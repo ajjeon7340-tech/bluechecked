@@ -206,6 +206,13 @@ export const signInWithSocial = async (provider: 'google' | 'instagram', role: U
         }
     }
 
+    // Remove trailing slash if present to ensure clean URL construction
+    if (redirectBase.endsWith('/')) {
+        redirectBase = redirectBase.slice(0, -1);
+    }
+
+    console.log("Redirecting to:", `${redirectBase}?role=${role}`);
+
     const { error } = await supabase.auth.signInWithOAuth({
         provider: supabaseProvider as any,
         options: {
