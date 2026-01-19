@@ -81,6 +81,7 @@ export interface Message {
   amount: number; // In Credits
   creatorId?: string;
   creatorName?: string;
+  creatorAvatarUrl?: string;
   createdAt: string; 
   expiresAt: string; 
   status: MessageStatus;

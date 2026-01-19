@@ -483,16 +483,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight">
                                                 {creator.displayName}
                                             </h1>
-                                            
-                                            {platforms.length > 0 && (
-                                                <div className="flex items-center gap-2 px-2 border-l border-slate-200 h-5">
-                                                    {platforms.map(platform => (
-                                                        <div key={platform} className="hover:scale-110 transition-transform cursor-pointer flex items-center">
-                                                            {getPlatformIcon(platform)}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
                                         </div>
 
                                         {/* Stats Pill */}
@@ -509,9 +499,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                         <span className="text-slate-400">Rating</span>
                                                 </div>
                                                 <div className="w-px h-3 bg-slate-200"></div>
-                                                <div className="flex items-center gap-1.5">
-                                                    <CheckCircle2 size={14} className="text-blue-500" />
-                                                    <span>Verified</span>
+                                                <div className="flex items-center gap-2">
+                                                    {platforms.map(platform => (
+                                                        <div key={platform} className="hover:scale-110 transition-transform cursor-pointer flex items-center">
+                                                            {getPlatformIcon(platform)}
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
                                         </div>

@@ -56,6 +56,7 @@ const ADDITIONAL_CREATORS: CreatorProfile[] = [
         avatarUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=400&q=80',
         pricePerMessage: 300,
         tags: ['Fitness', 'Health', 'Nutrition', 'Lifestyle'],
+        likesCount: 89,
     }
 ];
 
@@ -73,6 +74,9 @@ const generateDemoMessages = () => {
             senderName: 'Jane Doe',
             senderEmail: 'jane@example.com',
             content: 'Hey Alex, could you take a quick look at my React project? I am having issues with re-renders.',
+            creatorId: 'c1',
+            creatorName: 'Alex The Dev',
+            creatorAvatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=400',
             amount: 250,
             createdAt: new Date(Date.now() - 3600000).toISOString(),
             expiresAt: new Date(Date.now() + 172800000).toISOString(),
@@ -87,6 +91,9 @@ const generateDemoMessages = () => {
             senderName: 'John Smith',
             senderEmail: 'john@example.com',
             content: 'Great content! Just wanted to say thanks for the VS Code theme recommendation.',
+            creatorId: 'c1',
+            creatorName: 'Alex The Dev',
+            creatorAvatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=400',
             amount: 250,
             createdAt: new Date(Date.now() - 86400000).toISOString(),
             expiresAt: new Date(Date.now() + 86400000).toISOString(),
@@ -266,9 +273,9 @@ export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date
 
         return {
             date: label,
-            views: Math.floor(Math.random() * 800) + 200,
-            likes: Math.floor(Math.random() * 100) + 20,
-            rating: 4.2 + (Math.random() * 0.8)
+            views: 500 + (i * 50) + (label.length * 10),
+            likes: 50 + (i * 5),
+            rating: 4.5 + ((i % 5) * 0.1)
         };
     }).reverse();
 };
@@ -292,9 +299,9 @@ export const getFinancialStatistics = async (timeFrame: StatTimeFrame, date: Dat
             label = labelDate.toLocaleDateString('en-US', { month: 'short' });
         }
 
-        const msgRev = Math.floor(Math.random() * 2000) + 500;
-        const prodRev = Math.floor(Math.random() * 1500) + 200;
-        const tips = Math.floor(Math.random() * 500) + 50;
+        const msgRev = 1000 + (i * 100);
+        const prodRev = 500 + (i * 50);
+        const tips = 100 + (i * 10);
 
         return {
             date: label,

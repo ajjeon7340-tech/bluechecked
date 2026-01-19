@@ -26,6 +26,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const [searchQuery, setSearchQuery] = useState('');
   const [exploreQuery, setExploreQuery] = useState('');
 
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [deletedNotificationIds, setDeletedNotificationIds] = useState<string[]>([]);
   // UI States
   const [isCancelling, setIsCancelling] = useState(false);
   const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
@@ -104,7 +106,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const conversationGroups = useMemo(() => {
       if (messages.length === 0) return [];
       
-      const groups: Record<string, { creatorId: string, creatorName: string, latestMessage: Message, messageCount: number }> = {};
+      const groups: Record<string, { creatorId: string, creatorName: string, creatorAvatarUrl?: string, latestMessage: Message, messageCount: number }> = {};
       
       messages.forEach(msg => {
           const cId = msg.creatorId || 'unknown';
@@ -112,6 +114,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
               groups[cId] = {
                   creatorId: cId,
                   creatorName: msg.creatorName || 'Creator',
+                  creatorAvatarUrl: msg.creatorAvatarUrl,
                   latestMessage: msg,
                   messageCount: 0
               };
@@ -335,6 +338,63 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   };
 
   const activeRequests = messages.filter(m => m.status === MessageStatus.PENDING).length;
+  
+  const notifications = useMemo(() => {
+      const list: { id: string, icon: any, text: string, time: Date, color: string }[] = [];
+      
+      messages.forEach(msg => {
+          // 1. Sent Request
+          list.push({
+              id: `sent-${msg.id}`,
+              icon: Send,
+              text: `You sent a request to ${msg.creatorName}`,
+              time: new Date(msg.createdAt),
+              color: 'bg-blue-100 text-blue-600'
+          });
+
+          // 2. Reply Received
+          if (msg.status === MessageStatus.REPLIED && msg.replyAt) {
+              list.push({
+                  id: `reply-${msg.id}`,
+                  icon: MessageSquare,
+                  text: `${msg.creatorName} replied to your request!`,
+                  time: new Date(msg.replyAt),
+                  color: 'bg-green-100 text-green-600'
+              });
+          }
+
+          // 3. Refunded (Expired)
+          if (msg.status === MessageStatus.EXPIRED) {
+              list.push({
+                  id: `exp-${msg.id}`,
+                  icon: Coins,
+                  text: `Request to ${msg.creatorName} expired. ${msg.amount} credits refunded.`,
+                  time: new Date(msg.expiresAt),
+                  color: 'bg-amber-100 text-amber-600'
+              });
+          }
+
+          // 4. Rejected (Cancelled)
+          if (msg.status === MessageStatus.CANCELLED) {
+               list.push({
+                  id: `can-${msg.id}`,
+                  icon: Ban,
+                  text: `Request to ${msg.creatorName} was rejected.`,
+                  time: new Date(msg.createdAt), // Fallback
+                  color: 'bg-red-100 text-red-600'
+              });
+          }
+      });
+
+      return list
+        .filter(n => !deletedNotificationIds.includes(n.id))
+        .sort((a, b) => b.time.getTime() - a.time.getTime());
+  }, [messages, deletedNotificationIds]);
+
+  const handleDeleteNotification = (e: React.MouseEvent, id: string) => {
+      e.stopPropagation();
+      setDeletedNotificationIds(prev => [...prev, id]);
+  };
 
   const getPageTitle = () => {
       if (selectedCreatorId) return 'Conversation';
@@ -479,10 +539,51 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             <Coins size={14} className="text-indigo-500" />
                             {currentUser?.credits || 0} Credits
                         </button>
-                        <button className="relative text-slate-400 hover:text-slate-600">
-                            <Bell size={20} />
-                            {activeRequests > 0 && <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
-                        </button>
+                        <div className="relative">
+                            <button 
+                                onClick={() => setShowNotifications(!showNotifications)}
+                                className="relative text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-100"
+                            >
+                                <Bell size={20} />
+                                {notifications.length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
+                            </button>
+
+                            {showNotifications && (
+                                <>
+                                    <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)}></div>
+                                    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                        <div className="px-4 py-3 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+                                            <h3 className="font-bold text-sm text-slate-900">Notifications</h3>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{notifications.length} Updates</span>
+                                        </div>
+                                        <div className="max-h-[320px] overflow-y-auto">
+                                            {notifications.length === 0 ? (
+                                                <div className="p-8 text-center text-slate-400 text-xs">No notifications yet.</div>
+                                            ) : (
+                                                notifications.map(notif => (
+                                                    <div key={notif.id} className="px-4 py-3 hover:bg-slate-50 transition-colors flex gap-3 border-b border-slate-50 last:border-0 group relative pr-8">
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
+                                                            <notif.icon size={14} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs text-slate-600 leading-snug mb-1 font-medium">{notif.text}</p>
+                                                            <p className="text-[10px] text-slate-400">{notif.time.toLocaleDateString()} • {notif.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                                                        </div>
+                                                        <button 
+                                                            onClick={(e) => handleDeleteNotification(e, notif.id)}
+                                                            className="absolute top-3 right-3 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            title="Dismiss"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 )}
             </header>
@@ -536,7 +637,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 <div className="p-5 flex flex-col flex-1">
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="w-5 h-5 rounded-full bg-slate-200 overflow-hidden">
-                                            <img src="https://picsum.photos/200/200" alt="Creator" className="w-full h-full object-cover"/>
+                                            <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=100" alt="Creator" className="w-full h-full object-cover"/>
                                         </div>
                                         <span className="text-[10px] font-bold text-slate-500">Alex The Dev</span>
                                     </div>
@@ -563,7 +664,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 <div className="p-5 flex flex-col flex-1">
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="w-5 h-5 rounded-full bg-slate-200 overflow-hidden">
-                                            <img src="https://picsum.photos/200/200" alt="Creator" className="w-full h-full object-cover"/>
+                                            <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=100" alt="Creator" className="w-full h-full object-cover"/>
                                         </div>
                                         <span className="text-[10px] font-bold text-slate-500">Alex The Dev</span>
                                     </div>
@@ -589,7 +690,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 <div className="p-5 flex flex-col flex-1">
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="w-5 h-5 rounded-full bg-slate-200 overflow-hidden">
-                                            <img src="https://picsum.photos/200/200" alt="Creator" className="w-full h-full object-cover"/>
+                                            <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=100" alt="Creator" className="w-full h-full object-cover"/>
                                         </div>
                                         <span className="text-[10px] font-bold text-slate-500">Alex The Dev</span>
                                     </div>
@@ -646,7 +747,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                         {/* RANKING GRID */}
                         {filteredCreators.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {filteredCreators.map((creator, index) => {
                                     // @ts-ignore
                                     const platforms = creator.platforms || ['youtube'];
@@ -657,67 +758,56 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         <div 
                                             key={creator.id} 
                                             onClick={() => onBrowseCreators(creator.id)}
-                                            className="group bg-white rounded-[1.5rem] p-5 border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col h-full"
+                                            className="group bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center text-center h-full relative overflow-hidden"
                                         >
-                                            {/* 1. Header: Photo, Name, Stats Row, Grouped Icons */}
-                                            <div className="flex justify-between items-start mb-6">
-                                                <div className="flex items-start gap-3">
-                                                    <div className="relative">
-                                                        <img src={creator.avatarUrl} className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm" alt={creator.displayName} />
-                                                        {/* Green circle removed */}
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <h3 className="font-black text-slate-900 text-lg leading-tight group-hover:text-indigo-600 transition-colors mb-2">
-                                                            {creator.displayName}
-                                                        </h3>
-                                                        {/* Repositioned Stats directly under name: Rating and Likes as Boxes */}
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="flex items-center gap-1 bg-slate-50 border border-slate-100 px-2 py-1 rounded-lg text-[10px] font-bold text-slate-600">
-                                                                <Star size={10} className="fill-slate-400 text-slate-400"/> 
-                                                                {creator.stats.averageRating}
-                                                            </div>
-                                                            <div className="flex items-center gap-1 bg-slate-50 border border-slate-100 px-2 py-1 rounded-lg text-[10px] font-bold text-slate-600">
-                                                                <Heart size={10} className="fill-slate-400 text-slate-400"/> 
-                                                                {likesFormatted}
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                            {/* Gradient Header */}
+                                            <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-slate-50 to-transparent opacity-60"></div>
+
+                                            {/* 1. Avatar (Centered & Larger) */}
+                                            <div className="relative mb-4 z-10">
+                                                <div className="w-20 h-20 rounded-full p-1 bg-white shadow-sm border border-slate-100 mx-auto">
+                                                    <img src={creator.avatarUrl} className="w-full h-full rounded-full object-cover" alt={creator.displayName} />
                                                 </div>
-                                                
-                                                {/* Grouped Icons Pill */}
-                                                <div className="bg-slate-50 border border-slate-100 rounded-full px-2 py-1 flex -space-x-1 shrink-0">
-                                                    {platforms.map((p: string, i: number) => (
-                                                        <div key={i} className="w-6 h-6 rounded-full bg-white border border-slate-100 flex items-center justify-center shadow-sm z-10 text-slate-600">
+                                            </div>
+
+                                            {/* 2. Name & Info */}
+                                            <div className="relative z-10 w-full mb-5">
+                                                <h3 className="font-black text-slate-900 text-lg leading-tight group-hover:text-indigo-600 transition-colors mb-1 truncate px-2">
+                                                    {creator.displayName}
+                                                </h3>
+                                                <div className="flex items-center justify-center gap-1.5 mb-3 mt-2">
+                                                    {platforms.slice(0, 3).map((p: string, i: number) => (
+                                                        <div key={i} className="w-7 h-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center hover:scale-110 transition-transform shadow-sm">
                                                             {/* @ts-ignore */}
                                                             {getPlatformIcon(p, 'colored')}
                                                         </div>
                                                     ))}
                                                 </div>
-                                            </div>
-
-                                            {/* 2. Stats Boxes (Guaranteed Hours + Avg Reply) */}
-                                            <div className="grid grid-cols-2 gap-3 mb-6">
-                                                <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
-                                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-                                                        <ShieldCheck size={10} /> Guaranteed
-                                                    </div>
-                                                    <div className="text-lg font-black text-slate-900">{creator.responseWindowHours} Hours</div>
-                                                </div>
-                                                <div className="bg-purple-50 rounded-2xl p-3 border border-purple-100">
-                                                    <div className="text-[10px] font-bold text-purple-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-                                                        <Clock size={10} /> Avg Reply
-                                                    </div>
-                                                    <div className="text-lg font-black text-purple-700">
-                                                        {creator.stats.responseTimeAvg}
-                                                    </div>
+                                                <div className="flex items-center justify-center gap-3 text-xs text-slate-500 font-medium">
+                                                    <span className="flex items-center gap-1"><Star size={10} className="fill-yellow-400 text-yellow-400"/> {creator.stats.averageRating}</span>
+                                                    <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                                    <span>{likesFormatted} Likes</span>
                                                 </div>
                                             </div>
 
-                                            {/* 3. Bottom Action - Book Only */}
-                                            <div className="mt-auto">
-                                                <button className="w-full bg-slate-900 text-white rounded-xl py-3.5 text-sm font-bold shadow-lg shadow-slate-900/20 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 group">
-                                                    <Sparkles size={16} className="text-yellow-300 group-hover:scale-110 transition-transform" /> 
-                                                    <span>Lets Bluechecked ({creator.pricePerMessage} Credits)</span>
+                                            {/* 3. Stats Grid - Compact */}
+                                            <div className="grid grid-cols-2 gap-2 w-full mb-6 relative z-10">
+                                                <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-100 flex flex-col items-center justify-center">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Reply</span>
+                                                    <span className="font-black text-slate-700 text-sm">{creator.stats.responseTimeAvg}</span>
+                                                </div>
+                                                <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-100 flex flex-col items-center justify-center">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Window</span>
+                                                    <span className="font-black text-slate-700 text-sm">{creator.responseWindowHours}h</span>
+                                                </div>
+                                            </div>
+
+                                            {/* 4. Action */}
+                                            <div className="mt-auto w-full relative z-10">
+                                                <button className="w-full bg-slate-900 text-white rounded-xl py-3 text-sm font-bold shadow-lg shadow-slate-900/10 group-hover:bg-indigo-600 group-hover:shadow-indigo-500/20 transition-all flex items-center justify-center gap-2">
+                                                    <Sparkles size={14} className="text-yellow-300" />
+                                                    <span>Request</span>
+                                                    <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-mono">{creator.pricePerMessage}</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -971,7 +1061,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200 overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
-                                                                <img src="https://picsum.photos/200/200" className="w-full h-full object-cover" alt="Alex" />
+                                                                {group.creatorAvatarUrl ? (
+                                                                    <img src={group.creatorAvatarUrl} className="w-full h-full object-cover" alt={group.creatorName} />
+                                                                ) : (
+                                                                    <User size={20} />
+                                                                )}
                                                             </div>
                                                             <div className="flex flex-col">
                                                                 <span className="text-sm font-bold text-slate-900">{group.creatorName}</span>
@@ -1016,7 +1110,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         <div key={group.creatorId} onClick={() => handleOpenChat(group.creatorId)} className="p-4 active:bg-slate-50 cursor-pointer">
                                             <div className="flex items-center gap-3 mb-3">
                                                 <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200 overflow-hidden shadow-sm">
-                                                    <img src="https://picsum.photos/200/200" className="w-full h-full object-cover" alt="Alex" />
+                                                    {group.creatorAvatarUrl ? (
+                                                        <img src={group.creatorAvatarUrl} className="w-full h-full object-cover" alt={group.creatorName} />
+                                                    ) : (
+                                                        <User size={20} />
+                                                    )}
                                                 </div>
                                                 <div className="flex-1">
                                                     <div className="flex justify-between items-start">
@@ -1096,7 +1194,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     <div key={`${msg.id}-${chatIndex}`} className={`flex gap-3 max-w-[85%] md:max-w-[75%] ${isMe ? 'ml-auto justify-end' : ''} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}>
                                                         {!isMe && (
                                                             <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-300 shadow-sm mt-1">
-                                                                <img src="https://picsum.photos/200/200" alt="Creator" className="w-full h-full object-cover" />
+                                                                {msg.creatorAvatarUrl ? (
+                                                                    <img src={msg.creatorAvatarUrl} alt="Creator" className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <User size={16} className="text-slate-400" />
+                                                                )}
                                                             </div>
                                                         )}
                                                         <div className={`space-y-1 w-full ${isMe ? 'text-right' : 'text-left'}`}>

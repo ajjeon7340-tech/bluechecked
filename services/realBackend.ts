@@ -61,6 +61,7 @@ const mapDbMessageToAppMessage = (m: any, currentUserId: string): Message => {
         amount: m.amount,
         creatorId: m.creator_id,
         creatorName: m.creator?.display_name || 'Creator',
+        creatorAvatarUrl: m.creator?.avatar_url || DEFAULT_AVATAR,
         createdAt: m.created_at,
         expiresAt: m.expires_at,
         status: m.status as MessageStatus,
@@ -189,27 +190,10 @@ export const signInWithSocial = async (provider: 'google' | 'instagram', role: U
     // Note: You must enable Google/Facebook providers in Supabase Dashboard.
     const supabaseProvider = provider === 'instagram' ? 'facebook' : provider;
     
-    // Use the current window origin as the default redirect base.
-    // This automatically handles Localhost, Vercel Preview, and Production URLs correctly.
-    let redirectBase = window.location.origin;
-
-    // Optional: Allow override via env var, but prevent accidental localhost redirects on production
-    const envUrl = import.meta.env.VITE_APP_URL;
-    if (envUrl) {
-        const formattedUrl = envUrl.startsWith('http') ? envUrl : `https://${envUrl}`;
-        const isEnvLocal = formattedUrl.includes('localhost') || formattedUrl.includes('127.0.0.1');
-        const isCurrentLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-        // Only use the env var if it's NOT localhost, OR if we are actually on localhost
-        if (!isEnvLocal || isCurrentLocal) {
-            redirectBase = formattedUrl;
-        }
-    }
-
-    // Remove trailing slash if present to ensure clean URL construction
-    if (redirectBase.endsWith('/')) {
-        redirectBase = redirectBase.slice(0, -1);
-    }
+    // Use the current window origin. This ensures:
+    // 1. Localhost -> Localhost
+    // 2. Production -> Production
+    const redirectBase = window.location.origin;
 
     console.log("Redirecting to:", `${redirectBase}?role=${role}`);
 
@@ -408,7 +392,7 @@ export const getMessages = async (): Promise<Message[]> => {
         .select(`
             *,
             sender:profiles!sender_id(display_name, email),
-            creator:profiles!creator_id(display_name),
+            creator:profiles!creator_id(display_name, avatar_url),
             chat_lines(*)
         `)
         .or(`sender_id.eq.${session.session.user.id},creator_id.eq.${session.session.user.id}`)
@@ -624,24 +608,53 @@ export const getFeaturedCreators = async (): Promise<CreatorProfile[]> => {
         .from('profiles')
         .select('*')
         .eq('role', 'CREATOR')
+        .order('display_name', { ascending: true })
         .limit(20);
 
     if (error || !data) return [];
 
-    return data.map(p => ({
-        id: p.id,
-        handle: p.handle || '@user',
-        displayName: p.display_name || 'Creator',
-        bio: p.bio || '',
-        avatarUrl: p.avatar_url || DEFAULT_AVATAR,
-        pricePerMessage: p.price_per_message || 50,
-        responseWindowHours: p.response_window_hours || 48,
-        likesCount: 0,
-        stats: { responseTimeAvg: '4h', replyRate: '98%', profileViews: 0, averageRating: 5.0 },
-        customQuestions: [],
-        tags: [],
-        links: p.links || [],
-        products: p.products || [],
-        platforms: p.platforms || []
-    }));
+    // Fetch stats (ratings/likes) for these creators
+    const creatorIds = data.map(p => p.id);
+    const { data: messages } = await supabase
+        .from('messages')
+        .select('creator_id, rating')
+        .in('creator_id', creatorIds)
+        .gt('rating', 0);
+
+    const stats: Record<string, { count: number, sum: number }> = {};
+    
+    if (messages) {
+        messages.forEach(m => {
+            if (!stats[m.creator_id]) stats[m.creator_id] = { count: 0, sum: 0 };
+            stats[m.creator_id].count++;
+            stats[m.creator_id].sum += m.rating;
+        });
+    }
+
+    return data.map(p => {
+        const s = stats[p.id] || { count: 0, sum: 0 };
+        const avg = s.count > 0 ? parseFloat((s.sum / s.count).toFixed(1)) : 5.0;
+
+        return {
+            id: p.id,
+            handle: p.handle || '@user',
+            displayName: p.display_name || 'Creator',
+            bio: p.bio || '',
+            avatarUrl: p.avatar_url || DEFAULT_AVATAR,
+            pricePerMessage: p.price_per_message || 50,
+            responseWindowHours: p.response_window_hours || 48,
+            likesCount: s.count,
+            stats: { 
+                responseTimeAvg: '4h', 
+                replyRate: '98%', 
+                profileViews: s.count * 15 + 100, 
+                averageRating: avg 
+            },
+            customQuestions: [],
+            tags: [],
+            links: p.links || [],
+            products: p.products || [],
+            platforms: p.platforms || []
+        };
+    });
 };
