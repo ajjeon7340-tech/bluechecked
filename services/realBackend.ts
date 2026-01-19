@@ -191,6 +191,8 @@ export const signInWithSocial = async (provider: 'google' | 'instagram', role: U
     
     // Allow overriding the redirect URL via env var, otherwise use current origin
     // This helps ensure the correct URL is sent when hosted on Vercel
+    // We use window.location.origin as the default because it is always the correct current URL
+    // (e.g. https://your-app.vercel.app or http://localhost:3000)
     const redirectBase = import.meta.env.VITE_APP_URL || window.location.origin;
 
     const { error } = await supabase.auth.signInWithOAuth({
