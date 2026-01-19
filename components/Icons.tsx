@@ -61,7 +61,8 @@ import {
   Phone,
   PieChart,
   Calendar,
-  Coins // Added Coins icon
+  Coins, // Added Coins icon
+  RefreshCw
 } from 'lucide-react';
 
 export const GoogleLogo = ({ className }: { className?: string }) => (
@@ -160,5 +161,6 @@ export {
   Phone,
   PieChart,
   Calendar,
-  Coins
+  Coins,
+  RefreshCw
 };

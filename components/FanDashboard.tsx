@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import '../index.css';
 import { CurrentUser, Message, MessageStatus, CreatorProfile } from '../types';
 import { Button } from './Button';
-import { CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard } from './Icons';
+import { CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw } from './Icons';
 import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, isBackendConfigured } from '../services/realBackend';
 
 interface Props {
@@ -76,6 +77,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
     }
   }, [currentUser]);
 
+  // Auto-refresh creators when entering Explore view
+  useEffect(() => {
+    if (currentView === 'EXPLORE') {
+        loadCreators();
+    }
+  }, [currentView]);
+
   useEffect(() => {
     if (selectedCreatorId && scrollRef.current) {
         setTimeout(() => {
@@ -99,6 +107,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
   const loadCreators = async () => {
       const creators = await getFeaturedCreators();
+      // Force a state update to ensure UI reflects changes
       setFeaturedCreators(creators);
   };
 
@@ -342,12 +351,21 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const notifications = useMemo(() => {
       const list: { id: string, icon: any, text: string, time: Date, color: string }[] = [];
       
+      // Add Welcome Notification (Ensures list is never empty on first load)
+      list.push({
+          id: 'welcome',
+          icon: Sparkles,
+          text: 'Welcome to Bluechecked! Find a creator to start.',
+          time: new Date(),
+          color: 'bg-indigo-100 text-indigo-600'
+      });
+
       messages.forEach(msg => {
           // 1. Sent Request
           list.push({
               id: `sent-${msg.id}`,
               icon: Send,
-              text: `You sent a request to ${msg.creatorName}`,
+              text: `You sent a request to ${msg.creatorName || 'Creator'}`,
               time: new Date(msg.createdAt),
               color: 'bg-blue-100 text-blue-600'
           });
@@ -357,7 +375,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
               list.push({
                   id: `reply-${msg.id}`,
                   icon: MessageSquare,
-                  text: `${msg.creatorName} replied to your request!`,
+                  text: `${msg.creatorName || 'Creator'} replied to your request!`,
                   time: new Date(msg.replyAt),
                   color: 'bg-green-100 text-green-600'
               });
@@ -368,7 +386,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
               list.push({
                   id: `exp-${msg.id}`,
                   icon: Coins,
-                  text: `Request to ${msg.creatorName} expired. ${msg.amount} credits refunded.`,
+                  text: `Request to ${msg.creatorName || 'Creator'} expired. ${msg.amount} credits refunded.`,
                   time: new Date(msg.expiresAt),
                   color: 'bg-amber-100 text-amber-600'
               });
@@ -379,7 +397,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                list.push({
                   id: `can-${msg.id}`,
                   icon: Ban,
-                  text: `Request to ${msg.creatorName} was rejected.`,
+                  text: `Request to ${msg.creatorName || 'Creator'} was rejected.`,
                   time: new Date(msg.createdAt), // Fallback
                   color: 'bg-red-100 text-red-600'
               });
@@ -728,7 +746,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         {/* Header Section */}
                         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                             <div>
-                                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Recommended Creators</h2>
+                                <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                                    Recommended Creators
+                                    <button onClick={() => loadCreators()} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors" title="Refresh List">
+                                        <RefreshCw size={16} />
+                                    </button>
+                                </h2>
                                 <p className="text-slate-500 text-sm mt-1">Verified experts ready to reply.</p>
                             </div>
                             
