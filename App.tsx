@@ -51,7 +51,7 @@ function App() {
   };
 
   useEffect(() => {
-    console.log("Bluechecked App Version: 2.3.0 (Build Fix)");
+    console.log("Bluechecked App Version: 2.4.0 (Cache Fix)");
     loadCreatorData();
     
     // Optimistically load session from local storage

@@ -478,10 +478,6 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
   return (
     <div className="min-h-screen bg-[#F7F9FC] flex font-sans text-slate-900 overflow-hidden">
-        <style>{`
-          .no-scrollbar::-webkit-scrollbar { display: none; }
-          .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        `}</style>
 
         {/* Mobile Sidebar Overlay */}
         {isSidebarOpen && (
