@@ -51,7 +51,7 @@ function App() {
   };
 
   useEffect(() => {
-    console.log("Bluechecked App Version: 2.5.0 (Standard CSS)");
+    console.log("Bluechecked App Version: 2.6.0 (Styles Fix)");
     loadCreatorData();
     
     // Optimistically load session from local storage
