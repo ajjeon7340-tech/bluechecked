@@ -1,6 +1,8 @@
 
 import { CreatorProfile, Message, MessageStatus, CurrentUser, UserRole, ChatMessage, MonthlyStat, ProAnalyticsData, DetailedStat, DetailedFinancialStat, StatTimeFrame } from '../types';
 
+export const DEFAULT_AVATAR = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+
 // Initial Mock Creator
 const INITIAL_CREATOR: CreatorProfile = {
   id: 'c1',
@@ -113,7 +115,8 @@ generateDemoMessages();
 
 // --- EXPORTED FUNCTIONS ---
 
-export const getCreatorProfile = async (): Promise<CreatorProfile> => {
+export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProfile> => {
+    if (creatorId && creatorId !== creatorProfile.id) return ADDITIONAL_CREATORS.find(c => c.id === creatorId) || creatorProfile;
     return { ...creatorProfile };
 };
 
@@ -126,7 +129,7 @@ export const getMessages = async (): Promise<Message[]> => {
     return [...messages];
 };
 
-export const sendMessage = async (name: string, email: string, content: string, amount: number, attachmentUrl?: string): Promise<Message> => {
+export const sendMessage = async (creatorId: string, name: string, email: string, content: string, amount: number, attachmentUrl?: string): Promise<Message> => {
     
     // Check balance if currentUser is defined
     if (currentUser) {
@@ -139,6 +142,8 @@ export const sendMessage = async (name: string, email: string, content: string, 
 
     const newMessage: Message = {
         id: `m${Date.now()}`,
+        creatorId: creatorId,
+        creatorName: 'Alex The Dev', // Mock default
         senderName: name,
         senderEmail: email,
         content,
@@ -208,6 +213,22 @@ export const loginUser = async (role: UserRole, identifier: string, method: 'EMA
         credits: role === 'FAN' ? 1000 : 5000 // Give initial credits for testing
     };
     return currentUser;
+};
+
+export const signInWithSocial = async (provider: 'google' | 'instagram', role: UserRole) => {
+    console.log(`[Mock] Signing in with ${provider} as ${role}`);
+    const user = await loginUser(role, `mock-${provider}@example.com`, 'EMAIL', `Mock ${provider} User`);
+    localStorage.setItem('bluechecked_current_user', JSON.stringify(user));
+    window.location.reload();
+};
+
+export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
+    const stored = localStorage.getItem('bluechecked_current_user');
+    if (stored) {
+        currentUser = JSON.parse(stored);
+        return currentUser;
+    }
+    return null;
 };
 
 export const updateCurrentUser = async (user: CurrentUser): Promise<void> => {

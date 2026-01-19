@@ -1,5 +1,6 @@
 import { supabase, isConfigured } from './supabaseClient';
 import { CreatorProfile, Message, MessageStatus, CurrentUser, UserRole, ChatMessage, StatTimeFrame, DetailedStat, DetailedFinancialStat, MonthlyStat, ProAnalyticsData } from '../types';
+import * as MockBackend from './mockBackend';
 
 export const DEFAULT_AVATAR = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
 
@@ -77,6 +78,8 @@ const mapDbMessageToAppMessage = (m: any, currentUserId: string): Message => {
 // --- AUTH ---
 
 export const loginUser = async (role: UserRole, identifier: string, method: 'EMAIL' | 'PHONE' = 'EMAIL', name?: string): Promise<CurrentUser> => {
+    if (!isConfigured) return MockBackend.loginUser(role, identifier, method, name);
+
     const cleanIdentifier = identifier.trim();
     // 1. Try to sign in
     let { data, error } = await supabase.auth.signInWithPassword({
@@ -160,6 +163,8 @@ export const loginUser = async (role: UserRole, identifier: string, method: 'EMA
 };
 
 export const updateCurrentUser = async (user: CurrentUser): Promise<void> => {
+    if (!isConfigured) return MockBackend.updateCurrentUser(user);
+
     const { error } = await supabase
         .from('profiles')
         .update({
@@ -173,7 +178,7 @@ export const updateCurrentUser = async (user: CurrentUser): Promise<void> => {
 
 export const signInWithSocial = async (provider: 'google' | 'instagram', role: UserRole) => {
     if (!isConfigured) {
-        throw new Error("Supabase is not configured. Please check your .env.local file for VITE_SUPABASE_URL.");
+        return MockBackend.signInWithSocial(provider, role);
     }
 
     // Store role preference to persist through redirect (Fallback if URL param is lost)
@@ -207,6 +212,8 @@ export const signInWithSocial = async (provider: 'google' | 'instagram', role: U
 };
 
 export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
+    if (!isConfigured) return MockBackend.checkAndSyncSession();
+
     // 1. Check Supabase Session
     const { data: { session } } = await supabase.auth.getSession();
     
@@ -274,6 +281,8 @@ export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
 // --- PROFILES ---
 
 export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProfile> => {
+    if (!isConfigured) return MockBackend.getCreatorProfile(creatorId);
+
     let query = supabase
         .from('profiles')
         .select('*')
@@ -360,6 +369,8 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
 };
 
 export const updateCreatorProfile = async (profile: CreatorProfile): Promise<CreatorProfile> => {
+    if (!isConfigured) return MockBackend.updateCreatorProfile(profile);
+
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error("Not logged in");
 
@@ -384,6 +395,8 @@ export const updateCreatorProfile = async (profile: CreatorProfile): Promise<Cre
 // --- MESSAGES & TRANSACTIONS ---
 
 export const getMessages = async (): Promise<Message[]> => {
+    if (!isConfigured) return MockBackend.getMessages();
+
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) return [];
 
@@ -407,6 +420,8 @@ export const getMessages = async (): Promise<Message[]> => {
 };
 
 export const sendMessage = async (creatorId: string, senderName: string, senderEmail: string, content: string, amount: number, attachmentUrl?: string): Promise<Message> => {
+    if (!isConfigured) return MockBackend.sendMessage(creatorId, senderName, senderEmail, content, amount, attachmentUrl);
+
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error("Must be logged in");
     
@@ -469,6 +484,8 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
 };
 
 export const replyToMessage = async (messageId: string, replyText: string, isComplete: boolean): Promise<void> => {
+    if (!isConfigured) return MockBackend.replyToMessage(messageId, replyText, isComplete);
+
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error("Not logged in");
 
@@ -510,6 +527,8 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
 };
 
 export const cancelMessage = async (messageId: string): Promise<void> => {
+    if (!isConfigured) return MockBackend.cancelMessage(messageId);
+
     // 1. Get Message to check amount
     const { data: msg } = await supabase.from('messages').select('*').eq('id', messageId).single();
     if (!msg) return;
@@ -527,10 +546,14 @@ export const cancelMessage = async (messageId: string): Promise<void> => {
 };
 
 export const markMessageAsRead = async (messageId: string): Promise<void> => {
+    if (!isConfigured) return MockBackend.markMessageAsRead(messageId);
+
     await supabase.from('messages').update({ is_read: true }).eq('id', messageId);
 };
 
 export const addCredits = async (amount: number): Promise<CurrentUser> => {
+    if (!isConfigured) return MockBackend.addCredits(amount);
+
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error("No user");
 
@@ -546,12 +569,14 @@ export const addCredits = async (amount: number): Promise<CurrentUser> => {
 };
 
 // --- MOCK STUBS FOR ANALYTICS (Can remain mock until DB has enough data) ---
-export const getHistoricalStats = (): MonthlyStat[] => [];
-export const getProAnalytics = async (): Promise<ProAnalyticsData | null> => null;
-export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date): Promise<DetailedStat[]> => [];
-export const getFinancialStatistics = async (timeFrame: StatTimeFrame, date: Date): Promise<DetailedFinancialStat[]> => [];
+export const getHistoricalStats = (): MonthlyStat[] => MockBackend.getHistoricalStats();
+export const getProAnalytics = async (): Promise<ProAnalyticsData | null> => MockBackend.getProAnalytics();
+export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date): Promise<DetailedStat[]> => MockBackend.getDetailedStatistics(timeFrame, date);
+export const getFinancialStatistics = async (timeFrame: StatTimeFrame, date: Date): Promise<DetailedFinancialStat[]> => MockBackend.getFinancialStatistics(timeFrame, date);
 
 export const rateMessage = async (messageId: string, rating: number): Promise<void> => {
+    if (!isConfigured) return MockBackend.rateMessage(messageId, rating);
+
     const { error } = await supabase
         .from('messages')
         .update({ rating })
@@ -560,6 +585,8 @@ export const rateMessage = async (messageId: string, rating: number): Promise<vo
 };
 
 export const sendFanAppreciation = async (messageId: string, text: string): Promise<void> => {
+    if (!isConfigured) return MockBackend.sendFanAppreciation(messageId, text);
+
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error("Not logged in");
 
@@ -604,6 +631,8 @@ export const sendFanAppreciation = async (messageId: string, text: string): Prom
 };
 
 export const getFeaturedCreators = async (): Promise<CreatorProfile[]> => {
+    if (!isConfigured) return MockBackend.getFeaturedCreators();
+
     const { data, error } = await supabase
         .from('profiles')
         .select('*')
