@@ -51,7 +51,7 @@ function App() {
   };
 
   useEffect(() => {
-    console.log("Bluechecked App Version: 2.8.0 (Favicon Fix)");
+    console.log("Bluechecked App Version: 2.9.0 (Legacy CSS Fix)");
     loadCreatorData();
     
     // Optimistically load session from local storage
