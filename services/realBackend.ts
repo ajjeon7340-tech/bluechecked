@@ -189,10 +189,14 @@ export const signInWithSocial = async (provider: 'google' | 'instagram', role: U
     // Note: You must enable Google/Facebook providers in Supabase Dashboard.
     const supabaseProvider = provider === 'instagram' ? 'facebook' : provider;
     
+    // Allow overriding the redirect URL via env var, otherwise use current origin
+    // This helps ensure the correct URL is sent when hosted on Vercel
+    const redirectBase = import.meta.env.VITE_APP_URL || window.location.origin;
+
     const { error } = await supabase.auth.signInWithOAuth({
         provider: supabaseProvider as any,
         options: {
-            redirectTo: `${window.location.origin}?role=${role}`,
+            redirectTo: `${redirectBase}?role=${role}`,
         }
     });
     if (error) throw error;
