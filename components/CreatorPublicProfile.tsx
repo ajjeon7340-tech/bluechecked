@@ -494,6 +494,27 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 </div>
                                             )}
                                         </div>
+
+                                        {/* Stats Pill */}
+                                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                                            <div className="inline-flex flex-wrap items-center gap-3 sm:gap-4 bg-slate-50 p-2 px-3 rounded-xl border border-slate-100 text-xs font-medium text-slate-500">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Clock size={14} className="text-slate-400" />
+                                                    <span>{creator.stats.responseTimeAvg} reply time</span>
+                                                </div>
+                                                <div className="w-px h-3 bg-slate-200"></div>
+                                                <div className="flex items-center gap-1.5">
+                                                        <Star size={14} className="text-yellow-400 fill-yellow-400" />
+                                                        <span className="font-bold text-slate-700">{creator.stats.averageRating}</span>
+                                                        <span className="text-slate-400">Rating</span>
+                                                </div>
+                                                <div className="w-px h-3 bg-slate-200"></div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <CheckCircle2 size={14} className="text-blue-500" />
+                                                    <span>Verified</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     
                                     <div className="flex items-center gap-3">
@@ -506,27 +527,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                             </div>
                                             <span className="text-[10px] font-bold">Share</span>
                                         </button>
-                                    </div>
-                                </div>
-
-                                {/* Stats Pill */}
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <div className="inline-flex flex-wrap items-center gap-3 sm:gap-4 bg-slate-50 p-2 px-3 rounded-xl border border-slate-100 text-xs font-medium text-slate-500 w-fit">
-                                        <div className="flex items-center gap-1.5 pr-1">
-                                            <Clock size={14} className="text-slate-400" />
-                                            <span>{creator.stats.responseTimeAvg} reply time</span>
-                                        </div>
-                                        <div className="w-px h-3 bg-slate-200"></div>
-                                        <div className="flex items-center gap-1.5">
-                                                <Star size={14} className="text-yellow-400 fill-yellow-400" />
-                                                <span className="font-bold text-slate-700">{creator.stats.averageRating}</span>
-                                                <span className="text-slate-400">Rating</span>
-                                        </div>
-                                        <div className="w-px h-3 bg-slate-200"></div>
-                                        <div className="flex items-center gap-1.5">
-                                            <CheckCircle2 size={14} className="text-blue-500" />
-                                            <span>Verified</span>
-                                        </div>
                                     </div>
                                 </div>
                             </>
