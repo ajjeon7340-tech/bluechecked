@@ -4,6 +4,8 @@ import * as MockBackend from './mockBackend';
 
 export const DEFAULT_AVATAR = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
 
+export const isBackendConfigured = () => isConfigured;
+
 // --- HELPER: MAP DB OBJECTS TO TYPES ---
 
 const mapProfileToUser = (profile: any): CurrentUser => ({

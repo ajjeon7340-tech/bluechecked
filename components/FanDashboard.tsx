@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { CurrentUser, Message, MessageStatus, CreatorProfile } from '../types';
 import { Button } from './Button';
 import { CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard } from './Icons';
-import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits } from '../services/realBackend';
+import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, isBackendConfigured } from '../services/realBackend';
 
 interface Props {
   currentUser: CurrentUser | null;
@@ -520,6 +520,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
         {/* 2. MAIN CONTENT */}
         <main className="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden relative">
+            {/* Demo Banner */}
+            {!isBackendConfigured() && (
+                <div className="bg-indigo-600 text-white text-[10px] font-bold px-4 py-1 text-center z-50 shadow-sm">
+                    DEMO MODE: Supabase not configured. Showing mock data.
+                </div>
+            )}
             {/* Header */}
             <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-20">
                 <div className="flex items-center gap-4">
