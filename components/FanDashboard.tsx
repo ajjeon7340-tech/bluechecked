@@ -747,7 +747,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                             <div>
                                 <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                                    Recommended Creators
+                                    Featured Experts
                                     <button onClick={() => loadCreators()} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors" title="Refresh List">
                                         <RefreshCw size={16} />
                                     </button>

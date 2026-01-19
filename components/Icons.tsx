@@ -61,7 +61,7 @@ import {
   Phone,
   PieChart,
   Calendar,
-  Coins, // Added Coins icon
+  Coins,
   RefreshCw
 } from 'lucide-react';
 
