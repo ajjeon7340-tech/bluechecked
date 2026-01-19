@@ -51,7 +51,7 @@ function App() {
   };
 
   useEffect(() => {
-    console.log("Bluechecked App Version: 2.6.0 (Styles Fix)");
+    console.log("Bluechecked App Version: 2.7.0 (Vercel Config)");
     loadCreatorData();
     
     // Optimistically load session from local storage
