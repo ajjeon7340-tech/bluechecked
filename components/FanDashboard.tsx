@@ -1,0 +1,1359 @@
+
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { CurrentUser, Message, MessageStatus, CreatorProfile } from '../types';
+import { Button } from './Button';
+import { CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard } from './Icons';
+import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits } from '../services/realBackend';
+
+interface Props {
+  currentUser: CurrentUser | null;
+  onLogout: () => void;
+  onBrowseCreators: (creatorId: string) => void;
+  onUpdateUser?: (user: CurrentUser) => void;
+}
+
+export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseCreators, onUpdateUser }) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [featuredCreators, setFeaturedCreators] = useState<CreatorProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
+  
+  // Navigation State
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [currentView, setCurrentView] = useState<'OVERVIEW' | 'EXPLORE' | 'SETTINGS' | 'PURCHASED' | 'HISTORY' | 'SUPPORT'>('OVERVIEW');
+
+  // Search State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [exploreQuery, setExploreQuery] = useState('');
+
+  // UI States
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
+
+  const [isSendingFollowUp, setIsSendingFollowUp] = useState(false);
+  const [showFollowUpInput, setShowFollowUpInput] = useState(false);
+  const [followUpText, setFollowUpText] = useState('');
+
+  // Rating & Appreciation
+  const [rating, setRating] = useState(0); 
+  const [hoveredStar, setHoveredStar] = useState(0); 
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [showRatingSuccess, setShowRatingSuccess] = useState(false);
+  
+  // Custom Appreciation State
+  const [customAppreciationMode, setCustomAppreciationMode] = useState(false);
+  const [customAppreciationText, setCustomAppreciationText] = useState('');
+
+  // Profile Editor State
+  const [profileForm, setProfileForm] = useState({
+      name: '',
+      age: '',
+      avatarUrl: ''
+  });
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false);
+
+  // Wallet / Top Up State
+  const [showTopUpModal, setShowTopUpModal] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState(1000);
+  const [isProcessingTopUp, setIsProcessingTopUp] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    loadMessages();
+    loadCreators();
+    if (currentUser) {
+        setProfileForm({
+            name: currentUser.name || '',
+            age: currentUser.age?.toString() || '',
+            avatarUrl: currentUser.avatarUrl || ''
+        });
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (selectedCreatorId && scrollRef.current) {
+        setTimeout(() => {
+            if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }, 100);
+    }
+  }, [messages, selectedCreatorId, showFollowUpInput, customAppreciationMode]);
+
+  const loadMessages = async () => {
+    setIsLoading(true);
+    const allMessages = await getMessages();
+    const myMessages = allMessages.filter(m => 
+      m.senderEmail === (currentUser?.email || 'sarah@example.com') || 
+      currentUser?.email === 'google-user@example.com'
+    );
+    // Sort descending for list view
+    myMessages.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    setMessages(myMessages.length > 0 ? myMessages : allMessages.slice(0, 2));
+    setIsLoading(false);
+  };
+
+  const loadCreators = async () => {
+      const creators = await getFeaturedCreators();
+      setFeaturedCreators(creators);
+  };
+
+  // Group messages for List View (Simulating grouping by Creator)
+  const conversationGroups = useMemo(() => {
+      if (messages.length === 0) return [];
+      
+      const groups: Record<string, { creatorId: string, creatorName: string, latestMessage: Message, messageCount: number }> = {};
+      
+      messages.forEach(msg => {
+          const cId = msg.creatorId || 'unknown';
+          if (!groups[cId]) {
+              groups[cId] = {
+                  creatorId: cId,
+                  creatorName: msg.creatorName || 'Creator',
+                  latestMessage: msg,
+                  messageCount: 0
+              };
+          }
+          groups[cId].messageCount++;
+          if (new Date(msg.createdAt) > new Date(groups[cId].latestMessage.createdAt)) {
+              groups[cId].latestMessage = msg;
+          }
+      });
+      
+      return Object.values(groups);
+  }, [messages]);
+
+  const filteredGroups = useMemo(() => {
+      return conversationGroups.filter(g => 
+          g.creatorName.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+  }, [conversationGroups, searchQuery]);
+
+  const filteredCreators = useMemo(() => {
+    return featuredCreators.filter(c => 
+        c.displayName.toLowerCase().includes(exploreQuery.toLowerCase()) ||
+        c.tags.some(t => t.toLowerCase().includes(exploreQuery.toLowerCase()))
+    );
+  }, [featuredCreators, exploreQuery]);
+
+  const threadMessages = useMemo(() => {
+      if (!selectedCreatorId) return [];
+      return messages
+        .filter(m => m.creatorId === selectedCreatorId)
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }, [messages, selectedCreatorId]);
+
+  const latestMessage = threadMessages.length > 0 ? threadMessages[threadMessages.length - 1] : null;
+
+  // Derived state for UI logic
+  const hasRated = !!(latestMessage?.rating && latestMessage.rating > 0);
+  const hasThanked = useMemo(() => {
+      return latestMessage?.conversation.some(c => c.role === 'FAN' && c.content.startsWith('Fan Appreciation:'));
+  }, [latestMessage]);
+
+  const handleOpenChat = (creatorId: string) => {
+      setSelectedCreatorId(creatorId); 
+      setShowFollowUpInput(false);
+      setFollowUpText('');
+      setCustomAppreciationMode(false);
+      setCustomAppreciationText('');
+      setRating(0);
+      setHoveredStar(0);
+      setConfirmCancelId(null);
+      // Ensure we stay in Overview when opening chat, but the 'selectedCreatorId' acts as a sub-view
+      setCurrentView('OVERVIEW');
+  };
+
+  const handleCancelClick = (msgId: string) => {
+    setConfirmCancelId(msgId);
+  };
+
+  const processCancellation = async () => {
+    if (!confirmCancelId) return;
+    setIsCancelling(true);
+    try {
+        await cancelMessage(confirmCancelId);
+        await loadMessages();
+        setConfirmCancelId(null);
+    } catch (error) {
+        console.error("Cancel failed", error);
+        alert("Failed to cancel message. Please try again.");
+    } finally {
+        setIsCancelling(false);
+    }
+  };
+
+  const handleSendFollowUp = async () => {
+      if (!latestMessage || !followUpText.trim()) return;
+      setIsSendingFollowUp(true);
+      try {
+          await sendMessage(latestMessage.creatorId || '', latestMessage.senderName, latestMessage.senderEmail, followUpText, latestMessage.amount);
+          await loadMessages();
+          setShowFollowUpInput(false);
+          setFollowUpText('');
+          setToastMessage("Follow-up Sent!");
+          setTimeout(() => setToastMessage(null), 3000);
+          // Refresh user balance if updated
+          if (onUpdateUser && currentUser) {
+              onUpdateUser({ ...currentUser, credits: currentUser.credits - latestMessage.amount });
+          }
+      } catch (e: any) {
+          if (e.message.includes("Insufficient")) {
+              setShowTopUpModal(true);
+          } else {
+              console.error(e);
+              alert(e.message || "Failed to send follow-up.");
+          }
+      } finally {
+          setIsSendingFollowUp(false);
+      }
+  };
+
+  const handleSubmitRating = async (msgId: string, val: number) => {
+      setIsSubmittingRating(true);
+      try {
+          // Optimistic update for immediate feedback
+          setMessages(prev => prev.map(m => m.id === msgId ? { ...m, rating: val } : m));
+          
+          await rateMessage(msgId, val);
+          loadMessages(); // Background refresh
+          
+          setRating(0); 
+          setHoveredStar(0);
+          setShowRatingSuccess(true);
+          setTimeout(() => setShowRatingSuccess(false), 2000);
+      } catch (e: any) { 
+          console.error(e); 
+          alert(`Failed to submit rating: ${e.message || "Please try again."}`);
+          loadMessages(); // Revert on error
+      } finally { setIsSubmittingRating(false); }
+  };
+
+  const handleSendAppreciation = async (msgId: string, text: string) => {
+      try {
+          await sendFanAppreciation(msgId, text);
+          setCustomAppreciationText('');
+          setCustomAppreciationMode(false);
+          await loadMessages();
+          setToastMessage("Appreciation Sent!");
+          setTimeout(() => setToastMessage(null), 3000);
+          // Decrease local credits for the tip (mock 50)
+          if (onUpdateUser && currentUser) {
+              onUpdateUser({ ...currentUser, credits: currentUser.credits - 50 });
+          }
+      } catch (e: any) { 
+          if (e.message?.includes("Insufficient") || (currentUser && currentUser.credits < 50)) { // Mock check for tip
+              setShowTopUpModal(true);
+          } else {
+              console.error("Failed to send appreciation", e);
+          }
+      }
+  };
+
+  const handleTopUp = async () => {
+      setIsProcessingTopUp(true);
+      try {
+          // Simulate API delay
+          await new Promise(r => setTimeout(r, 1500));
+          const updatedUser = await addCredits(topUpAmount);
+          if (onUpdateUser) onUpdateUser(updatedUser);
+          setShowTopUpModal(false);
+      } catch (e) {
+          console.error(e);
+          alert("Top up failed");
+      } finally {
+          setIsProcessingTopUp(false);
+      }
+  };
+
+  const handleSaveProfile = async () => {
+      if (!currentUser) return;
+      setIsSavingProfile(true);
+      setShowSaveSuccess(false);
+      try {
+          const updatedUser = {
+              ...currentUser,
+              name: profileForm.name,
+              age: profileForm.age ? parseInt(profileForm.age) : undefined,
+              avatarUrl: profileForm.avatarUrl
+          };
+          await updateCurrentUser(updatedUser);
+          if (onUpdateUser) onUpdateUser(updatedUser);
+          setShowSaveSuccess(true);
+          setTimeout(() => setShowSaveSuccess(false), 3000);
+      } catch (e) { console.error(e); } finally { setIsSavingProfile(false); }
+  };
+
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+          if (!file.type.startsWith('image/')) {
+              alert("Please upload a valid image file (JPEG, PNG).");
+              return;
+          }
+
+          // Resize image to max 400x400
+          const reader = new FileReader();
+          reader.onload = (event) => {
+              const img = new Image();
+              img.onload = () => {
+                  const canvas = document.createElement('canvas');
+                  let width = img.width;
+                  let height = img.height;
+                  const MAX_SIZE = 400;
+                  if (width > height) {
+                      if (width > MAX_SIZE) {
+                          height *= MAX_SIZE / width;
+                          width = MAX_SIZE;
+                      }
+                  } else {
+                      if (height > MAX_SIZE) {
+                          width *= MAX_SIZE / height;
+                          height = MAX_SIZE;
+                      }
+                  }
+                  canvas.width = width;
+                  canvas.height = height;
+                  const ctx = canvas.getContext('2d');
+                  ctx?.drawImage(img, 0, 0, width, height);
+                  const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                  setProfileForm(prev => ({ ...prev, avatarUrl: dataUrl }));
+              };
+              img.src = event.target?.result as string;
+          };
+          reader.readAsDataURL(file);
+      }
+  };
+
+  const getTimeLeft = (expiresAt: string) => {
+    const diff = new Date(expiresAt).getTime() - Date.now();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    if (diff < 0) return { text: 'Expired', color: 'text-red-600', bg: 'bg-red-50' };
+    return { text: `${hours}h left`, color: 'text-slate-500', bg: 'bg-slate-100' };
+  };
+
+  const activeRequests = messages.filter(m => m.status === MessageStatus.PENDING).length;
+
+  const getPageTitle = () => {
+      if (selectedCreatorId) return 'Conversation';
+      switch (currentView) {
+          case 'OVERVIEW': return 'Conversations';
+          case 'EXPLORE': return 'Explore Creators';
+          case 'PURCHASED': return 'Purchased Content';
+          case 'HISTORY': return 'Purchase History';
+          case 'SUPPORT': return 'Support';
+          case 'SETTINGS': return 'Profile Settings';
+          default: return 'Dashboard';
+      }
+  };
+
+  // Helper to get platform icon
+  const getPlatformIcon = (platform: string, variant: 'light' | 'colored' = 'colored') => {
+      const size = 14;
+      const cn = variant === 'light' ? 'text-white fill-current' : '';
+      switch(platform.toLowerCase()) {
+          case 'youtube': return <YouTubeLogo className={`${cn} ${variant === 'colored' ? 'text-red-600' : ''} w-4 h-4`} />;
+          case 'instagram': return <InstagramLogo className={`${cn} ${variant === 'colored' ? 'text-pink-600' : ''} w-4 h-4`} />;
+          case 'x': return <XLogo className={`${cn} ${variant === 'colored' ? 'text-black' : ''} w-3.5 h-3.5`} />;
+          case 'tiktok': return <TikTokLogo className={`${cn} ${variant === 'colored' ? 'text-black' : ''} w-3.5 h-3.5`} />;
+          case 'twitch': return <Twitch size={size} className={`${cn} ${variant === 'colored' ? 'text-purple-600' : ''}`} />;
+          case 'linkedin': return <User size={size} className={`${cn} ${variant === 'colored' ? 'text-blue-700' : ''}`} />;
+          default: return <Sparkles size={size} className={cn} />;
+      }
+  };
+
+  // Sidebar Item Component
+  const SidebarItem = ({ icon: Icon, label, view, isBeta, onClick }: { icon: any, label: string, view?: 'OVERVIEW' | 'EXPLORE' | 'SETTINGS' | 'PURCHASED' | 'HISTORY' | 'SUPPORT', isBeta?: boolean, onClick?: () => void }) => (
+    <button 
+      onClick={() => { 
+          if (onClick) {
+              onClick();
+          } else if (view) {
+              setCurrentView(view); 
+              setSelectedCreatorId(null); 
+          }
+          setIsSidebarOpen(false); 
+      }}
+      className={`w-full flex items-center px-3 py-2 rounded-md mb-1 transition-colors text-sm font-medium ${
+        currentView === view && !selectedCreatorId && !onClick
+          ? 'bg-slate-200 text-slate-900' 
+          : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+      }`}
+    >
+      <Icon size={18} className={`mr-3 ${currentView === view && !selectedCreatorId && !onClick ? 'text-indigo-600' : 'text-slate-400'}`} />
+      <span>{label}</span>
+      {isBeta && (
+          <span className="ml-2 bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded border border-indigo-200">BETA</span>
+      )}
+    </button>
+  );
+
+  const ComingSoonOverlay = () => (
+      <div className="absolute inset-0 bg-slate-50/70 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center text-slate-900">
+        <div className="bg-white p-2.5 rounded-full shadow-lg mb-2 ring-1 ring-slate-100 animate-in zoom-in duration-300">
+            <Lock size={20} className="text-slate-400" />
+        </div>
+        <span className="font-bold text-xs uppercase tracking-wider text-slate-500 bg-white/80 px-3 py-1 rounded-full border border-slate-100">Coming Soon</span>
+      </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-[#F7F9FC] flex font-sans text-slate-900 overflow-hidden">
+        <style>{`
+          .no-scrollbar::-webkit-scrollbar { display: none; }
+          .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        `}</style>
+
+        {/* Mobile Sidebar Overlay */}
+        {isSidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-slate-900/50 z-20 md:hidden backdrop-blur-sm transition-opacity"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
+        {/* 1. SIDEBAR */}
+        <aside className={`fixed inset-y-0 left-0 w-64 bg-[#F3F4F6] border-r border-slate-200 transform transition-transform duration-300 z-30 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+            <div className="p-4 h-full flex flex-col">
+                {/* Brand */}
+                <div className="flex items-center gap-2 px-3 py-4 mb-6">
+                    <div className="bg-slate-900 text-white p-1 rounded-md">
+                        <CheckCircle2 size={16} />
+                    </div>
+                    <span className="font-bold text-slate-900 tracking-tight">Bluechecked</span>
+                </div>
+
+                {/* Nav Links */}
+                <div className="space-y-1 flex-1">
+                    <div className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Fan Menu</div>
+                    <SidebarItem icon={Home} label="Conversations" view="OVERVIEW" />
+                    <SidebarItem icon={Search} label="Explore Creators" view="EXPLORE" />
+                    <SidebarItem icon={ShoppingBag} label="Purchased" view="PURCHASED" isBeta={true} />
+                    {/* Wallet now acts as a trigger for the modal, not a separate view */}
+                    <SidebarItem icon={Wallet} label="My Wallet" onClick={() => setShowTopUpModal(true)} />
+                    <SidebarItem icon={Receipt} label="Purchase History" view="HISTORY" />
+                    <SidebarItem icon={HelpCircle} label="Support" view="SUPPORT" />
+                    
+                    <div className="my-4 mx-3 border-t border-slate-200"></div>
+                    <SidebarItem icon={Settings} label="Settings" view="SETTINGS" />
+                </div>
+
+                {/* Profile Snippet Bottom */}
+                <div className="mt-auto border-t border-slate-200 pt-4 px-3">
+                    <div className="flex items-center gap-3">
+                         <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
+                            {currentUser?.avatarUrl ? <img src={currentUser.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-full h-full p-1 text-slate-400" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">{currentUser?.name || 'Fan User'}</p>
+                            <p className="text-xs text-slate-500 truncate">{currentUser?.email}</p>
+                        </div>
+                        <button onClick={onLogout} className="text-slate-400 hover:text-red-600 transition-colors">
+                            <LogOut size={16} />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        {/* 2. MAIN CONTENT */}
+        <main className="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden relative">
+            {/* Header */}
+            <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-20">
+                <div className="flex items-center gap-4">
+                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-slate-500">
+                        <Menu size={20} />
+                    </button>
+                    <h2 className="font-semibold text-slate-800">
+                        {getPageTitle()}
+                    </h2>
+                </div>
+                {!selectedCreatorId && (
+                     <div className="flex items-center gap-4">
+                        <button 
+                            onClick={() => setShowTopUpModal(true)}
+                            className="hidden sm:flex items-center gap-2 bg-slate-100 hover:bg-slate-200 transition-colors px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 cursor-pointer"
+                        >
+                            <Coins size={14} className="text-indigo-500" />
+                            {currentUser?.credits || 0} Credits
+                        </button>
+                        <button className="relative text-slate-400 hover:text-slate-600">
+                            <Bell size={20} />
+                            {activeRequests > 0 && <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
+                        </button>
+                    </div>
+                )}
+            </header>
+
+            {/* Content Area */}
+            <div className="flex-1 overflow-auto relative bg-[#F7F9FC]">
+                
+                {/* --- VIEW: PURCHASED (BETA) --- */}
+                {currentView === 'PURCHASED' && (
+                    <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in">
+                        <div className="bg-indigo-900 text-white p-8 rounded-3xl shadow-xl relative overflow-hidden mb-8">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                            <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <span className="bg-indigo-500/50 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-white/20 shadow-sm">Beta Access</span>
+                                        <Sparkles size={14} className="text-indigo-300" />
+                                    </div>
+                                    <h3 className="font-bold text-2xl md:text-3xl mb-2">My Library</h3>
+                                    <p className="text-indigo-200 text-sm max-w-lg leading-relaxed">
+                                        Your collection of premium digital assets, guides, and exclusive content from creators you support.
+                                    </p>
+                                </div>
+                                <div className="hidden md:block">
+                                    <div className="bg-white/10 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
+                                        <ShoppingBag size={32} className="text-white" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Content Filter Tabs (Mock) */}
+                        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                             <button className="px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-bold whitespace-nowrap shadow-md">All Content</button>
+                             <button className="px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-full text-xs font-bold hover:bg-slate-50 whitespace-nowrap">Documents (PDF)</button>
+                             <button className="px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-full text-xs font-bold hover:bg-slate-50 whitespace-nowrap">Images</button>
+                             <button className="px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-full text-xs font-bold hover:bg-slate-50 whitespace-nowrap">Videos</button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                             {/* Mock Content 1: PDF */}
+                            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col h-full relative">
+                                <ComingSoonOverlay />
+                                <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden flex items-center justify-center p-8 group-hover:bg-indigo-50 transition-colors">
+                                     <div className="bg-white shadow-lg p-0 w-24 h-32 rounded-sm border border-slate-200 relative transform group-hover:-rotate-3 transition-transform duration-500 flex items-center justify-center">
+                                         <div className="absolute inset-x-2 top-2 bottom-2 border-2 border-dashed border-slate-100"></div>
+                                         <FileText size={32} className="text-red-500" />
+                                     </div>
+                                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-slate-500 border border-slate-200">PDF</div>
+                                </div>
+                                <div className="p-5 flex flex-col flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-5 h-5 rounded-full bg-slate-200 overflow-hidden">
+                                            <img src="https://picsum.photos/200/200" alt="Creator" className="w-full h-full object-cover"/>
+                                        </div>
+                                        <span className="text-[10px] font-bold text-slate-500">Alex The Dev</span>
+                                    </div>
+                                    <h4 className="font-bold text-slate-900 mb-1 leading-tight">React Performance Cheatsheet</h4>
+                                    <p className="text-xs text-slate-500 mb-4 line-clamp-2 flex-1">A quick reference guide for optimizing render cycles.</p>
+                                    <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
+                                        <span className="text-[10px] text-slate-400">1.2 MB</span>
+                                        <span className="text-xs font-bold text-slate-400">Coming Soon</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                             {/* Mock Content 2: Video */}
+                             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col h-full relative">
+                                <ComingSoonOverlay />
+                                <div className="aspect-[4/3] bg-slate-900 relative overflow-hidden group-hover:bg-slate-800 transition-colors">
+                                     <div className="absolute inset-0 flex items-center justify-center">
+                                         <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 group-hover:scale-110 transition-transform">
+                                            <Video size={20} className="text-white fill-white ml-1" />
+                                         </div>
+                                     </div>
+                                      <div className="absolute top-3 right-3 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-white border border-white/10">14:20</div>
+                                </div>
+                                <div className="p-5 flex flex-col flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-5 h-5 rounded-full bg-slate-200 overflow-hidden">
+                                            <img src="https://picsum.photos/200/200" alt="Creator" className="w-full h-full object-cover"/>
+                                        </div>
+                                        <span className="text-[10px] font-bold text-slate-500">Alex The Dev</span>
+                                    </div>
+                                    <h4 className="font-bold text-slate-900 mb-1 leading-tight">Career Q&A Session</h4>
+                                    <p className="text-xs text-slate-500 mb-4 line-clamp-2 flex-1">Exclusive recording covering salary negotiation tips.</p>
+                                    <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
+                                        <span className="text-[10px] text-slate-400">Nov 22, 2024</span>
+                                        <span className="text-xs font-bold text-slate-400">Coming Soon</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Mock Content 3: Image Collection */}
+                             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col h-full relative">
+                                <ComingSoonOverlay />
+                                <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
+                                    <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=400" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" alt="Cover" />
+                                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                                     <div className="absolute bottom-3 left-3 text-white flex items-center gap-1.5">
+                                         <ImageIcon size={14} /> <span className="text-xs font-bold">5 Photos</span>
+                                     </div>
+                                </div>
+                                <div className="p-5 flex flex-col flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-5 h-5 rounded-full bg-slate-200 overflow-hidden">
+                                            <img src="https://picsum.photos/200/200" alt="Creator" className="w-full h-full object-cover"/>
+                                        </div>
+                                        <span className="text-[10px] font-bold text-slate-500">Alex The Dev</span>
+                                    </div>
+                                    <h4 className="font-bold text-slate-900 mb-1 leading-tight">Workspace Setup 2024</h4>
+                                    <p className="text-xs text-slate-500 mb-4 line-clamp-2 flex-1">High-res photos of my desk setup and gear list.</p>
+                                    <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
+                                        <span className="text-[10px] text-slate-400">5 items</span>
+                                        <span className="text-xs font-bold text-slate-400">Coming Soon</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                             {/* Empty State Mock */}
+                             <div className="border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center p-8 text-center min-h-[280px] hover:bg-slate-50 transition-colors cursor-pointer group">
+                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
+                                    <Plus size={20} className="text-slate-400 group-hover:text-indigo-500" />
+                                </div>
+                                <p className="text-sm font-bold text-slate-600 mb-1">Browse Marketplace</p>
+                                <p className="text-xs text-slate-400 max-w-[180px]">Find more resources from top creators.</p>
+                             </div>
+                        </div>
+                    </div>
+                )}
+                
+                {/* --- VIEW: EXPLORE CREATORS --- */}
+                {currentView === 'EXPLORE' && (
+                    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in">
+                        
+                        {/* Header Section */}
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+                            <div>
+                                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Recommended Creators</h2>
+                                <p className="text-slate-500 text-sm mt-1">Verified experts ready to reply.</p>
+                            </div>
+                            
+                            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                                <div className="relative group flex-1 sm:flex-initial">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search creators, tags..." 
+                                        value={exploreQuery}
+                                        onChange={(e) => setExploreQuery(e.target.value)}
+                                        className="w-full sm:w-64 pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
+                                    />
+                                </div>
+                                <select className="bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                                    <option>Sort by: Relevance</option>
+                                    <option>Sort by: Price (Low to High)</option>
+                                    <option>Sort by: Response Time</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* RANKING GRID */}
+                        {filteredCreators.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                {filteredCreators.map((creator, index) => {
+                                    // @ts-ignore
+                                    const platforms = creator.platforms || ['youtube'];
+                                    const followers = (creator.stats.profileViews / 1000).toFixed(1) + 'k'; // Mock followers from views
+                                    const likesFormatted = creator.likesCount.toLocaleString();
+
+                                    return (
+                                        <div 
+                                            key={creator.id} 
+                                            onClick={() => onBrowseCreators(creator.id)}
+                                            className="group bg-white rounded-[1.5rem] p-5 border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col h-full"
+                                        >
+                                            {/* 1. Header: Photo, Name, Stats Row, Grouped Icons */}
+                                            <div className="flex justify-between items-start mb-6">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="relative">
+                                                        <img src={creator.avatarUrl} className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm" alt={creator.displayName} />
+                                                        {/* Green circle removed */}
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <h3 className="font-black text-slate-900 text-lg leading-tight group-hover:text-indigo-600 transition-colors mb-2">
+                                                            {creator.displayName}
+                                                        </h3>
+                                                        {/* Repositioned Stats directly under name: Rating and Likes as Boxes */}
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex items-center gap-1 bg-slate-50 border border-slate-100 px-2 py-1 rounded-lg text-[10px] font-bold text-slate-600">
+                                                                <Star size={10} className="fill-slate-400 text-slate-400"/> 
+                                                                {creator.stats.averageRating}
+                                                            </div>
+                                                            <div className="flex items-center gap-1 bg-slate-50 border border-slate-100 px-2 py-1 rounded-lg text-[10px] font-bold text-slate-600">
+                                                                <Heart size={10} className="fill-slate-400 text-slate-400"/> 
+                                                                {likesFormatted}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Grouped Icons Pill */}
+                                                <div className="bg-slate-50 border border-slate-100 rounded-full px-2 py-1 flex -space-x-1 shrink-0">
+                                                    {platforms.map((p: string, i: number) => (
+                                                        <div key={i} className="w-6 h-6 rounded-full bg-white border border-slate-100 flex items-center justify-center shadow-sm z-10 text-slate-600">
+                                                            {/* @ts-ignore */}
+                                                            {getPlatformIcon(p, 'colored')}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* 2. Stats Boxes (Guaranteed Hours + Avg Reply) */}
+                                            <div className="grid grid-cols-2 gap-3 mb-6">
+                                                <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
+                                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                                        <ShieldCheck size={10} /> Guaranteed
+                                                    </div>
+                                                    <div className="text-lg font-black text-slate-900">{creator.responseWindowHours} Hours</div>
+                                                </div>
+                                                <div className="bg-purple-50 rounded-2xl p-3 border border-purple-100">
+                                                    <div className="text-[10px] font-bold text-purple-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                                        <Clock size={10} /> Avg Reply
+                                                    </div>
+                                                    <div className="text-lg font-black text-purple-700">
+                                                        {creator.stats.responseTimeAvg}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* 3. Bottom Action - Book Only */}
+                                            <div className="mt-auto">
+                                                <button className="w-full bg-slate-900 text-white rounded-xl py-3.5 text-sm font-bold shadow-lg shadow-slate-900/20 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 group">
+                                                    <Sparkles size={16} className="text-yellow-300 group-hover:scale-110 transition-transform" /> 
+                                                    <span>Lets Bluechecked ({creator.pricePerMessage} Credits)</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="text-center py-20 text-slate-400 bg-white rounded-3xl border border-slate-100 shadow-sm">
+                                <Search size={48} className="mx-auto mb-4 opacity-20" />
+                                <p className="text-lg font-bold text-slate-500">No creators found</p>
+                                <p className="text-sm">Try searching for "fitness", "react", or specific names.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* --- VIEW: HISTORY --- */}
+                {currentView === 'HISTORY' && (
+                    <div className="p-6 max-w-5xl mx-auto animate-in fade-in">
+                        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                                 <h3 className="text-sm font-bold text-slate-900">Transaction History</h3>
+                                 <Button variant="ghost" size="sm" className="text-xs"><ExternalLink size={14} className="mr-1"/> Export CSV</Button>
+                             </div>
+                             <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm whitespace-nowrap">
+                                    <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 text-xs uppercase tracking-wider">
+                                        <tr>
+                                            <th className="px-6 py-3">Date</th>
+                                            <th className="px-6 py-3">Description</th>
+                                            <th className="px-6 py-3">Status</th>
+                                            <th className="px-6 py-3 text-right">Amount (Credits)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {messages.map(msg => {
+                                            const isRefunded = msg.status === MessageStatus.EXPIRED || msg.status === MessageStatus.CANCELLED;
+                                            return (
+                                                <tr key={msg.id} className="hover:bg-slate-50 transition-colors group">
+                                                    <td className="px-6 py-4 text-slate-500 font-mono text-xs">{new Date(msg.createdAt).toLocaleDateString()}</td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                                                                <User size={14} />
+                                                            </div>
+                                                            <div>
+                                                                <div className="font-bold text-slate-900 text-sm">Priority DM Request</div>
+                                                                <div className="text-xs text-slate-400 truncate max-w-[200px]">{msg.content}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {msg.status === MessageStatus.PENDING && (
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-100">
+                                                                <Clock size={12} /> Pending
+                                                            </span>
+                                                        )}
+                                                        {msg.status === MessageStatus.REPLIED && (
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                                                <CheckCircle2 size={12} /> Completed
+                                                            </span>
+                                                        )}
+                                                        {isRefunded && (
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                                                                <Ban size={12} /> Refunded
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <span className={`font-mono font-bold flex items-center justify-end gap-1 ${isRefunded ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
+                                                            <Coins size={14} /> {msg.amount}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })}
+                                        {messages.length === 0 && (
+                                            <tr><td colSpan={4} className="p-12 text-center text-slate-400">No transactions found.</td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- VIEW: SUPPORT --- */}
+                {currentView === 'SUPPORT' && (
+                    <div className="p-6 max-w-2xl mx-auto animate-in fade-in flex items-center justify-center min-h-[500px]">
+                         <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 text-center space-y-6 max-w-md w-full relative overflow-hidden">
+                             {/* Decorative Background */}
+                             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+                             
+                             <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto mb-4 shadow-inner ring-4 ring-blue-50/50">
+                                 <AlertCircle size={40} />
+                             </div>
+                             
+                             <div>
+                                <h3 className="text-2xl font-black text-slate-900 mb-2">How can we help?</h3>
+                                <p className="text-slate-500 text-sm leading-relaxed">
+                                    Our support team is available Monday through Friday, 9am - 5pm EST. We usually respond within 24 hours.
+                                </p>
+                             </div>
+
+                             <div className="space-y-3 pt-2">
+                                 <Button fullWidth className="h-12 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-900/10">
+                                    <MessageSquare size={18}/> Contact Support
+                                 </Button>
+                                 <Button fullWidth variant="secondary" className="h-12 rounded-xl flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 border border-slate-200">
+                                    <FileText size={18}/> View FAQ & Guides
+                                 </Button>
+                             </div>
+
+                             <div className="pt-6 border-t border-slate-100">
+                                 <p className="text-xs text-slate-400">
+                                     Direct Email: <a href="#" className="text-indigo-600 font-bold hover:underline">support@bluechecked.com</a>
+                                 </p>
+                             </div>
+                         </div>
+                    </div>
+                )}
+
+                {/* --- VIEW: SETTINGS --- */}
+                {currentView === 'SETTINGS' && (
+                    <div className="max-w-2xl mx-auto p-6 space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                        {showSaveSuccess && (
+                            <div className="fixed bottom-8 right-8 z-[60] max-w-sm animate-in slide-in-from-bottom-4">
+                                <div className="bg-slate-900 text-white rounded-lg px-4 py-3 shadow-lg flex items-center gap-3">
+                                    <CheckCircle2 size={20} className="text-green-400" />
+                                    <span className="font-bold text-sm">Profile updated successfully!</span>
+                                </div>
+                            </div>
+                        )}
+                        <div className="bg-white p-6 rounded-xl border border-slate-200">
+                            <h3 className="text-lg font-bold text-slate-900 mb-6 border-b border-slate-100 pb-2">Your Profile</h3>
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-6">
+                                    <div className="w-20 h-20 rounded-full bg-slate-100 flex-shrink-0 overflow-hidden border border-slate-200">
+                                        {profileForm.avatarUrl ? <img src={profileForm.avatarUrl} className="w-full h-full object-cover" /> : <User size={32} className="m-auto text-slate-300"/>}
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Profile Photo</label>
+                                        <div className="flex gap-2">
+                                            {profileForm.avatarUrl?.startsWith('data:') ? (
+                                                <div className="flex items-center gap-2 w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-500 text-sm">
+                                                    <span className="truncate flex-1">Image uploaded from device</span>
+                                                    <button onClick={() => setProfileForm(p => ({...p, avatarUrl: ''}))} className="text-red-500 hover:text-red-700"><X size={14}/></button>
+                                                </div>
+                                            ) : (
+                                                <input 
+                                                    type="text" 
+                                                    value={profileForm.avatarUrl}
+                                                    onChange={e => setProfileForm(p => ({...p, avatarUrl: e.target.value}))}
+                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none"
+                                                    placeholder="https://..."
+                                                />
+                                            )}
+                                            <button 
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
+                                            >
+                                                <Camera size={16} /> Upload
+                                            </button>
+                                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarFileChange} />
+                                        </div>
+                                        <p className="text-[10px] text-slate-400 mt-1">Upload from desktop or paste an image URL.</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Display Name</label>
+                                    <input 
+                                        type="text" 
+                                        value={profileForm.name} 
+                                        onChange={e => setProfileForm(p => ({...p, name: e.target.value}))}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Age (Optional)</label>
+                                    <input 
+                                        type="number" 
+                                        value={profileForm.age} 
+                                        onChange={e => setProfileForm(p => ({...p, age: e.target.value}))}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none"
+                                    />
+                                </div>
+                                <div className="pt-4 flex justify-end">
+                                    <Button onClick={handleSaveProfile} isLoading={isSavingProfile}>Save Changes</Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- VIEW: OVERVIEW (List) --- */}
+                {currentView === 'OVERVIEW' && !selectedCreatorId && (
+                   <div className="p-6 max-w-5xl mx-auto space-y-8 animate-in fade-in">
+                      {/* Conversation List */}
+                      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                         <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                             <h3 className="text-sm font-bold text-slate-900">Your Conversations</h3>
+                             {/* Search Input - More Prominent */}
+                             <div className="relative w-full sm:w-auto group">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                                <input 
+                                    type="text" 
+                                    placeholder="Search messages..." 
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full sm:w-72 pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all shadow-sm"
+                                />
+                             </div>
+                         </div>
+
+                         {isLoading ? (
+                            <div className="text-center py-12 text-sm text-slate-400">Loading requests...</div>
+                         ) : filteredGroups.length === 0 ? (
+                            <div className="text-center py-16">
+                                <MessageSquare size={32} className="mx-auto text-slate-300 mb-3" />
+                                <h3 className="text-sm font-bold text-slate-900 mb-1">
+                                    {searchQuery ? 'No conversations found' : 'No messages yet'}
+                                </h3>
+                                <p className="text-xs text-slate-500 mb-6">
+                                    {searchQuery ? 'Try a different search term.' : 'Find an expert to help you solve your problem.'}
+                                </p>
+                                {!searchQuery && (
+                                    <Button onClick={() => setCurrentView('EXPLORE')} className="rounded-full shadow-lg shadow-indigo-200">
+                                        Explore Creators
+                                    </Button>
+                                )}
+                            </div>
+                         ) : (
+                            <>
+                            {/* Desktop Table */}
+                            <div className="hidden md:block overflow-x-auto">
+                                <table className="w-full text-left border-collapse min-w-[600px]">
+                                    <thead>
+                                        <tr className="bg-slate-50/50 border-b border-slate-100">
+                                            <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Expert</th>
+                                            <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Latest Status</th>
+                                            <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Total Requests</th>
+                                            <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Last Active</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredGroups.map(group => {
+                                            const latestMsg = group.latestMessage;
+                                            const timeLeft = getTimeLeft(latestMsg.expiresAt);
+                                            return (
+                                                <tr key={group.creatorId} onClick={() => handleOpenChat(group.creatorId)} className="group cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200 overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
+                                                                <img src="https://picsum.photos/200/200" className="w-full h-full object-cover" alt="Alex" />
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-sm font-bold text-slate-900">{group.creatorName}</span>
+                                                                <span className="text-[10px] text-slate-500">View Conversation &rarr;</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {latestMsg.status === MessageStatus.PENDING ? (
+                                                            <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${timeLeft.bg} ${timeLeft.color} border-current/20 flex items-center gap-1 w-fit`}>
+                                                                <Clock size={10} /> Pending Reply
+                                                            </span>
+                                                        ) : latestMsg.status === MessageStatus.REPLIED ? (
+                                                            <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center gap-1 w-fit">
+                                                                <CheckCircle2 size={10} /> Replied
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-slate-100 text-slate-500 border border-slate-200 w-fit">Refunded</span>
+                                                        )}
+                                                        <p className="text-[10px] text-slate-400 mt-1 truncate max-w-[150px]">
+                                                            {latestMsg.conversation[latestMsg.conversation.length - 1]?.content || latestMsg.content}
+                                                        </p>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <span className="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-md">{group.messageCount}</span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <span className="text-xs text-slate-500">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {/* Mobile Cards */}
+                            <div className="md:hidden divide-y divide-slate-100">
+                                {filteredGroups.map(group => {
+                                    const latestMsg = group.latestMessage;
+                                    const timeLeft = getTimeLeft(latestMsg.expiresAt);
+                                    return (
+                                        <div key={group.creatorId} onClick={() => handleOpenChat(group.creatorId)} className="p-4 active:bg-slate-50 cursor-pointer">
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200 overflow-hidden shadow-sm">
+                                                    <img src="https://picsum.photos/200/200" className="w-full h-full object-cover" alt="Alex" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between items-start">
+                                                        <span className="text-sm font-bold text-slate-900">{group.creatorName}</span>
+                                                        <span className="text-[10px] text-slate-400 font-mono">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <div className="mt-1">
+                                                        {latestMsg.status === MessageStatus.PENDING ? (
+                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${timeLeft.bg} ${timeLeft.color} border-current/20 flex items-center gap-1 w-fit`}>
+                                                                <Clock size={10} /> Pending Reply
+                                                            </span>
+                                                        ) : latestMsg.status === MessageStatus.REPLIED ? (
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center gap-1 w-fit">
+                                                                <CheckCircle2 size={10} /> Replied
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 w-fit">Refunded</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-slate-600 line-clamp-2 mb-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100 italic">
+                                                "{latestMsg.conversation[latestMsg.conversation.length - 1]?.content || latestMsg.content}"
+                                            </p>
+                                            <div className="flex justify-between items-center mt-2">
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{group.messageCount} Requests</span>
+                                                <div className="text-xs font-bold text-blue-600 flex items-center gap-1">View <ChevronRight size={14} /></div>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                            </>
+                         )}
+                      </div>
+                   </div>
+                )}
+
+                {/* --- VIEW: CHAT (Sub-view of Overview) --- */}
+                {selectedCreatorId && (
+                     <div className="h-full flex flex-col bg-[#F0F2F5] animate-in slide-in-from-right-4">
+                        {/* Internal Chat Header */}
+                        <div className="bg-white px-4 py-3 border-b border-slate-200 flex items-center justify-between shadow-sm flex-shrink-0">
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => setSelectedCreatorId(null)} className="p-2 -ml-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-full transition-colors">
+                                    <ChevronLeft size={20} />
+                                </button>
+                                <div>
+                                    <h2 className="font-bold text-slate-900 text-lg leading-tight">{conversationGroups.find(g => g.creatorId === selectedCreatorId)?.creatorName || 'Creator'}</h2>
+                                    <p className="text-[10px] text-slate-500 font-medium">Verified Expert</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Messages */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-8 scroll-smooth" ref={scrollRef}>
+                             {threadMessages.map((msg, msgIndex) => {
+                                const isPending = msg.status === MessageStatus.PENDING;
+                                const isRefunded = msg.status === MessageStatus.EXPIRED || msg.status === MessageStatus.CANCELLED;
+                                return (
+                                    <div key={msg.id} className="relative group">
+                                        <div className="flex items-center justify-center gap-4 mb-6 opacity-60">
+                                            <div className="h-px bg-slate-300 flex-1"></div>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-[#F0F2F5] px-2 flex items-center gap-1">
+                                                Session {msgIndex + 1} • <Coins size={10} className="inline mb-0.5" /> {msg.amount} • {new Date(msg.createdAt).toLocaleDateString()}
+                                            </span>
+                                            <div className="h-px bg-slate-300 flex-1"></div>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            {msg.conversation.map((chat, chatIndex) => {
+                                                const isMe = chat.role === 'FAN';
+                                                const nextChat = msg.conversation[chatIndex + 1];
+                                                const prevChat = msg.conversation[chatIndex - 1];
+                                                const isLastInGroup = !nextChat || nextChat.role !== chat.role;
+                                                const isFirstInGroup = !prevChat || prevChat.role !== chat.role;
+                                                return (
+                                                    <div key={`${msg.id}-${chatIndex}`} className={`flex gap-3 max-w-[85%] md:max-w-[75%] ${isMe ? 'ml-auto justify-end' : ''} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}>
+                                                        {!isMe && (
+                                                            <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-300 shadow-sm mt-1">
+                                                                <img src="https://picsum.photos/200/200" alt="Creator" className="w-full h-full object-cover" />
+                                                            </div>
+                                                        )}
+                                                        <div className={`space-y-1 w-full ${isMe ? 'text-right' : 'text-left'}`}>
+                                                            <div className={`px-4 py-3 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap inline-block text-left 
+                                                                ${isMe ? 'bg-blue-600 text-white rounded-tr-sm' : 'bg-white text-slate-800 border border-slate-200 rounded-tl-sm'}`}>
+                                                                {chat.content}
+                                                                {isMe && chatIndex === 0 && msg.attachmentUrl && (
+                                                                    <div className="mt-2 rounded-lg overflow-hidden border border-white/20">
+                                                                        <img src={msg.attachmentUrl} alt="Attachment" className="w-full h-auto max-w-[200px]" />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            {isLastInGroup && (
+                                                                <div className={`flex items-center gap-1.5 px-1 text-[10px] text-slate-400 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                                                    <span>{new Date(chat.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
+                                            {isPending && (
+                                                <div className="flex gap-3 max-w-[90%] mt-4">
+                                                   <div className="w-8 h-8 rounded-full bg-white flex-shrink-0 flex items-center justify-center border border-indigo-100 shadow-sm relative overflow-hidden">
+                                                        <div className="absolute inset-0 bg-gradient-to-tr from-blue-500 via-indigo-500 to-violet-500 opacity-20 animate-spin duration-[3s]"></div>
+                                                        <ShieldCheck size={14} className="text-blue-600 relative z-10 animate-pulse" />
+                                                    </div>
+                                                    <div className="relative group">
+                                                        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 rounded-full opacity-20 blur group-hover:opacity-40 transition duration-1000 animate-pulse"></div>
+                                                        <div className="relative bg-white px-4 py-2 rounded-full border border-indigo-50 flex items-center gap-3 shadow-sm">
+                                                            <div className="flex gap-1">
+                                                                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce"></span>
+                                                                <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce delay-100"></span>
+                                                                <span className="w-1.5 h-1.5 bg-violet-500 rounded-full animate-bounce delay-200"></span>
+                                                            </div>
+                                                            <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-700">
+                                                                Bluecheck Priority Active... ({getTimeLeft(msg.expiresAt).text})
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {isRefunded && (
+                                                <div className="flex justify-center mt-4">
+                                                    <div className="bg-slate-100 text-slate-500 text-xs px-3 py-1.5 rounded-full border border-slate-200 flex items-center gap-2">
+                                                        <Ban size={12} /> This session was refunded.
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            {isSendingFollowUp && (
+                                <div className="flex justify-end mt-4 mr-4 animate-pulse">
+                                    <div className="bg-blue-600 text-white px-4 py-3 rounded-2xl rounded-tr-sm shadow-sm">
+                                        <div className="flex gap-1 items-center h-4">
+                                            <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce"></span>
+                                            <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce delay-100"></span>
+                                            <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce delay-200"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            <div className="h-4"></div>
+                        </div>
+
+                        {/* Bottom Actions */}
+                        <div className="bg-white border-t border-slate-200 shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.05)] z-20 flex-shrink-0">
+                            {latestMessage && latestMessage.status === MessageStatus.PENDING && (
+                                <div className="p-4 flex items-center justify-between bg-slate-50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-white p-2 rounded-full border border-slate-200 shadow-sm animate-pulse">
+                                            <Clock size={20} className="text-amber-500" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-slate-700">Waiting for reply...</p>
+                                            <p className="text-xs text-slate-400">Request expires in {getTimeLeft(latestMessage.expiresAt).text}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    {confirmCancelId === latestMessage.id ? (
+                                        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
+                                            <span className="text-xs font-bold text-slate-500 mr-2 flex items-center gap-1">Refund <Coins size={10}/>{latestMessage.amount}?</span>
+                                            <Button size="sm" variant="ghost" onClick={() => setConfirmCancelId(null)}>No</Button>
+                                            <Button size="sm" variant="danger" onClick={processCancellation} isLoading={isCancelling}>Yes, Cancel</Button>
+                                        </div>
+                                    ) : (
+                                        <button 
+                                            onClick={() => handleCancelClick(latestMessage.id)}
+                                            className="text-slate-400 hover:text-red-600 text-xs font-bold hover:bg-red-50 px-3 py-1.5 rounded-full transition-colors"
+                                        >
+                                            Cancel Request
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+
+                            {latestMessage && latestMessage.status === MessageStatus.REPLIED && (
+                                <div className="p-4 bg-slate-50/50">
+                                     {/* Rating Section */}
+                                     {!hasRated && !showRatingSuccess && (
+                                         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-4 text-center">
+                                             <h4 className="font-bold text-slate-900 text-sm mb-2">How was the answer?</h4>
+                                             <div className="flex justify-center gap-2 mb-2">
+                                                 {[1,2,3,4,5].map(star => (
+                                                     <button
+                                                        key={star}
+                                                        onMouseEnter={() => setHoveredStar(star)}
+                                                        onMouseLeave={() => setHoveredStar(0)}
+                                                        onClick={() => handleSubmitRating(latestMessage.id, star)}
+                                                        disabled={isSubmittingRating}
+                                                        className="transition-transform hover:scale-110 active:scale-95"
+                                                     >
+                                                         <Star 
+                                                            size={24} 
+                                                            className={`${(hoveredStar || rating) >= star ? 'fill-yellow-400 text-yellow-400' : 'text-slate-300'} transition-colors`}
+                                                         />
+                                                     </button>
+                                                 ))}
+                                             </div>
+                                         </div>
+                                     )}
+
+                                     {showRatingSuccess && (
+                                         <div className="bg-green-50 text-green-600 p-3 rounded-xl border border-green-100 text-center text-sm font-bold mb-4 animate-in zoom-in">
+                                             Thanks for your feedback!
+                                         </div>
+                                     )}
+
+                                     {/* Follow Up / Appreciation */}
+                                     {!showFollowUpInput && !customAppreciationMode ? (
+                                         <div className="grid grid-cols-2 gap-3">
+                                             <button 
+                                                onClick={() => setCustomAppreciationMode(true)}
+                                                disabled={!!hasThanked}
+                                                className={`flex items-center justify-center gap-2 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 font-bold py-2 text-sm rounded-xl transition-all shadow-sm ${hasThanked ? 'opacity-60 cursor-not-allowed bg-slate-50' : ''}`}
+                                             >
+                                                 <Heart size={16} className={hasThanked ? "fill-pink-500 text-pink-500" : ""} /> {hasThanked ? 'Thanks Sent' : 'Send Thanks'}
+                                             </button>
+                                             <button 
+                                                onClick={() => setShowFollowUpInput(true)}
+                                                className="flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-800 font-bold py-2 text-sm rounded-xl transition-all shadow-lg shadow-slate-900/10"
+                                             >
+                                                 <MessageSquare size={16} /> New Request
+                                             </button>
+                                         </div>
+                                     ) : (
+                                         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-lg relative animate-in slide-in-from-bottom-2">
+                                             <button 
+                                                onClick={() => { setShowFollowUpInput(false); setCustomAppreciationMode(false); }}
+                                                className="absolute top-2 right-2 p-1 text-slate-300 hover:text-slate-500 rounded-full hover:bg-slate-50"
+                                             >
+                                                 <X size={16} />
+                                             </button>
+                                             
+                                             <h4 className="font-bold text-slate-900 text-sm mb-3">
+                                                 {showFollowUpInput ? 'Send Follow-up Request' : 'Send Appreciation'}
+                                             </h4>
+                                             
+                                             <textarea 
+                                                value={showFollowUpInput ? followUpText : customAppreciationText}
+                                                onChange={e => showFollowUpInput ? setFollowUpText(e.target.value) : setCustomAppreciationText(e.target.value)}
+                                                placeholder={showFollowUpInput ? "Ask another question..." : "Write a nice note..."}
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none h-24 mb-3"
+                                             />
+
+                                             {showFollowUpInput && (
+                                                 <div className="flex justify-between items-center mb-3 text-xs text-slate-500 px-1">
+                                                     <span className="flex items-center gap-1">Price: <b><Coins size={10} className="inline mb-0.5"/> {latestMessage.amount}</b></span>
+                                                 </div>
+                                             )}
+
+                                             <Button 
+                                                fullWidth 
+                                                onClick={showFollowUpInput ? handleSendFollowUp : () => handleSendAppreciation(latestMessage.id, customAppreciationText)}
+                                                isLoading={isSendingFollowUp}
+                                                disabled={showFollowUpInput ? !followUpText.trim() : !customAppreciationText.trim()}
+                                             >
+                                                 {showFollowUpInput ? 'Pay & Send' : 'Send Message'}
+                                             </Button>
+                                         </div>
+                                     )}
+                                </div>
+                            )}
+                        </div>
+                     </div>
+                )}
+            </div>
+        </main>
+
+        {/* Top Up Modal */}
+        {showTopUpModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl relative animate-in zoom-in-95 duration-300">
+                    <button onClick={() => setShowTopUpModal(false)} className="absolute top-4 right-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 z-10 transition-colors"><X size={18}/></button>
+                    
+                    <div className="p-8">
+                        <div className="text-center mb-6">
+                            <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Available Balance</div>
+                            <div className="text-4xl font-black text-slate-900 mb-4 flex justify-center items-baseline gap-1">
+                                {currentUser?.credits?.toLocaleString() || 0}
+                                <span className="text-sm font-bold text-slate-400 uppercase">Credits</span>
+                            </div>
+                            <h3 className="font-bold text-lg text-slate-800">Add Credits</h3>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                            {[500, 1000, 2500, 5000].map(amt => (
+                                <button 
+                                key={amt}
+                                onClick={() => setTopUpAmount(amt)}
+                                className={`p-3 rounded-xl border text-center transition-all ${topUpAmount === amt ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-white border-slate-200 hover:border-slate-300 text-slate-900'}`}
+                                >
+                                    <div className="font-black text-lg">{amt}</div>
+                                    <div className={`text-[10px] font-bold uppercase ${topUpAmount === amt ? 'text-indigo-200' : 'text-slate-400'}`}>Credits</div>
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="bg-slate-50 p-4 rounded-xl flex justify-between items-center mb-6 border border-slate-100">
+                            <span className="text-sm font-medium text-slate-600">Total Cost</span>
+                            <span className="font-black text-slate-900 text-xl">${(topUpAmount / 100).toFixed(2)}</span>
+                        </div>
+
+                        <Button 
+                            fullWidth 
+                            size="lg" 
+                            onClick={handleTopUp}
+                            isLoading={isProcessingTopUp}
+                            className="bg-slate-900 text-white rounded-xl h-12 font-bold shadow-lg shadow-slate-900/20"
+                        >
+                            Pay & Add Credits
+                        </Button>
+                        <p className="text-center text-[10px] text-slate-400 mt-4 flex items-center justify-center gap-1">
+                            <Lock size={10} /> Secure encrypted payment
+                        </p>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {toastMessage && (
+            <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-4 fade-in duration-500">
+                <div className="relative overflow-hidden bg-slate-900 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-4 border border-white/10 ring-1 ring-white/20">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 opacity-20"></div>
+                    <div className="relative z-10 flex items-center gap-3">
+                        <div className="bg-gradient-to-tr from-blue-400 to-indigo-500 p-1.5 rounded-full shadow-lg shadow-indigo-500/20">
+                            <Send size={16} className="text-white fill-white" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-white tracking-wide">{toastMessage}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+    </div>
+  );
+};
