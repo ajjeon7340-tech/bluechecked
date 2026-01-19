@@ -189,11 +189,22 @@ export const signInWithSocial = async (provider: 'google' | 'instagram', role: U
     // Note: You must enable Google/Facebook providers in Supabase Dashboard.
     const supabaseProvider = provider === 'instagram' ? 'facebook' : provider;
     
-    // Allow overriding the redirect URL via env var, otherwise use current origin
-    // This helps ensure the correct URL is sent when hosted on Vercel
-    // We use window.location.origin as the default because it is always the correct current URL
-    // (e.g. https://your-app.vercel.app or http://localhost:3000)
-    const redirectBase = import.meta.env.VITE_APP_URL || window.location.origin;
+    // Use the current window origin as the default redirect base.
+    // This automatically handles Localhost, Vercel Preview, and Production URLs correctly.
+    let redirectBase = window.location.origin;
+
+    // Optional: Allow override via env var, but prevent accidental localhost redirects on production
+    const envUrl = import.meta.env.VITE_APP_URL;
+    if (envUrl) {
+        const formattedUrl = envUrl.startsWith('http') ? envUrl : `https://${envUrl}`;
+        const isEnvLocal = formattedUrl.includes('localhost') || formattedUrl.includes('127.0.0.1');
+        const isCurrentLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+        // Only use the env var if it's NOT localhost, OR if we are actually on localhost
+        if (!isEnvLocal || isCurrentLocal) {
+            redirectBase = formattedUrl;
+        }
+    }
 
     const { error } = await supabase.auth.signInWithOAuth({
         provider: supabaseProvider as any,
