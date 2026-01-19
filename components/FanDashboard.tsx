@@ -527,6 +527,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             <LogOut size={16} />
                         </button>
                     </div>
+                    <div className="mt-3 text-[10px] text-slate-400 text-center font-mono opacity-50">
+                        v2.11.0
+                    </div>
                 </div>
             </div>
         </aside>
