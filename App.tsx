@@ -5,7 +5,7 @@ import { CreatorDashboard } from './components/CreatorDashboard';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { FanDashboard } from './components/FanDashboard';
-import { getCreatorProfile, checkAndSyncSession } from './services/realBackend';
+import { getCreatorProfile, checkAndSyncSession, isBackendConfigured } from './services/realBackend';
 import { CreatorProfile, CurrentUser } from './types';
 
 type PageState = 'LANDING' | 'LOGIN' | 'DASHBOARD' | 'PROFILE' | 'FAN_DASHBOARD';
@@ -51,7 +51,8 @@ function App() {
   };
 
   useEffect(() => {
-    console.log("Bluechecked App Version: 2.11.0 (Build Fix)");
+    console.log("Bluechecked App Version: 3.0.0");
+    console.log("Backend Connection:", isBackendConfigured() ? "✅ Connected to Supabase" : "⚠️ Using Mock Data");
     loadCreatorData();
     
     // Optimistically load session from local storage

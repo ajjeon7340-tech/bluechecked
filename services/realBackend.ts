@@ -283,7 +283,10 @@ export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
 // --- PROFILES ---
 
 export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProfile> => {
-    if (!isConfigured) return MockBackend.getCreatorProfile(creatorId);
+    if (!isConfigured) {
+        console.log("%c[Backend] Using Mock Data (Supabase not configured)", "background: #f59e0b; color: black; padding: 2px 4px; border-radius: 2px; font-weight: bold;");
+        return MockBackend.getCreatorProfile(creatorId);
+    }
 
     let query = supabase
         .from('profiles')
