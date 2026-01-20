@@ -67,6 +67,9 @@ let creatorProfile: CreatorProfile = { ...INITIAL_CREATOR };
 let messages: Message[] = [];
 let currentUser: CurrentUser | null = null;
 
+// Mock Likes Store: creatorId -> Set of userIds
+const creatorLikes = new Map<string, Set<string>>();
+
 // Helper to generate random messages
 const generateDemoMessages = () => {
     if (messages.length > 0) return;
@@ -117,7 +120,10 @@ generateDemoMessages();
 
 export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProfile> => {
     if (creatorId && creatorId !== creatorProfile.id) return ADDITIONAL_CREATORS.find(c => c.id === creatorId) || creatorProfile;
-    return { ...creatorProfile };
+    
+    // Sync likes count
+    const likes = creatorLikes.get(creatorProfile.id)?.size || creatorProfile.likesCount;
+    return { ...creatorProfile, likesCount: likes };
 };
 
 export const updateCreatorProfile = async (profile: CreatorProfile): Promise<CreatorProfile> => {
@@ -356,5 +362,34 @@ export const sendFanAppreciation = async (messageId: string, text: string): Prom
 };
 
 export const getFeaturedCreators = async (): Promise<CreatorProfile[]> => {
-    return [creatorProfile, ...ADDITIONAL_CREATORS];
+    // Sync likes for all
+    const all = [creatorProfile, ...ADDITIONAL_CREATORS].map(c => ({
+        ...c,
+        likesCount: creatorLikes.get(c.id)?.size || c.likesCount
+    }));
+    return all;
+};
+
+export const toggleCreatorLike = async (creatorId: string): Promise<{ likes: number, hasLiked: boolean }> => {
+    if (!currentUser) throw new Error("Must be logged in");
+    
+    if (!creatorLikes.has(creatorId)) {
+        creatorLikes.set(creatorId, new Set());
+    }
+    
+    const likes = creatorLikes.get(creatorId)!;
+    const hasLiked = likes.has(currentUser.id);
+    
+    if (hasLiked) {
+        likes.delete(currentUser.id);
+    } else {
+        likes.add(currentUser.id);
+    }
+    
+    return { likes: likes.size, hasLiked: !hasLiked };
+};
+
+export const getCreatorLikeStatus = async (creatorId: string): Promise<boolean> => {
+    if (!currentUser) return false;
+    return creatorLikes.get(creatorId)?.has(currentUser.id) || false;
 };

@@ -350,6 +350,9 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
         }
     }
 
+    // 4. Get Real Likes Count
+    const { count: realLikesCount } = await supabase.from('creator_likes').select('*', { count: 'exact', head: true }).eq('creator_id', data.id);
+
     return {
         id: data.id,
         handle: data.handle || '@user',
@@ -358,7 +361,7 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
         avatarUrl: data.avatar_url || DEFAULT_AVATAR,
         pricePerMessage: data.price_per_message || 50,
         responseWindowHours: data.response_window_hours || 48,
-        likesCount: reviewCount,
+        likesCount: realLikesCount || 0,
         stats: { 
             responseTimeAvg, 
             replyRate, 
@@ -683,26 +686,36 @@ export const getFeaturedCreators = async (): Promise<CreatorProfile[]> => {
 
     if (error || !data) return [];
 
-    // Fetch stats (ratings/likes) for these creators
+    // Fetch stats (ratings) for these creators
     const creatorIds = data.map(p => p.id);
     const { data: messages } = await supabase
         .from('messages')
         .select('creator_id, rating')
         .in('creator_id', creatorIds)
         .gt('rating', 0);
+        
+    // Fetch real likes
+    const { data: allLikes } = await supabase.from('creator_likes').select('creator_id').in('creator_id', creatorIds);
 
-    const stats: Record<string, { count: number, sum: number }> = {};
+    const stats: Record<string, { count: number, sum: number, likes: number }> = {};
     
     if (messages) {
         messages.forEach(m => {
-            if (!stats[m.creator_id]) stats[m.creator_id] = { count: 0, sum: 0 };
+            if (!stats[m.creator_id]) stats[m.creator_id] = { count: 0, sum: 0, likes: 0 };
             stats[m.creator_id].count++;
             stats[m.creator_id].sum += m.rating;
         });
     }
+    
+    if (allLikes) {
+        allLikes.forEach(l => {
+            if (!stats[l.creator_id]) stats[l.creator_id] = { count: 0, sum: 0, likes: 0 };
+            stats[l.creator_id].likes++;
+        });
+    }
 
     return data.map(p => {
-        const s = stats[p.id] || { count: 0, sum: 0 };
+        const s = stats[p.id] || { count: 0, sum: 0, likes: 0 };
         const avg = s.count > 0 ? parseFloat((s.sum / s.count).toFixed(1)) : 5.0;
 
         return {
@@ -714,7 +727,7 @@ export const getFeaturedCreators = async (): Promise<CreatorProfile[]> => {
             pricePerMessage: p.price_per_message || 50,
             responseWindowHours: p.response_window_hours || 48,
             welcomeMessage: p.welcome_message,
-            likesCount: s.count,
+            likesCount: s.likes,
             stats: { 
                 responseTimeAvg: '4h', 
                 replyRate: '98%', 
@@ -728,4 +741,35 @@ export const getFeaturedCreators = async (): Promise<CreatorProfile[]> => {
             platforms: p.platforms || []
         };
     });
+};
+
+export const toggleCreatorLike = async (creatorId: string): Promise<{ likes: number, hasLiked: boolean }> => {
+    if (!isConfigured) return MockBackend.toggleCreatorLike(creatorId);
+    
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) throw new Error("Must be logged in to like");
+    const userId = session.session.user.id;
+    
+    // Check existence
+    const { data: existing } = await supabase.from('creator_likes').select('id').eq('creator_id', creatorId).eq('fan_id', userId).maybeSingle();
+    
+    if (existing) {
+        await supabase.from('creator_likes').delete().eq('id', existing.id);
+    } else {
+        await supabase.from('creator_likes').insert({ creator_id: creatorId, fan_id: userId });
+    }
+    
+    // Get new count
+    const { count } = await supabase.from('creator_likes').select('*', { count: 'exact', head: true }).eq('creator_id', creatorId);
+    
+    return { likes: count || 0, hasLiked: !existing };
+};
+
+export const getCreatorLikeStatus = async (creatorId: string): Promise<boolean> => {
+    if (!isConfigured) return MockBackend.getCreatorLikeStatus(creatorId);
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) return false;
+    
+    const { data } = await supabase.from('creator_likes').select('id').eq('creator_id', creatorId).eq('fan_id', session.session.user.id).maybeSingle();
+    return !!data;
 };

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { CreatorProfile, CurrentUser, AffiliateLink, Product } from '../types';
 import { CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share } from './Icons';
 import { Button } from './Button';
-import { sendMessage, updateCreatorProfile, addCredits, DEFAULT_AVATAR } from '../services/realBackend';
+import { sendMessage, updateCreatorProfile, addCredits, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus } from '../services/realBackend';
 
 interface Props {
   creator: CreatorProfile;
@@ -65,6 +65,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   useEffect(() => {
     setEditedCreator(creator);
     setLikes(creator.likesCount || 0);
+    
+    // Check initial like status
+    if (currentUser) {
+        getCreatorLikeStatus(creator.id).then(status => {
+            setHasLiked(status);
+        });
+    }
   }, [creator]);
 
   useEffect(() => {
@@ -266,9 +273,18 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     fileInputRef.current?.click();
   };
 
-  const handleLike = () => {
-      setHasLiked(!hasLiked);
-      setLikes(prev => hasLiked ? prev - 1 : prev + 1);
+  const handleLike = async () => {
+      if (!currentUser) {
+          onLoginRequest();
+          return;
+      }
+      try {
+          const result = await toggleCreatorLike(creator.id);
+          setHasLiked(result.hasLiked);
+          setLikes(result.likes);
+      } catch (e) {
+          console.error("Failed to toggle like", e);
+      }
   };
 
   const handleShare = async () => {
