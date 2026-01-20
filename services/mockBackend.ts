@@ -184,7 +184,7 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
         // Here we would typically add credits to the creator's wallet in a real DB
     }
 
-    messages[msgIndex] = { ...msg };
+    messages[msgIndex] = { ...msg, isRead: false };
 };
 
 export const markMessageAsRead = async (messageId: string): Promise<void> => {

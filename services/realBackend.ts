@@ -503,6 +503,12 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
             content: replyText
         });
         if (chatError) throw chatError;
+
+        // Touch the message to trigger realtime updates for listeners (Fan Dashboard)
+        // Also set is_read to false so the recipient (Fan) sees it as unread
+        await supabase.from('messages').update({ 
+            is_read: false 
+        }).eq('id', messageId);
     }
 
     // 2. Update Status if Complete
@@ -633,6 +639,30 @@ export const sendFanAppreciation = async (messageId: string, text: string): Prom
         role: 'FAN',
         content: `Fan Appreciation: ${text}`
     });
+};
+
+export const subscribeToMessages = (userId: string, onUpdate: () => void) => {
+    if (!isConfigured) return { unsubscribe: () => {} };
+
+    const subscription = supabase
+        .channel('public:messages')
+        .on('postgres_changes', { 
+            event: '*', 
+            schema: 'public', 
+            table: 'messages', 
+            filter: `sender_id=eq.${userId}` 
+        }, onUpdate)
+        .on('postgres_changes', { 
+            event: '*', 
+            schema: 'public', 
+            table: 'messages', 
+            filter: `creator_id=eq.${userId}` 
+        }, onUpdate)
+        .subscribe();
+
+    return { unsubscribe: () => {
+        supabase.removeChannel(subscription);
+    }};
 };
 
 export const getFeaturedCreators = async (): Promise<CreatorProfile[]> => {

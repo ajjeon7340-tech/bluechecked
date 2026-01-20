@@ -270,7 +270,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setSelectedSenderEmail(senderEmail);
     
     // Mark all unread from this sender as read
-    const unread = incomingMessages.filter(m => m.senderEmail === senderEmail && !m.isRead);
+    const unread = incomingMessages.filter(m => {
+        if (m.senderEmail !== senderEmail || m.isRead) return false;
+        // Only mark as read if the last message is from the FAN
+        const lastMsg = m.conversation[m.conversation.length - 1];
+        return !lastMsg || lastMsg.role === 'FAN';
+    });
     if (unread.length > 0) {
         await Promise.all(unread.map(m => markMessageAsRead(m.id)));
         // Optimistic update
@@ -1182,7 +1187,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     const isActive = selectedSenderEmail === group.senderEmail;
                                     const latestMsg = group.latestMessage;
                                     const timeLeft = getTimeLeft(latestMsg.expiresAt);
-                                    const isUnread = incomingMessages.some(m => m.senderEmail === group.senderEmail && !m.isRead);
+                                    // Check unread based on role
+                                    const lastChatRole = latestMsg.conversation[latestMsg.conversation.length - 1]?.role;
+                                    const isUnread = incomingMessages.some(m => m.senderEmail === group.senderEmail && !m.isRead && (lastChatRole === 'FAN' || !lastChatRole));
                                     
                                     return (
                                         <div 
