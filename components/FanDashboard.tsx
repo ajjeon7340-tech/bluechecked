@@ -567,7 +567,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </button>
                     </div>
                     <div className="mt-3 flex flex-col items-center gap-1">
-                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.1.2</div>
+                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.1.4</div>
                         <div className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${isBackendConfigured() ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                             {isBackendConfigured() ? '● LIVE DB' : '○ MOCK DB'}
                         </div>
@@ -1276,7 +1276,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 const isLastInGroup = !nextChat || nextChat.role !== chat.role;
                                                 const isFirstInGroup = !prevChat || prevChat.role !== chat.role;
                                                 return (
-                                                    <div key={`${msg.id}-${chatIndex}`} className={`flex gap-3 max-w-[85%] md:max-w-[75%] ${isMe ? 'ml-auto justify-end' : ''} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}>
+                                                    <React.Fragment key={`${msg.id}-${chatIndex}`}>
+                                                    <div className={`flex gap-3 max-w-[85%] md:max-w-[75%] ${isMe ? 'ml-auto justify-end' : ''} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}>
                                                         {!isMe && (
                                                             <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-300 shadow-sm mt-1">
                                                                 {msg.creatorAvatarUrl ? (
@@ -1303,28 +1304,33 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             )}
                                                         </div>
                                                     </div>
-                                                )
-                                            })}
-                                            {isPending && (
-                                                <div className="flex gap-3 max-w-[85%] md:max-w-[75%] mt-4">
-                                                    <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-300 shadow-sm mt-1">
-                                                        {msg.creatorAvatarUrl ? (
-                                                            <img src={msg.creatorAvatarUrl} alt="Creator" className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <User size={16} className="text-slate-400" />
-                                                        )}
-                                                    </div>
-                                                    <div className="space-y-1 w-full text-left">
-                                                        <div className="px-4 py-3 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap inline-block text-left bg-white text-slate-800 border border-slate-200 rounded-tl-sm">
-                                                            {currentCreator?.welcomeMessage || "Thanks for your request! I've received it and will get back to you shortly."}
-                                                            <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 uppercase tracking-wide">
-                                                                <ShieldCheck size={12} /> 
-                                                                <span>Priority Active • {getTimeLeft(msg.expiresAt).text}</span>
+
+                                                    {/* Auto-Reply / Welcome Message (Always shown after first message) */}
+                                                    {chatIndex === 0 && (
+                                                        <div className="flex gap-3 max-w-[85%] md:max-w-[75%] mt-4">
+                                                            <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-300 shadow-sm mt-1">
+                                                                {msg.creatorAvatarUrl ? (
+                                                                    <img src={msg.creatorAvatarUrl} alt="Creator" className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <User size={16} className="text-slate-400" />
+                                                                )}
+                                                            </div>
+                                                            <div className="space-y-1 w-full text-left">
+                                                                <div className="px-4 py-3 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap inline-block text-left bg-white text-slate-800 border border-slate-200 rounded-tl-sm">
+                                                                    {currentCreator?.welcomeMessage || "Thanks for your request! I've received it and will get back to you shortly."}
+                                                                    {isPending && (
+                                                                        <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 uppercase tracking-wide">
+                                                                            <ShieldCheck size={12} /> 
+                                                                            <span>Priority Active • {getTimeLeft(msg.expiresAt).text}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                </div>
-                                            )}
+                                                    )}
+                                                    </React.Fragment>
+                                                )
+                                            })}
                                             {isRefunded && (
                                                 <div className="flex justify-center mt-4">
                                                     <div className="bg-slate-100 text-slate-500 text-xs px-3 py-1.5 rounded-full border border-slate-200 flex items-center gap-2">
