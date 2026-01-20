@@ -1325,18 +1325,24 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         const isMe = chat.role === 'CREATOR';
                                         const nextMsg = msg.conversation[index + 1];
                                         const prevMsg = msg.conversation[index - 1];
-                                        const isLastInGroup = !nextMsg || nextMsg.role !== chat.role;
-                                        const isFirstInGroup = !prevMsg || prevMsg.role !== chat.role;
+                                        
+                                        const getMinuteBucket = (ts: string) => Math.floor(new Date(ts).getTime() / 60000);
+                                        const currentBucket = getMinuteBucket(chat.timestamp);
+                                        const prevBucket = prevMsg ? getMinuteBucket(prevMsg.timestamp) : -1;
+                                        const nextBucket = nextMsg ? getMinuteBucket(nextMsg.timestamp) : -1;
+
+                                        const isLastInGroup = !nextMsg || nextMsg.role !== chat.role || nextBucket !== currentBucket;
+                                        const isFirstInGroup = !prevMsg || prevMsg.role !== chat.role || prevBucket !== currentBucket;
                                         return (
                                             <div key={`${msg.id}-${index}`} className={`flex gap-4 ${isMe ? 'flex-row-reverse' : ''} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}>
                                                 {!isMe && (
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border bg-indigo-100 text-indigo-600 border-indigo-200`}>
-                                                        <User size={18} />
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border bg-indigo-100 text-indigo-600 border-indigo-200 ${isFirstInGroup ? '' : 'opacity-0 border-transparent'}`}>
+                                                        {isFirstInGroup && <User size={18} />}
                                                     </div>
                                                 )}
                                                 
                                                 <div className={`space-y-1 max-w-[85%] ${isMe ? 'text-right' : 'text-left'}`}>
-                                                    <div className={`p-4 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap text-left ${isMe ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-800 border border-slate-200 rounded-tl-none'}`}>
+                                                    <div className={`p-4 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap text-left ${isMe ? `bg-indigo-600 text-white ${isFirstInGroup ? 'rounded-tr-none' : 'rounded-tr-2xl'}` : `bg-white text-slate-800 border border-slate-200 ${isFirstInGroup ? 'rounded-tl-none' : 'rounded-tl-2xl'}`}`}>
                                                         {chat.content}
                                                         {!isMe && index === 0 && msg.attachmentUrl && (
                                                             <div className="mt-3 rounded-lg overflow-hidden border border-black/10">
@@ -1355,18 +1361,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     })}
                                         </div>
                                     ))}
-
-                                    {isSendingReply && (
-                                        <div className="flex gap-4 flex-row-reverse mt-1">
-                                            <div className="px-4 py-3 rounded-2xl shadow-sm text-sm bg-indigo-600 text-white rounded-tr-none">
-                                                <div className="flex gap-1 items-center h-5">
-                                                    <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce"></span>
-                                                    <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce delay-100"></span>
-                                                    <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce delay-200"></span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
 
                                     {activeMessage.status === MessageStatus.EXPIRED && (
                                         <div className="flex justify-center py-4 mt-4">

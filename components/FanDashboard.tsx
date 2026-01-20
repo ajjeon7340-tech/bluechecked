@@ -567,7 +567,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </button>
                     </div>
                     <div className="mt-3 flex flex-col items-center gap-1">
-                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.1.4</div>
+                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.2.0</div>
                         <div className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${isBackendConfigured() ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                             {isBackendConfigured() ? '● LIVE DB' : '○ MOCK DB'}
                         </div>
@@ -1273,23 +1273,31 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 const isMe = chat.role === 'FAN';
                                                 const nextChat = msg.conversation[chatIndex + 1];
                                                 const prevChat = msg.conversation[chatIndex - 1];
-                                                const isLastInGroup = !nextChat || nextChat.role !== chat.role;
-                                                const isFirstInGroup = !prevChat || prevChat.role !== chat.role;
+                                                
+                                                const getMinuteBucket = (ts: string) => Math.floor(new Date(ts).getTime() / 60000);
+                                                const currentBucket = getMinuteBucket(chat.timestamp);
+                                                const prevBucket = prevChat ? getMinuteBucket(prevChat.timestamp) : -1;
+                                                const nextBucket = nextChat ? getMinuteBucket(nextChat.timestamp) : -1;
+
+                                                const isLastInGroup = !nextChat || nextChat.role !== chat.role || nextBucket !== currentBucket;
+                                                const isFirstInGroup = !prevChat || prevChat.role !== chat.role || prevBucket !== currentBucket;
                                                 return (
                                                     <React.Fragment key={`${msg.id}-${chatIndex}`}>
                                                     <div className={`flex gap-3 max-w-[85%] md:max-w-[75%] ${isMe ? 'ml-auto justify-end' : ''} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}>
                                                         {!isMe && (
-                                                            <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-300 shadow-sm mt-1">
-                                                                {msg.creatorAvatarUrl ? (
-                                                                    <img src={msg.creatorAvatarUrl} alt="Creator" className="w-full h-full object-cover" />
-                                                                ) : (
-                                                                    <User size={16} className="text-slate-400" />
+                                                            <div className={`w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-300 shadow-sm mt-1 ${isFirstInGroup ? '' : 'opacity-0 border-transparent shadow-none'}`}>
+                                                                {isFirstInGroup && (
+                                                                    msg.creatorAvatarUrl ? (
+                                                                        <img src={msg.creatorAvatarUrl} alt="Creator" className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <User size={16} className="text-slate-400" />
+                                                                    )
                                                                 )}
                                                             </div>
                                                         )}
                                                         <div className={`space-y-1 w-full ${isMe ? 'text-right' : 'text-left'}`}>
                                                             <div className={`px-4 py-3 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap inline-block text-left 
-                                                                ${isMe ? 'bg-blue-600 text-white rounded-tr-sm' : 'bg-white text-slate-800 border border-slate-200 rounded-tl-sm'}`}>
+                                                                ${isMe ? `bg-blue-600 text-white ${isFirstInGroup ? 'rounded-tr-sm' : 'rounded-tr-2xl'}` : `bg-white text-slate-800 border border-slate-200 ${isFirstInGroup ? 'rounded-tl-sm' : 'rounded-tl-2xl'}`}`}>
                                                                 {chat.content}
                                                                 {isMe && chatIndex === 0 && msg.attachmentUrl && (
                                                                     <div className="mt-2 rounded-lg overflow-hidden border border-white/20">
@@ -1342,17 +1350,6 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     </div>
                                 );
                             })}
-                            {isSendingFollowUp && (
-                                <div className="flex justify-end mt-4 mr-4 animate-pulse">
-                                    <div className="bg-blue-600 text-white px-4 py-3 rounded-2xl rounded-tr-sm shadow-sm">
-                                        <div className="flex gap-1 items-center h-4">
-                                            <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce"></span>
-                                            <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce delay-100"></span>
-                                            <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce delay-200"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                             <div className="h-4"></div>
                         </div>
 
