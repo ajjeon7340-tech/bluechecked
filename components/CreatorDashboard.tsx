@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { CreatorProfile, Message, MessageStatus, DashboardStats, MonthlyStat, AffiliateLink, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
-import { getMessages, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR } from '../services/realBackend';
+import { getMessages, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages } from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
 import { 
   Clock, CheckCircle2, AlertCircle, DollarSign, Sparkles, ChevronLeft, LogOut, 
@@ -109,7 +109,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   useEffect(() => {
     loadData();
-  }, []);
+
+    // Real-time Subscription
+    if (currentUser) {
+        const { unsubscribe } = subscribeToMessages(currentUser.id, () => {
+            loadData();
+        });
+        return () => unsubscribe();
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     // Load pro analytics if user is premium and on analytics tab

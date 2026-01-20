@@ -507,7 +507,8 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
         // Touch the message to trigger realtime updates for listeners (Fan Dashboard)
         // Also set is_read to false so the recipient (Fan) sees it as unread
         await supabase.from('messages').update({ 
-            is_read: false 
+            is_read: false,
+            updated_at: new Date().toISOString()
         }).eq('id', messageId);
     }
 
@@ -639,6 +640,11 @@ export const sendFanAppreciation = async (messageId: string, text: string): Prom
         role: 'FAN',
         content: `Fan Appreciation: ${text}`
     });
+
+    // Touch message to trigger realtime update for Creator
+    await supabase.from('messages').update({ 
+        updated_at: new Date().toISOString() 
+    }).eq('id', messageId);
 };
 
 export const subscribeToMessages = (userId: string, onUpdate: () => void) => {
