@@ -51,7 +51,7 @@ function App() {
   };
 
   useEffect(() => {
-    console.log("Bluechecked App Version: 3.0.1");
+    console.log("Bluechecked App Version: 3.1.0");
     console.log("Backend Connection:", isBackendConfigured() ? "✅ Connected to Supabase" : "⚠️ Using Mock Data");
     loadCreatorData();
     
@@ -175,9 +175,29 @@ function App() {
             setRefreshTrigger(p => p + 1);
             loadCreatorData(); // Refresh credits after sending
           }} 
-          onCreateOwn={() => setCurrentPage('LANDING')}
+          onCreateOwn={async () => {
+            if (currentUser) {
+              if (currentUser.role === 'CREATOR') {
+                setIsLoading(true);
+                await loadCreatorData(currentUser.id);
+                setCurrentPage('DASHBOARD');
+              } else {
+                setCurrentPage('FAN_DASHBOARD');
+              }
+            } else {
+              setCurrentPage('LANDING');
+            }
+          }}
           onLoginRequest={() => setCurrentPage('LOGIN')}
-          onNavigateToDashboard={() => setCurrentPage(currentUser?.role === 'CREATOR' ? 'DASHBOARD' : 'FAN_DASHBOARD')}
+          onNavigateToDashboard={async () => {
+            if (currentUser?.role === 'CREATOR') {
+              setIsLoading(true);
+              await loadCreatorData(currentUser.id);
+              setCurrentPage('DASHBOARD');
+            } else {
+              setCurrentPage('FAN_DASHBOARD');
+            }
+          }}
           onRefreshData={() => loadCreatorData(creator?.id)}
         />
       )}

@@ -539,11 +539,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       <aside className={`fixed inset-y-0 left-0 w-64 bg-[#F3F4F6] border-r border-slate-200 transform transition-transform duration-300 z-30 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 flex flex-col`}>
         <div className="p-4 flex flex-col h-full">
             {/* Brand */}
-            <div className="flex items-center gap-2 px-3 py-4 mb-6">
-                <div className="bg-slate-900 text-white p-1 rounded-md">
+            <div 
+                onClick={() => { setCurrentView('OVERVIEW'); setSelectedSenderEmail(null); }}
+                className="flex items-center gap-2 px-3 py-4 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
+            >
+                <div className="bg-blue-600 text-white p-1 rounded-md shadow-lg shadow-blue-500/20">
                     <CheckCircle2 size={16} />
                 </div>
-                <span className="font-bold text-slate-900 tracking-tight">Bluechecked</span>
+                <span className="font-bold text-slate-900 tracking-tight">BLUECHECKED</span>
                 {creator.isPremium && (
                    <span className="bg-yellow-100 text-yellow-700 text-[9px] font-bold px-1.5 py-0.5 rounded border border-yellow-200 ml-1">PRO</span>
                 )}

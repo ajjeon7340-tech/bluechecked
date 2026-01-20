@@ -677,6 +677,7 @@ export const getFeaturedCreators = async (): Promise<CreatorProfile[]> => {
             avatarUrl: p.avatar_url || DEFAULT_AVATAR,
             pricePerMessage: p.price_per_message || 50,
             responseWindowHours: p.response_window_hours || 48,
+            welcomeMessage: p.welcome_message,
             likesCount: s.count,
             stats: { 
                 responseTimeAvg: '4h', 

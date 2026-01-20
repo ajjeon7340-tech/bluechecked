@@ -575,7 +575,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                     </div>
 
                     {/* Action */}
-                    <div className="flex flex-col items-end gap-1.5">
+                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                         {isCustomizeMode && (
                              <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
                                 <Coins size={12} className="text-slate-400"/>
@@ -591,7 +591,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         <button 
                             onClick={currentUser ? handleOpenModal : onLoginRequest}
                             disabled={isCustomizeMode}
-                            className="bg-slate-900 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-indigo-600 transition-colors shadow-lg shadow-slate-900/10 flex items-center gap-2"
+                            className="bg-slate-900 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-indigo-600 transition-colors shadow-lg shadow-slate-900/10 flex items-center gap-2 whitespace-nowrap"
                         >
                             {isCustomizeMode ? (
                                 <>Preview <ArrowRight size={12} className="opacity-50"/></>
@@ -672,7 +672,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                     <h4 className="font-bold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors">{link.title}</h4>
                                                     <p className="text-[10px] text-slate-400 mt-0.5 font-medium">Digital Download • Instant Access</p>
                                                 </div>
-                                                <div className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold group-hover:bg-indigo-600 transition-colors flex items-center gap-1">
+                                                <div className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold group-hover:bg-indigo-600 transition-colors flex items-center gap-1 flex-shrink-0 whitespace-nowrap">
                                                     <Coins size={10} /> {link.price}
                                                 </div>
                                             </button>

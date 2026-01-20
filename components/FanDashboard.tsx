@@ -143,10 +143,34 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   }, [conversationGroups, searchQuery]);
 
   const filteredCreators = useMemo(() => {
-    return featuredCreators.filter(c => 
+    const list = featuredCreators.filter(c => 
         c.displayName.toLowerCase().includes(exploreQuery.toLowerCase()) ||
         c.tags.some(t => t.toLowerCase().includes(exploreQuery.toLowerCase()))
     );
+
+    // Add Mock "Under Review" Expert
+    if (!exploreQuery || 'sarah design'.includes(exploreQuery.toLowerCase())) {
+        list.push({
+            id: 'mock-review-1',
+            displayName: 'Sarah Design',
+            handle: '@sarahdesign',
+            bio: 'Senior Product Designer. Portfolio reviews & career mentorship.',
+            avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
+            pricePerMessage: 150,
+            responseWindowHours: 24,
+            stats: { averageRating: 5.0, responseTimeAvg: '2h', profileViews: 1200, replyRate: '100%' },
+            tags: ['Design', 'UX'],
+            likesCount: 45,
+            platforms: ['instagram', 'linkedin'],
+            links: [],
+            products: [],
+            customQuestions: [],
+            // @ts-ignore
+            isUnderReview: true
+        } as CreatorProfile);
+    }
+    
+    return list;
   }, [featuredCreators, exploreQuery]);
 
   const threadMessages = useMemo(() => {
@@ -157,6 +181,10 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   }, [messages, selectedCreatorId]);
 
   const latestMessage = threadMessages.length > 0 ? threadMessages[threadMessages.length - 1] : null;
+
+  const currentCreator = useMemo(() => {
+      return featuredCreators.find(c => c.id === selectedCreatorId);
+  }, [featuredCreators, selectedCreatorId]);
 
   // Derived state for UI logic
   const hasRated = !!(latestMessage?.rating && latestMessage.rating > 0);
@@ -491,11 +519,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         <aside className={`fixed inset-y-0 left-0 w-64 bg-[#F3F4F6] border-r border-slate-200 transform transition-transform duration-300 z-30 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
             <div className="p-4 h-full flex flex-col">
                 {/* Brand */}
-                <div className="flex items-center gap-2 px-3 py-4 mb-6">
-                    <div className="bg-slate-900 text-white p-1 rounded-md">
+                <div 
+                    onClick={() => { setCurrentView('OVERVIEW'); setSelectedCreatorId(null); }}
+                    className="flex items-center gap-2 px-3 py-4 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
+                >
+                    <div className="bg-blue-600 text-white p-1 rounded-md shadow-lg shadow-blue-500/20">
                         <CheckCircle2 size={16} />
                     </div>
-                    <span className="font-bold text-slate-900 tracking-tight">Bluechecked</span>
+                    <span className="font-bold text-slate-900 tracking-tight">BLUECHECKED</span>
                 </div>
 
                 {/* Nav Links */}
@@ -528,7 +559,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </button>
                     </div>
                     <div className="mt-3 flex flex-col items-center gap-1">
-                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.0.1</div>
+                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.1.0</div>
                         <div className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${isBackendConfigured() ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                             {isBackendConfigured() ? '● LIVE DB' : '○ MOCK DB'}
                         </div>
@@ -783,27 +814,43 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     const platforms = creator.platforms || ['youtube'];
                                     const followers = (creator.stats.profileViews / 1000).toFixed(1) + 'k'; // Mock followers from views
                                     const likesFormatted = creator.likesCount.toLocaleString();
+                                    // @ts-ignore
+                                    const isUnderReview = creator.isUnderReview;
 
                                     return (
                                         <div 
                                             key={creator.id} 
-                                            onClick={() => onBrowseCreators(creator.id)}
-                                            className="group bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center text-center h-full relative overflow-hidden"
+                                            onClick={() => !isUnderReview && onBrowseCreators(creator.id)}
+                                            className={`group bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center text-center h-full relative overflow-hidden ${isUnderReview ? 'opacity-75' : ''}`}
                                         >
+                                            {isUnderReview && (
+                                                <div className="absolute inset-0 z-50 flex items-center justify-center">
+                                                    <div className="bg-slate-900/90 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-bold shadow-xl transform -rotate-3 border border-white/20 flex items-center gap-2">
+                                                        <Clock size={12} className="text-yellow-400 animate-pulse" />
+                                                        Application Under Review
+                                                    </div>
+                                                </div>
+                                            )}
                                             {/* Gradient Header */}
                                             <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-slate-50 to-transparent opacity-60"></div>
 
                                             {/* 1. Avatar (Centered & Larger) */}
                                             <div className="relative mb-4 z-10">
-                                                <div className="w-20 h-20 rounded-full p-1 bg-white shadow-sm border border-slate-100 mx-auto">
-                                                    <img src={creator.avatarUrl} className="w-full h-full rounded-full object-cover" alt={creator.displayName} />
+                                                <div className="w-20 h-20 rounded-full p-1 bg-white shadow-sm border border-slate-100 mx-auto flex items-center justify-center overflow-hidden">
+                                                    {isUnderReview ? (
+                                                        <div className="w-full h-full bg-slate-50 flex items-center justify-center">
+                                                            <User size={32} className="text-slate-300" />
+                                                        </div>
+                                                    ) : (
+                                                        <img src={creator.avatarUrl} className="w-full h-full rounded-full object-cover" alt={creator.displayName} />
+                                                    )}
                                                 </div>
                                             </div>
 
                                             {/* 2. Name & Info */}
                                             <div className="relative z-10 w-full mb-5">
-                                                <h3 className="font-black text-slate-900 text-lg leading-tight group-hover:text-indigo-600 transition-colors mb-1 truncate px-2">
-                                                    {creator.displayName}
+                                                <h3 className={`font-black text-slate-900 text-lg leading-tight group-hover:text-indigo-600 transition-colors mb-1 truncate px-2 ${isUnderReview ? 'blur-sm opacity-40 select-none' : ''}`}>
+                                                    {isUnderReview ? 'Creator Name' : creator.displayName}
                                                 </h3>
                                                 <div className="flex items-center justify-center gap-1.5 mb-3 mt-2">
                                                     {platforms.slice(0, 3).map((p: string, i: number) => (
@@ -1078,7 +1125,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         <tr className="bg-slate-50/50 border-b border-slate-100">
                                             <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Expert</th>
                                             <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Latest Status</th>
-                                            <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Total Requests</th>
+                                            <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Sessions</th>
                                             <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Last Active</th>
                                         </tr>
                                     </thead>
@@ -1170,7 +1217,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 "{latestMsg.conversation[latestMsg.conversation.length - 1]?.content || latestMsg.content}"
                                             </p>
                                             <div className="flex justify-between items-center mt-2">
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{group.messageCount} Requests</span>
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{group.messageCount} Sessions</span>
                                                 <div className="text-xs font-bold text-blue-600 flex items-center gap-1">View <ChevronRight size={14} /></div>
                                             </div>
                                         </div>
@@ -1209,7 +1256,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         <div className="flex items-center justify-center gap-4 mb-6 opacity-60">
                                             <div className="h-px bg-slate-300 flex-1"></div>
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-[#F0F2F5] px-2 flex items-center gap-1">
-                                                Session {msgIndex + 1} • <Coins size={10} className="inline mb-0.5" /> {msg.amount} • {new Date(msg.createdAt).toLocaleDateString()}
+                                                Session {msgIndex + 1} • {new Date(msg.createdAt).toLocaleDateString()}
                                             </span>
                                             <div className="h-px bg-slate-300 flex-1"></div>
                                         </div>
@@ -1251,22 +1298,21 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 )
                                             })}
                                             {isPending && (
-                                                <div className="flex gap-3 max-w-[90%] mt-4">
-                                                   <div className="w-8 h-8 rounded-full bg-white flex-shrink-0 flex items-center justify-center border border-indigo-100 shadow-sm relative overflow-hidden">
-                                                        <div className="absolute inset-0 bg-gradient-to-tr from-blue-500 via-indigo-500 to-violet-500 opacity-20 animate-spin duration-[3s]"></div>
-                                                        <ShieldCheck size={14} className="text-blue-600 relative z-10 animate-pulse" />
+                                                <div className="flex gap-3 max-w-[85%] md:max-w-[75%] mt-4">
+                                                    <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-300 shadow-sm mt-1">
+                                                        {msg.creatorAvatarUrl ? (
+                                                            <img src={msg.creatorAvatarUrl} alt="Creator" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <User size={16} className="text-slate-400" />
+                                                        )}
                                                     </div>
-                                                    <div className="relative group">
-                                                        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 rounded-full opacity-20 blur group-hover:opacity-40 transition duration-1000 animate-pulse"></div>
-                                                        <div className="relative bg-white px-4 py-2 rounded-full border border-indigo-50 flex items-center gap-3 shadow-sm">
-                                                            <div className="flex gap-1">
-                                                                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce"></span>
-                                                                <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce delay-100"></span>
-                                                                <span className="w-1.5 h-1.5 bg-violet-500 rounded-full animate-bounce delay-200"></span>
+                                                    <div className="space-y-1 w-full text-left">
+                                                        <div className="px-4 py-3 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap inline-block text-left bg-white text-slate-800 border border-slate-200 rounded-tl-sm">
+                                                            {currentCreator?.welcomeMessage || "Thanks for your request! I've received it and will get back to you shortly."}
+                                                            <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 uppercase tracking-wide">
+                                                                <ShieldCheck size={12} /> 
+                                                                <span>Priority Active • {getTimeLeft(msg.expiresAt).text}</span>
                                                             </div>
-                                                            <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-700">
-                                                                Bluecheck Priority Active... ({getTimeLeft(msg.expiresAt).text})
-                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
