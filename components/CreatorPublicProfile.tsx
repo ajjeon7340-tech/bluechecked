@@ -14,6 +14,13 @@ interface Props {
   onRefreshData: () => Promise<void>;
 }
 
+const getResponseTimeTooltip = (status: string) => {
+    if (status === 'Super Responsive') return 'Typically replies in under 1 hour';
+    if (status === 'Expert') return 'Typically replies in under 4 hours';
+    if (status === 'Lightning') return 'Typically replies within 24 hours';
+    return 'Replies within the guaranteed response window';
+};
+
 export const CreatorPublicProfile: React.FC<Props> = ({ 
   creator, 
   currentUser, 
@@ -504,9 +511,17 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         {/* Stats Pill */}
                                         <div className="flex flex-wrap items-center gap-2 mt-2">
                                             <div className="inline-flex flex-wrap items-center gap-3 sm:gap-4 bg-slate-50 p-2 px-3 rounded-xl border border-slate-100 text-xs font-medium text-slate-500">
-                                                <div className="flex items-center gap-1.5">
+                                                <div 
+                                                    className="relative group/tooltip flex items-center gap-1.5 cursor-help"
+                                                >
                                                     <Clock size={14} className="text-slate-400" />
-                                                    <span>{creator.stats.responseTimeAvg} reply time</span>
+                                                    <span>{creator.stats.responseTimeAvg}</span>
+                                                    
+                                                    {/* Custom Tooltip */}
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[140px] bg-slate-800 text-white text-[10px] font-medium py-1.5 px-2.5 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50 text-center shadow-xl">
+                                                        {getResponseTimeTooltip(creator.stats.responseTimeAvg)}
+                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                                    </div>
                                                 </div>
                                                 <div className="w-px h-3 bg-slate-200"></div>
                                                 <div className="flex items-center gap-1.5">

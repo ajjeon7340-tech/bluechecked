@@ -38,7 +38,7 @@ const INITIAL_CREATOR: CreatorProfile = {
   likesCount: 124,
   isPremium: false,
   stats: {
-    responseTimeAvg: '4h',
+    responseTimeAvg: 'Expert',
     replyRate: '100%',
     profileViews: 8432,
     averageRating: 4.9

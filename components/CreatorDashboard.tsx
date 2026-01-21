@@ -276,7 +276,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const handleOpenChat = async (senderEmail: string) => {
     setSelectedSenderEmail(senderEmail);
-    
+
     // Mark all unread from this sender as read
     const unread = incomingMessages.filter(m => {
         if (m.senderEmail !== senderEmail || m.isRead) return false;

@@ -329,9 +329,14 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
         const repliedMsgs = statMessages.filter(m => m.status === 'REPLIED' && m.reply_at);
         if (repliedMsgs.length > 0) {
             const totalTimeMs = repliedMsgs.reduce((acc, m) => acc + (new Date(m.reply_at).getTime() - new Date(m.created_at).getTime()), 0);
-            const avgHours = Math.round(totalTimeMs / repliedMsgs.length / (1000 * 60 * 60));
-            responseTimeAvg = `${avgHours}h`;
+            const avgHours = totalTimeMs / repliedMsgs.length / (1000 * 60 * 60);
+            
+            if (avgHours < 1) responseTimeAvg = 'Super Responsive';
+            else if (avgHours < 4) responseTimeAvg = 'Expert';
+            else if (avgHours < 24) responseTimeAvg = 'Lightning';
+            else responseTimeAvg = 'Within Guaranteed';
         }
+        if (responseTimeAvg === 'N/A') responseTimeAvg = 'Within Guaranteed';
 
         // 2. Reply Rate (Replied / (Replied + Expired))
         const repliedCount = statMessages.filter(m => m.status === 'REPLIED').length;
@@ -363,7 +368,7 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
         responseWindowHours: data.response_window_hours || 48,
         likesCount: realLikesCount || 0,
         stats: { 
-            responseTimeAvg, 
+            responseTimeAvg,
             replyRate, 
             profileViews: totalRequests, // Using Total Requests as a proxy for views/activity
             averageRating 
@@ -729,7 +734,7 @@ export const getFeaturedCreators = async (): Promise<CreatorProfile[]> => {
             welcomeMessage: p.welcome_message,
             likesCount: s.likes,
             stats: { 
-                responseTimeAvg: '4h', 
+                responseTimeAvg: 'Expert', 
                 replyRate: '98%', 
                 profileViews: s.count * 15 + 100, 
                 averageRating: avg 

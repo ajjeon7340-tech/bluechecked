@@ -12,6 +12,13 @@ interface Props {
   onUpdateUser?: (user: CurrentUser) => void;
 }
 
+const getResponseTimeTooltip = (status: string) => {
+    if (status === 'Super Responsive') return 'Typically replies in under 1 hour';
+    if (status === 'Expert') return 'Typically replies in under 4 hours';
+    if (status === 'Lightning') return 'Typically replies within 24 hours';
+    return 'Replies within the guaranteed response window';
+};
+
 export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseCreators, onUpdateUser }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [featuredCreators, setFeaturedCreators] = useState<CreatorProfile[]>([]);
@@ -166,7 +173,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
             avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
             pricePerMessage: 150,
             responseWindowHours: 24,
-            stats: { averageRating: 5.0, responseTimeAvg: '2h', profileViews: 1200, replyRate: '100%' },
+            stats: { averageRating: 5.0, responseTimeAvg: 'Expert', profileViews: 1200, replyRate: '100%' },
             tags: ['Design', 'UX'],
             likesCount: 45,
             platforms: ['instagram', 'linkedin'],
@@ -567,7 +574,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </button>
                     </div>
                     <div className="mt-3 flex flex-col items-center gap-1">
-                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.2.0</div>
+                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.2.7</div>
                         <div className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${isBackendConfigured() ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                             {isBackendConfigured() ? '● LIVE DB' : '○ MOCK DB'}
                         </div>
@@ -877,9 +884,17 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                                             {/* 3. Stats Grid - Compact */}
                                             <div className="grid grid-cols-2 gap-2 w-full mb-6 relative z-10">
-                                                <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-100 flex flex-col items-center justify-center">
+                                                <div 
+                                                    className="relative group/tooltip bg-slate-50 rounded-xl p-2.5 border border-slate-100 flex flex-col items-center justify-center cursor-help transition-colors hover:bg-slate-100"
+                                                >
                                                     <span className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Reply</span>
-                                                    <span className="font-black text-slate-700 text-sm">{creator.stats.responseTimeAvg}</span>
+                                                    <span className="font-black text-slate-700 text-xs text-center leading-tight">{creator.stats.responseTimeAvg}</span>
+                                                    
+                                                    {/* Custom Tooltip */}
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[140px] bg-slate-800 text-white text-[10px] font-medium py-1.5 px-2.5 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50 text-center shadow-xl">
+                                                        {getResponseTimeTooltip(creator.stats.responseTimeAvg)}
+                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                                    </div>
                                                 </div>
                                                 <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-100 flex flex-col items-center justify-center">
                                                     <span className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Window</span>
