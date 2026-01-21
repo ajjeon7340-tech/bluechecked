@@ -113,7 +113,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     // Real-time Subscription
     if (currentUser) {
         const { unsubscribe } = subscribeToMessages(currentUser.id, () => {
-            loadData();
+            loadData(true);
         });
         return () => unsubscribe();
     }
@@ -145,8 +145,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     }
   }, [selectedMessage?.conversation, selectedMessage?.id]);
 
-  const loadData = async () => {
-    setIsLoading(true);
+  const loadData = async (silent = false) => {
+    if (!silent) setIsLoading(true);
     const msgs = await getMessages();
     setMessages(msgs);
     // If we have a selected message, update it with fresh data
@@ -155,7 +155,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
         // We don't need to manually update selectedMessage here as we will derive activeMessage from the thread
         // But we keep selectedMessage sync for safety if used elsewhere
     }
-    setIsLoading(false);
+    if (!silent) setIsLoading(false);
   };
 
   const loadProAnalytics = async () => {
@@ -339,7 +339,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     
     // The backend now handles empty replyText by skipping message creation but updating status
     await replyToMessage(activeMessage.id, replyText, isComplete);
-    await loadData(); 
+    await loadData(true); 
     setReplyText('');
     setIsSendingReply(false);
 
@@ -360,7 +360,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       
       setIsRejecting(true);
       await cancelMessage(activeMessage.id);
-      await loadData();
+      await loadData(true);
       setIsRejecting(false);
   };
 

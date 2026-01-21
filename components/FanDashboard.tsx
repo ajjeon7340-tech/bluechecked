@@ -34,7 +34,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const [exploreQuery, setExploreQuery] = useState('');
 
   const [showNotifications, setShowNotifications] = useState(false);
-  const [deletedNotificationIds, setDeletedNotificationIds] = useState<string[]>([]);
+  const [deletedNotificationIds, setDeletedNotificationIds] = useState<string[]>(() => {
+      try {
+          const saved = localStorage.getItem('bluechecked_deleted_notifications');
+          return saved ? JSON.parse(saved) : [];
+      } catch {
+          return [];
+      }
+  });
+
+  useEffect(() => {
+      localStorage.setItem('bluechecked_deleted_notifications', JSON.stringify(deletedNotificationIds));
+  }, [deletedNotificationIds]);
   // UI States
   const [isCancelling, setIsCancelling] = useState(false);
   const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
@@ -85,7 +96,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
     // Real-time Subscription
     if (currentUser) {
         const { unsubscribe } = subscribeToMessages(currentUser.id, () => {
-            loadMessages();
+            loadMessages(true);
         });
         return () => unsubscribe();
     }
@@ -106,8 +117,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
     }
   }, [messages, selectedCreatorId, showFollowUpInput, customAppreciationMode]);
 
-  const loadMessages = async () => {
-    setIsLoading(true);
+  const loadMessages = async (silent = false) => {
+    if (!silent) setIsLoading(true);
     const allMessages = await getMessages();
     const myMessages = allMessages.filter(m => 
       m.senderEmail === (currentUser?.email || 'sarah@example.com') || 
@@ -116,7 +127,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
     // Sort descending for list view
     myMessages.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     setMessages(myMessages.length > 0 ? myMessages : allMessages.slice(0, 2));
-    setIsLoading(false);
+    if (!silent) setIsLoading(false);
   };
 
   const loadCreators = async () => {
@@ -229,7 +240,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
     setIsCancelling(true);
     try {
         await cancelMessage(confirmCancelId);
-        await loadMessages();
+        await loadMessages(true);
         setConfirmCancelId(null);
     } catch (error) {
         console.error("Cancel failed", error);
@@ -244,7 +255,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       setIsSendingFollowUp(true);
       try {
           await sendMessage(latestMessage.creatorId || '', latestMessage.senderName, latestMessage.senderEmail, followUpText, latestMessage.amount);
-          await loadMessages();
+          await loadMessages(true);
           setShowFollowUpInput(false);
           setFollowUpText('');
           setToastMessage("Follow-up Sent!");
@@ -272,7 +283,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           setMessages(prev => prev.map(m => m.id === msgId ? { ...m, rating: val } : m));
           
           await rateMessage(msgId, val);
-          loadMessages(); // Background refresh
+          loadMessages(true); // Background refresh
           
           setRating(0); 
           setHoveredStar(0);
@@ -281,7 +292,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       } catch (e: any) { 
           console.error(e); 
           alert(`Failed to submit rating: ${e.message || "Please try again."}`);
-          loadMessages(); // Revert on error
+          loadMessages(true); // Revert on error
       } finally { setIsSubmittingRating(false); }
   };
 
@@ -290,7 +301,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           await sendFanAppreciation(msgId, text);
           setCustomAppreciationText('');
           setCustomAppreciationMode(false);
-          await loadMessages();
+          await loadMessages(true);
           setToastMessage("Appreciation Sent!");
           setTimeout(() => setToastMessage(null), 3000);
           // Decrease local credits for the tip (mock 50)
@@ -574,7 +585,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </button>
                     </div>
                     <div className="mt-3 flex flex-col items-center gap-1">
-                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.2.7</div>
+                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.2.9</div>
                         <div className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${isBackendConfigured() ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                             {isBackendConfigured() ? '● LIVE DB' : '○ MOCK DB'}
                         </div>
