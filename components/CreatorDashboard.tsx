@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { CreatorProfile, Message, MessageStatus, DashboardStats, MonthlyStat, AffiliateLink, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
-import { getMessages, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages } from '../services/realBackend';
+import { getMessages, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile } from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
 import { 
   Clock, CheckCircle2, AlertCircle, DollarSign, Sparkles, ChevronLeft, LogOut, 
@@ -106,6 +106,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const productFileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingProduct, setIsUploadingProduct] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -474,6 +476,74 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const handleRemoveLink = (id: string) => {
      setEditedCreator(prev => ({ ...prev, links: (prev.links || []).filter(l => l.id !== id) }));
+  };
+
+  const handleProductFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      setIsUploadingProduct(true);
+      try {
+          const url = await uploadProductFile(file, creator.id);
+          setNewLinkUrl(url);
+      } catch (error) {
+          console.error("Upload failed", error);
+          alert("Failed to upload file.");
+      } finally {
+          setIsUploadingProduct(false);
+      }
+  };
+
+  const handleProductDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (isUploadingProduct) return;
+
+      const file = e.dataTransfer.files?.[0];
+      if (!file) return;
+
+      setIsUploadingProduct(true);
+      try {
+          const url = await uploadProductFile(file, creator.id);
+          setNewLinkUrl(url);
+      } catch (error) {
+          console.error("Upload failed", error);
+          alert("Failed to upload file.");
+      } finally {
+          setIsUploadingProduct(false);
+      }
+  };
+
+  const handleExistingProductUpload = async (e: React.ChangeEvent<HTMLInputElement>, linkId: string) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      try {
+          // Note: In a real app, we'd want a per-item loading state. 
+          // For MVP, we rely on the async update.
+          const url = await uploadProductFile(file, creator.id);
+          handleUpdateLink(linkId, 'url', url);
+      } catch (error) {
+          console.error("Upload failed", error);
+          alert("Failed to upload file.");
+      }
+  };
+
+  const handleExistingProductDrop = async (e: React.DragEvent<HTMLDivElement>, linkId: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const file = e.dataTransfer.files?.[0];
+      if (!file) return;
+
+      try {
+          const url = await uploadProductFile(file, creator.id);
+          handleUpdateLink(linkId, 'url', url);
+      } catch (error) {
+          console.error("Upload failed", error);
+          alert("Failed to upload file.");
+      }
   };
 
   const handleUpgradeToPremium = async () => {
@@ -1625,12 +1695,46 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         onChange={(e) => handleUpdateLink(link.id, 'title', e.target.value)}
                                                         placeholder="Title"
                                                     />
-                                                    <input 
-                                                        className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-500 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                                        value={link.url}
-                                                        onChange={(e) => handleUpdateLink(link.id, 'url', e.target.value)}
-                                                        placeholder={isProduct ? "File URL (Dropbox/Drive)" : "https://..."}
-                                                    />
+                                                    {isProduct ? (
+                                                        <div 
+                                                            className="relative group/upload"
+                                                            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                                            onDrop={(e) => handleExistingProductDrop(e, link.id)}
+                                                        >
+                                                            <div className="flex gap-2">
+                                                                <input 
+                                                                    className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-500 focus:ring-2 focus:ring-indigo-500 outline-none pr-8"
+                                                                    value={link.url}
+                                                                    onChange={(e) => handleUpdateLink(link.id, 'url', e.target.value)}
+                                                                    placeholder="File URL"
+                                                                    readOnly
+                                                                />
+                                                                <button 
+                                                                    onClick={() => document.getElementById(`update-file-${link.id}`)?.click()}
+                                                                    className="px-2 py-1 bg-white border border-slate-200 rounded text-xs font-bold text-slate-600 hover:bg-slate-50 whitespace-nowrap"
+                                                                >
+                                                                    Replace
+                                                                </button>
+                                                            </div>
+                                                            <input 
+                                                                type="file" 
+                                                                id={`update-file-${link.id}`} 
+                                                                className="hidden" 
+                                                                onChange={(e) => handleExistingProductUpload(e, link.id)} 
+                                                            />
+                                                            {/* Drag Overlay */}
+                                                            <div className="absolute inset-0 bg-indigo-50/90 border-2 border-dashed border-indigo-300 rounded flex items-center justify-center opacity-0 group-hover/upload:opacity-100 pointer-events-none transition-opacity z-10">
+                                                                <span className="text-[10px] font-bold text-indigo-600">Drop new file to replace</span>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <input 
+                                                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-500 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                            value={link.url}
+                                                            onChange={(e) => handleUpdateLink(link.id, 'url', e.target.value)}
+                                                            placeholder="https://..."
+                                                        />
+                                                    )}
                                                     <div className="flex items-center gap-2">
                                                         <input 
                                                             type="checkbox" 
@@ -1679,13 +1783,53 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             value={newLinkTitle}
                                             onChange={e => setNewLinkTitle(e.target.value)}
                                         />
-                                        <input 
-                                            type="text" 
-                                            placeholder={newLinkType === 'DIGITAL_PRODUCT' ? "Download URL (File will be hidden until paid)" : "URL (https://...)"}
-                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                                            value={newLinkUrl}
-                                            onChange={e => setNewLinkUrl(e.target.value)}
-                                        />
+                                        {newLinkType === 'DIGITAL_PRODUCT' ? (
+                                            <div 
+                                                className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center transition-all ${isUploadingProduct ? 'bg-slate-50 border-slate-300' : 'border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/30 cursor-pointer'}`}
+                                                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                                onDrop={handleProductDrop}
+                                                onClick={() => !isUploadingProduct && !newLinkUrl && productFileInputRef.current?.click()}
+                                            >
+                                                <input type="file" ref={productFileInputRef} className="hidden" onChange={handleProductFileChange} />
+                                                
+                                                {isUploadingProduct ? (
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <div className="animate-spin h-6 w-6 border-2 border-indigo-600 border-t-transparent rounded-full"></div>
+                                                        <span className="text-xs font-medium text-slate-500">Uploading...</span>
+                                                    </div>
+                                                ) : newLinkUrl ? (
+                                                    <div className="flex flex-col items-center gap-2 w-full">
+                                                        <div className="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                                                            <Check size={20} />
+                                                        </div>
+                                                        <p className="text-sm font-medium text-slate-900">File Ready</p>
+                                                        <p className="text-xs text-slate-400 break-all max-w-full truncate px-4">{newLinkUrl.length > 30 ? '...' + newLinkUrl.slice(-20) : newLinkUrl}</p>
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); setNewLinkUrl(''); }}
+                                                            className="text-xs text-red-500 hover:text-red-700 font-bold mt-2 bg-red-50 px-3 py-1.5 rounded-full"
+                                                        >
+                                                            Remove File
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-2">
+                                                            <Download size={20} className="rotate-180" />
+                                                        </div>
+                                                        <p className="text-sm font-medium text-slate-700">Upload from local disk</p>
+                                                        <p className="text-xs text-slate-400 mt-1">PDF, Video, or Image (Max 50MB)</p>
+                                                    </>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <input 
+                                                type="text" 
+                                                placeholder="URL (https://...)"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                value={newLinkUrl}
+                                                onChange={e => setNewLinkUrl(e.target.value)}
+                                            />
+                                        )}
                                         {newLinkType === 'DIGITAL_PRODUCT' && (
                                             <div className="relative">
                                                 <span className="absolute left-3 top-2 text-slate-500 text-sm"><Coins size={14}/></span>

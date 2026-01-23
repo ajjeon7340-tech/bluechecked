@@ -588,6 +588,77 @@ export const addCredits = async (amount: number): Promise<CurrentUser> => {
     return mapProfileToUser(updated);
 };
 
+export const uploadProductFile = async (file: File, creatorId: string): Promise<string> => {
+    if (!isConfigured) return MockBackend.uploadProductFile(file, creatorId);
+
+    console.log(`[RealBackend] Uploading file to Supabase: ${file.name} for creator: ${creatorId}`);
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${creatorId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from('products')
+        .upload(fileName, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage.from('products').getPublicUrl(fileName);
+    console.log(`[RealBackend] File uploaded successfully: ${data.publicUrl}`);
+    return data.publicUrl;
+};
+
+export const getPurchasedProducts = async (): Promise<any[]> => {
+    if (!isConfigured) return MockBackend.getPurchasedProducts();
+
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) return [];
+    const userId = session.session.user.id;
+
+    // 1. Find messages that look like purchases
+    const { data: messages, error } = await supabase
+        .from('messages')
+        .select('id, content, creator_id, created_at, amount')
+        .eq('sender_id', userId)
+        .ilike('content', 'Purchased Product:%');
+
+    if (error || !messages || messages.length === 0) return [];
+
+    // 2. Get unique creator IDs and fetch their profiles (including products AND links)
+    const creatorIds = [...new Set(messages.map(m => m.creator_id))];
+    const { data: creators } = await supabase.from('profiles').select('id, display_name, avatar_url, products, links').in('id', creatorIds);
+    if (!creators) return [];
+
+    const products: any[] = [];
+    messages.forEach(msg => {
+        const productName = msg.content.replace('Purchased Product: ', '').trim();
+        const creator = creators.find(c => c.id === msg.creator_id);
+        
+        if (creator) {
+            // Try to find product details in 'products' column OR 'links' column (where dashboard saves them)
+            let productDetails = (creator.products as any[])?.find((p: any) => p.title === productName);
+            
+            if (!productDetails && creator.links) {
+                productDetails = (creator.links as any[]).find((l: any) => l.title === productName && l.type === 'DIGITAL_PRODUCT');
+            }
+
+            if (productDetails) {
+                products.push({
+                    purchaseId: msg.id, 
+                    purchaseDate: msg.created_at, 
+                    creatorName: creator.display_name, 
+                    creatorAvatar: creator.avatar_url,
+                    title: productDetails.title, 
+                    description: productDetails.description || 'Digital Download', 
+                    url: productDetails.url, 
+                    price: msg.amount, 
+                    type: 'DIGITAL_PRODUCT'
+                });
+            }
+        }
+    });
+    return products.sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
+};
+
 // --- MOCK STUBS FOR ANALYTICS (Can remain mock until DB has enough data) ---
 export const getHistoricalStats = (): MonthlyStat[] => MockBackend.getHistoricalStats();
 export const getProAnalytics = async (): Promise<ProAnalyticsData | null> => MockBackend.getProAnalytics();

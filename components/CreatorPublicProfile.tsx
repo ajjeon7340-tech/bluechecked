@@ -1023,6 +1023,17 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                             href={selectedProductLink.url} 
                             target="_blank" 
                             rel="noopener noreferrer"
+                            onClick={(e) => {
+                                if (selectedProductLink.url.startsWith('data:')) {
+                                    e.preventDefault();
+                                    const link = document.createElement('a');
+                                    link.href = selectedProductLink.url;
+                                    link.download = selectedProductLink.title || 'download';
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                }
+                            }}
                             className="w-full bg-slate-900 text-white hover:bg-slate-800 rounded-2xl h-14 font-bold text-lg flex items-center justify-center gap-2 shadow-xl shadow-slate-900/20"
                         >
                             <Download size={20} /> Download File

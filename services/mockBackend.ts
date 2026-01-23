@@ -23,18 +23,16 @@ const INITIAL_CREATOR: CreatorProfile = {
     { id: 'l1', title: 'Join my Discord Community', url: '#', isPromoted: true },
     { id: 'l2', title: 'My VS Code Setup & Theme', url: '#' },
     { id: 'l3', title: 'Weekly Newsletter', url: '#' },
-  ],
-  products: [
-    {
-      id: 'p1',
-      title: 'React Performance Masterclass',
-      description: 'The complete guide to optimizing React apps.',
-      price: 1500, // 1500 Credits
-      imageUrl: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&q=80&w=300',
-      url: '#',
-      buttonText: 'Buy Course'
+    { 
+      id: 'p1', 
+      title: 'React Performance Masterclass', 
+      url: '#', 
+      type: 'DIGITAL_PRODUCT', 
+      price: 1500,
+      isPromoted: false 
     }
   ],
+  products: [],
   likesCount: 124,
   isPremium: false,
   stats: {
@@ -63,12 +61,32 @@ const ADDITIONAL_CREATORS: CreatorProfile[] = [
 ];
 
 // Mock In-Memory DB
-let creatorProfile: CreatorProfile = { ...INITIAL_CREATOR };
-let messages: Message[] = [];
+let creatorProfile: CreatorProfile = (() => {
+    try {
+        const saved = localStorage.getItem('bluechecked_mock_creator_profile');
+        return saved ? JSON.parse(saved) : { ...INITIAL_CREATOR };
+    } catch (e) {
+        return { ...INITIAL_CREATOR };
+    }
+})();
+
+let messages: Message[] = (() => {
+    try {
+        const saved = localStorage.getItem('bluechecked_mock_messages');
+        return saved ? JSON.parse(saved) : [];
+    } catch {
+        return [];
+    }
+})();
+
 let currentUser: CurrentUser | null = null;
 
 // Mock Likes Store: creatorId -> Set of userIds
 const creatorLikes = new Map<string, Set<string>>();
+
+const saveMessages = () => {
+    localStorage.setItem('bluechecked_mock_messages', JSON.stringify(messages));
+};
 
 // Helper to generate random messages
 const generateDemoMessages = () => {
@@ -112,6 +130,7 @@ const generateDemoMessages = () => {
             ]
         }
     ];
+    saveMessages();
 };
 
 generateDemoMessages();
@@ -128,6 +147,7 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
 
 export const updateCreatorProfile = async (profile: CreatorProfile): Promise<CreatorProfile> => {
     creatorProfile = { ...profile };
+    localStorage.setItem('bluechecked_mock_creator_profile', JSON.stringify(creatorProfile));
     return creatorProfile;
 };
 
@@ -164,6 +184,7 @@ export const sendMessage = async (creatorId: string, name: string, email: string
         ]
     };
     messages = [newMessage, ...messages];
+    saveMessages();
     return newMessage;
 };
 
@@ -191,10 +212,12 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
     }
 
     messages[msgIndex] = { ...msg, isRead: false };
+    saveMessages();
 };
 
 export const markMessageAsRead = async (messageId: string): Promise<void> => {
     messages = messages.map(m => m.id === messageId ? { ...m, isRead: true } : m);
+    saveMessages();
 };
 
 export const cancelMessage = async (messageId: string): Promise<void> => {
@@ -206,6 +229,7 @@ export const cancelMessage = async (messageId: string): Promise<void> => {
         }
     }
     messages = messages.map(m => m.id === messageId ? { ...m, status: MessageStatus.CANCELLED } : m);
+    saveMessages();
 };
 
 export const loginUser = async (role: UserRole, identifier: string, method: 'EMAIL' | 'PHONE', name?: string): Promise<CurrentUser> => {
@@ -245,6 +269,74 @@ export const addCredits = async (amount: number): Promise<CurrentUser> => {
     if (!currentUser) throw new Error("No user");
     currentUser.credits += amount;
     return currentUser;
+};
+
+export const uploadProductFile = async (file: any, creatorId: string): Promise<string> => {
+    // Convert to Base64 to persist across reloads in Mock Mode
+    // Note: LocalStorage has size limits (~5MB), so this only works for small files.
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+};
+
+export const getPurchasedProducts = async (): Promise<any[]> => {
+    if (!currentUser) return [];
+
+    // 1. Find messages that look like purchases
+    const purchaseMessages = messages.filter(m => 
+        m.senderEmail === currentUser?.email && 
+        m.content.startsWith('Purchased Product:')
+    );
+
+    const products: any[] = [];
+    
+    // Combine the main mock creator and additional ones
+    const allCreators = [creatorProfile, ...ADDITIONAL_CREATORS];
+
+    purchaseMessages.forEach(msg => {
+        const productName = msg.content.replace('Purchased Product: ', '').trim();
+        const creator = allCreators.find(c => c.id === msg.creatorId);
+        
+        if (creator) {
+             // Check products array
+             let productDetails = creator.products?.find(p => p.title === productName);
+             
+             // Check links array (where dashboard saves new products)
+             if (!productDetails && creator.links) {
+                 const link = creator.links.find(l => l.title === productName && l.type === 'DIGITAL_PRODUCT');
+                 if (link) {
+                     productDetails = {
+                         id: link.id,
+                         title: link.title,
+                         description: 'Digital Download',
+                         url: link.url,
+                         price: link.price || 0,
+                         imageUrl: '',
+                         buttonText: 'Download'
+                     };
+                 }
+             }
+
+             if (productDetails) {
+                 products.push({
+                     purchaseId: msg.id,
+                     purchaseDate: msg.createdAt,
+                     creatorName: creator.displayName,
+                     creatorAvatar: creator.avatarUrl,
+                     title: productDetails.title,
+                     description: productDetails.description || 'Digital Download',
+                     url: productDetails.url,
+                     price: msg.amount,
+                     type: 'DIGITAL_PRODUCT'
+                 });
+             }
+        }
+    });
+
+    return products.sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
 };
 
 export const getHistoricalStats = (): MonthlyStat[] => {
@@ -359,6 +451,7 @@ export const sendFanAppreciation = async (messageId: string, text: string): Prom
     if (currentUser) currentUser.credits -= 50; // Mock tip amount
     
     messages[msgIndex] = { ...msg };
+    saveMessages();
 };
 
 export const getFeaturedCreators = async (): Promise<CreatorProfile[]> => {

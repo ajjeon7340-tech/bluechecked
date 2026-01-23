@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { CurrentUser, Message, MessageStatus, CreatorProfile } from '../types';
 import { Button } from './Button';
-import { CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw } from './Icons';
-import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, isBackendConfigured, subscribeToMessages } from '../services/realBackend';
+import { CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download } from './Icons';
+import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, isBackendConfigured, subscribeToMessages, getPurchasedProducts } from '../services/realBackend';
 
 interface Props {
   currentUser: CurrentUser | null;
@@ -22,6 +22,7 @@ const getResponseTimeTooltip = (status: string) => {
 export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseCreators, onUpdateUser }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [featuredCreators, setFeaturedCreators] = useState<CreatorProfile[]>([]);
+  const [purchasedProducts, setPurchasedProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
   
@@ -107,6 +108,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
     if (currentView === 'EXPLORE') {
         loadCreators();
     }
+    if (currentView === 'PURCHASED') {
+        loadPurchasedProducts();
+    }
   }, [currentView]);
 
   useEffect(() => {
@@ -134,6 +138,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       const creators = await getFeaturedCreators();
       // Force a state update to ensure UI reflects changes
       setFeaturedCreators(creators);
+  };
+
+  const loadPurchasedProducts = async () => {
+      setIsLoading(true);
+      const products = await getPurchasedProducts();
+      setPurchasedProducts(products);
+      setIsLoading(false);
   };
 
   // Group messages for List View (Simulating grouping by Creator)
@@ -585,7 +596,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </button>
                     </div>
                     <div className="mt-3 flex flex-col items-center gap-1">
-                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.2.9</div>
+                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.4.5</div>
                         <div className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${isBackendConfigured() ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                             {isBackendConfigured() ? '● LIVE DB' : '○ MOCK DB'}
                         </div>
@@ -705,10 +716,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                              <button className="px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-full text-xs font-bold hover:bg-slate-50 whitespace-nowrap">Videos</button>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                             {/* Mock Content 1: PDF */}
-                            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col h-full relative">
-                                <ComingSoonOverlay />
+                        {isLoading ? (
+                            <div className="text-center py-20 text-slate-400">Loading library...</div>
+                        ) : purchasedProducts.length > 0 ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {purchasedProducts.map((product, idx) => (
+                                    <div key={idx} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col h-full relative">
                                 <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden flex items-center justify-center p-8 group-hover:bg-indigo-50 transition-colors">
                                      <div className="bg-white shadow-lg p-0 w-24 h-32 rounded-sm border border-slate-200 relative transform group-hover:-rotate-3 transition-transform duration-500 flex items-center justify-center">
                                          <div className="absolute inset-x-2 top-2 bottom-2 border-2 border-dashed border-slate-100"></div>
@@ -719,81 +732,46 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 <div className="p-5 flex flex-col flex-1">
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="w-5 h-5 rounded-full bg-slate-200 overflow-hidden">
-                                            <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=100" alt="Creator" className="w-full h-full object-cover"/>
+                                            <img src={product.creatorAvatar || 'https://via.placeholder.com/100'} alt="Creator" className="w-full h-full object-cover"/>
                                         </div>
-                                        <span className="text-[10px] font-bold text-slate-500">Alex The Dev</span>
+                                        <span className="text-[10px] font-bold text-slate-500">{product.creatorName}</span>
                                     </div>
-                                    <h4 className="font-bold text-slate-900 mb-1 leading-tight">React Performance Cheatsheet</h4>
-                                    <p className="text-xs text-slate-500 mb-4 line-clamp-2 flex-1">A quick reference guide for optimizing render cycles.</p>
+                                    <h4 className="font-bold text-slate-900 mb-1 leading-tight">{product.title}</h4>
+                                    <p className="text-xs text-slate-500 mb-4 line-clamp-2 flex-1">{product.description || 'Digital Download'}</p>
                                     <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
-                                        <span className="text-[10px] text-slate-400">1.2 MB</span>
-                                        <span className="text-xs font-bold text-slate-400">Coming Soon</span>
+                                        <span className="text-[10px] text-slate-400">{new Date(product.purchaseDate).toLocaleDateString()}</span>
+                                        <a 
+                                            href={product.url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
+                                            onClick={(e) => {
+                                                if (product.url.startsWith('data:')) {
+                                                    e.preventDefault();
+                                                    const link = document.createElement('a');
+                                                    link.href = product.url;
+                                                    link.download = product.title || 'download';
+                                                    document.body.appendChild(link);
+                                                    link.click();
+                                                    document.body.removeChild(link);
+                                                }
+                                            }}
+                                        >
+                                            Download <Download size={12}/>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
-
-                             {/* Mock Content 2: Video */}
-                             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col h-full relative">
-                                <ComingSoonOverlay />
-                                <div className="aspect-[4/3] bg-slate-900 relative overflow-hidden group-hover:bg-slate-800 transition-colors">
-                                     <div className="absolute inset-0 flex items-center justify-center">
-                                         <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 group-hover:scale-110 transition-transform">
-                                            <Video size={20} className="text-white fill-white ml-1" />
-                                         </div>
-                                     </div>
-                                      <div className="absolute top-3 right-3 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-white border border-white/10">14:20</div>
-                                </div>
-                                <div className="p-5 flex flex-col flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <div className="w-5 h-5 rounded-full bg-slate-200 overflow-hidden">
-                                            <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=100" alt="Creator" className="w-full h-full object-cover"/>
-                                        </div>
-                                        <span className="text-[10px] font-bold text-slate-500">Alex The Dev</span>
-                                    </div>
-                                    <h4 className="font-bold text-slate-900 mb-1 leading-tight">Career Q&A Session</h4>
-                                    <p className="text-xs text-slate-500 mb-4 line-clamp-2 flex-1">Exclusive recording covering salary negotiation tips.</p>
-                                    <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
-                                        <span className="text-[10px] text-slate-400">Nov 22, 2024</span>
-                                        <span className="text-xs font-bold text-slate-400">Coming Soon</span>
-                                    </div>
-                                </div>
+                                ))}
                             </div>
-
-                            {/* Mock Content 3: Image Collection */}
-                             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col h-full relative">
-                                <ComingSoonOverlay />
-                                <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
-                                    <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=400" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" alt="Cover" />
-                                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                                     <div className="absolute bottom-3 left-3 text-white flex items-center gap-1.5">
-                                         <ImageIcon size={14} /> <span className="text-xs font-bold">5 Photos</span>
-                                     </div>
-                                </div>
-                                <div className="p-5 flex flex-col flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <div className="w-5 h-5 rounded-full bg-slate-200 overflow-hidden">
-                                            <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=100" alt="Creator" className="w-full h-full object-cover"/>
-                                        </div>
-                                        <span className="text-[10px] font-bold text-slate-500">Alex The Dev</span>
-                                    </div>
-                                    <h4 className="font-bold text-slate-900 mb-1 leading-tight">Workspace Setup 2024</h4>
-                                    <p className="text-xs text-slate-500 mb-4 line-clamp-2 flex-1">High-res photos of my desk setup and gear list.</p>
-                                    <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
-                                        <span className="text-[10px] text-slate-400">5 items</span>
-                                        <span className="text-xs font-bold text-slate-400">Coming Soon</span>
-                                    </div>
-                                </div>
+                        ) : (
+                            <div className="text-center py-20 text-slate-400 bg-white rounded-3xl border border-slate-100 shadow-sm">
+                                <ShoppingBag size={48} className="mx-auto mb-4 opacity-20" />
+                                <p className="text-lg font-bold text-slate-500">No purchases yet</p>
+                                <p className="text-sm">Support creators by purchasing their digital products.</p>
                             </div>
+                        )}
 
-                             {/* Empty State Mock */}
-                             <div className="border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center p-8 text-center min-h-[280px] hover:bg-slate-50 transition-colors cursor-pointer group">
-                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
-                                    <Plus size={20} className="text-slate-400 group-hover:text-indigo-500" />
-                                </div>
-                                <p className="text-sm font-bold text-slate-600 mb-1">Browse Marketplace</p>
-                                <p className="text-xs text-slate-400 max-w-[180px]">Find more resources from top creators.</p>
-                             </div>
-                        </div>
                     </div>
                 )}
                 
