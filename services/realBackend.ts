@@ -447,15 +447,24 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
     }
 
     // Check for existing pending request
-    const { data: pendingMessages } = await supabase
-        .from('messages')
-        .select('id')
-        .eq('sender_id', userId)
-        .eq('creator_id', creatorId)
-        .eq('status', 'PENDING');
+    // Skip check if this is a product purchase
+    if (!content.startsWith('Purchased Product:')) {
+        const { data: pendingMessages } = await supabase
+            .from('messages')
+            .select('id, content')
+            .eq('sender_id', userId)
+            .eq('creator_id', creatorId)
+            .eq('status', 'PENDING');
 
-    if (pendingMessages && pendingMessages.length > 0) {
-        throw new Error("You already have a pending request with this creator. Please wait for a reply.");
+        if (pendingMessages && pendingMessages.length > 0) {
+            // Only block if there is a pending REGULAR message. 
+            // Pending product purchases should not block new regular messages.
+            const hasPendingRegularMessage = pendingMessages.some(m => !m.content || !m.content.startsWith('Purchased Product:'));
+            
+            if (hasPendingRegularMessage) {
+                throw new Error("You already have a pending request with this creator. Please wait for a reply.");
+            }
+        }
     }
 
     // 2. Get Creator
