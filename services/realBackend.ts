@@ -638,7 +638,8 @@ export const getPurchasedProducts = async (): Promise<any[]> => {
     if (!creators) return [];
 
     const products: any[] = [];
-    messages.forEach(msg => {
+    
+    for (const msg of messages) {
         const productName = msg.content.replace('Purchased Product: ', '').trim();
         const creator = creators.find(c => c.id === msg.creator_id);
         
@@ -683,7 +684,7 @@ export const getPurchasedProducts = async (): Promise<any[]> => {
                 });
             }
         }
-    });
+    }
     return products.sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
 };
 
