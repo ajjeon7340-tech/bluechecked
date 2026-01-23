@@ -652,25 +652,6 @@ export const getPurchasedProducts = async (): Promise<any[]> => {
             }
 
             if (productDetails) {
-                // FIX: Generate Signed URL if it's a Supabase Storage URL
-                // This ensures downloads work even if the bucket is accidentally set to Private
-                let downloadUrl = productDetails.url;
-                if (downloadUrl && downloadUrl.includes('/storage/v1/object/public/products/')) {
-                    try {
-                        // Extract path: .../products/<path>
-                        const path = downloadUrl.split('/products/')[1];
-                        if (path) {
-                            // Generate signed URL valid for 1 hour
-                            const { data: signedData } = await supabase.storage.from('products').createSignedUrl(path, 3600);
-                            if (signedData?.signedUrl) {
-                                downloadUrl = signedData.signedUrl;
-                            }
-                        }
-                    } catch (e) {
-                        console.warn("Failed to sign URL", e);
-                    }
-                }
-
                 products.push({
                     purchaseId: msg.id, 
                     purchaseDate: msg.created_at, 
@@ -678,7 +659,7 @@ export const getPurchasedProducts = async (): Promise<any[]> => {
                     creatorAvatar: creator.avatar_url,
                     title: productDetails.title, 
                     description: productDetails.description || 'Digital Download', 
-                    url: downloadUrl, 
+                    url: productDetails.url, // Store original URL, signed URL generated on demand
                     price: msg.amount, 
                     type: 'DIGITAL_PRODUCT'
                 });
@@ -686,6 +667,49 @@ export const getPurchasedProducts = async (): Promise<any[]> => {
         }
     }
     return products.sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
+};
+
+export const getSecureDownloadUrl = async (productId: string, productUrl: string, creatorId: string): Promise<string> => {
+    if (!isConfigured) {
+        // In mock mode, the URL is already a Base64 Data URL, so it's directly usable
+        return MockBackend.getSecureDownloadUrl(productId, productUrl, creatorId);
+    }
+
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) throw new Error("Must be logged in to download.");
+    const userId = session.session.user.id;
+
+    // 1. Verify purchase record
+    const { count, error: purchaseError } = await supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('sender_id', userId)
+        .eq('creator_id', creatorId)
+        .ilike('content', `Purchased Product: ${productId}`); // Use product title as ID for simplicity
+
+    if (purchaseError) throw purchaseError;
+    if (count === 0) throw new Error("Purchase not found or not authorized.");
+
+    // 2. Generate Signed URL for Supabase Storage file
+    if (productUrl && productUrl.includes('/storage/v1/object/public/products/')) {
+        try {
+            const path = productUrl.split('/products/')[1];
+            if (path) {
+                // Generate signed URL valid for 5 minutes
+                const { data: signedData, error: signedError } = await supabase.storage.from('products').createSignedUrl(path, 300); // 300 seconds = 5 minutes
+                if (signedError) throw signedError;
+                if (signedData?.signedUrl) {
+                    return signedData.signedUrl;
+                }
+            }
+        } catch (e) {
+            console.error("Failed to generate signed URL:", e);
+            throw new Error("Failed to generate secure download link.");
+        }
+    }
+    
+    // If it's not a Supabase Storage URL, or signing failed, return original URL (e.g., external link)
+    return productUrl;
 };
 
 // --- MOCK STUBS FOR ANALYTICS (Can remain mock until DB has enough data) ---

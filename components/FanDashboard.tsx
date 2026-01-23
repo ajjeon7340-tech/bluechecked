@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { CurrentUser, Message, MessageStatus, CreatorProfile } from '../types';
 import { Button } from './Button';
 import { CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download } from './Icons';
-import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, isBackendConfigured, subscribeToMessages, getPurchasedProducts } from '../services/realBackend';
+import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl } from '../services/realBackend';
 
 interface Props {
   currentUser: CurrentUser | null;
@@ -596,7 +596,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </button>
                     </div>
                     <div className="mt-3 flex flex-col items-center gap-1">
-                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.4.9</div>
+                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.5.1</div>
                         <div className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${isBackendConfigured() ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                             {isBackendConfigured() ? '● LIVE DB' : '○ MOCK DB'}
                         </div>
@@ -740,25 +740,30 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     <p className="text-xs text-slate-500 mb-4 line-clamp-2 flex-1">{product.description || 'Digital Download'}</p>
                                     <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
                                         <span className="text-[10px] text-slate-400">{new Date(product.purchaseDate).toLocaleDateString()}</span>
-                                        <a 
-                                            href={product.url} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer" 
+                                        <button 
                                             className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
-                                            onClick={(e) => {
-                                                if (product.url.startsWith('data:')) {
-                                                    e.preventDefault();
-                                                    const link = document.createElement('a');
-                                                    link.href = product.url;
-                                                    link.download = product.title || 'download';
-                                                    document.body.appendChild(link);
-                                                    link.click();
-                                                    document.body.removeChild(link);
+                                            onClick={async (e) => {
+                                                e.preventDefault();
+                                                try {
+                                                    const secureUrl = await getSecureDownloadUrl(product.title, product.url, product.creatorId);
+                                                    if (secureUrl) {
+                                                        const link = document.createElement('a');
+                                                        link.href = secureUrl;
+                                                        link.download = product.title || 'download'; // Suggest filename
+                                                        document.body.appendChild(link);
+                                                        link.click();
+                                                        document.body.removeChild(link);
+                                                    } else {
+                                                        alert("Failed to get download link.");
+                                                    }
+                                                } catch (error: any) {
+                                                    console.error("Download failed:", error);
+                                                    alert(error.message || "Failed to download file. Please try again.");
                                                 }
                                             }}
                                         >
                                             Download <Download size={12}/>
-                                        </a>
+                                        </button>
                                     </div>
                                 </div>
                             </div>

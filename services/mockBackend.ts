@@ -339,6 +339,11 @@ export const getPurchasedProducts = async (): Promise<any[]> => {
     return products.sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
 };
 
+export const getSecureDownloadUrl = async (productId: string, productUrl: string, creatorId: string): Promise<string> => {
+    // In mock mode, the URL is already a Base64 Data URL or external, so it's directly usable
+    return productUrl;
+};
+
 export const getHistoricalStats = (): MonthlyStat[] => {
     return [
         { month: 'Jul', earnings: 15000, views: 12000, messages: 150 },
