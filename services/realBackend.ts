@@ -651,6 +651,25 @@ export const getPurchasedProducts = async (): Promise<any[]> => {
             }
 
             if (productDetails) {
+                // FIX: Generate Signed URL if it's a Supabase Storage URL
+                // This ensures downloads work even if the bucket is accidentally set to Private
+                let downloadUrl = productDetails.url;
+                if (downloadUrl && downloadUrl.includes('/storage/v1/object/public/products/')) {
+                    try {
+                        // Extract path: .../products/<path>
+                        const path = downloadUrl.split('/products/')[1];
+                        if (path) {
+                            // Generate signed URL valid for 1 hour
+                            const { data: signedData } = await supabase.storage.from('products').createSignedUrl(path, 3600);
+                            if (signedData?.signedUrl) {
+                                downloadUrl = signedData.signedUrl;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("Failed to sign URL", e);
+                    }
+                }
+
                 products.push({
                     purchaseId: msg.id, 
                     purchaseDate: msg.created_at, 
@@ -658,7 +677,7 @@ export const getPurchasedProducts = async (): Promise<any[]> => {
                     creatorAvatar: creator.avatar_url,
                     title: productDetails.title, 
                     description: productDetails.description || 'Digital Download', 
-                    url: productDetails.url, 
+                    url: downloadUrl, 
                     price: msg.amount, 
                     type: 'DIGITAL_PRODUCT'
                 });

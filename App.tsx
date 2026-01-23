@@ -51,7 +51,7 @@ function App() {
   };
 
   useEffect(() => {
-    console.log("Bluechecked App Version: 3.4.6");
+    console.log("Bluechecked App Version: 3.4.8");
     console.log("Backend Connection:", isBackendConfigured() ? "✅ Connected to Supabase" : "⚠️ Using Mock Data");
     loadCreatorData();
     

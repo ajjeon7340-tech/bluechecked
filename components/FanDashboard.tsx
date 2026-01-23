@@ -596,7 +596,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </button>
                     </div>
                     <div className="mt-3 flex flex-col items-center gap-1">
-                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.4.6</div>
+                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.4.8</div>
                         <div className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${isBackendConfigured() ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                             {isBackendConfigured() ? '● LIVE DB' : '○ MOCK DB'}
                         </div>
@@ -934,17 +934,21 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     <tbody className="divide-y divide-slate-100">
                                         {messages.map(msg => {
                                             const isRefunded = msg.status === MessageStatus.EXPIRED || msg.status === MessageStatus.CANCELLED;
+                                            const isProduct = msg.content.startsWith('Purchased Product:');
+
                                             return (
                                                 <tr key={msg.id} className="hover:bg-slate-50 transition-colors group">
                                                     <td className="px-6 py-4 text-slate-500 font-mono text-xs">{new Date(msg.createdAt).toLocaleDateString()}</td>
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
-                                                                <User size={14} />
+                                                                {isProduct ? <FileText size={14} /> : <User size={14} />}
                                                             </div>
                                                             <div>
-                                                                <div className="font-bold text-slate-900 text-sm">Priority DM Request</div>
-                                                                <div className="text-xs text-slate-400 truncate max-w-[200px]">{msg.content}</div>
+                                                                <div className="font-bold text-slate-900 text-sm">
+                                                                    {isProduct ? 'Digital Content Purchase' : 'Priority DM Request'}
+                                                                </div>
+                                                                <div className="text-xs text-slate-400 truncate max-w-[200px]">{isProduct ? msg.content.replace('Purchased Product: ', '') : msg.content}</div>
                                                             </div>
                                                         </div>
                                                     </td>
