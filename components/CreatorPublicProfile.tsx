@@ -622,12 +622,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         <button 
                             onClick={currentUser ? handleOpenModal : onLoginRequest}
                             disabled={isCustomizeMode}
-                            className="bg-slate-900 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-indigo-600 transition-colors shadow-lg shadow-slate-900/10 flex items-center gap-2 whitespace-nowrap"
+                            className="bg-blue-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-2 whitespace-nowrap"
                         >
                             {isCustomizeMode ? (
                                 <>Preview <ArrowRight size={12} className="opacity-50"/></>
                             ) : (
-                                <>Request <span className="opacity-30">|</span> <Coins size={12} /> {creator.pricePerMessage}</>
+                                <><Coins size={12} /> {creator.pricePerMessage}</>
                             )}
                         </button>
                     </div>

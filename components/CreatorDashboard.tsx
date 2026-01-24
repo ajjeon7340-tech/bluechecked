@@ -21,7 +21,7 @@ interface Props {
   onRefreshData: () => Promise<void>;
 }
 
-type DashboardView = 'OVERVIEW' | 'INBOX' | 'FINANCE' | 'ANALYTICS' | 'STATISTICS' | 'SETTINGS';
+type DashboardView = 'OVERVIEW' | 'INBOX' | 'FINANCE' | 'ANALYTICS' | 'STATISTICS' | 'SETTINGS' | 'NOTIFICATIONS';
 type InboxFilter = 'ALL' | 'PENDING' | 'REPLIED' | 'REJECTED';
 
 const SUPPORTED_PLATFORMS = [
@@ -108,6 +108,83 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const fileInputRef = useRef<HTMLInputElement>(null);
   const productFileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingProduct, setIsUploadingProduct] = useState(false);
+
+  const [deletedNotificationIds, setDeletedNotificationIds] = useState<string[]>(() => {
+      try {
+          const saved = localStorage.getItem('bluechecked_creator_deleted_notifications');
+          return saved ? JSON.parse(saved) : [];
+      } catch {
+          return [];
+      }
+  });
+
+  useEffect(() => {
+      localStorage.setItem('bluechecked_creator_deleted_notifications', JSON.stringify(deletedNotificationIds));
+  }, [deletedNotificationIds]);
+
+  const notifications = useMemo(() => {
+      const list: { id: string, icon: any, text: string, time: Date, color: string }[] = [];
+      
+      messages.forEach(msg => {
+          // Only incoming messages (where I am creator)
+          if (msg.creatorId !== creator.id) return;
+
+          const isProduct = msg.content.startsWith('Purchased Product:');
+          
+          // 1. New Request
+          if (msg.status === MessageStatus.PENDING && !isProduct) {
+              list.push({
+                  id: `req-${msg.id}`,
+                  icon: MessageSquare,
+                  text: `New request from ${msg.senderName}`,
+                  time: new Date(msg.createdAt),
+                  color: 'bg-blue-100 text-blue-600'
+              });
+          }
+
+          // 2. Product Purchased
+          if (isProduct) {
+               const productName = msg.content.replace('Purchased Product: ', '');
+               list.push({
+                  id: `sale-${msg.id}`,
+                  icon: ShoppingBag,
+                  text: `${msg.senderName} purchased ${productName}`,
+                  time: new Date(msg.createdAt),
+                  color: 'bg-purple-100 text-purple-600'
+              });
+          }
+          
+          // 3. Tips (Fan Appreciation)
+          msg.conversation.forEach(chat => {
+              if (chat.role === 'FAN' && chat.content.startsWith('Fan Appreciation:')) {
+                  list.push({
+                      id: `tip-${chat.id}`,
+                      icon: Heart,
+                      text: `${msg.senderName} sent a tip!`,
+                      time: new Date(chat.timestamp),
+                      color: 'bg-pink-100 text-pink-600'
+                  });
+              }
+          });
+      });
+
+      return list
+        .filter(n => !deletedNotificationIds.includes(n.id))
+        .sort((a, b) => b.time.getTime() - a.time.getTime());
+  }, [messages, creator.id, deletedNotificationIds]);
+
+  const handleDeleteNotification = (e: React.MouseEvent, id: string) => {
+      e.stopPropagation();
+      setDeletedNotificationIds(prev => [...prev, id]);
+  };
+
+  const handleClearAllNotifications = () => {
+      if (notifications.length === 0) return;
+      if (window.confirm("Are you sure you want to clear all notifications?")) {
+          const allIds = notifications.map(n => n.id);
+          setDeletedNotificationIds(prev => [...prev, ...allIds]);
+      }
+  };
 
   useEffect(() => {
     loadData();
@@ -223,6 +300,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       const groups: Record<string, { senderEmail: string, senderName: string, latestMessage: Message, messageCount: number }> = {};
       
       incomingMessages.forEach(msg => {
+          if (msg.content.startsWith('Purchased Product:')) return;
+
           const email = msg.senderEmail;
           if (!groups[email]) {
               groups[email] = { senderEmail: email, senderName: msg.senderName, latestMessage: msg, messageCount: 0 };
@@ -240,14 +319,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       .filter(m => m.status === MessageStatus.REPLIED)
       .reduce((sum, m) => sum + m.amount, 0);
     
-    const pendingCount = incomingMessages.filter(m => m.status === MessageStatus.PENDING).length;
-    const repliedCount = incomingMessages.filter(m => m.status === MessageStatus.REPLIED).length;
-    const expiredCount = incomingMessages.filter(m => m.status === MessageStatus.EXPIRED).length;
+    // Filter out products for message metrics
+    const messageOnly = incomingMessages.filter(m => !m.content.startsWith('Purchased Product:'));
+
+    const pendingCount = messageOnly.filter(m => m.status === MessageStatus.PENDING).length;
+    const repliedCount = messageOnly.filter(m => m.status === MessageStatus.REPLIED).length;
+    const expiredCount = messageOnly.filter(m => m.status === MessageStatus.EXPIRED).length;
     const totalProcessed = repliedCount + expiredCount;
     const responseRate = totalProcessed === 0 ? 100 : Math.round((repliedCount / totalProcessed) * 100);
 
     // Calculate Avg Response Time
-    const repliedMessages = incomingMessages.filter(m => m.status === MessageStatus.REPLIED && m.replyAt);
+    const repliedMessages = messageOnly.filter(m => m.status === MessageStatus.REPLIED && m.replyAt);
     let avgResponseTime = 'N/A';
     if (repliedMessages.length > 0) {
         const totalTimeMs = repliedMessages.reduce((acc, m) => acc + (new Date(m.replyAt!).getTime() - new Date(m.createdAt).getTime()), 0);
@@ -302,7 +384,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const threadMessages = useMemo(() => {
       if (!selectedSenderEmail) return [];
       return incomingMessages
-          .filter(m => m.senderEmail === selectedSenderEmail)
+          .filter(m => m.senderEmail === selectedSenderEmail && !m.content.startsWith('Purchased Product:'))
           .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }, [incomingMessages, selectedSenderEmail]);
 
@@ -641,6 +723,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <SidebarItem icon={Home} label="Overview" view="OVERVIEW" />
                 <SidebarItem icon={Users} label="Inbox" view="INBOX" badge={stats.pendingCount > 0 ? stats.pendingCount : undefined} />
                 <SidebarItem icon={Wallet} label="Finance" view="FINANCE" />
+                <SidebarItem icon={Bell} label="Notifications" view="NOTIFICATIONS" badge={notifications.length > 0 ? notifications.length : undefined} />
                 <SidebarItem icon={TrendingUp} label="Analytics" view="ANALYTICS" />
                 <SidebarItem icon={PieIcon} label="Statistics" view="STATISTICS" />
                 
@@ -1852,6 +1935,48 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                         <div className="mt-8 flex justify-end">
                             <Button onClick={handleSaveProfile} isLoading={isSavingProfile}>Save Changes</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- VIEW: NOTIFICATIONS --- */}
+            {currentView === 'NOTIFICATIONS' && (
+                <div className="p-6 max-w-3xl mx-auto animate-in fade-in">
+                    <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs text-slate-500">{notifications.length} items</span>
+                                {notifications.length > 0 && (
+                                    <button 
+                                        onClick={handleClearAllNotifications}
+                                        className="text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors flex items-center gap-1"
+                                    >
+                                        <Trash size={12} /> Clear All
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                        <div className="divide-y divide-slate-100">
+                            {notifications.length === 0 ? (
+                                <div className="p-12 text-center text-slate-400 text-sm">No notifications yet.</div>
+                            ) : (
+                                notifications.map(notif => (
+                                    <div key={notif.id} className="px-6 py-4 hover:bg-slate-50 transition-colors flex gap-4 group relative">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
+                                            <notif.icon size={18} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-sm text-slate-900 font-medium mb-1">{notif.text}</p>
+                                            <p className="text-xs text-slate-500">{notif.time.toLocaleString()}</p>
+                                        </div>
+                                        <button onClick={(e) => handleDeleteNotification(e, notif.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2">
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>

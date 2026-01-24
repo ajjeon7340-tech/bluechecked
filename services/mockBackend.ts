@@ -166,6 +166,8 @@ export const sendMessage = async (creatorId: string, name: string, email: string
         currentUser.credits -= amount;
     }
 
+    const isProductPurchase = content.startsWith('Purchased Product:');
+
     const newMessage: Message = {
         id: `m${Date.now()}`,
         creatorId: creatorId,
@@ -177,8 +179,9 @@ export const sendMessage = async (creatorId: string, name: string, email: string
         amount,
         createdAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 172800000).toISOString(),
-        status: MessageStatus.PENDING,
-        isRead: false,
+        status: isProductPurchase ? MessageStatus.REPLIED : MessageStatus.PENDING,
+        isRead: isProductPurchase,
+        replyAt: isProductPurchase ? new Date().toISOString() : undefined,
         conversation: [
             { id: `c${Date.now()}`, role: 'FAN', content, timestamp: new Date().toISOString() }
         ]

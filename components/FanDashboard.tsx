@@ -28,7 +28,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   
   // Navigation State
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [currentView, setCurrentView] = useState<'OVERVIEW' | 'EXPLORE' | 'SETTINGS' | 'PURCHASED' | 'HISTORY' | 'SUPPORT'>('OVERVIEW');
+  const [currentView, setCurrentView] = useState<'OVERVIEW' | 'EXPLORE' | 'SETTINGS' | 'PURCHASED' | 'HISTORY' | 'SUPPORT' | 'NOTIFICATIONS'>('OVERVIEW');
 
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -154,6 +154,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       const groups: Record<string, { creatorId: string, creatorName: string, creatorAvatarUrl?: string, latestMessage: Message, messageCount: number }> = {};
       
       messages.forEach(msg => {
+          if (msg.content.startsWith('Purchased Product:')) return;
+
           const cId = msg.creatorId || 'unknown';
           if (!groups[cId]) {
               groups[cId] = {
@@ -213,7 +215,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const threadMessages = useMemo(() => {
       if (!selectedCreatorId) return [];
       return messages
-        .filter(m => m.creatorId === selectedCreatorId)
+        .filter(m => m.creatorId === selectedCreatorId && !m.content.startsWith('Purchased Product:'))
         .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }, [messages, selectedCreatorId]);
 
@@ -425,6 +427,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       });
 
       messages.forEach(msg => {
+          const isProduct = msg.content.startsWith('Purchased Product:');
+
           // 1. Sent Request
           list.push({
               id: `sent-${msg.id}`,
@@ -435,7 +439,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           });
 
           // 2. Reply Received
-          if (msg.status === MessageStatus.REPLIED && msg.replyAt) {
+          if (msg.status === MessageStatus.REPLIED && msg.replyAt && !isProduct) {
               list.push({
                   id: `reply-${msg.id}`,
                   icon: MessageSquare,
@@ -466,6 +470,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                   color: 'bg-red-100 text-red-600'
               });
           }
+
+          // 5. Product Purchased
+          if (isProduct) {
+               const productName = msg.content.replace('Purchased Product: ', '');
+               list.push({
+                  id: `purch-${msg.id}`,
+                  icon: ShoppingBag,
+                  text: `You purchased ${productName}`,
+                  time: new Date(msg.createdAt),
+                  color: 'bg-purple-100 text-purple-600'
+              });
+          }
       });
 
       return list
@@ -478,6 +494,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       setDeletedNotificationIds(prev => [...prev, id]);
   };
 
+  const handleClearAllNotifications = () => {
+      if (notifications.length === 0) return;
+      if (window.confirm("Are you sure you want to clear all notifications?")) {
+          const allIds = notifications.map(n => n.id);
+          setDeletedNotificationIds(prev => [...prev, ...allIds]);
+      }
+  };
+
   const getPageTitle = () => {
       if (selectedCreatorId) return 'Conversation';
       switch (currentView) {
@@ -487,6 +511,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           case 'HISTORY': return 'Purchase History';
           case 'SUPPORT': return 'Support';
           case 'SETTINGS': return 'Profile Settings';
+          case 'NOTIFICATIONS': return 'Notifications';
           default: return 'Dashboard';
       }
   };
@@ -507,7 +532,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   };
 
   // Sidebar Item Component
-  const SidebarItem = ({ icon: Icon, label, view, isBeta, onClick }: { icon: any, label: string, view?: 'OVERVIEW' | 'EXPLORE' | 'SETTINGS' | 'PURCHASED' | 'HISTORY' | 'SUPPORT', isBeta?: boolean, onClick?: () => void }) => (
+  const SidebarItem = ({ icon: Icon, label, view, isBeta, onClick }: { icon: any, label: string, view?: 'OVERVIEW' | 'EXPLORE' | 'SETTINGS' | 'PURCHASED' | 'HISTORY' | 'SUPPORT' | 'NOTIFICATIONS', isBeta?: boolean, onClick?: () => void }) => (
     <button 
       onClick={() => { 
           if (onClick) {
@@ -572,6 +597,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                     <SidebarItem icon={Home} label="Conversations" view="OVERVIEW" />
                     <SidebarItem icon={Search} label="Explore Creators" view="EXPLORE" />
                     <SidebarItem icon={ShoppingBag} label="Purchased" view="PURCHASED" isBeta={true} />
+                    <SidebarItem icon={Bell} label="Notifications" view="NOTIFICATIONS" />
                     {/* Wallet now acts as a trigger for the modal, not a separate view */}
                     <SidebarItem icon={Wallet} label="My Wallet" onClick={() => setShowTopUpModal(true)} />
                     <SidebarItem icon={Receipt} label="Purchase History" view="HISTORY" />
@@ -596,7 +622,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </button>
                     </div>
                     <div className="mt-3 flex flex-col items-center gap-1">
-                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.5.1</div>
+                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.5.8</div>
                         <div className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${isBackendConfigured() ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                             {isBackendConfigured() ? '● LIVE DB' : '○ MOCK DB'}
                         </div>
@@ -1486,6 +1512,48 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             )}
                         </div>
                      </div>
+                )}
+
+                {/* --- VIEW: NOTIFICATIONS --- */}
+                {currentView === 'NOTIFICATIONS' && (
+                    <div className="p-6 max-w-3xl mx-auto animate-in fade-in">
+                        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-slate-900">All Notifications</h3>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs text-slate-500">{notifications.length} items</span>
+                                    {notifications.length > 0 && (
+                                        <button 
+                                            onClick={handleClearAllNotifications}
+                                            className="text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors flex items-center gap-1"
+                                        >
+                                            <Trash size={12} /> Clear All
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="divide-y divide-slate-100">
+                                {notifications.length === 0 ? (
+                                    <div className="p-12 text-center text-slate-400 text-sm">No notifications yet.</div>
+                                ) : (
+                                    notifications.map(notif => (
+                                        <div key={notif.id} className="px-6 py-4 hover:bg-slate-50 transition-colors flex gap-4 group relative">
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
+                                                <notif.icon size={18} />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-sm text-slate-900 font-medium mb-1">{notif.text}</p>
+                                                <p className="text-xs text-slate-500">{notif.time.toLocaleString()}</p>
+                                            </div>
+                                            <button onClick={(e) => handleDeleteNotification(e, notif.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2">
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
         </main>

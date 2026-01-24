@@ -439,6 +439,7 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
     if (!session.session) throw new Error("Must be logged in");
     
     const userId = session.session.user.id;
+    const isProductPurchase = content.startsWith('Purchased Product:');
 
     // 1. Check Balance
     const { data: profile } = await supabase.from('profiles').select('credits').eq('id', userId).single();
@@ -448,7 +449,7 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
 
     // Check for existing pending request
     // Skip check if this is a product purchase
-    if (!content.startsWith('Purchased Product:')) {
+    if (!isProductPurchase) {
         const { data: pendingMessages } = await supabase
             .from('messages')
             .select('id, content')
@@ -476,6 +477,14 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
     // A. Deduct Credits
     await supabase.from('profiles').update({ credits: profile.credits - amount }).eq('id', userId);
 
+    // If product purchase, immediately transfer credits to creator (since it's instant delivery)
+    if (isProductPurchase) {
+         const { data: creator } = await supabase.from('profiles').select('credits').eq('id', creatorId).single();
+         if (creator) {
+             await supabase.from('profiles').update({ credits: creator.credits + amount }).eq('id', creatorId);
+         }
+    }
+
     // B. Create Message
     const { data: message, error: msgError } = await supabase
         .from('messages')
@@ -484,9 +493,11 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
             creator_id: creatorId,
             content: content,
             amount: amount,
-            status: 'PENDING',
+            status: isProductPurchase ? 'REPLIED' : 'PENDING',
             attachment_url: attachmentUrl,
-            expires_at: new Date(Date.now() + (responseWindow * 3600000)).toISOString()
+            expires_at: new Date(Date.now() + (responseWindow * 3600000)).toISOString(),
+            reply_at: isProductPurchase ? new Date().toISOString() : null,
+            is_read: isProductPurchase // Mark as read if product purchase
         })
         .select()
         .single();
