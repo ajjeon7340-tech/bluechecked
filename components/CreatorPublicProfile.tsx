@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { CreatorProfile, CurrentUser, AffiliateLink, Product } from '../types';
 import { CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share } from './Icons';
 import { Button } from './Button';
-import { sendMessage, updateCreatorProfile, addCredits, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus } from '../services/realBackend';
+import { sendMessage, updateCreatorProfile, addCredits, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus, getSecureDownloadUrl } from '../services/realBackend';
 
 interface Props {
   creator: CreatorProfile;
@@ -108,16 +108,23 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
   const handleTopUp = async () => {
       setIsSubmitting(true);
-      await new Promise(r => setTimeout(r, 1500));
-      await addCredits(topUpAmount);
-      setIsSubmitting(false);
-      // Return to previous flow
-      if (selectedProductLink) {
-          setStep('product_payment');
-      } else {
-          setStep('payment');
+      try {
+          await new Promise(r => setTimeout(r, 1500));
+          await addCredits(topUpAmount);
+          await onRefreshData(); // Wait for parent to update currentUser balance
+          
+          setIsSubmitting(false);
+          // Return to previous flow
+          if (selectedProductLink) {
+              setStep('product_payment');
+          } else {
+              setStep('payment');
+          }
+      } catch (e) {
+          console.error(e);
+          setIsSubmitting(false);
+          alert("Failed to top up credits. Please try again.");
       }
-      onRefreshData(); // Refresh to update current user credit balance
   };
 
   const handleSend = async () => {

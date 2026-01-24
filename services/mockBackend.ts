@@ -164,6 +164,7 @@ export const sendMessage = async (creatorId: string, name: string, email: string
         }
         // Deduct credits
         currentUser.credits -= amount;
+        localStorage.setItem('bluechecked_current_user', JSON.stringify(currentUser));
     }
 
     const isProductPurchase = content.startsWith('Purchased Product:');
@@ -271,6 +272,7 @@ export const updateCurrentUser = async (user: CurrentUser): Promise<void> => {
 export const addCredits = async (amount: number): Promise<CurrentUser> => {
     if (!currentUser) throw new Error("No user");
     currentUser.credits += amount;
+    localStorage.setItem('bluechecked_current_user', JSON.stringify(currentUser));
     return currentUser;
 };
 
