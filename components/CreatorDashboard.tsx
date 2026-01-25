@@ -9,6 +9,7 @@ import {
   Home, BarChart3, Wallet, Users, Bell, Search, Menu, ChevronDown, Ban, Check,
   Heart, Star, Eye, TrendingUp, MessageSquare, ArrowRight, Lock, 
   InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Download, ShoppingBag, FileText, PieChart as PieIcon, LayoutGrid, MonitorPlay, Link as LinkIcon, Calendar, ChevronRight, Coins, CreditCard
+  , MousePointerClick
 } from './Icons';
 import { Button } from './Button';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid, PieChart, Pie, Cell, Legend, ComposedChart, Line } from 'recharts';
@@ -21,7 +22,7 @@ interface Props {
   onRefreshData: () => Promise<void>;
 }
 
-type DashboardView = 'OVERVIEW' | 'INBOX' | 'FINANCE' | 'ANALYTICS' | 'STATISTICS' | 'SETTINGS' | 'NOTIFICATIONS';
+type DashboardView = 'OVERVIEW' | 'INBOX' | 'FINANCE' | 'ANALYTICS' | 'STATISTICS' | 'SETTINGS' | 'NOTIFICATIONS' | 'REVIEWS';
 type InboxFilter = 'ALL' | 'PENDING' | 'REPLIED' | 'REJECTED';
 
 const SUPPORTED_PLATFORMS = [
@@ -58,6 +59,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [selectedSenderEmail, setSelectedSenderEmail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [historicalStats, setHistoricalStats] = useState<MonthlyStat[]>([]);
   
   // Analytics State
   const [proData, setProData] = useState<ProAnalyticsData | null>(null);
@@ -228,6 +230,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     if (!silent) setIsLoading(true);
     const msgs = await getMessages();
     setMessages(msgs);
+
+    const history = await getHistoricalStats();
+    setHistoricalStats(history);
+
     // If we have a selected message, update it with fresh data
     // If we have a selected sender, refresh their thread implicitly by updating 'messages'
     if (selectedSenderEmail) {
@@ -287,9 +293,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       }
   };
 
-  // Memoize mock data to prevent chart flickering on re-renders
-  const historicalStats = useMemo(() => getHistoricalStats(), []);
-
   // Filter messages to only show incoming requests (where I am the creator)
   const incomingMessages = useMemo(() => messages.filter(m => m.creatorId === creator.id), [messages, creator.id]);
 
@@ -313,6 +316,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       });
       return Object.values(groups).sort((a, b) => new Date(b.latestMessage.createdAt).getTime() - new Date(a.latestMessage.createdAt).getTime());
   }, [incomingMessages]);
+
+  const reviews = useMemo(() => {
+      return messages
+          .filter(m => m.rating && m.rating > 0)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [messages]);
 
   const stats = useMemo((): DashboardStats => {
     const totalEarnings = incomingMessages
@@ -724,6 +733,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <SidebarItem icon={Users} label="Inbox" view="INBOX" badge={stats.pendingCount > 0 ? stats.pendingCount : undefined} />
                 <SidebarItem icon={Wallet} label="Finance" view="FINANCE" />
                 <SidebarItem icon={Bell} label="Notifications" view="NOTIFICATIONS" badge={notifications.length > 0 ? notifications.length : undefined} />
+                <SidebarItem icon={Star} label="Reviews" view="REVIEWS" />
                 <SidebarItem icon={TrendingUp} label="Analytics" view="ANALYTICS" />
                 <SidebarItem icon={PieIcon} label="Statistics" view="STATISTICS" />
                 
@@ -853,14 +863,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         </div>
                     </div>
                     {/* ... Charts ... */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="md:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden">
-                            <h3 className="font-bold text-slate-900 mb-6 flex items-center justify-between">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden h-96 flex flex-col">
+                            <h3 className="font-bold text-slate-900 mb-6 flex items-center justify-between flex-shrink-0">
                                 <span>Credit Trend</span>
                                 <span className="text-xs font-normal text-slate-400 bg-slate-50 px-2 py-1 rounded">Last 6 Months</span>
                             </h3>
                             
-                            <div className={`h-64 ${!creator.isPremium ? 'blur-sm select-none opacity-50' : ''}`}>
+                            <div className={`flex-1 w-full min-h-0 ${!creator.isPremium ? 'blur-sm select-none opacity-50' : ''}`}>
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={stats.monthlyStats}>
                                         <defs>
@@ -902,12 +912,39 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     </button>
                                 </div>
                             )}
-                             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-                                <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Recent Review</div>
-                                <div className="flex gap-1 mb-2">
-                                     {[1,2,3,4,5].map(i => <Star key={i} size={14} className="fill-yellow-400 text-yellow-400"/>)}
+                             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col h-96">
+                                <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-50 flex-shrink-0">
+                                    <div className="text-slate-400 text-xs font-bold uppercase tracking-wider">Recent Reviews ({reviews.length})</div>
+                                    <div className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{reviews.length}</div>
                                 </div>
-                                <p className="text-sm italic text-slate-600">"Super helpful advice on my React architecture. Worth every penny!"</p>
+                                
+                                <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+                                    {reviews.length === 0 ? (
+                                        <div className="text-center py-6">
+                                            <Star size={24} className="mx-auto text-slate-200 mb-2" />
+                                            <p className="text-xs text-slate-400">No reviews yet.</p>
+                                        </div>
+                                    ) : (
+                                        reviews.map(review => (
+                                            <div key={review.id} className="group">
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <span className="font-bold text-slate-900 text-xs">{review.senderName}</span>
+                                                    <span className="text-[10px] text-slate-400">{new Date(review.createdAt).toLocaleDateString()}</span>
+                                                </div>
+                                                <div className="flex gap-0.5 mb-2">
+                                                        {[1,2,3,4,5].map(i => (
+                                                            <Star key={i} size={10} className={`${(review.rating || 0) >= i ? "fill-yellow-400 text-yellow-400" : "text-slate-200"}`}/>
+                                                        ))}
+                                                </div>
+                                                <div className="bg-slate-50 p-2 rounded-lg">
+                                                    <p className="text-[10px] text-slate-500 line-clamp-2 italic">
+                                                        "{review.content}"
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1165,15 +1202,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             {currentView === 'ANALYTICS' && (
                 <div className="max-w-6xl mx-auto animate-in fade-in relative min-h-[80vh]">
                     {/* Header - Always visible */}
-                    <div className="flex justify-between items-center mb-6">
+                    <div className="flex justify-between items-center mb-8">
                         <div>
                             <h2 className="text-2xl font-bold text-slate-900">Analytics Overview</h2>
-                            <p className="text-slate-500 text-sm">Real-time data for the last 30 days.</p>
-                            {analyticsData && (
-                                <div className="mt-2 inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">
-                                    <Eye size={12} /> {analyticsData.funnel[0].count.toLocaleString()} Total Views
-                                </div>
-                            )}
+                            <p className="text-slate-500 text-sm">Performance metrics for the last 30 days.</p>
                         </div>
                         <div className="flex gap-2">
                             <button className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 shadow-sm hover:bg-slate-50">Export Report</button>
@@ -1211,6 +1243,49 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                             {/* Charts Layout - Blurred if not premium */}
                             <div className={`space-y-6 transition-all duration-500 ${!creator.isPremium ? 'filter blur-sm opacity-50 pointer-events-none select-none' : ''}`}>
+                                
+                                {/* 1. Key Metrics Cards */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                                        <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+                                            <Eye size={16} className="text-indigo-500"/> Profile Views
+                                        </div>
+                                        <div className="text-3xl font-black text-slate-900">
+                                            {analyticsData.funnel.find(f => f.name === 'Profile Views')?.count.toLocaleString() || 0}
+                                        </div>
+                                    </div>
+                                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                                        <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+                                            <MousePointerClick size={16} className="text-blue-500"/> Interactions
+                                        </div>
+                                        <div className="text-3xl font-black text-slate-900">
+                                            {analyticsData.funnel.find(f => f.name === 'Interactions')?.count.toLocaleString() || 0}
+                                        </div>
+                                        <div className="text-xs text-slate-400 mt-1">
+                                            {(() => {
+                                                const views = analyticsData.funnel.find(f => f.name === 'Profile Views')?.count || 0;
+                                                const interactions = analyticsData.funnel.find(f => f.name === 'Interactions')?.count || 0;
+                                                return views > 0 ? ((interactions / views) * 100).toFixed(1) : '0.0';
+                                            })()}% Engagement
+                                        </div>
+                                    </div>
+                                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                                        <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+                                            <CheckCircle2 size={16} className="text-emerald-500"/> Conversions
+                                        </div>
+                                        <div className="text-3xl font-black text-slate-900">
+                                            {analyticsData.funnel.find(f => f.name === 'Conversions')?.count.toLocaleString() || 0}
+                                        </div>
+                                        <div className="text-xs text-slate-400 mt-1">
+                                            {(() => {
+                                                const views = analyticsData.funnel.find(f => f.name === 'Profile Views')?.count || 0;
+                                                const conversions = analyticsData.funnel.find(f => f.name === 'Conversions')?.count || 0;
+                                                return views > 0 ? ((conversions / views) * 100).toFixed(1) : '0.0';
+                                            })()}% Conversion Rate
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     {/* Traffic Sources Pie Chart */}
                                     <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -1240,29 +1315,30 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </div>
                                     </div>
 
-                                    {/* Conversion Funnel Bar Chart */}
-                                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                    {/* Conversion Funnel - Simplified Visual */}
+                                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
                                         <h3 className="text-sm font-bold text-slate-900 mb-6 flex items-center gap-2">
                                             <TrendingUp size={16} className="text-emerald-500" /> Conversion Funnel
                                         </h3>
-                                        <div className="h-64">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart
-                                                    layout="vertical"
-                                                    data={analyticsData.funnel}
-                                                    margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
-                                                >
-                                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                                                    <XAxis type="number" hide />
-                                                    <YAxis dataKey="name" type="category" width={100} tick={{fontSize: 11, fontWeight: 600, fill: '#64748b'}} />
-                                                    <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
-                                                    <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={32}>
-                                                        {analyticsData.funnel.map((entry, index) => (
-                                                            <Cell key={`cell-${index}`} fill={entry.fill} />
-                                                        ))}
-                                                    </Bar>
-                                                </BarChart>
-                                            </ResponsiveContainer>
+                                        <div className="flex-1 flex flex-col justify-center space-y-8">
+                                            {analyticsData.funnel.map((step, index) => {
+                                                const maxVal = analyticsData.funnel[0].count || 1;
+                                                const percent = (step.count / maxVal) * 100;
+                                                return (
+                                                    <div key={step.name} className="relative">
+                                                        <div className="flex justify-between text-sm font-medium mb-2">
+                                                            <span className="text-slate-700">{step.name}</span>
+                                                            <span className="text-slate-900 font-bold">{step.count.toLocaleString()}</span>
+                                                        </div>
+                                                        <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                                                            <div 
+                                                                className="h-full rounded-full transition-all duration-1000" 
+                                                                style={{ width: `${percent}%`, backgroundColor: step.fill }}
+                                                            ></div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </div>
@@ -1271,7 +1347,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                                     <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
                                         <Star size={16} className="text-yellow-500" />
-                                        <h3 className="text-sm font-bold text-slate-900">Top Performing Links & Products</h3>
+                                        <h3 className="text-sm font-bold text-slate-900">Top Performing Content</h3>
                                     </div>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left text-sm">
@@ -1302,20 +1378,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 ))}
                                             </tbody>
                                         </table>
-                                    </div>
-                                </div>
-
-                                {/* Audience Info */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg">
-                                        <h4 className="font-bold text-white/80 text-sm mb-1 uppercase tracking-wide">New vs Returning</h4>
-                                        <div className="flex items-end gap-2 mt-2">
-                                            <span className="text-4xl font-black">{analyticsData.audienceType.new}%</span>
-                                            <span className="text-indigo-100 font-medium mb-1">New Visitors</span>
-                                        </div>
-                                        <div className="w-full bg-black/20 h-2 rounded-full mt-4 overflow-hidden">
-                                            <div className="bg-white h-full rounded-full" style={{width: `${analyticsData.audienceType.new}%`}}></div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1979,6 +2041,43 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <button onClick={(e) => handleDeleteNotification(e, notif.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2">
                                             <X size={16} />
                                         </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- VIEW: REVIEWS --- */}
+            {currentView === 'REVIEWS' && (
+                <div className="p-6 max-w-5xl mx-auto animate-in fade-in">
+                    <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-slate-900">All Reviews</h3>
+                            <span className="text-xs text-slate-500">{reviews.length} reviews</span>
+                        </div>
+                        <div className="divide-y divide-slate-100">
+                            {reviews.length === 0 ? (
+                                <div className="p-12 text-center text-slate-400 text-sm">No reviews yet.</div>
+                            ) : (
+                                reviews.map(review => (
+                                    <div key={review.id} className="p-6 hover:bg-slate-50 transition-colors">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-bold text-slate-900 text-sm">{review.senderName}</span>
+                                                <div className="flex gap-0.5">
+                                                    {[1,2,3,4,5].map(i => (
+                                                        <Star key={i} size={14} className={`${(review.rating || 0) >= i ? "fill-yellow-400 text-yellow-400" : "text-slate-200"}`}/>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <span className="text-xs text-slate-400">{new Date(review.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                        <p className="text-sm text-slate-600 italic mb-2">"{review.content}"</p>
+                                        <div className="text-xs text-slate-400">
+                                            Session Amount: <span className="font-medium text-slate-600">{review.amount} Credits</span>
+                                        </div>
                                     </div>
                                 ))
                             )}

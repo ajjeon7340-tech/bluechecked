@@ -726,7 +726,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 href={link.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                onClick={() => logAnalyticsEvent(creator.id, 'CLICK', { type: 'LINK', id: link.id, url: link.url })}
+                                                onClick={() => logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'LINK', id: link.id, title: link.title, url: link.url })}
                                                 className={`block bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 group cursor-pointer transition-all ${link.isPromoted ? 'hover:border-amber-300' : 'hover:border-slate-300'}`}
                                             >
                                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${link.isPromoted ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-600'}`}>

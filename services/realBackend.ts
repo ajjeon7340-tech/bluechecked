@@ -817,7 +817,19 @@ export const getProAnalytics = async (): Promise<ProAnalyticsData | null> => {
         .eq('creator_id', creatorId)
         .gte('created_at', thirtyDaysAgo.toISOString());
 
-    if (!events || events.length === 0) return MockBackend.getProAnalytics(); // Fallback to mock if no data
+    if (!events || events.length === 0) {
+        // Return empty real data structure instead of mock data if configured
+        return {
+            trafficSources: [],
+            funnel: [
+                { name: 'Profile Views', count: 0, fill: '#6366F1' },
+                { name: 'Interactions', count: 0, fill: '#818CF8' },
+                { name: 'Conversions', count: 0, fill: '#4ADE80' }
+            ],
+            topAssets: [],
+            audienceType: { new: 100, returning: 0 }
+        };
+    }
 
     // 1. Traffic Sources
     const views = events.filter(e => e.event_type === 'VIEW');
@@ -838,24 +850,123 @@ export const getProAnalytics = async (): Promise<ProAnalyticsData | null> => {
 
     const funnel = [
         { name: 'Profile Views', count: views.length, fill: '#6366F1' },
-        { name: 'Interactions', count: clicks, fill: '#818CF8' },
+        { name: 'Interactions', count: clicks + conversions, fill: '#818CF8' },
         { name: 'Conversions', count: conversions, fill: '#4ADE80' }
     ];
 
-    // 3. Top Assets (Simplified for now)
-    // In a full implementation, we would aggregate CLICK events by metadata.id
-    const topAssets = MockBackend.getProAnalytics().then(d => d.topAssets); // Keep mock assets for now as they require complex aggregation
+    // 3. Top Assets (Real Aggregation)
+    const assetStats: Record<string, { clicks: number, revenue: number, type: 'LINK' | 'PRODUCT', title: string }> = {};
+    
+    // Initialize with known links from profile if available, or build dynamically from events
+    // Here we build dynamically from events to capture deleted links too
+    events.filter(e => (e.event_type === 'CLICK' || e.event_type === 'CONVERSION') && e.metadata?.id).forEach(e => {
+        const id = e.metadata.id;
+        if (!assetStats[id]) {
+            assetStats[id] = { 
+                clicks: 0, 
+                revenue: 0, 
+                type: e.metadata.type || 'LINK', 
+                title: e.metadata.title || 'Unknown Asset' 
+            };
+        }
+        assetStats[id].clicks++;
+    });
+
+    // Calculate revenue from messages (for products)
+    // Note: We need to fetch messages to attribute revenue to products
+    // For MVP, we'll skip revenue attribution here or do a separate query if needed.
+    // Assuming revenue is 0 for links.
+
+    const topAssets = Object.entries(assetStats)
+        .map(([id, stat]) => ({ id, title: stat.title, type: stat.type, clicks: stat.clicks, revenue: stat.revenue, ctr: stat.clicks > 0 ? `${((stat.revenue > 0 ? 1 : 0) / stat.clicks * 100).toFixed(1)}%` : '0%' }))
+        .sort((a, b) => b.clicks - a.clicks)
+        .slice(0, 5);
 
     return {
         trafficSources,
         funnel,
-        topAssets: await topAssets,
-        audienceType: { new: 65, returning: 35 } // Placeholder
+        topAssets,
+        audienceType: { new: 100, returning: 0 } // Placeholder
     };
 };
 
 export const getHistoricalStats = (): MonthlyStat[] => MockBackend.getHistoricalStats();
-export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date): Promise<DetailedStat[]> => MockBackend.getDetailedStatistics(timeFrame, date);
+
+export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date): Promise<DetailedStat[]> => {
+    if (!isConfigured) return MockBackend.getDetailedStatistics(timeFrame, date);
+
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) return [];
+    const creatorId = session.session.user.id;
+
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+    
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+
+    if (timeFrame === 'DAILY') {
+        startDate.setDate(endDate.getDate() - 6);
+    } else if (timeFrame === 'WEEKLY') {
+        startDate.setDate(endDate.getDate() - 27); // 4 weeks
+    } else {
+        startDate.setMonth(endDate.getMonth() - 5); // 6 months
+        startDate.setDate(1);
+    }
+
+    // Fetch Data
+    const [viewsResult, likesResult, ratingsResult] = await Promise.all([
+        supabase.from('analytics_events').select('created_at').eq('creator_id', creatorId).eq('event_type', 'VIEW').gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString()),
+        supabase.from('creator_likes').select('created_at').eq('creator_id', creatorId).gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString()),
+        supabase.from('messages').select('created_at, rating').eq('creator_id', creatorId).gt('rating', 0).gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString())
+    ]);
+
+    const views = viewsResult.data || [];
+    const likes = likesResult.data || [];
+    const ratings = ratingsResult.data || [];
+
+    // Initialize Buckets
+    const stats: DetailedStat[] = [];
+    const count = timeFrame === 'DAILY' ? 7 : timeFrame === 'WEEKLY' ? 4 : 6;
+
+    for (let i = 0; i < count; i++) {
+        let label = '';
+        let bucketStart = new Date();
+        let bucketEnd = new Date();
+
+        if (timeFrame === 'DAILY') {
+            const d = new Date(startDate);
+            d.setDate(startDate.getDate() + i);
+            label = d.toLocaleDateString('en-US', { weekday: 'short' });
+            bucketStart = new Date(d.setHours(0,0,0,0));
+            bucketEnd = new Date(d.setHours(23,59,59,999));
+        } else if (timeFrame === 'WEEKLY') {
+            label = `Wk ${i + 1}`;
+            const d = new Date(startDate);
+            d.setDate(startDate.getDate() + (i * 7));
+            bucketStart = new Date(d.setHours(0,0,0,0));
+            const e = new Date(d);
+            e.setDate(d.getDate() + 6);
+            bucketEnd = new Date(e.setHours(23,59,59,999));
+        } else {
+            const d = new Date(startDate);
+            d.setMonth(startDate.getMonth() + i);
+            label = d.toLocaleDateString('en-US', { month: 'short' });
+            bucketStart = new Date(d.getFullYear(), d.getMonth(), 1);
+            bucketEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
+        }
+
+        const bucketViews = views.filter(v => new Date(v.created_at) >= bucketStart && new Date(v.created_at) <= bucketEnd).length;
+        const bucketLikes = likes.filter(l => new Date(l.created_at) >= bucketStart && new Date(l.created_at) <= bucketEnd).length;
+        const bucketRatings = ratings.filter(r => new Date(r.created_at) >= bucketStart && new Date(r.created_at) <= bucketEnd);
+        const avgRating = bucketRatings.length > 0 ? bucketRatings.reduce((sum, r) => sum + (r.rating || 0), 0) / bucketRatings.length : 0;
+
+        stats.push({ date: label, views: bucketViews, likes: bucketLikes, rating: parseFloat(avgRating.toFixed(1)) });
+    }
+
+    return stats;
+};
+
 export const getFinancialStatistics = async (timeFrame: StatTimeFrame, date: Date): Promise<DetailedFinancialStat[]> => MockBackend.getFinancialStatistics(timeFrame, date);
 
 export const rateMessage = async (messageId: string, rating: number): Promise<void> => {

@@ -84,6 +84,22 @@ let currentUser: CurrentUser | null = null;
 // Mock Likes Store: creatorId -> Set of userIds
 const creatorLikes = new Map<string, Set<string>>();
 
+// Mock Likes Log (for statistics over time)
+interface LikeEvent {
+    creatorId: string;
+    userId: string;
+    timestamp: string;
+}
+let mockLikesLog: LikeEvent[] = (() => {
+    try {
+        const saved = localStorage.getItem('bluechecked_mock_likes_log');
+        return saved ? JSON.parse(saved) : [];
+    } catch {
+        return [];
+    }
+})();
+const saveLikesLog = () => localStorage.setItem('bluechecked_mock_likes_log', JSON.stringify(mockLikesLog));
+
 // Mock Analytics Store
 interface AnalyticsEvent {
     id: string;
@@ -411,15 +427,43 @@ export const logAnalyticsEvent = async (creatorId: string, eventType: 'VIEW' | '
     saveAnalytics();
 };
 
-export const getHistoricalStats = (): MonthlyStat[] => {
-    return [
-        { month: 'Jul', earnings: 15000, views: 12000, messages: 150 },
-        { month: 'Aug', earnings: 22000, views: 15000, messages: 180 },
-        { month: 'Sep', earnings: 18000, views: 14000, messages: 160 },
-        { month: 'Oct', earnings: 25000, views: 18000, messages: 210 },
-        { month: 'Nov', earnings: 35000, views: 22000, messages: 250 },
-        { month: 'Dec', earnings: 42000, views: 25000, messages: 280 },
-    ];
+export const getHistoricalStats = async (): Promise<MonthlyStat[]> => {
+    const statsMap: Record<string, MonthlyStat> = {};
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    // Initialize buckets for last 6 months
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        statsMap[key] = {
+            month: months[d.getMonth()],
+            earnings: 0,
+            views: 0,
+            messages: 0
+        };
+    }
+
+    // Filter messages for current creator
+    messages.filter(m => m.creatorId === creatorProfile.id && m.status === MessageStatus.REPLIED).forEach(m => {
+        const d = new Date(m.createdAt);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        if (statsMap[key]) {
+            statsMap[key].earnings += m.amount;
+            statsMap[key].messages += 1;
+        }
+    });
+
+    // Filter analytics events
+    analyticsEvents.filter(e => e.creatorId === creatorProfile.id && e.eventType === 'VIEW').forEach(e => {
+        const d = new Date(e.createdAt);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        if (statsMap[key]) {
+            statsMap[key].views += 1;
+        }
+    });
+
+    return Object.values(statsMap);
 };
 
 export const getProAnalytics = async (): Promise<ProAnalyticsData> => {
@@ -434,7 +478,7 @@ export const getProAnalytics = async (): Promise<ProAnalyticsData> => {
     });
     
     // Default if empty
-    if (Object.keys(sources).length === 0) sources['Direct'] = 1;
+    if (Object.keys(sources).length === 0) sources['Direct'] = 0;
 
     const trafficSources = Object.entries(sources)
         .map(([name, value]) => ({ 
@@ -449,8 +493,8 @@ export const getProAnalytics = async (): Promise<ProAnalyticsData> => {
     const conversions = events.filter(e => e.eventType === 'CONVERSION').length;
     
     const funnel = [
-        { name: 'Profile Views', count: views.length || 1, fill: '#6366F1' }, // Min 1 to show bar
-        { name: 'Interactions', count: clicks, fill: '#818CF8' },
+        { name: 'Profile Views', count: views.length, fill: '#6366F1' },
+        { name: 'Interactions', count: clicks + conversions, fill: '#818CF8' }, // Interactions = Clicks + Conversions
         { name: 'Conversions', count: conversions, fill: '#4ADE80' }
     ];
 
@@ -461,7 +505,7 @@ export const getProAnalytics = async (): Promise<ProAnalyticsData> => {
         assetStats[link.id] = { clicks: 0, revenue: 0, type: link.type || 'LINK', title: link.title };
     });
 
-    events.filter(e => e.eventType === 'CLICK' && e.metadata?.id).forEach(e => {
+    events.filter(e => (e.eventType === 'CLICK' || e.eventType === 'CONVERSION') && e.metadata?.id).forEach(e => {
         if (assetStats[e.metadata.id]) assetStats[e.metadata.id].clicks++;
     });
 
@@ -485,34 +529,6 @@ export const getProAnalytics = async (): Promise<ProAnalyticsData> => {
         topAssets,
         audienceType: { new: 75, returning: 25 }
     };
-};
-
-export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date): Promise<DetailedStat[]> => {
-    const count = timeFrame === 'DAILY' ? 7 : timeFrame === 'WEEKLY' ? 4 : 6;
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    
-    return Array.from({ length: count }).map((_, i) => {
-        let labelDate = new Date(date);
-        let label = '';
-        
-        if (timeFrame === 'DAILY') {
-            labelDate.setDate(date.getDate() - i);
-            label = days[labelDate.getDay()];
-        } else if (timeFrame === 'WEEKLY') {
-            labelDate.setDate(date.getDate() - (i * 7));
-            label = `Wk ${count - i}`;
-        } else {
-            labelDate.setMonth(date.getMonth() - i);
-            label = labelDate.toLocaleDateString('en-US', { month: 'short' });
-        }
-
-        return {
-            date: label,
-            views: 500 + (i * 50) + (label.length * 10),
-            likes: 50 + (i * 5),
-            rating: 4.5 + ((i % 5) * 0.1)
-        };
-    }).reverse();
 };
 
 export const getFinancialStatistics = async (timeFrame: StatTimeFrame, date: Date): Promise<DetailedFinancialStat[]> => {
@@ -591,8 +607,20 @@ export const toggleCreatorLike = async (creatorId: string): Promise<{ likes: num
     
     if (hasLiked) {
         likes.delete(currentUser.id);
+        // Remove from log for stats accuracy
+        const idx = mockLikesLog.findIndex(l => l.creatorId === creatorId && l.userId === currentUser!.id);
+        if (idx !== -1) {
+            mockLikesLog.splice(idx, 1);
+            saveLikesLog();
+        }
     } else {
         likes.add(currentUser.id);
+        mockLikesLog.push({
+            creatorId,
+            userId: currentUser.id,
+            timestamp: new Date().toISOString()
+        });
+        saveLikesLog();
     }
     
     return { likes: likes.size, hasLiked: !hasLiked };
@@ -601,4 +629,67 @@ export const toggleCreatorLike = async (creatorId: string): Promise<{ likes: num
 export const getCreatorLikeStatus = async (creatorId: string): Promise<boolean> => {
     if (!currentUser) return false;
     return creatorLikes.get(creatorId)?.has(currentUser.id) || false;
+};
+
+export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date): Promise<DetailedStat[]> => {
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+    
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+
+    if (timeFrame === 'DAILY') {
+        startDate.setDate(endDate.getDate() - 6);
+    } else if (timeFrame === 'WEEKLY') {
+        startDate.setDate(endDate.getDate() - 27); // 4 weeks
+    } else {
+        startDate.setMonth(endDate.getMonth() - 5); // 6 months
+        startDate.setDate(1);
+    }
+
+    // Filter Data
+    const views = analyticsEvents.filter(e => e.creatorId === creatorProfile.id && e.eventType === 'VIEW' && new Date(e.createdAt) >= startDate && new Date(e.createdAt) <= endDate);
+    const likes = mockLikesLog.filter(l => l.creatorId === creatorProfile.id && new Date(l.timestamp) >= startDate && new Date(l.timestamp) <= endDate);
+    const ratings = messages.filter(m => m.creatorId === creatorProfile.id && m.rating && m.rating > 0 && new Date(m.createdAt) >= startDate && new Date(m.createdAt) <= endDate);
+
+    // Initialize Buckets
+    const stats: DetailedStat[] = [];
+    const count = timeFrame === 'DAILY' ? 7 : timeFrame === 'WEEKLY' ? 4 : 6;
+
+    for (let i = 0; i < count; i++) {
+        let label = '';
+        let bucketStart = new Date();
+        let bucketEnd = new Date();
+
+        if (timeFrame === 'DAILY') {
+            const d = new Date(startDate);
+            d.setDate(startDate.getDate() + i);
+            label = d.toLocaleDateString('en-US', { weekday: 'short' });
+            bucketStart = new Date(d.setHours(0,0,0,0));
+            bucketEnd = new Date(d.setHours(23,59,59,999));
+        } else if (timeFrame === 'WEEKLY') {
+            label = `Wk ${i + 1}`;
+            const d = new Date(startDate);
+            d.setDate(startDate.getDate() + (i * 7));
+            bucketStart = new Date(d.setHours(0,0,0,0));
+            const e = new Date(d);
+            e.setDate(d.getDate() + 6);
+            bucketEnd = new Date(e.setHours(23,59,59,999));
+        } else {
+            const d = new Date(startDate);
+            d.setMonth(startDate.getMonth() + i);
+            label = d.toLocaleDateString('en-US', { month: 'short' });
+            bucketStart = new Date(d.getFullYear(), d.getMonth(), 1);
+            bucketEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
+        }
+
+        const bucketViews = views.filter(v => new Date(v.createdAt) >= bucketStart && new Date(v.createdAt) <= bucketEnd).length;
+        const bucketLikes = likes.filter(l => new Date(l.timestamp) >= bucketStart && new Date(l.timestamp) <= bucketEnd).length;
+        const bucketRatings = ratings.filter(r => new Date(r.createdAt) >= bucketStart && new Date(r.createdAt) <= bucketEnd);
+        const avgRating = bucketRatings.length > 0 ? bucketRatings.reduce((sum, r) => sum + (r.rating || 0), 0) / bucketRatings.length : 0;
+
+        stats.push({ date: label, views: bucketViews, likes: bucketLikes, rating: parseFloat(avgRating.toFixed(1)) });
+    }
+
+    return stats;
 };
