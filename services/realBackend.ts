@@ -6,6 +6,17 @@ export const DEFAULT_AVATAR = 'https://www.gravatar.com/avatar/00000000000000000
 
 export const isBackendConfigured = () => isConfigured;
 
+const getColorForSource = (source: string) => {
+    const s = source.toLowerCase();
+    if (s.includes('youtube')) return '#FF0000';
+    if (s.includes('instagram')) return '#E1306C';
+    if (s.includes('x') || s.includes('twitter')) return '#000000';
+    if (s.includes('tiktok')) return '#000000';
+    if (s.includes('linkedin')) return '#0077B5';
+    if (s.includes('direct')) return '#64748b';
+    return '#94a3b8';
+};
+
 // --- HELPER: MAP DB OBJECTS TO TYPES ---
 
 const mapProfileToUser = (profile: any): CurrentUser => ({
@@ -413,6 +424,27 @@ export const getMessages = async (): Promise<Message[]> => {
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) return [];
 
+    // Check for expired pending messages and process refunds (Lazy Expiration)
+    const now = new Date().toISOString();
+    const { data: expiredMessages } = await supabase
+        .from('messages')
+        .select('id, amount, sender_id')
+        .eq('status', 'PENDING')
+        .lt('expires_at', now)
+        .or(`sender_id.eq.${session.session.user.id},creator_id.eq.${session.session.user.id}`);
+
+    if (expiredMessages && expiredMessages.length > 0) {
+        for (const msg of expiredMessages) {
+            // 1. Refund the sender
+            const { data: sender } = await supabase.from('profiles').select('credits').eq('id', msg.sender_id).single();
+            if (sender) {
+                await supabase.from('profiles').update({ credits: sender.credits + msg.amount }).eq('id', msg.sender_id);
+            }
+            // 2. Mark as expired
+            await supabase.from('messages').update({ status: 'EXPIRED' }).eq('id', msg.id);
+        }
+    }
+
     const { data, error } = await supabase
         .from('messages')
         .select(`
@@ -521,6 +553,17 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
 
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error("Not logged in");
+
+    // Check status before replying
+    const { data: msgCheck } = await supabase.from('messages').select('status, expires_at').eq('id', messageId).single();
+    if (!msgCheck) throw new Error("Message not found");
+    
+    if (msgCheck.status !== 'PENDING') {
+         throw new Error(`Cannot reply. Message is ${msgCheck.status}`);
+    }
+    if (new Date(msgCheck.expires_at) < new Date()) {
+        throw new Error("Message has expired and cannot be replied to.");
+    }
 
     // 1. Add Chat Line
     if (replyText.trim()) {
@@ -723,9 +766,95 @@ export const getSecureDownloadUrl = async (productId: string, productUrl: string
     return productUrl;
 };
 
-// --- MOCK STUBS FOR ANALYTICS (Can remain mock until DB has enough data) ---
+export const logAnalyticsEvent = async (creatorId: string, eventType: 'VIEW' | 'CLICK' | 'CONVERSION', metadata: any = {}) => {
+    if (!isConfigured) return MockBackend.logAnalyticsEvent(creatorId, eventType, metadata);
+
+    const params = new URLSearchParams(window.location.search);
+    let source = params.get('utm_source') || params.get('source');
+    
+    if (!source) {
+        const referrer = document.referrer;
+        if (referrer) {
+            try {
+                const url = new URL(referrer);
+                if (url.hostname.includes('youtube')) source = 'YouTube';
+                else if (url.hostname.includes('instagram')) source = 'Instagram';
+                else if (url.hostname.includes('twitter') || url.hostname.includes('x.com')) source = 'X';
+                else if (url.hostname.includes('tiktok')) source = 'TikTok';
+                else if (url.hostname.includes('linkedin')) source = 'LinkedIn';
+                else if (url.hostname.includes('facebook')) source = 'Facebook';
+                else source = url.hostname;
+            } catch {
+                source = 'Other';
+            }
+        } else {
+            source = 'Direct';
+        }
+    }
+
+    await supabase.from('analytics_events').insert({
+        creator_id: creatorId,
+        event_type: eventType,
+        source: source,
+        metadata
+    });
+};
+
+export const getProAnalytics = async (): Promise<ProAnalyticsData | null> => {
+    if (!isConfigured) return MockBackend.getProAnalytics();
+
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) return null;
+    const creatorId = session.session.user.id;
+
+    // Fetch analytics data (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const { data: events } = await supabase
+        .from('analytics_events')
+        .select('*')
+        .eq('creator_id', creatorId)
+        .gte('created_at', thirtyDaysAgo.toISOString());
+
+    if (!events || events.length === 0) return MockBackend.getProAnalytics(); // Fallback to mock if no data
+
+    // 1. Traffic Sources
+    const views = events.filter(e => e.event_type === 'VIEW');
+    const sources: Record<string, number> = {};
+    views.forEach(v => {
+        const s = v.source || 'Direct';
+        sources[s] = (sources[s] || 0) + 1;
+    });
+
+    const trafficSources = Object.entries(sources)
+        .map(([name, value]) => ({ name, value, color: getColorForSource(name) }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5);
+
+    // 2. Funnel
+    const clicks = events.filter(e => e.event_type === 'CLICK').length;
+    const conversions = events.filter(e => e.event_type === 'CONVERSION').length;
+
+    const funnel = [
+        { name: 'Profile Views', count: views.length, fill: '#6366F1' },
+        { name: 'Interactions', count: clicks, fill: '#818CF8' },
+        { name: 'Conversions', count: conversions, fill: '#4ADE80' }
+    ];
+
+    // 3. Top Assets (Simplified for now)
+    // In a full implementation, we would aggregate CLICK events by metadata.id
+    const topAssets = MockBackend.getProAnalytics().then(d => d.topAssets); // Keep mock assets for now as they require complex aggregation
+
+    return {
+        trafficSources,
+        funnel,
+        topAssets: await topAssets,
+        audienceType: { new: 65, returning: 35 } // Placeholder
+    };
+};
+
 export const getHistoricalStats = (): MonthlyStat[] => MockBackend.getHistoricalStats();
-export const getProAnalytics = async (): Promise<ProAnalyticsData | null> => MockBackend.getProAnalytics();
 export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date): Promise<DetailedStat[]> => MockBackend.getDetailedStatistics(timeFrame, date);
 export const getFinancialStatistics = async (timeFrame: StatTimeFrame, date: Date): Promise<DetailedFinancialStat[]> => MockBackend.getFinancialStatistics(timeFrame, date);
 

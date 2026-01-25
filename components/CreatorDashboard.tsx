@@ -1169,6 +1169,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         <div>
                             <h2 className="text-2xl font-bold text-slate-900">Analytics Overview</h2>
                             <p className="text-slate-500 text-sm">Real-time data for the last 30 days.</p>
+                            {analyticsData && (
+                                <div className="mt-2 inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">
+                                    <Eye size={12} /> {analyticsData.funnel[0].count.toLocaleString()} Total Views
+                                </div>
+                            )}
                         </div>
                         <div className="flex gap-2">
                             <button className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 shadow-sm hover:bg-slate-50">Export Report</button>

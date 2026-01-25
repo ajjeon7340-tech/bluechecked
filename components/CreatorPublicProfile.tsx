@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { CreatorProfile, CurrentUser, AffiliateLink, Product } from '../types';
 import { CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share } from './Icons';
 import { Button } from './Button';
-import { sendMessage, updateCreatorProfile, addCredits, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus, getSecureDownloadUrl } from '../services/realBackend';
+import { sendMessage, updateCreatorProfile, addCredits, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus, getSecureDownloadUrl, logAnalyticsEvent } from '../services/realBackend';
 
 interface Props {
   creator: CreatorProfile;
@@ -79,6 +79,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
             setHasLiked(status);
         });
     }
+
+    // Log Page View
+    logAnalyticsEvent(creator.id, 'VIEW');
   }, [creator]);
 
   useEffect(() => {
@@ -97,6 +100,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const handleProductClick = (link: AffiliateLink) => {
       if (isCustomizeMode) return;
       setSelectedProductLink(link);
+      logAnalyticsEvent(creator.id, 'CLICK', { type: 'PRODUCT', id: link.id, title: link.title });
       setStep('product_confirm');
       setIsModalOpen(true);
   };
@@ -131,6 +135,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     setIsSubmitting(true);
     try {
         await sendMessage(creator.id, name, email, generalMessage, creator.pricePerMessage, attachment || undefined);
+        logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'MESSAGE' });
         setIsSubmitting(false);
         setIsModalOpen(false);
         setShowSuccessToast(true);
@@ -153,6 +158,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
       // Simulate deduction logic (would be a real API call)
       try {
         await sendMessage(creator.id, name, email, `Purchased Product: ${selectedProductLink.title}`, selectedProductLink.price);
+        logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'PRODUCT', id: selectedProductLink.id });
         setIsSubmitting(false);
         setStep('product_success');
       } catch (e: any) {
@@ -309,6 +315,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                   text: creator.bio,
                   url: window.location.href,
               });
+              logAnalyticsEvent(creator.id, 'CLICK', { type: 'SHARE' });
           } catch (error) {
               console.log('Error sharing', error);
           }
@@ -719,6 +726,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 href={link.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
+                                                onClick={() => logAnalyticsEvent(creator.id, 'CLICK', { type: 'LINK', id: link.id, url: link.url })}
                                                 className={`block bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 group cursor-pointer transition-all ${link.isPromoted ? 'hover:border-amber-300' : 'hover:border-slate-300'}`}
                                             >
                                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${link.isPromoted ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-600'}`}>

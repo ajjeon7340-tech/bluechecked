@@ -51,7 +51,31 @@ function App() {
   };
 
   useEffect(() => {
-    console.log("Bluechecked App Version: 3.5.9");
+    // Handle Browser Back Button
+    const handlePopState = (event: PopStateEvent) => {
+      const state = event.state;
+      if (state && state.page) {
+        if (state.page === 'PROFILE' && state.creatorId) {
+             setIsLoading(true);
+             loadCreatorData(state.creatorId);
+        } else if (state.page === 'DASHBOARD' && currentUser?.role === 'CREATOR') {
+             setIsLoading(true);
+             loadCreatorData(currentUser.id);
+        }
+        setCurrentPage(state.page);
+      } else {
+        // Fallback if state is missing (e.g. initial entry popped)
+        if (currentUser) {
+             setCurrentPage(currentUser.role === 'CREATOR' ? 'DASHBOARD' : 'FAN_DASHBOARD');
+        } else {
+             setCurrentPage('LANDING');
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    console.log("Bluechecked App Version: 3.6.1");
     console.log("Backend Connection:", isBackendConfigured() ? "✅ Connected to Supabase" : "⚠️ Using Mock Data");
     loadCreatorData();
     
@@ -72,13 +96,18 @@ function App() {
                 setIsLoading(true);
                 await loadCreatorData(user.id); // Ensure we load the correct creator profile
                 setCurrentPage('DASHBOARD');
+                window.history.replaceState({ page: 'DASHBOARD' }, '', '');
             } else {
                 setCurrentPage('FAN_DASHBOARD');
+                window.history.replaceState({ page: 'FAN_DASHBOARD' }, '', '');
             }
+        } else {
+            window.history.replaceState({ page: 'LANDING' }, '', '');
         }
     };
     initSession();
-  }, []);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []); // Removed currentUser dependency to prevent infinite loop
 
   // Redirect to Landing if we are on a creator page but have no creator data (e.g. empty DB)
   useEffect(() => {
@@ -130,9 +159,11 @@ function App() {
     if (user.role === 'CREATOR') {
       setIsLoading(true); // Show loading while switching to your profile
       await loadCreatorData(user.id); // Load YOUR specific profile
+      window.history.pushState({ page: 'DASHBOARD' }, '', '');
       setCurrentPage('DASHBOARD');
     } else {
        await loadCreatorData(); // Load default/featured profile for fan view
+       window.history.pushState({ page: 'FAN_DASHBOARD' }, '', '');
        setCurrentPage('FAN_DASHBOARD');
     }
   };
@@ -141,6 +172,7 @@ function App() {
     try {
       setIsLoading(true);
       await loadCreatorData(creatorId);
+      window.history.pushState({ page: 'PROFILE', creatorId }, '', '');
       setCurrentPage('PROFILE');
     } catch (e) {
       setIsLoading(false);
@@ -151,10 +183,16 @@ function App() {
     <div className="font-sans text-slate-900">
       
       {currentPage === 'LANDING' && (
-        <LandingPage 
-          onLoginClick={() => setCurrentPage('LOGIN')}
+        <LandingPage
+          onLoginClick={() => {
+              window.history.pushState({ page: 'LOGIN' }, '', '');
+              setCurrentPage('LOGIN');
+          }}
           onDemoClick={() => {
-            if (creator) setCurrentPage('PROFILE');
+            if (creator) {
+                window.history.pushState({ page: 'PROFILE', creatorId: creator.id }, '', '');
+                setCurrentPage('PROFILE');
+            }
             else alert("No creators found. Please sign up as a creator first!");
           }}
         />
@@ -163,7 +201,10 @@ function App() {
       {currentPage === 'LOGIN' && (
         <LoginPage 
           onLoginSuccess={handleLoginSuccess}
-          onBack={() => setCurrentPage('LANDING')}
+          onBack={() => {
+              window.history.pushState({ page: 'LANDING' }, '', '');
+              setCurrentPage('LANDING');
+          }}
         />
       )}
 
@@ -180,21 +221,29 @@ function App() {
               if (currentUser.role === 'CREATOR') {
                 setIsLoading(true);
                 await loadCreatorData(currentUser.id);
+                window.history.pushState({ page: 'DASHBOARD' }, '', '');
                 setCurrentPage('DASHBOARD');
               } else {
+                window.history.pushState({ page: 'FAN_DASHBOARD' }, '', '');
                 setCurrentPage('FAN_DASHBOARD');
               }
             } else {
+              window.history.pushState({ page: 'LANDING' }, '', '');
               setCurrentPage('LANDING');
             }
           }}
-          onLoginRequest={() => setCurrentPage('LOGIN')}
+          onLoginRequest={() => {
+              window.history.pushState({ page: 'LOGIN' }, '', '');
+              setCurrentPage('LOGIN');
+          }}
           onNavigateToDashboard={async () => {
             if (currentUser?.role === 'CREATOR') {
               setIsLoading(true);
               await loadCreatorData(currentUser.id);
+              window.history.pushState({ page: 'DASHBOARD' }, '', '');
               setCurrentPage('DASHBOARD');
             } else {
+              window.history.pushState({ page: 'FAN_DASHBOARD' }, '', '');
               setCurrentPage('FAN_DASHBOARD');
             }
           }}
@@ -210,9 +259,13 @@ function App() {
           onLogout={() => {
             setCurrentUser(null);
             localStorage.removeItem('bluechecked_current_user'); // Ensure session clear
+            window.history.pushState({ page: 'LANDING' }, '', '');
             setCurrentPage('LANDING');
           }}
-          onViewProfile={() => setCurrentPage('PROFILE')}
+          onViewProfile={() => {
+              window.history.pushState({ page: 'PROFILE', creatorId: creator.id }, '', '');
+              setCurrentPage('PROFILE');
+          }}
           onRefreshData={() => loadCreatorData(creator?.id)}
         />
       )}
@@ -224,6 +277,7 @@ function App() {
             onLogout={() => {
               setCurrentUser(null);
               localStorage.removeItem('bluechecked_current_user'); // Ensure session clear
+              window.history.pushState({ page: 'LANDING' }, '', '');
               setCurrentPage('LANDING');
             }}
             onBrowseCreators={handleCreatorSelect}

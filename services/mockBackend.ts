@@ -84,6 +84,36 @@ let currentUser: CurrentUser | null = null;
 // Mock Likes Store: creatorId -> Set of userIds
 const creatorLikes = new Map<string, Set<string>>();
 
+// Mock Analytics Store
+interface AnalyticsEvent {
+    id: string;
+    creatorId: string;
+    eventType: 'VIEW' | 'CLICK' | 'CONVERSION';
+    source: string;
+    metadata: any;
+    createdAt: string;
+}
+
+let analyticsEvents: AnalyticsEvent[] = (() => {
+    try {
+        const saved = localStorage.getItem('bluechecked_mock_analytics');
+        return saved ? JSON.parse(saved) : [];
+    } catch {
+        return [];
+    }
+})();
+
+const saveAnalytics = () => {
+    localStorage.setItem('bluechecked_mock_analytics', JSON.stringify(analyticsEvents));
+};
+
+// Initialize some demo analytics if empty
+if (analyticsEvents.length === 0) {
+    // We'll generate these on the fly in getProAnalytics if needed, 
+    // or just let it start empty. Let's start empty to show "actual" behavior 
+    // or maybe just 1 view to avoid empty charts.
+}
+
 const saveMessages = () => {
     localStorage.setItem('bluechecked_mock_messages', JSON.stringify(messages));
 };
@@ -152,6 +182,23 @@ export const updateCreatorProfile = async (profile: CreatorProfile): Promise<Cre
 };
 
 export const getMessages = async (): Promise<Message[]> => {
+    // Check for expired messages
+    const now = new Date();
+    let hasChanges = false;
+
+    messages.forEach(msg => {
+        if (msg.status === MessageStatus.PENDING && new Date(msg.expiresAt) < now) {
+            msg.status = MessageStatus.EXPIRED;
+            hasChanges = true;
+            // Refund logic for mock: If currentUser is the sender, refund them.
+            if (currentUser && currentUser.email === msg.senderEmail) {
+                currentUser.credits += msg.amount;
+                localStorage.setItem('bluechecked_current_user', JSON.stringify(currentUser));
+            }
+        }
+    });
+
+    if (hasChanges) saveMessages();
     return [...messages];
 };
 
@@ -349,6 +396,21 @@ export const getSecureDownloadUrl = async (productId: string, productUrl: string
     return productUrl;
 };
 
+export const logAnalyticsEvent = async (creatorId: string, eventType: 'VIEW' | 'CLICK' | 'CONVERSION', metadata: any = {}) => {
+    const params = new URLSearchParams(window.location.search);
+    let source = params.get('source') || 'Direct';
+
+    analyticsEvents.push({
+        id: `evt-${Date.now()}`,
+        creatorId,
+        eventType,
+        source,
+        metadata,
+        createdAt: new Date().toISOString()
+    });
+    saveAnalytics();
+};
+
 export const getHistoricalStats = (): MonthlyStat[] => {
     return [
         { month: 'Jul', earnings: 15000, views: 12000, messages: 150 },
@@ -361,22 +423,66 @@ export const getHistoricalStats = (): MonthlyStat[] => {
 };
 
 export const getProAnalytics = async (): Promise<ProAnalyticsData> => {
+    const events = analyticsEvents.filter(e => e.creatorId === creatorProfile.id);
+    
+    // 1. Traffic Sources
+    const views = events.filter(e => e.eventType === 'VIEW');
+    const sources: Record<string, number> = {};
+    views.forEach(v => {
+        const s = v.source || 'Direct';
+        sources[s] = (sources[s] || 0) + 1;
+    });
+    
+    // Default if empty
+    if (Object.keys(sources).length === 0) sources['Direct'] = 1;
+
+    const trafficSources = Object.entries(sources)
+        .map(([name, value]) => ({ 
+            name, 
+            value, 
+            color: name.includes('YouTube') ? '#FF0000' : name.includes('Instagram') ? '#E1306C' : name.includes('X') ? '#000000' : '#64748b' 
+        }))
+        .sort((a, b) => b.value - a.value);
+
+    // 2. Funnel
+    const clicks = events.filter(e => e.eventType === 'CLICK').length;
+    const conversions = events.filter(e => e.eventType === 'CONVERSION').length;
+    
+    const funnel = [
+        { name: 'Profile Views', count: views.length || 1, fill: '#6366F1' }, // Min 1 to show bar
+        { name: 'Interactions', count: clicks, fill: '#818CF8' },
+        { name: 'Conversions', count: conversions, fill: '#4ADE80' }
+    ];
+
+    // 3. Top Assets
+    const assetStats: Record<string, { clicks: number, revenue: number, type: 'LINK' | 'PRODUCT', title: string }> = {};
+    
+    (creatorProfile.links || []).forEach(link => {
+        assetStats[link.id] = { clicks: 0, revenue: 0, type: link.type || 'LINK', title: link.title };
+    });
+
+    events.filter(e => e.eventType === 'CLICK' && e.metadata?.id).forEach(e => {
+        if (assetStats[e.metadata.id]) assetStats[e.metadata.id].clicks++;
+    });
+
+    // Calculate revenue from messages
+    messages.forEach(m => {
+        if (m.content.startsWith('Purchased Product:')) {
+            const productName = m.content.replace('Purchased Product: ', '').trim();
+            const link = (creatorProfile.links || []).find(l => l.title === productName);
+            if (link && assetStats[link.id]) assetStats[link.id].revenue += m.amount;
+        }
+    });
+
+    const topAssets = Object.entries(assetStats)
+        .map(([id, stat]) => ({ id, title: stat.title, type: stat.type, clicks: stat.clicks, revenue: stat.revenue, ctr: stat.clicks > 0 ? `${((stat.revenue > 0 ? 1 : 0) / stat.clicks * 100).toFixed(1)}%` : '0%' }))
+        .sort((a, b) => b.clicks - a.clicks)
+        .slice(0, 5);
+
     return {
-        trafficSources: [
-            { name: 'YouTube', value: 45, color: '#FF0000' },
-            { name: 'X', value: 25, color: '#000000' },
-            { name: 'Instagram', value: 20, color: '#E1306C' },
-            { name: 'Direct', value: 10, color: '#64748b' }
-        ],
-        funnel: [
-            { name: 'Profile Views', count: 12400, fill: '#6366F1' },
-            { name: 'Request Clicks', count: 3200, fill: '#818CF8' },
-            { name: 'Successful Payments', count: 850, fill: '#4ADE80' }
-        ],
-        topAssets: [
-            { id: 'l1', title: 'Discord Community', type: 'LINK', clicks: 1200, revenue: 0, ctr: '9.6%' },
-            { id: 'p1', title: 'React Performance Masterclass', type: 'PRODUCT', clicks: 850, revenue: 85000, ctr: '6.8%' }
-        ],
+        trafficSources,
+        funnel,
+        topAssets,
         audienceType: { new: 75, returning: 25 }
     };
 };
