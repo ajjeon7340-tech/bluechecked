@@ -564,8 +564,9 @@ export const getFinancialStatistics = async (timeFrame: StatTimeFrame, date: Dat
     }).reverse();
 };
 
-export const rateMessage = async (messageId: string, rating: number): Promise<void> => {
-    messages = messages.map(m => m.id === messageId ? { ...m, rating } : m);
+export const rateMessage = async (messageId: string, rating: number, reviewContent?: string): Promise<void> => {
+    messages = messages.map(m => m.id === messageId ? { ...m, rating, reviewContent } : m);
+    saveMessages();
 };
 
 export const sendFanAppreciation = async (messageId: string, text: string): Promise<void> => {

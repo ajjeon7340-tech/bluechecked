@@ -61,6 +61,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const [topUpAmount, setTopUpAmount] = useState(500);
   const [imgError, setImgError] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const viewLogRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (currentUser) {
@@ -79,10 +80,14 @@ export const CreatorPublicProfile: React.FC<Props> = ({
             setHasLiked(status);
         });
     }
+  }, [creator, currentUser]);
 
+  useEffect(() => {
+    if (viewLogRef.current === creator.id) return;
     // Log Page View
     logAnalyticsEvent(creator.id, 'VIEW');
-  }, [creator]);
+    viewLogRef.current = creator.id;
+  }, [creator.id]);
 
   useEffect(() => {
     setImgError(false);

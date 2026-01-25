@@ -54,6 +54,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const [isSendingFollowUp, setIsSendingFollowUp] = useState(false);
   const [showFollowUpInput, setShowFollowUpInput] = useState(false);
   const [followUpText, setFollowUpText] = useState('');
+  const [reviewText, setReviewText] = useState('');
 
   // Rating & Appreciation
   const [rating, setRating] = useState(0); 
@@ -289,13 +290,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       }
   };
 
-  const handleSubmitRating = async (msgId: string, val: number) => {
+  const handleSubmitRating = async () => {
+      if (!latestMessage || rating === 0) return;
       setIsSubmittingRating(true);
       try {
           // Optimistic update for immediate feedback
-          setMessages(prev => prev.map(m => m.id === msgId ? { ...m, rating: val } : m));
+          setMessages(prev => prev.map(m => m.id === latestMessage.id ? { ...m, rating, reviewContent: reviewText } : m));
           
-          await rateMessage(msgId, val);
+          await rateMessage(latestMessage.id, rating, reviewText);
           loadMessages(true); // Background refresh
           
           setRating(0); 
@@ -1435,7 +1437,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         key={star}
                                                         onMouseEnter={() => setHoveredStar(star)}
                                                         onMouseLeave={() => setHoveredStar(0)}
-                                                        onClick={() => handleSubmitRating(latestMessage.id, star)}
+                                                        onClick={() => setRating(star)}
                                                         disabled={isSubmittingRating}
                                                         className="transition-transform hover:scale-110 active:scale-95"
                                                      >
@@ -1446,6 +1448,25 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                      </button>
                                                  ))}
                                              </div>
+                                             
+                                             {rating > 0 && (
+                                                 <div className="animate-in fade-in slide-in-from-top-2 px-4 pb-2">
+                                                     <textarea
+                                                         value={reviewText}
+                                                         onChange={(e) => setReviewText(e.target.value)}
+                                                         placeholder="Write a review (optional)..."
+                                                         className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none h-20 mb-3"
+                                                     />
+                                                     <Button 
+                                                         fullWidth 
+                                                         onClick={handleSubmitRating}
+                                                         isLoading={isSubmittingRating}
+                                                         size="sm"
+                                                     >
+                                                         Submit Review
+                                                     </Button>
+                                                 </div>
+                                             )}
                                          </div>
                                      )}
 

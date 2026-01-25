@@ -84,7 +84,9 @@ const mapDbMessageToAppMessage = (m: any, currentUserId: string): Message => {
         isRead: m.is_read,
         attachmentUrl: m.attachment_url,
         conversation: conversation,
-        rating: m.rating
+        rating: m.rating,
+        // @ts-ignore
+        reviewContent: m.review_content
     };
 };
 
@@ -969,12 +971,12 @@ export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date
 
 export const getFinancialStatistics = async (timeFrame: StatTimeFrame, date: Date): Promise<DetailedFinancialStat[]> => MockBackend.getFinancialStatistics(timeFrame, date);
 
-export const rateMessage = async (messageId: string, rating: number): Promise<void> => {
-    if (!isConfigured) return MockBackend.rateMessage(messageId, rating);
+export const rateMessage = async (messageId: string, rating: number, reviewContent?: string): Promise<void> => {
+    if (!isConfigured) return MockBackend.rateMessage(messageId, rating, reviewContent);
 
     const { error } = await supabase
         .from('messages')
-        .update({ rating })
+        .update({ rating, review_content: reviewContent })
         .eq('id', messageId);
     if (error) throw error;
 };

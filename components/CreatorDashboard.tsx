@@ -938,7 +938,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 </div>
                                                 <div className="bg-slate-50 p-2 rounded-lg">
                                                     <p className="text-[10px] text-slate-500 line-clamp-2 italic">
-                                                        "{review.content}"
+                                                        {/* @ts-ignore */}
+                                                        "{review.reviewContent || "No written review"}"
                                                     </p>
                                                 </div>
                                             </div>
@@ -2074,7 +2075,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             </div>
                                             <span className="text-xs text-slate-400">{new Date(review.createdAt).toLocaleDateString()}</span>
                                         </div>
-                                        <p className="text-sm text-slate-600 italic mb-2">"{review.content}"</p>
+                                        {/* @ts-ignore */}
+                                        <p className="text-sm text-slate-600 italic mb-2">"{review.reviewContent || "No written review"}"</p>
                                         <div className="text-xs text-slate-400">
                                             Session Amount: <span className="font-medium text-slate-600">{review.amount} Credits</span>
                                         </div>
