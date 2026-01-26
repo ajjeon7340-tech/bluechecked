@@ -500,6 +500,18 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
                 throw new Error("You already have a pending request with this creator. Please wait for a reply.");
             }
         }
+    } else {
+        // Check for duplicate purchase
+        const { count } = await supabase
+            .from('messages')
+            .select('id', { count: 'exact', head: true })
+            .eq('sender_id', userId)
+            .eq('creator_id', creatorId)
+            .eq('content', content);
+
+        if (count && count > 0) {
+            throw new Error("You have already purchased this product.");
+        }
     }
 
     // 2. Get Creator

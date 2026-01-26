@@ -901,17 +901,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             )}
                         </div>
                          <div className="space-y-4">
-                            {!creator.isPremium && (
-                                <div className="bg-indigo-900 p-5 rounded-xl shadow-lg text-white">
-                                    <h4 className="font-bold text-sm mb-2 flex items-center gap-2"><Sparkles size={14} className="text-yellow-300"/> Go Premium</h4>
-                                    <p className="text-xs text-indigo-200 leading-relaxed mb-3">
-                                        Zero commission fees for the first 12 months.
-                                    </p>
-                                    <button onClick={() => setShowPremiumModal(true)} className="text-xs font-bold text-indigo-900 bg-white hover:bg-indigo-50 px-3 py-1.5 rounded transition-colors w-full">
-                                        Upgrade Now
-                                    </button>
-                                </div>
-                            )}
                              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col h-96">
                                 <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-50 flex-shrink-0">
                                     <div className="text-slate-400 text-xs font-bold uppercase tracking-wider">Recent Reviews ({reviews.length})</div>

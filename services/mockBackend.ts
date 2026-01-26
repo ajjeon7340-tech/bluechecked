@@ -220,6 +220,20 @@ export const getMessages = async (): Promise<Message[]> => {
 
 export const sendMessage = async (creatorId: string, name: string, email: string, content: string, amount: number, attachmentUrl?: string): Promise<Message> => {
     
+    const isProductPurchase = content.startsWith('Purchased Product:');
+
+    if (isProductPurchase) {
+        const hasPurchased = messages.some(m => 
+            m.senderEmail === email && 
+            m.creatorId === creatorId && 
+            m.content === content
+        );
+
+        if (hasPurchased) {
+            throw new Error("You have already purchased this product.");
+        }
+    }
+
     // Check balance if currentUser is defined
     if (currentUser) {
         if (currentUser.credits < amount) {
@@ -229,8 +243,6 @@ export const sendMessage = async (creatorId: string, name: string, email: string
         currentUser.credits -= amount;
         localStorage.setItem('bluechecked_current_user', JSON.stringify(currentUser));
     }
-
-    const isProductPurchase = content.startsWith('Purchased Product:');
 
     const newMessage: Message = {
         id: `m${Date.now()}`,
