@@ -125,16 +125,24 @@ export const loginUser = async (role: UserRole, identifier: string, method: 'EMA
 
         // 2b. Create Profile Row manually (Required since we aren't using SQL Triggers)
         if (data.user) {
-            // We attempt to insert the profile. If it exists (rare race condition), we ignore the error.
-            await supabase.from('profiles').insert({
-                id: data.user.id,
-                email: cleanIdentifier,
-                display_name: name || 'New User',
-                role: role,
-                credits: role === 'FAN' ? 500 : 0, // Give fans starting credits
-                price_per_message: 50,
-                response_window_hours: 48
-            });
+            // Check if profile exists first to avoid error on duplicate insert and check role
+            const { data: existingProfile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
+            
+            if (existingProfile) {
+                if (existingProfile.role !== role) {
+                     throw new Error(`This account already exists as a ${existingProfile.role}. Please sign in as a ${existingProfile.role}.`);
+                }
+            } else {
+                await supabase.from('profiles').insert({
+                    id: data.user.id,
+                    email: cleanIdentifier,
+                    display_name: name || 'New User',
+                    role: role,
+                    credits: role === 'FAN' ? 500 : 0, // Give fans starting credits
+                    price_per_message: 50,
+                    response_window_hours: 48
+                });
+            }
         }
     }
 
@@ -170,6 +178,11 @@ export const loginUser = async (role: UserRole, identifier: string, method: 'EMA
         // Fetch again
         const { data: newProfile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
         profile = newProfile;
+    } else {
+        // Check Role Mismatch for existing profile
+        if (profile.role !== role) {
+            throw new Error(`This account already exists as a ${profile.role}. Please sign in as a ${profile.role}.`);
+        }
     }
 
     const user = mapProfileToUser(profile);
@@ -226,6 +239,16 @@ export const signInWithSocial = async (provider: 'google' | 'instagram', role: U
     if (error) throw error;
 };
 
+export const signOut = async () => {
+    if (!isConfigured) {
+        localStorage.removeItem('bluechecked_current_user');
+        window.location.reload();
+        return;
+    }
+    await supabase.auth.signOut();
+    localStorage.removeItem('bluechecked_current_user');
+};
+
 export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
     if (!isConfigured) return MockBackend.checkAndSyncSession();
 
@@ -246,43 +269,23 @@ export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
 
     // 3. Handle First Time OAuth Login (Profile Creation)
     if (!profile) {
-        // Determine role from URL param OR localStorage (fallback)
-        const params = new URLSearchParams(window.location.search);
-        const urlRole = params.get('role');
-        const storedRole = localStorage.getItem('bluechecked_oauth_role');
-        
-        // Prioritize localStorage (user intent before redirect), fallback to URL param, default to FAN
-        const roleParam = (storedRole === 'CREATOR' || storedRole === 'FAN') ? storedRole
-            : (urlRole === 'CREATOR' || urlRole === 'FAN') ? urlRole 
-            : 'FAN';
-            
-        const role = roleParam as UserRole;
-        
-        // Clean up
-        localStorage.removeItem('bluechecked_oauth_role');
-
-        const meta = session.user.user_metadata;
-        const name = meta?.full_name || meta?.name || 'New User';
-        const avatar = meta?.avatar_url || meta?.picture;
-
-        // Create Profile
-        await supabase.from('profiles').insert({
-            id: session.user.id,
-            email: session.user.email,
-            display_name: name,
-            role: role,
-            avatar_url: avatar,
-            credits: role === 'FAN' ? 500 : 0,
-            price_per_message: 50,
-            response_window_hours: 48
-        });
-
-        // Fetch again
-        const { data: newProfile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
-        profile = newProfile;
+        // Instead of auto-creating, we throw a specific error to prompt the user in the UI
+        const error: any = new Error("PROFILE_MISSING");
+        error.code = 'PROFILE_MISSING';
+        throw error;
     }
 
     if (profile) {
+        // Check for role mismatch from OAuth intent
+        const storedRole = localStorage.getItem('bluechecked_oauth_role');
+        if (storedRole && storedRole !== profile.role) {
+            localStorage.removeItem('bluechecked_oauth_role');
+            const error: any = new Error(`This account already exists as a ${profile.role}. Please sign in as a ${profile.role}.`);
+            error.code = 'ROLE_MISMATCH';
+            throw error;
+        }
+        localStorage.removeItem('bluechecked_oauth_role');
+
         const user = mapProfileToUser(profile);
         saveUserToLocalStorage(user);
         return user;
@@ -291,6 +294,53 @@ export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
     // If we reach here, we have a session but no profile (and failed to create one)
     localStorage.removeItem('bluechecked_current_user');
     return null;
+};
+
+export const completeOAuthSignup = async (): Promise<CurrentUser> => {
+    if (!isConfigured) throw new Error("Backend not configured");
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("No session found");
+
+    // Determine role from URL param OR localStorage (fallback)
+    const params = new URLSearchParams(window.location.search);
+    const urlRole = params.get('role');
+    const storedRole = localStorage.getItem('bluechecked_oauth_role');
+    
+    // Prioritize localStorage (user intent before redirect), fallback to URL param, default to FAN
+    const roleParam = (storedRole === 'CREATOR' || storedRole === 'FAN') ? storedRole
+        : (urlRole === 'CREATOR' || urlRole === 'FAN') ? urlRole 
+        : 'FAN';
+        
+    const role = roleParam as UserRole;
+    
+    // Clean up
+    localStorage.removeItem('bluechecked_oauth_role');
+
+    const meta = session.user.user_metadata;
+    const name = meta?.full_name || meta?.name || 'New User';
+    const avatar = meta?.avatar_url || meta?.picture;
+
+    // Create Profile
+    const { error } = await supabase.from('profiles').insert({
+        id: session.user.id,
+        email: session.user.email,
+        display_name: name,
+        role: role,
+        avatar_url: avatar,
+        credits: role === 'FAN' ? 500 : 0,
+        price_per_message: 50,
+        response_window_hours: 48
+    });
+
+    if (error) throw error;
+
+    // Fetch again
+    const { data: newProfile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+    
+    const user = mapProfileToUser(newProfile);
+    saveUserToLocalStorage(user);
+    return user;
 };
 
 // --- PROFILES ---

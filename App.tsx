@@ -5,7 +5,7 @@ import { CreatorDashboard } from './components/CreatorDashboard';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { FanDashboard } from './components/FanDashboard';
-import { getCreatorProfile, checkAndSyncSession, isBackendConfigured } from './services/realBackend';
+import { getCreatorProfile, checkAndSyncSession, isBackendConfigured, completeOAuthSignup, signOut } from './services/realBackend';
 import { CreatorProfile, CurrentUser } from './types';
 
 type PageState = 'LANDING' | 'LOGIN' | 'DASHBOARD' | 'PROFILE' | 'FAN_DASHBOARD';
@@ -17,6 +17,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showSignUpConfirm, setShowSignUpConfirm] = useState(false);
 
   const loadCreatorData = async (specificCreatorId?: string) => {
     try {
@@ -43,6 +44,11 @@ function App() {
       }
 
     } catch (err: any) {
+      if (err.code === 'PROFILE_MISSING') {
+          setShowSignUpConfirm(true);
+          setIsLoading(false);
+          return;
+      }
       console.error("Failed to load creator:", err);
       setError(err.message || "Failed to load application data. Please ensure the database is seeded.");
     } finally {
@@ -75,7 +81,7 @@ function App() {
 
     window.addEventListener('popstate', handlePopState);
 
-    console.log("Bluechecked App Version: 3.6.17");
+    console.log("Bluechecked App Version: 3.6.18");
     console.log("Backend Connection:", isBackendConfigured() ? "✅ Connected to Supabase" : "⚠️ Using Mock Data");
     loadCreatorData();
     
@@ -89,20 +95,31 @@ function App() {
 
     // Check for existing session
     const initSession = async () => {
-        const user = await checkAndSyncSession();
-        if (user) {
-            setCurrentUser(user);
-            if (user.role === 'CREATOR') {
-                setIsLoading(true);
-                await loadCreatorData(user.id); // Ensure we load the correct creator profile
-                setCurrentPage('DASHBOARD');
-                window.history.replaceState({ page: 'DASHBOARD' }, '', '');
+        try {
+            const user = await checkAndSyncSession();
+            if (user) {
+                setCurrentUser(user);
+                if (user.role === 'CREATOR') {
+                    setIsLoading(true);
+                    await loadCreatorData(user.id); // Ensure we load the correct creator profile
+                    setCurrentPage('DASHBOARD');
+                    window.history.replaceState({ page: 'DASHBOARD' }, '', '');
+                } else {
+                    setCurrentPage('FAN_DASHBOARD');
+                    window.history.replaceState({ page: 'FAN_DASHBOARD' }, '', '');
+                }
             } else {
-                setCurrentPage('FAN_DASHBOARD');
-                window.history.replaceState({ page: 'FAN_DASHBOARD' }, '', '');
+                window.history.replaceState({ page: 'LANDING' }, '', '');
             }
-        } else {
-            window.history.replaceState({ page: 'LANDING' }, '', '');
+        } catch (err: any) {
+            if (err.code === 'PROFILE_MISSING') {
+                setShowSignUpConfirm(true);
+            } else if (err.code === 'ROLE_MISMATCH') {
+                alert(err.message);
+                await signOut();
+                window.history.replaceState({ page: 'LANDING' }, '', '');
+                setCurrentPage('LANDING');
+            }
         }
     };
     initSession();
@@ -177,6 +194,27 @@ function App() {
     } catch (e) {
       setIsLoading(false);
     }
+  };
+
+  const handleConfirmSignUp = async () => {
+      setIsLoading(true);
+      try {
+          const user = await completeOAuthSignup();
+          handleLoginSuccess(user);
+          setShowSignUpConfirm(false);
+      } catch (e) {
+          console.error(e);
+          alert("Failed to create account.");
+          await handleCancelSignUp();
+      } finally {
+          setIsLoading(false);
+      }
+  };
+
+  const handleCancelSignUp = async () => {
+      await signOut();
+      setShowSignUpConfirm(false);
+      setCurrentPage('LANDING');
   };
 
   return (
@@ -282,6 +320,22 @@ function App() {
             }}
             onBrowseCreators={handleCreatorSelect}
          />
+      )}
+
+      {/* Sign Up Confirmation Modal */}
+      {showSignUpConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl text-center">
+                <h3 className="text-xl font-bold text-slate-900 mb-2">Create Account?</h3>
+                <p className="text-slate-500 mb-6">
+                    We couldn't find an account linked to this email. Would you like to create a new one?
+                </p>
+                <div className="flex gap-3">
+                    <button onClick={handleCancelSignUp} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+                    <button onClick={handleConfirmSignUp} className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">Create Account</button>
+                </div>
+            </div>
+        </div>
       )}
     </div>
   );
