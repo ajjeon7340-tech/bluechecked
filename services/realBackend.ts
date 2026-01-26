@@ -390,7 +390,8 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
         tags: [],
         links: data.links || [],
         products: data.products || [],
-        platforms: data.platforms || []
+        platforms: data.platforms || [],
+        isPremium: data.is_premium || false
     };
 };
 
@@ -410,7 +411,8 @@ export const updateCreatorProfile = async (profile: CreatorProfile): Promise<Cre
             response_window_hours: profile.responseWindowHours,
             platforms: profile.platforms,
             links: profile.links,
-            products: profile.products
+            products: profile.products,
+            is_premium: profile.isPremium
         })
         .eq('id', session.session.user.id);
 
