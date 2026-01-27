@@ -66,7 +66,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack }) => {
     } catch (error: any) {
         console.error("Login Error:", error);
         if (error.message === "CONFIRMATION_REQUIRED") {
-            alert("Confirmation email sent! Please check your inbox and click the link to activate your account.");
+            alert("Confirmation email sent! Please check your inbox (and spam folder) and click the link to activate your account.");
             setIsSignUp(false); // Switch back to login mode so they are ready to sign in after clicking link
         } else {
             alert(error.message || "Login failed. Please try again.");

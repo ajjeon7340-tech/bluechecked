@@ -81,7 +81,7 @@ function App() {
 
     window.addEventListener('popstate', handlePopState);
 
-    console.log("Bluechecked App Version: 3.6.25");
+    console.log("Bluechecked App Version: 3.6.26");
     console.log("Backend Connection:", isBackendConfigured() ? "✅ Connected to Supabase" : "⚠️ Using Mock Data");
     loadCreatorData();
     
