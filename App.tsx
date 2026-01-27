@@ -19,7 +19,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [showSignUpConfirm, setShowSignUpConfirm] = useState(false);
 
-  const loadCreatorData = async (specificCreatorId?: string) => {
+  const loadCreatorData = async (specificCreatorId?: string): Promise<CreatorProfile | null> => {
     try {
       // Don't set isLoading(true) here to avoid flashing the loading screen on background refreshes
       setError(null);
@@ -37,10 +37,12 @@ function App() {
       try {
         const creatorData = await getCreatorProfile(specificCreatorId);
         setCreator(creatorData);
+        return creatorData;
       } catch (e: any) {
         // If DB is empty, ignore error so we can load Landing Page and allow Sign Up
         console.warn("No creator profile found (DB might be empty). App running in setup mode.");
         setCreator(null);
+        return null;
       }
 
     } catch (err: any) {
@@ -48,9 +50,11 @@ function App() {
           setShowSignUpConfirm(true);
           setIsLoading(false);
           return;
+          return null;
       }
       console.error("Failed to load creator:", err);
       setError(err.message || "Failed to load application data. Please ensure the database is seeded.");
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -81,7 +85,7 @@ function App() {
 
     window.addEventListener('popstate', handlePopState);
 
-    console.log("Bluechecked App Version: 3.6.26");
+    console.log("Bluechecked App Version: 3.6.27");
     console.log("Backend Connection:", isBackendConfigured() ? "✅ Connected to Supabase" : "⚠️ Using Mock Data");
     loadCreatorData();
     
@@ -100,17 +104,17 @@ function App() {
             if (user) {
                 setCurrentUser(user);
                 
-                // Check if profile setup is needed (e.g. default name 'New User' and not skipped)
-                const hasSkippedSetup = localStorage.getItem('bluechecked_skip_setup') === 'true';
-                if (user.name === 'New User' && !hasSkippedSetup) {
-                    // Redirect to setup via Login Page logic (or a dedicated setup page)
-                    // For now, we can just let them through or force a specific view.
-                    // Let's assume we want to force them to the dashboard but maybe show a modal?
-                    // Or better, redirect to a setup view.
-                }
-
                 if (user.role === 'CREATOR') {
-                    await navigateToDashboard(user);
+                    const profile = await loadCreatorData(user.id);
+                    
+                    // Check if profile setup is needed (empty bio is a good indicator of fresh account)
+                    const hasSkippedSetup = localStorage.getItem('bluechecked_skip_setup') === 'true';
+                    if (profile && !profile.bio && !hasSkippedSetup) {
+                        setCurrentPage('SETUP_PROFILE');
+                        window.history.replaceState({ page: 'SETUP_PROFILE' }, '', '');
+                    } else {
+                        await navigateToDashboard(user);
+                    }
                 } else {
                     // Fan Dashboard
                     setCurrentPage('FAN_DASHBOARD');
@@ -248,6 +252,17 @@ function App() {
 
       {currentPage === 'LOGIN' && (
         <LoginPage 
+          onLoginSuccess={handleLoginSuccess}
+          onBack={() => {
+              window.history.pushState({ page: 'LANDING' }, '', '');
+              setCurrentPage('LANDING');
+          }}
+        />
+      )}
+
+      {currentPage === 'SETUP_PROFILE' && (
+        <LoginPage 
+          initialStep="SETUP_PROFILE"
           onLoginSuccess={handleLoginSuccess}
           onBack={() => {
               window.history.pushState({ page: 'LANDING' }, '', '');

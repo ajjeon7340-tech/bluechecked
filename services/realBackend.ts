@@ -110,6 +110,7 @@ export const loginUser = async (role: UserRole, identifier: string, method: 'EMA
             email: cleanIdentifier,
             password: 'password123',
             options: {
+                emailRedirectTo: window.location.origin,
                 data: {
                     name: name || 'New User',
                     role: role

@@ -7,6 +7,7 @@ import { loginUser, updateCreatorProfile, getCreatorProfile, updateCurrentUser, 
 interface Props {
   onLoginSuccess: (user: CurrentUser) => void;
   onBack: () => void;
+  initialStep?: 'LOGIN' | 'SETUP_PROFILE';
 }
 
 const SUPPORTED_PLATFORMS = [
@@ -17,7 +18,7 @@ const SUPPORTED_PLATFORMS = [
     { id: 'twitch', label: 'Twitch', icon: Twitch },
 ];
 
-export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack }) => {
+export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep = 'LOGIN' }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [role, setRole] = useState<UserRole>('CREATOR'); 
   const [authMethod, setAuthMethod] = useState<'EMAIL' | 'PHONE'>('EMAIL');
@@ -31,7 +32,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack }) => {
   const [isSocialLoading, setIsSocialLoading] = useState(false);
 
   // Setup / Onboarding State
-  const [step, setStep] = useState<'LOGIN' | 'SETUP_PROFILE'>('LOGIN');
+  const [step, setStep] = useState<'LOGIN' | 'SETUP_PROFILE'>(initialStep);
   const [tempUser, setTempUser] = useState<CurrentUser | null>(null);
   
   // Creator Config
