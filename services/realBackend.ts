@@ -96,14 +96,16 @@ export const loginUser = async (role: UserRole, identifier: string, method: 'EMA
     if (!isConfigured) return MockBackend.loginUser(role, identifier, method, name);
 
     const cleanIdentifier = identifier.trim();
-    // 1. Try to sign in
-    let { data, error } = await supabase.auth.signInWithPassword({
-        email: cleanIdentifier,
-        password: 'password123', // Hardcoded for prototype simplicity.
-    });
+    
+    // 1. Determine if we are Signing Up or Signing In based on 'name' presence
+    // If 'name' is provided, it's a Sign Up attempt. If not, it's a Sign In attempt.
+    // This relies on the UI passing 'name' only during Sign Up.
+    
+    let data;
+    let error;
 
-    // 2. If user doesn't exist, Sign Up 
-    if (error) {
+    if (name) {
+        // --- SIGN UP FLOW ---
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email: cleanIdentifier,
             password: 'password123',
@@ -143,6 +145,22 @@ export const loginUser = async (role: UserRole, identifier: string, method: 'EMA
                     response_window_hours: 48
                 });
             }
+        }
+    } else {
+        // --- SIGN IN FLOW ---
+        const result = await supabase.auth.signInWithPassword({
+            email: cleanIdentifier,
+            password: 'password123', // Hardcoded for prototype simplicity.
+        });
+        data = result.data;
+        error = result.error;
+
+        if (error) {
+            // Do NOT auto-signup. Throw error if user not found or password wrong.
+            if (error.message.includes("Invalid login credentials")) {
+                throw new Error("Invalid email or password. If you haven't created an account, please Sign Up first.");
+            }
+            throw error;
         }
     }
 

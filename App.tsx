@@ -8,7 +8,7 @@ import { FanDashboard } from './components/FanDashboard';
 import { getCreatorProfile, checkAndSyncSession, isBackendConfigured, completeOAuthSignup, signOut } from './services/realBackend';
 import { CreatorProfile, CurrentUser } from './types';
 
-type PageState = 'LANDING' | 'LOGIN' | 'DASHBOARD' | 'PROFILE' | 'FAN_DASHBOARD';
+type PageState = 'LANDING' | 'LOGIN' | 'DASHBOARD' | 'PROFILE' | 'FAN_DASHBOARD' | 'SETUP_PROFILE';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<PageState>('LANDING');
@@ -81,7 +81,7 @@ function App() {
 
     window.addEventListener('popstate', handlePopState);
 
-    console.log("Bluechecked App Version: 3.6.23");
+    console.log("Bluechecked App Version: 3.6.24");
     console.log("Backend Connection:", isBackendConfigured() ? "✅ Connected to Supabase" : "⚠️ Using Mock Data");
     loadCreatorData();
     
@@ -99,12 +99,20 @@ function App() {
             const user = await checkAndSyncSession();
             if (user) {
                 setCurrentUser(user);
+                
+                // Check if profile setup is needed (e.g. default name 'New User' and not skipped)
+                const hasSkippedSetup = localStorage.getItem('bluechecked_skip_setup') === 'true';
+                if (user.name === 'New User' && !hasSkippedSetup) {
+                    // Redirect to setup via Login Page logic (or a dedicated setup page)
+                    // For now, we can just let them through or force a specific view.
+                    // Let's assume we want to force them to the dashboard but maybe show a modal?
+                    // Or better, redirect to a setup view.
+                }
+
                 if (user.role === 'CREATOR') {
-                    setIsLoading(true);
-                    await loadCreatorData(user.id); // Ensure we load the correct creator profile
-                    setCurrentPage('DASHBOARD');
-                    window.history.replaceState({ page: 'DASHBOARD' }, '', '');
+                    await navigateToDashboard(user);
                 } else {
+                    // Fan Dashboard
                     setCurrentPage('FAN_DASHBOARD');
                     window.history.replaceState({ page: 'FAN_DASHBOARD' }, '', '');
                 }
@@ -170,19 +178,21 @@ function App() {
     </div>
   );
 
+  const navigateToDashboard = async (user: CurrentUser) => {
+      if (user.role === 'CREATOR') {
+          setIsLoading(true);
+          await loadCreatorData(user.id);
+          window.history.pushState({ page: 'DASHBOARD' }, '', '');
+          setCurrentPage('DASHBOARD');
+      } else {
+          window.history.pushState({ page: 'FAN_DASHBOARD' }, '', '');
+          setCurrentPage('FAN_DASHBOARD');
+      }
+  };
+
   const handleLoginSuccess = async (user: CurrentUser) => {
     setCurrentUser(user);
-    
-    if (user.role === 'CREATOR') {
-      setIsLoading(true); // Show loading while switching to your profile
-      await loadCreatorData(user.id); // Load YOUR specific profile
-      window.history.pushState({ page: 'DASHBOARD' }, '', '');
-      setCurrentPage('DASHBOARD');
-    } else {
-       await loadCreatorData(); // Load default/featured profile for fan view
-       window.history.pushState({ page: 'FAN_DASHBOARD' }, '', '');
-       setCurrentPage('FAN_DASHBOARD');
-    }
+    await navigateToDashboard(user);
   };
 
   const handleCreatorSelect = async (creatorId: string) => {
