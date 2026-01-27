@@ -269,6 +269,16 @@ export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
 
     // 3. Handle First Time OAuth Login (Profile Creation)
     if (!profile) {
+        // Check for role intent from localStorage or URL
+        const storedRole = localStorage.getItem('bluechecked_oauth_role');
+        const params = new URLSearchParams(window.location.search);
+        const urlRole = params.get('role');
+        
+        // If we have a role intent, we complete the signup automatically
+        if (storedRole || urlRole) {
+            return await completeOAuthSignup();
+        }
+
         // Instead of auto-creating, we throw a specific error to prompt the user in the UI
         const error: any = new Error("PROFILE_MISSING");
         error.code = 'PROFILE_MISSING';
