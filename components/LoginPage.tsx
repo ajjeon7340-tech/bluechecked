@@ -285,6 +285,9 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                     <button onClick={handleCompleteSetup} className="w-full text-center text-slate-400 text-sm hover:text-slate-600 font-medium transition-colors">
                         Skip for now
                     </button>
+                    <button onClick={onBack} className="w-full text-center text-slate-300 hover:text-red-500 text-xs font-medium transition-colors mt-2">
+                        Cancel & Sign Out
+                    </button>
                 </div>
              </div>
           </div>

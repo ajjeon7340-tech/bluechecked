@@ -85,7 +85,7 @@ function App() {
 
     window.addEventListener('popstate', handlePopState);
 
-    console.log("Bluechecked App Version: 3.6.28");
+    console.log("Bluechecked App Version: 3.6.29");
     console.log("Backend Connection:", isBackendConfigured() ? "✅ Connected to Supabase" : "⚠️ Using Mock Data");
     loadCreatorData();
     
@@ -264,7 +264,9 @@ function App() {
         <LoginPage 
           initialStep="SETUP_PROFILE"
           onLoginSuccess={handleLoginSuccess}
-          onBack={() => {
+          onBack={async () => {
+              await signOut();
+              setCurrentUser(null);
               window.history.pushState({ page: 'LANDING' }, '', '');
               setCurrentPage('LANDING');
           }}
