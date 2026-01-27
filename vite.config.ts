@@ -2,15 +2,6 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   build: {
-    rollupOptions: {
-      external: [
-        'react',
-        'react-dom',
-        'recharts',
-        'lucide-react',
-        '@google/genai',
-        '@supabase/supabase-js'
-      ]
-    }
+    // Dependencies are now bundled to ensure version consistency
   }
 });
