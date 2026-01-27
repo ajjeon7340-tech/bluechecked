@@ -84,6 +84,18 @@ let currentUser: CurrentUser | null = null;
 // Mock Likes Store: creatorId -> Set of userIds
 const creatorLikes = new Map<string, Set<string>>();
 
+// Mock Users Store (Persistent)
+let mockUsers: CurrentUser[] = (() => {
+    try {
+        const saved = localStorage.getItem('bluechecked_mock_users');
+        return saved ? JSON.parse(saved) : [];
+    } catch {
+        return [];
+    }
+})();
+
+const saveMockUsers = () => localStorage.setItem('bluechecked_mock_users', JSON.stringify(mockUsers));
+
 // Mock Likes Log (for statistics over time)
 interface LikeEvent {
     creatorId: string;
@@ -312,16 +324,47 @@ export const cancelMessage = async (messageId: string): Promise<void> => {
 };
 
 export const loginUser = async (role: UserRole, identifier: string, method: 'EMAIL' | 'PHONE', name?: string): Promise<CurrentUser> => {
-    // Mock user with a credit balance
-    currentUser = {
-        id: `u${Date.now()}`,
-        name: name || (method === 'EMAIL' ? identifier.split('@')[0] : 'User'),
-        email: method === 'EMAIL' ? identifier : undefined,
-        phoneNumber: method === 'PHONE' ? identifier : undefined,
-        role,
-        credits: role === 'FAN' ? 1000 : 5000 // Give initial credits for testing
-    };
-    return currentUser;
+    // Simulate network delay
+    await new Promise(r => setTimeout(r, 600));
+
+    const cleanIdentifier = identifier.trim();
+
+    if (name) {
+        // --- SIGN UP ---
+        const existing = mockUsers.find(u => u.email === cleanIdentifier || (u.phoneNumber && u.phoneNumber === cleanIdentifier));
+        if (existing) {
+            throw new Error("User already registered. Please sign in.");
+        }
+
+        const newUser: CurrentUser = {
+            id: `u-${Date.now()}`,
+            name: name,
+            email: method === 'EMAIL' ? cleanIdentifier : undefined,
+            phoneNumber: method === 'PHONE' ? cleanIdentifier : undefined,
+            role,
+            credits: role === 'FAN' ? 500 : 0,
+            avatarUrl: DEFAULT_AVATAR
+        };
+
+        mockUsers.push(newUser);
+        saveMockUsers();
+        
+        currentUser = newUser;
+        localStorage.setItem('bluechecked_current_user', JSON.stringify(currentUser));
+        return currentUser;
+    } else {
+        // --- SIGN IN ---
+        const existing = mockUsers.find(u => u.email === cleanIdentifier || (u.phoneNumber && u.phoneNumber === cleanIdentifier));
+        
+        if (!existing) {
+            throw new Error("Invalid login credentials. If you haven't created an account, please Sign Up first.");
+        }
+
+        // Note: In mock mode we don't check password
+        currentUser = existing;
+        localStorage.setItem('bluechecked_current_user', JSON.stringify(currentUser));
+        return currentUser;
+    }
 };
 
 export const signInWithSocial = async (provider: 'google' | 'instagram', role: UserRole) => {
