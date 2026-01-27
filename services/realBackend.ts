@@ -223,6 +223,16 @@ export const updateCurrentUser = async (user: CurrentUser): Promise<void> => {
     if (error) throw error;
 };
 
+export const resendConfirmationEmail = async (email: string) => {
+    if (!isConfigured) return; // Mock mode doesn't send emails
+    const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: { emailRedirectTo: window.location.origin }
+    });
+    if (error) throw error;
+};
+
 export const signInWithSocial = async (provider: 'google' | 'instagram', role: UserRole) => {
     if (!isConfigured) {
         return MockBackend.signInWithSocial(provider, role);
@@ -350,19 +360,27 @@ export const completeOAuthSignup = async (): Promise<CurrentUser> => {
     const name = meta?.full_name || meta?.name || 'New User';
     const avatar = meta?.avatar_url || meta?.picture;
 
-    // Create Profile
-    const { error } = await supabase.from('profiles').insert({
-        id: session.user.id,
-        email: session.user.email,
-        display_name: name,
-        role: role,
-        avatar_url: avatar,
-        credits: role === 'FAN' ? 500 : 0,
-        price_per_message: 50,
-        response_window_hours: 48
-    });
+    // Check if profile exists first to avoid error on duplicate insert (409 Conflict)
+    const { data: existingProfile } = await supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
 
-    if (error) throw error;
+    if (!existingProfile) {
+        // Create Profile
+        const { error } = await supabase.from('profiles').insert({
+            id: session.user.id,
+            email: session.user.email,
+            display_name: name,
+            role: role,
+            avatar_url: avatar,
+            credits: role === 'FAN' ? 500 : 0,
+            price_per_message: 50,
+            response_window_hours: 48
+        });
+        if (error) throw error;
+    } else {
+        // Profile already exists, just ensure we return it.
+        // We could update it here if needed, but for now just proceed.
+        console.log("Profile already exists, skipping creation.");
+    }
 
     // Fetch again
     const { data: newProfile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();

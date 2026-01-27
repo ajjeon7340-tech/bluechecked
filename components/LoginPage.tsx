@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Button } from './Button';
 import { CheckCircle2, Lock, GoogleLogo, InstagramLogo, Mail, User, MessageSquare, Camera, X, Plus, YouTubeLogo, XLogo, TikTokLogo, Twitch, Check, Phone } from './Icons';
 import { CurrentUser, UserRole } from '../types';
-import { loginUser, updateCreatorProfile, getCreatorProfile, updateCurrentUser, signInWithSocial } from '../services/realBackend';
+import { loginUser, updateCreatorProfile, getCreatorProfile, updateCurrentUser, signInWithSocial, resendConfirmationEmail } from '../services/realBackend';
 
 interface Props {
   onLoginSuccess: (user: CurrentUser) => void;
@@ -30,6 +30,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   
   const [isLoading, setIsLoading] = useState(false);
   const [isSocialLoading, setIsSocialLoading] = useState(false);
+  const [showResend, setShowResend] = useState(false);
 
   // Setup / Onboarding State
   const [step, setStep] = useState<'LOGIN' | 'SETUP_PROFILE'>(initialStep);
@@ -69,6 +70,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
         if (error.message === "CONFIRMATION_REQUIRED") {
             alert("Confirmation email sent! Please check your inbox (and spam folder) and click the link to activate your account.");
             setIsSignUp(false); // Switch back to login mode so they are ready to sign in after clicking link
+            setShowResend(true);
         } else {
             alert(error.message || "Login failed. Please try again.");
         }
@@ -96,6 +98,19 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
             alert(errorMessage || "Social login failed");
         }
         setIsSocialLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!email) return;
+    setIsLoading(true);
+    try {
+        await resendConfirmationEmail(email);
+        alert("Confirmation email resent! Please check your inbox.");
+    } catch (e: any) {
+        alert(e.message || "Failed to resend email.");
+    } finally {
+        setIsLoading(false);
     }
   };
 
@@ -455,6 +470,12 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 }
               </Button>
             </form>
+
+            {showResend && authMethod === 'EMAIL' && (
+                <button onClick={handleResend} className="w-full text-center text-xs text-blue-600 hover:underline mt-2">
+                    Didn't receive the email? Click to resend.
+                </button>
+            )}
           </div>
 
           <div className="mt-6 text-center">
