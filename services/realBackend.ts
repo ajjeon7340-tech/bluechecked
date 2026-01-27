@@ -92,10 +92,11 @@ const mapDbMessageToAppMessage = (m: any, currentUserId: string): Message => {
 
 // --- AUTH ---
 
-export const loginUser = async (role: UserRole, identifier: string, method: 'EMAIL' | 'PHONE' = 'EMAIL', name?: string): Promise<CurrentUser> => {
-    if (!isConfigured) return MockBackend.loginUser(role, identifier, method, name);
+export const loginUser = async (role: UserRole, identifier: string, password?: string, method: 'EMAIL' | 'PHONE' = 'EMAIL', name?: string): Promise<CurrentUser> => {
+    if (!isConfigured) return MockBackend.loginUser(role, identifier, method, name); // Mock doesn't use password yet
 
     const cleanIdentifier = identifier.trim();
+    const authPassword = password || 'password123'; // Fallback for safety, but UI should provide it
     
     // 1. Determine if we are Signing Up or Signing In based on 'name' presence
     // If 'name' is provided, it's a Sign Up attempt. If not, it's a Sign In attempt.
@@ -108,7 +109,7 @@ export const loginUser = async (role: UserRole, identifier: string, method: 'EMA
         // --- SIGN UP FLOW ---
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email: cleanIdentifier,
-            password: 'password123',
+            password: authPassword,
             options: {
                 emailRedirectTo: window.location.origin,
                 data: {
@@ -151,7 +152,7 @@ export const loginUser = async (role: UserRole, identifier: string, method: 'EMA
         // --- SIGN IN FLOW ---
         const result = await supabase.auth.signInWithPassword({
             email: cleanIdentifier,
-            password: 'password123', // Hardcoded for prototype simplicity.
+            password: authPassword,
         });
         data = result.data;
         error = result.error;

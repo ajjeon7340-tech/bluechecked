@@ -56,7 +56,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
         const identifier = (authMethod === 'EMAIL' ? email : phoneNumber).trim();
         
         // Only pass name if signing up. This tells the backend to use the SignUp flow.
-        const user = await loginUser(role, identifier, authMethod, isSignUp ? fullName.trim() : undefined);
+        const user = await loginUser(role, identifier, password, authMethod, isSignUp ? fullName.trim() : undefined);
         
         if (isSignUp) {
             setTempUser(user);
