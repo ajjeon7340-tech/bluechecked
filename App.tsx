@@ -39,17 +39,19 @@ function App() {
         setCreator(creatorData);
         return creatorData;
       } catch (e: any) {
-        // If DB is empty, ignore error so we can load Landing Page and allow Sign Up
-        console.warn("No creator profile found (DB might be empty). App running in setup mode.");
-        setCreator(null);
-        return null;
+        // Only ignore error if we are NOT looking for a specific creator (i.e. app init)
+        if (!specificCreatorId) {
+            console.warn("No creator profile found (DB might be empty). App running in setup mode.");
+            setCreator(null);
+            return null;
+        }
+        throw e;
       }
 
     } catch (err: any) {
       if (err.code === 'PROFILE_MISSING') {
           setShowSignUpConfirm(true);
           setIsLoading(false);
-          return;
           return null;
       }
       console.error("Failed to load creator:", err);
@@ -107,6 +109,8 @@ function App() {
                 if (user.role === 'CREATOR') {
                     const profile = await loadCreatorData(user.id);
                     
+                    if (!profile) return;
+
                     // Check if profile setup is needed (empty bio is a good indicator of fresh account)
                     const hasSkippedSetup = localStorage.getItem('bluechecked_skip_setup') === 'true';
                     if (profile && !profile.bio && !hasSkippedSetup) {
