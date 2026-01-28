@@ -358,7 +358,7 @@ export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
     return null;
 };
 
-export const completeOAuthSignup = async (): Promise<CurrentUser> => {
+export const completeOAuthSignup = async (roleOverride?: UserRole): Promise<CurrentUser> => {
     if (!isConfigured) throw new Error("Backend not configured");
 
     const { data: { session } } = await supabase.auth.getSession();
@@ -366,19 +366,25 @@ export const completeOAuthSignup = async (): Promise<CurrentUser> => {
 
     // Determine role from URL param OR localStorage (fallback)
     const params = new URLSearchParams(window.location.search);
-    const urlRole = params.get('role');
+    let urlRole = params.get('role');
+    
+    // Also check hash params (Supabase sometimes puts custom params in hash)
+    if (!urlRole && window.location.hash) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        urlRole = hashParams.get('role');
+    }
+
     const storedRole = localStorage.getItem('bluechecked_oauth_role');
     
     // Prioritize localStorage (user intent before redirect), fallback to URL param, default to FAN
-    const roleParam = (storedRole === 'CREATOR' || storedRole === 'FAN') ? storedRole
+    const roleParam = roleOverride 
+        ? roleOverride
+        : (storedRole === 'CREATOR' || storedRole === 'FAN') ? storedRole
         : (urlRole === 'CREATOR' || urlRole === 'FAN') ? urlRole 
         : 'FAN';
         
     const role = roleParam as UserRole;
     
-    // Clean up
-    localStorage.removeItem('bluechecked_oauth_role');
-
     const meta = session.user.user_metadata;
     const name = meta?.full_name || meta?.name || 'New User';
     const avatar = meta?.avatar_url || meta?.picture;
@@ -407,6 +413,9 @@ export const completeOAuthSignup = async (): Promise<CurrentUser> => {
              throw new Error(`This account already exists as a ${existingProfile.role}. Please sign in as a ${existingProfile.role}.`);
         }
     }
+
+    // Clean up only after success
+    localStorage.removeItem('bluechecked_oauth_role');
 
     // Fetch again
     const { data: newProfile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();

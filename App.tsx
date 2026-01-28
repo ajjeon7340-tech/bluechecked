@@ -6,7 +6,7 @@ import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { FanDashboard } from './components/FanDashboard';
 import { getCreatorProfile, checkAndSyncSession, isBackendConfigured, completeOAuthSignup, signOut } from './services/realBackend';
-import { CreatorProfile, CurrentUser } from './types';
+import { CreatorProfile, CurrentUser, UserRole } from './types';
 
 type PageState = 'LANDING' | 'LOGIN' | 'DASHBOARD' | 'PROFILE' | 'FAN_DASHBOARD' | 'SETUP_PROFILE';
 
@@ -229,10 +229,10 @@ function App() {
     }
   };
 
-  const handleConfirmSignUp = async () => {
+  const handleConfirmSignUp = async (role: UserRole) => {
       setIsLoading(true);
       try {
-          const user = await completeOAuthSignup();
+          const user = await completeOAuthSignup(role);
           handleLoginSuccess(user);
           setShowSignUpConfirm(false);
       } catch (e) {
@@ -375,11 +375,12 @@ function App() {
             <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl text-center">
                 <h3 className="text-xl font-bold text-slate-900 mb-2">Create Account?</h3>
                 <p className="text-slate-500 mb-6">
-                    We couldn't find an account linked to this email. Would you like to create a new one?
+                    We couldn't find an account linked to this email. Please select your account type to continue.
                 </p>
-                <div className="flex gap-3">
-                    <button onClick={handleCancelSignUp} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-                    <button onClick={handleConfirmSignUp} className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">Create Account</button>
+                <div className="flex flex-col gap-3">
+                    <button onClick={() => handleConfirmSignUp('CREATOR')} className="w-full px-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">Create Creator Account</button>
+                    <button onClick={() => handleConfirmSignUp('FAN')} className="w-full px-4 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/20">Create Fan Account</button>
+                    <button onClick={handleCancelSignUp} className="w-full px-4 py-2 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors mt-2">Cancel</button>
                 </div>
             </div>
         </div>
