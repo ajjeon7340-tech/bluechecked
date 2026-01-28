@@ -136,6 +136,7 @@ export const loginUser = async (role: UserRole, identifier: string, password?: s
                 if (existingProfile.role !== role) {
                      throw new Error(`This account already exists as a ${existingProfile.role}. Please sign in as a ${existingProfile.role}.`);
                 }
+                throw new Error("Account already exists. Please sign in.");
             } else {
                 await supabase.from('profiles').insert({
                     id: data.user.id,
