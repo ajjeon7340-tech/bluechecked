@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { CreatorProfile, Message, MessageStatus, DashboardStats, MonthlyStat, AffiliateLink, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
+import { CreatorProfile, Message, DashboardStats, MonthlyStat, AffiliateLink, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
 import { getMessages, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile } from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
 import { 
@@ -134,7 +134,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           const isProduct = msg.content.startsWith('Purchased Product:');
           
           // 1. New Request
-          if (msg.status === MessageStatus.PENDING && !isProduct) {
+          if (msg.status === 'PENDING' && !isProduct) {
               list.push({
                   id: `req-${msg.id}`,
                   icon: MessageSquare,
@@ -399,7 +399,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   // Determine the "Active" message for the reply input (Latest Pending, or just latest)
   const activeMessage = useMemo(() => {
-      const pending = [...threadMessages].reverse().find(m => m.status === MessageStatus.PENDING);
+      const pending = [...threadMessages].reverse().find(m => m.status === 'PENDING');
       return pending || threadMessages[threadMessages.length - 1];
   }, [threadMessages]);
 
@@ -1424,9 +1424,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             </div>
                                             <p className="text-xs text-slate-500 line-clamp-2 mb-2">{latestMsg.content}</p>
                                             <div className="flex items-center justify-between">
-                                                {latestMsg.status === MessageStatus.PENDING ? (
+                                                {latestMsg.status === 'PENDING' ? (
                                                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${timeLeft.bg} ${timeLeft.color}`}>{timeLeft.text}</span>
-                                                ) : latestMsg.status === MessageStatus.REPLIED ? (
+                                                ) : latestMsg.status === 'REPLIED' ? (
                                                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">REPLIED</span>
                                                 ) : (
                                                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">{latestMsg.status === 'EXPIRED' ? 'EXPIRED' : 'REJECTED'}</span>
@@ -1482,7 +1482,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <div>
                                             <div className="flex items-center gap-2">
                                                 <h3 className="font-bold text-slate-900">{activeMessage.senderName}</h3>
-                                                {activeMessage.status === MessageStatus.PENDING && (
+                                                {activeMessage.status === 'PENDING' && (
                                                     <button 
                                                         onClick={(e) => handleReject(e)}
                                                         disabled={isRejecting}
@@ -1502,17 +1502,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     </div>
                                     
                                     <div className="flex items-center gap-2">
-                                        {activeMessage.status === MessageStatus.PENDING && (
+                                        {activeMessage.status === 'PENDING' && (
                                             <div className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full flex items-center gap-1 border border-amber-100">
                                                 <Clock size={12} /> {getTimeLeft(activeMessage.expiresAt).text}
                                             </div>
                                         )}
-                                        {activeMessage.status === MessageStatus.REPLIED && (
+                                        {activeMessage.status === 'REPLIED' && (
                                             <div className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full flex items-center gap-1 border border-emerald-100">
                                                 <CheckCircle2 size={12} /> Completed
                                             </div>
                                         )}
-                                        {(activeMessage.status === MessageStatus.EXPIRED || activeMessage.status === MessageStatus.CANCELLED) && (
+                                        {(activeMessage.status === 'EXPIRED' || activeMessage.status === 'CANCELLED') && (
                                             <div className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
                                                 Refunded
                                             </div>
@@ -1572,14 +1572,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </div>
                                     ))}
 
-                                    {activeMessage.status === MessageStatus.EXPIRED && (
+                                    {activeMessage.status === 'EXPIRED' && (
                                         <div className="flex justify-center py-4 mt-4">
                                             <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm border border-red-100 flex items-center gap-2">
                                                 <AlertCircle size={16} /> Deadline missed. Refund issued.
                                             </div>
                                         </div>
                                     )}
-                                    {activeMessage.status === MessageStatus.CANCELLED && (
+                                    {activeMessage.status === 'CANCELLED' && (
                                         <div className="flex justify-center py-4 mt-4">
                                             <div className="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg text-sm border border-slate-200 flex items-center gap-2">
                                                 <Ban size={16} /> Request rejected & refunded.
@@ -1589,7 +1589,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
 
                                 {/* Reply Input Area */}
-                                {activeMessage.status === MessageStatus.PENDING && (
+                                {activeMessage.status === 'PENDING' && (
                                     <div className="p-4 bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
                                         <div className="flex justify-between items-center mb-3">
                                             <div className="flex items-center gap-2 text-xs text-slate-500">

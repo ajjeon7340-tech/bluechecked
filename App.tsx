@@ -174,7 +174,7 @@ function App() {
             </ul>
         </div>
         <button 
-          onClick={loadCreatorData}
+          onClick={() => loadCreatorData()}
           className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20"
         >
           Retry Connection

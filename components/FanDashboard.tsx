@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { CurrentUser, Message, MessageStatus, CreatorProfile } from '../types';
+import { CurrentUser, Message, CreatorProfile } from '../types';
 import { Button } from './Button';
 import { CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download } from './Icons';
 import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl } from '../services/realBackend';
@@ -414,7 +414,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
     return { text: `${hours}h left`, color: 'text-slate-500', bg: 'bg-slate-100' };
   };
 
-  const activeRequests = messages.filter(m => m.status === MessageStatus.PENDING).length;
+  const activeRequests = messages.filter(m => m.status === 'PENDING').length;
   
   const notifications = useMemo(() => {
       const list: { id: string, icon: any, text: string, time: Date, color: string }[] = [];
@@ -441,7 +441,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           });
 
           // 2. Reply Received
-          if (msg.status === MessageStatus.REPLIED && msg.replyAt && !isProduct) {
+          if (msg.status === 'REPLIED' && msg.replyAt && !isProduct) {
               list.push({
                   id: `reply-${msg.id}`,
                   icon: MessageSquare,
@@ -452,7 +452,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           }
 
           // 3. Refunded (Expired)
-          if (msg.status === MessageStatus.EXPIRED) {
+          if (msg.status === 'EXPIRED') {
               list.push({
                   id: `exp-${msg.id}`,
                   icon: Coins,
@@ -463,7 +463,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           }
 
           // 4. Rejected (Cancelled)
-          if (msg.status === MessageStatus.CANCELLED) {
+          if (msg.status === 'CANCELLED') {
                list.push({
                   id: `can-${msg.id}`,
                   icon: Ban,
@@ -966,7 +966,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
                                         {messages.map(msg => {
-                                            const isRefunded = msg.status === MessageStatus.EXPIRED || msg.status === MessageStatus.CANCELLED;
+                                            const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
                                             const isProduct = msg.content.startsWith('Purchased Product:');
 
                                             return (
@@ -986,12 +986,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        {msg.status === MessageStatus.PENDING && (
+                                                        {msg.status === 'PENDING' && (
                                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-100">
                                                                 <Clock size={12} /> Pending
                                                             </span>
                                                         )}
-                                                        {msg.status === MessageStatus.REPLIED && (
+                                                        {msg.status === 'REPLIED' && (
                                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
                                                                 <CheckCircle2 size={12} /> Completed
                                                             </span>
@@ -1200,11 +1200,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        {latestMsg.status === MessageStatus.PENDING ? (
+                                                        {latestMsg.status === 'PENDING' ? (
                                                             <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${timeLeft.bg} ${timeLeft.color} border-current/20 flex items-center gap-1 w-fit`}>
                                                                 <Clock size={10} /> Pending Reply
                                                             </span>
-                                                        ) : latestMsg.status === MessageStatus.REPLIED ? (
+                                                        ) : latestMsg.status === 'REPLIED' ? (
                                                             <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center gap-1 w-fit">
                                                                 <CheckCircle2 size={10} /> Replied
                                                             </span>
@@ -1248,11 +1248,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         <span className="text-[10px] text-slate-400 font-mono">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
                                                     </div>
                                                     <div className="mt-1">
-                                                        {latestMsg.status === MessageStatus.PENDING ? (
+                                                        {latestMsg.status === 'PENDING' ? (
                                                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${timeLeft.bg} ${timeLeft.color} border-current/20 flex items-center gap-1 w-fit`}>
                                                                 <Clock size={10} /> Pending Reply
                                                             </span>
-                                                        ) : latestMsg.status === MessageStatus.REPLIED ? (
+                                                        ) : latestMsg.status === 'REPLIED' ? (
                                                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center gap-1 w-fit">
                                                                 <CheckCircle2 size={10} /> Replied
                                                             </span>
@@ -1298,8 +1298,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         {/* Messages */}
                         <div className="flex-1 overflow-y-auto p-4 space-y-8 scroll-smooth" ref={scrollRef}>
                              {threadMessages.map((msg, msgIndex) => {
-                                const isPending = msg.status === MessageStatus.PENDING;
-                                const isRefunded = msg.status === MessageStatus.EXPIRED || msg.status === MessageStatus.CANCELLED;
+                                const isPending = msg.status === 'PENDING';
+                                const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
                                 return (
                                     <div key={msg.id} className="relative group">
                                         <div className="flex items-center justify-center gap-4 mb-6 opacity-60">
@@ -1396,7 +1396,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                         {/* Bottom Actions */}
                         <div className="bg-white border-t border-slate-200 shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.05)] z-20 flex-shrink-0">
-                            {latestMessage && latestMessage.status === MessageStatus.PENDING && (
+                            {latestMessage && latestMessage.status === 'PENDING' && (
                                 <div className="p-4 flex items-center justify-between bg-slate-50">
                                     <div className="flex items-center gap-3">
                                         <div className="bg-white p-2 rounded-full border border-slate-200 shadow-sm animate-pulse">
@@ -1425,7 +1425,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 </div>
                             )}
 
-                            {latestMessage && latestMessage.status === MessageStatus.REPLIED && (
+                            {latestMessage && latestMessage.status === 'REPLIED' && (
                                 <div className="p-4 bg-slate-50/50">
                                      {/* Rating Section */}
                                      {!hasRated && !showRatingSuccess && (
