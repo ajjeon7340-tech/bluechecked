@@ -263,6 +263,7 @@ function App() {
       {currentPage === 'SETUP_PROFILE' && (
         <LoginPage 
           initialStep="SETUP_PROFILE"
+          currentUser={currentUser}
           onLoginSuccess={handleLoginSuccess}
           onBack={async () => {
               await signOut();

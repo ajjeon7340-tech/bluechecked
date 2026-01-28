@@ -8,6 +8,7 @@ interface Props {
   onLoginSuccess: (user: CurrentUser) => void;
   onBack: () => void;
   initialStep?: 'LOGIN' | 'SETUP_PROFILE';
+  currentUser?: CurrentUser | null;
 }
 
 const SUPPORTED_PLATFORMS = [
@@ -18,9 +19,9 @@ const SUPPORTED_PLATFORMS = [
     { id: 'twitch', label: 'Twitch', icon: Twitch },
 ];
 
-export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep = 'LOGIN' }) => {
+export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep = 'LOGIN', currentUser }) => {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [role, setRole] = useState<UserRole>('CREATOR'); 
+  const [role, setRole] = useState<UserRole>(currentUser?.role || 'CREATOR'); 
   const [authMethod, setAuthMethod] = useState<'EMAIL' | 'PHONE'>('EMAIL');
   
   const [email, setEmail] = useState('');
@@ -34,7 +35,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
   // Setup / Onboarding State
   const [step, setStep] = useState<'LOGIN' | 'SETUP_PROFILE'>(initialStep);
-  const [tempUser, setTempUser] = useState<CurrentUser | null>(null);
+  const [tempUser, setTempUser] = useState<CurrentUser | null>(currentUser || null);
   
   // Creator Config
   const [price, setPrice] = useState(20);
@@ -42,9 +43,9 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   const [platforms, setPlatforms] = useState<string[]>([]);
 
   // Shared Profile Config
-  const [displayName, setDisplayName] = useState('');
+  const [displayName, setDisplayName] = useState(currentUser?.name || '');
   const [bio, setBio] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState(currentUser?.avatarUrl || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -147,7 +148,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
          finalUser = {
              ...tempUser,
              name: displayName || tempUser.name,
-             avatarUrl: avatarUrl || undefined
+             avatarUrl: avatarUrl || tempUser.avatarUrl
          };
          await updateCurrentUser(finalUser);
      }

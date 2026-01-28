@@ -1,7 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import './styles.css';
+import './index.css';  // 404 에러 방지를 위해 명시적으로 Import
+import './styles.css'; 
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
