@@ -106,7 +106,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
     if (!email) return;
     setIsLoading(true);
     try {
-        await resendConfirmationEmail(email);
+        await resendConfirmationEmail(email.trim());
         alert("Confirmation email resent! Please check your inbox.");
     } catch (e: any) {
         alert(e.message || "Failed to resend email.");

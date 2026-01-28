@@ -107,8 +107,7 @@ export const loginUser = async (role: UserRole, identifier: string, password?: s
 
     if (name) {
         // --- SIGN UP FLOW ---
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: cleanIdentifier,
+        const signUpOptions = {
             password: authPassword,
             options: {
                 emailRedirectTo: window.location.origin,
@@ -117,7 +116,14 @@ export const loginUser = async (role: UserRole, identifier: string, password?: s
                     role: role
                 }
             }
-        });
+        };
+
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp(
+            method === 'EMAIL' 
+                ? { email: cleanIdentifier, ...signUpOptions }
+                : { phone: cleanIdentifier, ...signUpOptions }
+        );
+
         if (signUpError) throw signUpError;
         data = signUpData;
         
@@ -151,10 +157,11 @@ export const loginUser = async (role: UserRole, identifier: string, password?: s
         }
     } else {
         // --- SIGN IN FLOW ---
-        const result = await supabase.auth.signInWithPassword({
-            email: cleanIdentifier,
-            password: authPassword,
-        });
+        const result = await supabase.auth.signInWithPassword(
+            method === 'EMAIL'
+                ? { email: cleanIdentifier, password: authPassword }
+                : { phone: cleanIdentifier, password: authPassword }
+        );
         data = result.data;
         error = result.error;
 
@@ -227,6 +234,7 @@ export const updateCurrentUser = async (user: CurrentUser): Promise<void> => {
 
 export const resendConfirmationEmail = async (email: string) => {
     if (!isConfigured) return; // Mock mode doesn't send emails
+    console.log("Resending confirmation email to:", email);
     const { error } = await supabase.auth.resend({
         type: 'signup',
         email,
