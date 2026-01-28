@@ -138,6 +138,14 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
     }
   };
 
+  const handleSkipForNow = () => {
+    // Set a flag in local storage to not show the setup screen again.
+    localStorage.setItem('bluechecked_skip_setup', 'true');
+    if (tempUser) {
+      onLoginSuccess(tempUser);
+    }
+  };
+
   const handleCompleteSetup = async () => {
      setIsLoading(true);
      
@@ -172,6 +180,9 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
         }
      }
      setIsLoading(false);
+
+     // Also set the flag on save, to prevent re-entry even if bio is empty.
+     localStorage.setItem('bluechecked_skip_setup', 'true');
      
      if (finalUser) {
          onLoginSuccess(finalUser);
@@ -283,7 +294,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 
                 <div className="space-y-3 pt-4">
                     <Button fullWidth onClick={handleCompleteSetup} isLoading={isLoading} size="lg">Save Profile & Continue</Button>
-                    <button onClick={handleCompleteSetup} className="w-full text-center text-slate-400 text-sm hover:text-slate-600 font-medium transition-colors">
+                    <button onClick={handleSkipForNow} className="w-full text-center text-slate-400 text-sm hover:text-slate-600 font-medium transition-colors">
                         Skip for now
                     </button>
                     <button onClick={onBack} className="w-full text-center text-slate-300 hover:text-red-500 text-xs font-medium transition-colors mt-2">
