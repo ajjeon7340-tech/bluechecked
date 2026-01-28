@@ -20,7 +20,6 @@ function App() {
   const [showSignUpConfirm, setShowSignUpConfirm] = useState(false);
 
   const loadCreatorData = async (specificCreatorId?: string): Promise<CreatorProfile | null> => {
-    let userRole = currentUser?.role;
     try {
       // Don't set isLoading(true) here to avoid flashing the loading screen on background refreshes
       setError(null);
@@ -29,7 +28,6 @@ function App() {
       const userData = await checkAndSyncSession();
       if (userData) {
           setCurrentUser(userData);
-          userRole = userData.role;
       } else {
           // Session is invalid (e.g. user deleted from DB), clear local state
           setCurrentUser(null);
@@ -43,7 +41,8 @@ function App() {
       } catch (e: any) {
         // Only ignore error if we are NOT looking for a specific creator (i.e. app init)
         // BUT if we are logged in as a CREATOR, we expect to find our profile, so don't ignore.
-        if (!specificCreatorId && userRole !== 'CREATOR') {
+        const role = userData?.role || currentUser?.role;
+        if (!specificCreatorId && role !== 'CREATOR') {
              console.warn("No creator profile found (DB might be empty). App running in setup mode.");
              setCreator(null);
              return null;
@@ -90,7 +89,7 @@ function App() {
 
     window.addEventListener('popstate', handlePopState);
 
-    console.log("Bluechecked App Version: 3.6.30");
+    console.log("Bluechecked App Version: 3.6.31");
     console.log("Backend Connection:", isBackendConfigured() ? "✅ Connected to Supabase" : "⚠️ Using Mock Data");
     
     // Optimistically load session from local storage

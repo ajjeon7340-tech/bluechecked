@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Button } from './Button';
 import { CheckCircle2, Lock, GoogleLogo, InstagramLogo, Mail, User, MessageSquare, Camera, X, Plus, YouTubeLogo, XLogo, TikTokLogo, Twitch, Check, Phone } from './Icons';
-import { CurrentUser, UserRole } from '../types';
+import { CurrentUser } from '../types';
 import { loginUser, updateCreatorProfile, getCreatorProfile, updateCurrentUser, signInWithSocial, resendConfirmationEmail } from '../services/realBackend';
 
 interface Props {
@@ -21,7 +21,7 @@ const SUPPORTED_PLATFORMS = [
 
 export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep = 'LOGIN', currentUser }) => {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [role, setRole] = useState<UserRole>(currentUser?.role || 'CREATOR'); 
+  const [role, setRole] = useState<'CREATOR' | 'FAN'>(currentUser?.role || 'CREATOR'); 
   const [authMethod, setAuthMethod] = useState<'EMAIL' | 'PHONE'>('EMAIL');
   
   const [email, setEmail] = useState('');
