@@ -325,20 +325,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const stats = useMemo((): DashboardStats => {
     const totalEarnings = incomingMessages
-      .filter(m => m.status === MessageStatus.REPLIED)
+      .filter(m => m.status === 'REPLIED')
       .reduce((sum, m) => sum + m.amount, 0);
     
     // Filter out products for message metrics
     const messageOnly = incomingMessages.filter(m => !m.content.startsWith('Purchased Product:'));
 
-    const pendingCount = messageOnly.filter(m => m.status === MessageStatus.PENDING).length;
-    const repliedCount = messageOnly.filter(m => m.status === MessageStatus.REPLIED).length;
-    const expiredCount = messageOnly.filter(m => m.status === MessageStatus.EXPIRED).length;
+    const pendingCount = messageOnly.filter(m => m.status === 'PENDING').length;
+    const repliedCount = messageOnly.filter(m => m.status === 'REPLIED').length;
+    const expiredCount = messageOnly.filter(m => m.status === 'EXPIRED').length;
     const totalProcessed = repliedCount + expiredCount;
     const responseRate = totalProcessed === 0 ? 100 : Math.round((repliedCount / totalProcessed) * 100);
 
     // Calculate Avg Response Time
-    const repliedMessages = messageOnly.filter(m => m.status === MessageStatus.REPLIED && m.replyAt);
+    const repliedMessages = messageOnly.filter(m => m.status === 'REPLIED' && m.replyAt);
     let avgResponseTime = 'N/A';
     if (repliedMessages.length > 0) {
         const totalTimeMs = repliedMessages.reduce((acc, m) => acc + (new Date(m.replyAt!).getTime() - new Date(m.createdAt).getTime()), 0);
@@ -665,9 +665,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       const status = group.latestMessage.status;
 
       if (inboxFilter === 'ALL') return true;
-      if (inboxFilter === 'PENDING') return status === MessageStatus.PENDING;
-      if (inboxFilter === 'REPLIED') return status === MessageStatus.REPLIED;
-      if (inboxFilter === 'REJECTED') return status === MessageStatus.EXPIRED || status === MessageStatus.CANCELLED;
+      if (inboxFilter === 'PENDING') return status === 'PENDING';
+      if (inboxFilter === 'REPLIED') return status === 'REPLIED';
+      if (inboxFilter === 'REJECTED') return status === 'EXPIRED' || status === 'CANCELLED';
       return false;
   }), [conversationGroups, inboxFilter]);
 
