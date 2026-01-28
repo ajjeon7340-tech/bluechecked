@@ -381,6 +381,9 @@ export const completeOAuthSignup = async (): Promise<CurrentUser> => {
         // Profile already exists, just ensure we return it.
         // We could update it here if needed, but for now just proceed.
         console.log("Profile already exists, skipping creation.");
+        if (existingProfile.role !== role) {
+             throw new Error(`This account already exists as a ${existingProfile.role}. Please sign in as a ${existingProfile.role}.`);
+        }
     }
 
     // Fetch again

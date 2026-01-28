@@ -369,7 +369,9 @@ export const loginUser = async (role: UserRole, identifier: string, method: 'EMA
 
 export const signInWithSocial = async (provider: 'google' | 'instagram', role: UserRole) => {
     console.log(`[Mock] Signing in with ${provider} as ${role}`);
-    const user = await loginUser(role, `mock-${provider}@example.com`, 'EMAIL', `Mock ${provider} User`);
+    const email = `mock-${provider}@example.com`;
+    const existing = mockUsers.find(u => u.email === email);
+    const user = await loginUser(role, email, 'EMAIL', existing ? undefined : `Mock ${provider} User`);
     localStorage.setItem('bluechecked_current_user', JSON.stringify(user));
     window.location.reload();
 };
