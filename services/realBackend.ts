@@ -106,6 +106,19 @@ export const loginUser = async (role: UserRole, identifier: string, password?: s
     let error;
 
     if (name) {
+        // Check if account exists before attempting signup to prevent sending confirmation email to existing users
+        if (method === 'EMAIL') {
+             const { data: existingProfile } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('email', cleanIdentifier)
+                .maybeSingle();
+             
+             if (existingProfile) {
+                 throw new Error("Account already exists. Please sign in.");
+             }
+        }
+
         // --- SIGN UP FLOW ---
         const signUpOptions = {
             password: authPassword,
