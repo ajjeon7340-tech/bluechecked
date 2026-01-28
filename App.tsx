@@ -15,7 +15,7 @@ function App() {
   const [creator, setCreator] = useState<CreatorProfile | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSignUpConfirm, setShowSignUpConfirm] = useState(false);
 
@@ -89,16 +89,16 @@ function App() {
 
     window.addEventListener('popstate', handlePopState);
 
-    console.log("Bluechecked App Version: 3.6.31");
+    console.log("Bluechecked App Version: 3.6.32");
     console.log("Backend Connection:", isBackendConfigured() ? "✅ Connected to Supabase" : "⚠️ Using Mock Data");
     
     // Optimistically load session from local storage
-    const storedUser = localStorage.getItem('bluechecked_current_user');
-    if (storedUser) {
-        const user = JSON.parse(storedUser);
-        setCurrentUser(user);
-        setCurrentPage(user.role === 'CREATOR' ? 'DASHBOARD' : 'FAN_DASHBOARD');
-    }
+    // const storedUser = localStorage.getItem('bluechecked_current_user');
+    // if (storedUser) {
+    //     const user = JSON.parse(storedUser);
+    //     setCurrentUser(user);
+    //     setCurrentPage(user.role === 'CREATOR' ? 'DASHBOARD' : 'FAN_DASHBOARD');
+    // }
 
     // Check for existing session
     const initSession = async () => {
