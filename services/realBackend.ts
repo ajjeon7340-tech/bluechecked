@@ -265,6 +265,7 @@ export const signInWithSocial = async (provider: 'google' | 'instagram', role: U
     // We also clear the current user cache to ensure we have space and don't mix sessions
     try {
         localStorage.removeItem('bluechecked_current_user');
+        localStorage.removeItem('bluechecked_skip_setup');
         localStorage.setItem('bluechecked_oauth_role', role);
     } catch (e) {
         console.warn("Failed to save role preference to local storage", e);
@@ -299,6 +300,7 @@ export const signOut = async () => {
     }
     await supabase.auth.signOut();
     localStorage.removeItem('bluechecked_current_user');
+    localStorage.removeItem('bluechecked_skip_setup');
 };
 
 export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
@@ -309,6 +311,7 @@ export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
     
     if (!session) {
         localStorage.removeItem('bluechecked_current_user');
+        localStorage.removeItem('bluechecked_skip_setup');
         return null;
     }
 
@@ -355,6 +358,7 @@ export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
     
     // If we reach here, we have a session but no profile (and failed to create one)
     localStorage.removeItem('bluechecked_current_user');
+    localStorage.removeItem('bluechecked_skip_setup');
     return null;
 };
 
