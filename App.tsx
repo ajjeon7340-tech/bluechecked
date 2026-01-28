@@ -202,9 +202,21 @@ function App() {
   const navigateToDashboard = async (user: CurrentUser) => {
       if (user.role === 'CREATOR') {
           setIsLoading(true);
-          await loadCreatorData(user.id, false);
-          window.history.pushState({ page: 'DASHBOARD' }, '', '');
-          setCurrentPage('DASHBOARD');
+          const profile = await loadCreatorData(user.id, false);
+          
+          if (!profile) {
+              setIsLoading(false);
+              return;
+          }
+
+          const hasSkippedSetup = localStorage.getItem('bluechecked_skip_setup') === 'true';
+          if (!profile.bio && !hasSkippedSetup) {
+              window.history.pushState({ page: 'SETUP_PROFILE' }, '', '');
+              setCurrentPage('SETUP_PROFILE');
+          } else {
+              window.history.pushState({ page: 'DASHBOARD' }, '', '');
+              setCurrentPage('DASHBOARD');
+          }
           setIsLoading(false);
       } else {
           window.history.pushState({ page: 'FAN_DASHBOARD' }, '', '');
