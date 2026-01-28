@@ -1,10 +1,5 @@
 
-export enum MessageStatus {
-  PENDING = 'PENDING',
-  REPLIED = 'REPLIED',
-  EXPIRED = 'EXPIRED', // Refunded (Time out)
-  CANCELLED = 'CANCELLED', // Refunded (User action)
-}
+export type MessageStatus = 'PENDING' | 'REPLIED' | 'EXPIRED' | 'CANCELLED';
 
 export type UserRole = 'CREATOR' | 'FAN';
 

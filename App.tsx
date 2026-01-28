@@ -125,9 +125,11 @@ function App() {
                     // Fan Dashboard
                     setCurrentPage('FAN_DASHBOARD');
                     window.history.replaceState({ page: 'FAN_DASHBOARD' }, '', '');
+                    setIsLoading(false);
                 }
             } else {
                 window.history.replaceState({ page: 'LANDING' }, '', '');
+                setIsLoading(false);
             }
         } catch (err: any) {
             if (err.code === 'PROFILE_MISSING') {
@@ -142,6 +144,7 @@ function App() {
                 console.error("Session initialization failed:", err);
                 setError(err.message || "Failed to initialize session.");
             }
+            setIsLoading(false);
         }
     };
     initSession();
