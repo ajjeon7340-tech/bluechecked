@@ -15,11 +15,11 @@ function App() {
   const [creator, setCreator] = useState<CreatorProfile | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSignUpConfirm, setShowSignUpConfirm] = useState(false);
 
-  const loadCreatorData = async (specificCreatorId?: string): Promise<CreatorProfile | null> => {
+  const loadCreatorData = async (specificCreatorId?: string, stopLoading = true): Promise<CreatorProfile | null> => {
     try {
       // Don't set isLoading(true) here to avoid flashing the loading screen on background refreshes
       setError(null);
@@ -53,14 +53,14 @@ function App() {
     } catch (err: any) {
       if (err.code === 'PROFILE_MISSING') {
           setShowSignUpConfirm(true);
-          setIsLoading(false);
+          if (stopLoading) setIsLoading(false);
           return null;
       }
       console.error("Failed to load creator:", err);
       setError(err.message || "Failed to load application data. Please ensure the database is seeded.");
       return null;
     } finally {
-      setIsLoading(false);
+      if (stopLoading) setIsLoading(false);
     }
   };
 
@@ -108,9 +108,12 @@ function App() {
                 setCurrentUser(user);
                 
                 if (user.role === 'CREATOR') {
-                    const profile = await loadCreatorData(user.id);
+                    const profile = await loadCreatorData(user.id, false);
                     
-                    if (!profile) return;
+                    if (!profile) {
+                        setIsLoading(false);
+                        return;
+                    }
 
                     // Check if profile setup is needed (empty bio is a good indicator of fresh account)
                     const hasSkippedSetup = localStorage.getItem('bluechecked_skip_setup') === 'true';
@@ -118,8 +121,10 @@ function App() {
                         setCurrentPage('SETUP_PROFILE');
                         window.history.replaceState({ page: 'SETUP_PROFILE' }, '', '');
                     } else {
-                        await navigateToDashboard(user);
+                        setCurrentPage('DASHBOARD');
+                        window.history.replaceState({ page: 'DASHBOARD' }, '', '');
                     }
+                    setIsLoading(false);
                 } else {
                     // Fan Dashboard
                     setCurrentPage('FAN_DASHBOARD');
@@ -197,9 +202,10 @@ function App() {
   const navigateToDashboard = async (user: CurrentUser) => {
       if (user.role === 'CREATOR') {
           setIsLoading(true);
-          await loadCreatorData(user.id);
+          await loadCreatorData(user.id, false);
           window.history.pushState({ page: 'DASHBOARD' }, '', '');
           setCurrentPage('DASHBOARD');
+          setIsLoading(false);
       } else {
           window.history.pushState({ page: 'FAN_DASHBOARD' }, '', '');
           setCurrentPage('FAN_DASHBOARD');
@@ -214,9 +220,10 @@ function App() {
   const handleCreatorSelect = async (creatorId: string) => {
     try {
       setIsLoading(true);
-      await loadCreatorData(creatorId);
+      await loadCreatorData(creatorId, false);
       window.history.pushState({ page: 'PROFILE', creatorId }, '', '');
       setCurrentPage('PROFILE');
+      setIsLoading(false);
     } catch (e) {
       setIsLoading(false);
     }
