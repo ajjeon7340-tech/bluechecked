@@ -1157,7 +1157,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                            </tr>
                                        </thead>
                                        <tbody className="divide-y divide-slate-100">
-                                           {messages.filter(m => m.status === MessageStatus.REPLIED).map(msg => (
+                                           {messages.filter(m => m.status === 'REPLIED').map(msg => (
                                                <tr key={msg.id} className="hover:bg-slate-50 transition-colors">
                                                    <td className="px-6 py-4 text-slate-500 font-mono text-xs">{new Date(msg.createdAt).toLocaleDateString()}</td>
                                                    <td className="px-6 py-4 font-medium text-slate-900">{msg.senderName}</td>

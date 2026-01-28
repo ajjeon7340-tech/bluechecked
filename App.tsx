@@ -6,7 +6,7 @@ import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { FanDashboard } from './components/FanDashboard';
 import { getCreatorProfile, checkAndSyncSession, isBackendConfigured, completeOAuthSignup, signOut } from './services/realBackend';
-import { CreatorProfile, CurrentUser, UserRole } from './types';
+import { CreatorProfile, CurrentUser } from './types';
 
 type PageState = 'LANDING' | 'LOGIN' | 'DASHBOARD' | 'PROFILE' | 'FAN_DASHBOARD' | 'SETUP_PROFILE';
 
@@ -20,7 +20,7 @@ function App() {
   const [showSignUpConfirm, setShowSignUpConfirm] = useState(false);
 
   const loadCreatorData = async (specificCreatorId?: string): Promise<CreatorProfile | null> => {
-    let userRole: UserRole | undefined = currentUser?.role;
+    let userRole = currentUser?.role;
     try {
       // Don't set isLoading(true) here to avoid flashing the loading screen on background refreshes
       setError(null);
