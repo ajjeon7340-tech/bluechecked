@@ -161,7 +161,7 @@ const generateDemoMessages = () => {
             amount: 250,
             createdAt: new Date(Date.now() - 3600000).toISOString(),
             expiresAt: new Date(Date.now() + 172800000).toISOString(),
-            status: MessageStatus.PENDING,
+            status: 'PENDING' as MessageStatus,
             isRead: false,
             conversation: [
                 { id: 'c1', role: 'FAN', content: 'Hey Alex, could you take a quick look at my React project? I am having issues with re-renders.', timestamp: new Date(Date.now() - 3600000).toISOString() }
@@ -178,7 +178,7 @@ const generateDemoMessages = () => {
             amount: 250,
             createdAt: new Date(Date.now() - 86400000).toISOString(),
             expiresAt: new Date(Date.now() + 86400000).toISOString(),
-            status: MessageStatus.REPLIED,
+            status: 'REPLIED' as MessageStatus,
             isRead: true,
             replyContent: 'You are welcome John! Glad you like it.',
             replyAt: new Date(Date.now() - 82800000).toISOString(),
@@ -215,8 +215,8 @@ export const getMessages = async (): Promise<Message[]> => {
     let hasChanges = false;
 
     messages.forEach(msg => {
-        if (msg.status === MessageStatus.PENDING && new Date(msg.expiresAt) < now) {
-            msg.status = MessageStatus.EXPIRED;
+        if (msg.status === 'PENDING' as MessageStatus && new Date(msg.expiresAt) < now) {
+            msg.status = 'EXPIRED' as MessageStatus;
             hasChanges = true;
             // Refund logic for mock: If currentUser is the sender, refund them.
             if (currentUser && currentUser.email === msg.senderEmail) {
@@ -267,7 +267,7 @@ export const sendMessage = async (creatorId: string, name: string, email: string
         amount,
         createdAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 172800000).toISOString(),
-        status: isProductPurchase ? MessageStatus.REPLIED : MessageStatus.PENDING,
+        status: isProductPurchase ? 'REPLIED' as MessageStatus : 'PENDING' as MessageStatus,
         isRead: isProductPurchase,
         replyAt: isProductPurchase ? new Date().toISOString() : undefined,
         conversation: [
@@ -296,7 +296,7 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
     }
 
     if (isComplete) {
-        msg.status = MessageStatus.REPLIED;
+        msg.status = 'REPLIED' as MessageStatus;
         msg.replyContent = replyText;
         msg.replyAt = new Date().toISOString();
         // Here we would typically add credits to the creator's wallet in a real DB
@@ -315,11 +315,11 @@ export const cancelMessage = async (messageId: string): Promise<void> => {
     const msg = messages.find(m => m.id === messageId);
     if (msg && currentUser) {
         // Refund credits if pending
-        if (msg.status === MessageStatus.PENDING) {
+        if (msg.status === 'PENDING' as MessageStatus) {
             currentUser.credits += msg.amount;
         }
     }
-    messages = messages.map(m => m.id === messageId ? { ...m, status: MessageStatus.CANCELLED } : m);
+    messages = messages.map(m => m.id === messageId ? { ...m, status: 'CANCELLED' as MessageStatus } : m);
     saveMessages();
 };
 
@@ -500,7 +500,7 @@ export const getHistoricalStats = async (): Promise<MonthlyStat[]> => {
     }
 
     // Filter messages for current creator
-    messages.filter(m => m.creatorId === creatorProfile.id && m.status === MessageStatus.REPLIED).forEach(m => {
+    messages.filter(m => m.creatorId === creatorProfile.id && m.status === 'REPLIED' as MessageStatus).forEach(m => {
         const d = new Date(m.createdAt);
         const key = `${d.getFullYear()}-${d.getMonth()}`;
         if (statsMap[key]) {

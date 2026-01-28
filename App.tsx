@@ -6,7 +6,7 @@ import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { FanDashboard } from './components/FanDashboard';
 import { getCreatorProfile, checkAndSyncSession, isBackendConfigured, completeOAuthSignup, signOut } from './services/realBackend';
-import { CreatorProfile, CurrentUser } from './types';
+import { CreatorProfile, CurrentUser, UserRole } from './types';
 
 type PageState = 'LANDING' | 'LOGIN' | 'DASHBOARD' | 'PROFILE' | 'FAN_DASHBOARD' | 'SETUP_PROFILE';
 
@@ -20,6 +20,7 @@ function App() {
   const [showSignUpConfirm, setShowSignUpConfirm] = useState(false);
 
   const loadCreatorData = async (specificCreatorId?: string): Promise<CreatorProfile | null> => {
+    let userRole: UserRole | undefined = currentUser?.role;
     try {
       // Don't set isLoading(true) here to avoid flashing the loading screen on background refreshes
       setError(null);
@@ -28,6 +29,7 @@ function App() {
       const userData = await checkAndSyncSession();
       if (userData) {
           setCurrentUser(userData);
+          userRole = userData.role;
       } else {
           // Session is invalid (e.g. user deleted from DB), clear local state
           setCurrentUser(null);
@@ -41,7 +43,7 @@ function App() {
       } catch (e: any) {
         // Only ignore error if we are NOT looking for a specific creator (i.e. app init)
         // BUT if we are logged in as a CREATOR, we expect to find our profile, so don't ignore.
-        if (!specificCreatorId && currentUser?.role !== 'CREATOR') {
+        if (!specificCreatorId && userRole !== 'CREATOR') {
              console.warn("No creator profile found (DB might be empty). App running in setup mode.");
              setCreator(null);
              return null;
@@ -90,7 +92,6 @@ function App() {
 
     console.log("Bluechecked App Version: 3.6.30");
     console.log("Backend Connection:", isBackendConfigured() ? "✅ Connected to Supabase" : "⚠️ Using Mock Data");
-    loadCreatorData();
     
     // Optimistically load session from local storage
     const storedUser = localStorage.getItem('bluechecked_current_user');
