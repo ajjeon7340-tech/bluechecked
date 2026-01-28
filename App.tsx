@@ -40,10 +40,11 @@ function App() {
         return creatorData;
       } catch (e: any) {
         // Only ignore error if we are NOT looking for a specific creator (i.e. app init)
-        if (!specificCreatorId) {
-            console.warn("No creator profile found (DB might be empty). App running in setup mode.");
-            setCreator(null);
-            return null;
+        // BUT if we are logged in as a CREATOR, we expect to find our profile, so don't ignore.
+        if (!specificCreatorId && currentUser?.role !== 'CREATOR') {
+             console.warn("No creator profile found (DB might be empty). App running in setup mode.");
+             setCreator(null);
+             return null;
         }
         throw e;
       }
@@ -135,6 +136,10 @@ function App() {
                 await signOut();
                 window.history.replaceState({ page: 'LANDING' }, '', '');
                 setCurrentPage('LANDING');
+            } else {
+                // Handle generic errors (e.g. Network, DB) by showing the Error UI
+                console.error("Session initialization failed:", err);
+                setError(err.message || "Failed to initialize session.");
             }
         }
     };
