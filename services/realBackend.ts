@@ -26,7 +26,8 @@ const mapProfileToUser = (profile: any): CurrentUser => ({
     role: (profile.role as UserRole) || 'FAN',
     avatarUrl: profile.avatar_url || DEFAULT_AVATAR,
     phoneNumber: '', 
-    credits: profile.credits || 0
+    credits: profile.credits || 0,
+    bio: profile.bio
 });
 
 // Helper to safely save user to local storage without exceeding quota
@@ -238,7 +239,8 @@ export const updateCurrentUser = async (user: CurrentUser): Promise<void> => {
         .from('profiles')
         .update({
             display_name: user.name,
-            avatar_url: user.avatarUrl
+            avatar_url: user.avatarUrl,
+            bio: user.bio
         })
         .eq('id', user.id);
         

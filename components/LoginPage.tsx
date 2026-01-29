@@ -44,7 +44,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
   // Shared Profile Config
   const [displayName, setDisplayName] = useState(currentUser?.name || '');
-  const [bio, setBio] = useState('');
+  const [bio, setBio] = useState(currentUser?.bio || '');
   const [avatarUrl, setAvatarUrl] = useState(currentUser?.avatarUrl || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -156,7 +156,8 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
          finalUser = {
              ...tempUser,
              name: displayName || tempUser.name,
-             avatarUrl: avatarUrl || tempUser.avatarUrl
+             avatarUrl: avatarUrl || tempUser.avatarUrl,
+             bio: bio
          };
          await updateCurrentUser(finalUser);
      }

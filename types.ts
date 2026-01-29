@@ -12,6 +12,7 @@ export interface CurrentUser {
   avatarUrl?: string;
   age?: number; 
   credits: number; // New field for internal currency balance
+  bio?: string;
 }
 
 export interface AffiliateLink {
