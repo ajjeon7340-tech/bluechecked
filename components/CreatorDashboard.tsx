@@ -1030,7 +1030,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Avg Rating</span>
                                         </div>
                                         <div className="text-3xl font-black text-slate-900">
-                                            {(detailedStats.reduce((acc, curr) => acc + curr.rating, 0) / (detailedStats.length || 1)).toFixed(1)}
+                                            {(() => {
+                                                const valid = detailedStats.filter(s => s.rating > 0);
+                                                const avg = valid.length > 0 ? valid.reduce((acc, curr) => acc + curr.rating, 0) / valid.length : 0;
+                                                return avg.toFixed(1);
+                                            })()}
                                         </div>
                                     </div>
                                 </div>
