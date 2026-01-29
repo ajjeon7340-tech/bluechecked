@@ -893,9 +893,12 @@ export const getSecureDownloadUrl = async (productId: string, productUrl: string
         .select('id', { count: 'exact', head: true })
         .eq('sender_id', userId)
         .eq('creator_id', creatorId)
-        .ilike('content', `Purchased Product: ${productId}`); // Use product title as ID for simplicity
+        .eq('content', `Purchased Product: ${productId}`); // Use eq for exact match to avoid 400 errors
 
-    if (purchaseError) throw purchaseError;
+    if (purchaseError) {
+        console.error("Purchase verification failed:", purchaseError);
+        throw new Error(`Verification failed: ${purchaseError.message}`);
+    }
     if (count === 0) throw new Error("Purchase not found or not authorized.");
 
     // 2. Generate Signed URL for Supabase Storage file
@@ -947,12 +950,19 @@ export const logAnalyticsEvent = async (creatorId: string, eventType: 'VIEW' | '
         }
     }
 
-    await supabase.from('analytics_events').insert({
+    const { error } = await supabase.from('analytics_events').insert({
         creator_id: creatorId,
         event_type: eventType,
         source: source,
         metadata
     });
+
+    if (error) {
+        // Suppress 404/missing table errors to avoid console noise
+        if (error.code !== '42P01' && error.code !== '404') {
+             console.warn("Failed to log analytics event:", error);
+        }
+    }
 };
 
 export const getProAnalytics = async (): Promise<ProAnalyticsData | null> => {
