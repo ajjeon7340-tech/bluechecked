@@ -168,6 +168,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                   });
               }
           });
+
+          // 4. Reviews
+          if (msg.rating && msg.rating > 0) {
+              list.push({
+                  id: `review-${msg.id}`,
+                  icon: Star,
+                  text: `${msg.senderName} left a ${msg.rating}-star review`,
+                  time: msg.replyAt ? new Date(msg.replyAt) : new Date(msg.createdAt),
+                  color: 'bg-yellow-100 text-yellow-600'
+              });
+          }
       });
 
       return list
