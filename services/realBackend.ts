@@ -903,16 +903,17 @@ export const getSecureDownloadUrl = async (productId: string, productUrl: string
         try {
             const path = productUrl.split('/products/')[1];
             if (path) {
+                const decodedPath = decodeURIComponent(path);
                 // Generate signed URL valid for 5 minutes
-                const { data: signedData, error: signedError } = await supabase.storage.from('products').createSignedUrl(path, 300); // 300 seconds = 5 minutes
+                const { data: signedData, error: signedError } = await supabase.storage.from('products').createSignedUrl(decodedPath, 300); // 300 seconds = 5 minutes
                 if (signedError) throw signedError;
                 if (signedData?.signedUrl) {
                     return signedData.signedUrl;
                 }
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error("Failed to generate signed URL:", e);
-            throw new Error("Failed to generate secure download link.");
+            throw new Error(e.message || "Failed to generate secure download link.");
         }
     }
     
