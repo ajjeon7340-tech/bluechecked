@@ -70,7 +70,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const [profileForm, setProfileForm] = useState({
       name: '',
       age: '',
-      avatarUrl: ''
+      avatarUrl: '',
+      bio: ''
   });
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
@@ -91,7 +92,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         setProfileForm({
             name: currentUser.name || '',
             age: currentUser.age?.toString() || '',
-            avatarUrl: currentUser.avatarUrl || ''
+            avatarUrl: currentUser.avatarUrl || '',
+            bio: currentUser.bio || ''
         });
     }
 
@@ -357,7 +359,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
               ...currentUser,
               name: profileForm.name,
               age: profileForm.age ? parseInt(profileForm.age) : undefined,
-              avatarUrl: profileForm.avatarUrl
+              avatarUrl: profileForm.avatarUrl,
+              bio: profileForm.bio
           };
           await updateCurrentUser(updatedUser);
           if (onUpdateUser) onUpdateUser(updatedUser);
@@ -606,7 +609,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                     <SidebarItem icon={HelpCircle} label="Support" view="SUPPORT" />
                     
                     <div className="my-4 mx-3 border-t border-slate-200"></div>
-                    <SidebarItem icon={Settings} label="Settings" view="SETTINGS" />
+                    <SidebarItem icon={User} label="Profile" view="SETTINGS" />
                 </div>
 
                 {/* Profile Snippet Bottom */}
@@ -1109,6 +1112,15 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         value={profileForm.name} 
                                         onChange={e => setProfileForm(p => ({...p, name: e.target.value}))}
                                         className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Bio</label>
+                                    <textarea 
+                                        value={profileForm.bio} 
+                                        onChange={e => setProfileForm(p => ({...p, bio: e.target.value}))}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none resize-none h-24"
+                                        placeholder="Tell us about yourself..."
                                     />
                                 </div>
                                 <div>
