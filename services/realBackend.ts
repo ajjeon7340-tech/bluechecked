@@ -865,6 +865,7 @@ export const getPurchasedProducts = async (): Promise<any[]> => {
                     purchaseDate: msg.created_at, 
                     creatorName: creator.display_name, 
                     creatorAvatar: creator.avatar_url,
+                    creatorId: creator.id,
                     title: productDetails.title, 
                     description: productDetails.description || 'Digital Download', 
                     url: productDetails.url, // Store original URL, signed URL generated on demand
@@ -882,6 +883,8 @@ export const getSecureDownloadUrl = async (productId: string, productUrl: string
         // In mock mode, the URL is already a Base64 Data URL, so it's directly usable
         return MockBackend.getSecureDownloadUrl(productId, productUrl, creatorId);
     }
+
+    if (!creatorId) throw new Error("Creator ID is missing.");
 
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error("Must be logged in to download.");
