@@ -507,7 +507,11 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
     }
 
     // 4. Get Real Likes Count
-    const { count: realLikesCount } = await supabase.from('creator_likes').select('*', { count: 'exact', head: true }).eq('creator_id', data.id);
+    const { count: realLikesCount, error: likesError } = await supabase.from('creator_likes').select('*', { count: 'exact', head: true }).eq('creator_id', data.id);
+
+    if (likesError && likesError.code !== '42P01') {
+        console.warn("Failed to fetch likes count:", likesError);
+    }
 
     return {
         id: data.id,
@@ -1299,16 +1303,22 @@ export const toggleCreatorLike = async (creatorId: string): Promise<{ likes: num
     const userId = session.session.user.id;
     
     // Check existence
-    const { data: existing } = await supabase.from('creator_likes').select('id').eq('creator_id', creatorId).eq('fan_id', userId).maybeSingle();
+    const { data: existing, error: fetchError } = await supabase.from('creator_likes').select('id').eq('creator_id', creatorId).eq('fan_id', userId).maybeSingle();
+    
+    if (fetchError && fetchError.code !== '42P01') throw fetchError;
     
     if (existing) {
-        await supabase.from('creator_likes').delete().eq('id', existing.id);
+        const { error } = await supabase.from('creator_likes').delete().eq('id', existing.id);
+        if (error) throw error;
     } else {
-        await supabase.from('creator_likes').insert({ creator_id: creatorId, fan_id: userId });
+        const { error } = await supabase.from('creator_likes').insert({ creator_id: creatorId, fan_id: userId });
+        if (error) throw error;
     }
     
     // Get new count
-    const { count } = await supabase.from('creator_likes').select('*', { count: 'exact', head: true }).eq('creator_id', creatorId);
+    const { count, error: countError } = await supabase.from('creator_likes').select('*', { count: 'exact', head: true }).eq('creator_id', creatorId);
+    
+    if (countError && countError.code !== '42P01') throw countError;
     
     return { likes: count || 0, hasLiked: !existing };
 };
