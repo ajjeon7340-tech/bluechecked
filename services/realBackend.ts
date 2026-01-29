@@ -962,7 +962,7 @@ export const logAnalyticsEvent = async (creatorId: string, eventType: 'VIEW' | '
 
     if (error) {
         // Suppress 404/missing table errors to avoid console noise
-        if (error.code !== '42P01' && error.code !== '404') {
+        if (error.code !== '42P01' && error.code !== '404' && error.code !== 'PGRST205') {
              console.warn("Failed to log analytics event:", error);
         }
     }
