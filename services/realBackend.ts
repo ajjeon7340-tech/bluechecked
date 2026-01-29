@@ -86,7 +86,6 @@ const mapDbMessageToAppMessage = (m: any, currentUserId: string): Message => {
         attachmentUrl: m.attachment_url,
         conversation: conversation,
         rating: m.rating,
-        // @ts-ignore
         reviewContent: m.review_content
     };
 };

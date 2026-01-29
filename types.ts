@@ -86,7 +86,7 @@ export interface Message {
   isRead: boolean;
   conversation: ChatMessage[];
   rating?: number; 
-  review?: string;
+  reviewContent?: string;
 }
 
 export interface MonthlyStat {
