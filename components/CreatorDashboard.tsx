@@ -1055,18 +1055,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     </linearGradient>
                                                 </defs>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#334155', fontSize: 12, fontWeight: 600}} dy={10} />
-                                                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{fill: '#334155', fontSize: 12, fontWeight: 600}} />
-                                                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fill: '#334155', fontSize: 12, fontWeight: 600}} domain={[0, 5]} hide />
+                                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
+                                                <YAxis yAxisId="views" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                                                <YAxis yAxisId="likes" orientation="right" axisLine={false} tickLine={false} tick={{fill: '#ec4899', fontSize: 12}} />
+                                                <YAxis yAxisId="rating" orientation="right" domain={[0, 5]} hide />
                                                 <Tooltip 
                                                     contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}}
                                                     cursor={{fill: '#f8fafc'}}
                                                 />
                                                 <Legend wrapperStyle={{paddingTop: '20px'}} iconType="circle" />
                                                 
-                                                <Area yAxisId="left" type="monotone" dataKey="views" name="Profile Views" stroke="#8b5cf6" fill="url(#colorViewsStats)" strokeWidth={2} />
-                                                <Bar yAxisId="left" dataKey="likes" name="Likes" fill="#ec4899" radius={[4, 4, 0, 0]} barSize={20} />
-                                                <Line yAxisId="right" type="monotone" dataKey="rating" name="Rating" stroke="#eab308" strokeWidth={2} dot={{r: 3, fill: '#eab308'}} />
+                                                <Bar yAxisId="views" dataKey="views" name="Profile Views" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={32} />
+                                                <Line yAxisId="likes" type="monotone" dataKey="likes" name="Likes" stroke="#ec4899" strokeWidth={3} dot={{r: 4, fill: '#ec4899', strokeWidth: 2, stroke: '#fff'}} />
+                                                <Line yAxisId="rating" type="monotone" dataKey="rating" name="Rating" stroke="#eab308" strokeWidth={3} strokeDasharray="5 5" dot={{r: 4, fill: '#eab308', strokeWidth: 2, stroke: '#fff'}} />
                                             </ComposedChart>
                                         </ResponsiveContainer>
                                     )}

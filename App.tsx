@@ -127,14 +127,8 @@ function App() {
                     setIsLoading(false);
                 } else {
                     // Fan Dashboard
-                    const hasSkippedSetup = localStorage.getItem('bluechecked_skip_setup') === 'true';
-                    if (!user.bio && !hasSkippedSetup) {
-                        setCurrentPage('SETUP_PROFILE');
-                        window.history.replaceState({ page: 'SETUP_PROFILE' }, '', '');
-                    } else {
-                        setCurrentPage('FAN_DASHBOARD');
-                        window.history.replaceState({ page: 'FAN_DASHBOARD' }, '', '');
-                    }
+                    setCurrentPage('FAN_DASHBOARD');
+                    window.history.replaceState({ page: 'FAN_DASHBOARD' }, '', '');
                     setIsLoading(false);
                 }
             } else {
@@ -225,14 +219,8 @@ function App() {
           }
           setIsLoading(false);
       } else {
-          const hasSkippedSetup = localStorage.getItem('bluechecked_skip_setup') === 'true';
-          if (!user.bio && !hasSkippedSetup) {
-              window.history.pushState({ page: 'SETUP_PROFILE' }, '', '');
-              setCurrentPage('SETUP_PROFILE');
-          } else {
-              window.history.pushState({ page: 'FAN_DASHBOARD' }, '', '');
-              setCurrentPage('FAN_DASHBOARD');
-          }
+          window.history.pushState({ page: 'FAN_DASHBOARD' }, '', '');
+          setCurrentPage('FAN_DASHBOARD');
       }
   };
 
