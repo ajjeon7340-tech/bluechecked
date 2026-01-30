@@ -1367,6 +1367,7 @@ export const getFeaturedCreators = async (): Promise<CreatorProfile[]> => {
     const creatorsWithStats = await Promise.all(data.map(async (p) => {
         let averageRating = 5.0;
         let reviewCount = 0;
+        let responseTimeAvg = 'Standard';
         
         // Try RPC
         const { data: rpcStats, error: rpcError } = await supabase.rpc('get_creator_stats', { target_creator_id: p.id });
@@ -1374,6 +1375,13 @@ export const getFeaturedCreators = async (): Promise<CreatorProfile[]> => {
         if (!rpcError && rpcStats) {
             averageRating = rpcStats.averageRating;
             reviewCount = rpcStats.reviewCount;
+            
+            const hours = rpcStats.avgResponseHours;
+            if (hours === null || hours === undefined) responseTimeAvg = 'Standard';
+            else if (hours < 1) responseTimeAvg = 'Lightning';
+            else if (hours < 4) responseTimeAvg = 'Very Fast';
+            else if (hours < 24) responseTimeAvg = 'Fast';
+            else responseTimeAvg = 'Standard';
         } else {
             // Fallback (RLS restricted)
              const { count, data: msgs } = await supabase
@@ -1400,7 +1408,7 @@ export const getFeaturedCreators = async (): Promise<CreatorProfile[]> => {
             welcomeMessage: p.welcome_message,
             likesCount: likesMap[p.id] || 0,
             stats: { 
-                responseTimeAvg: 'Expert', 
+                responseTimeAvg, 
                 replyRate: '98%', 
                 profileViews: reviewCount * 15 + 100, 
                 averageRating: averageRating 
