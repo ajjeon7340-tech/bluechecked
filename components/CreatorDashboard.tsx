@@ -893,23 +893,21 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden h-96 flex flex-col">
                             <h3 className="font-bold text-slate-900 mb-6 flex items-center justify-between flex-shrink-0">
-                                <div className="flex items-center gap-2">
-                                    <span>Credit Trend</span>
-                                    <div className="flex bg-slate-100 p-0.5 rounded-lg">
-                                        {[
-                                            { label: 'Week', value: 'DAILY' },
-                                            { label: 'Month', value: 'WEEKLY' },
-                                            { label: 'Year', value: 'YEARLY' }
-                                        ].map((opt) => (
-                                            <button
-                                                key={opt.value}
-                                                onClick={() => setTrendTimeFrame(opt.value as StatTimeFrame)}
-                                                className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${trendTimeFrame === opt.value ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                                            >
-                                                {opt.label}
-                                            </button>
-                                        ))}
-                                    </div>
+                                <span>Credit Trend</span>
+                                <div className="flex bg-slate-100 p-0.5 rounded-lg">
+                                    {[
+                                        { label: 'Daily', value: 'DAILY' },
+                                        { label: 'Weekly', value: 'WEEKLY' },
+                                        { label: 'Monthly', value: 'YEARLY' }
+                                    ].map((opt) => (
+                                        <button
+                                            key={opt.value}
+                                            onClick={() => setTrendTimeFrame(opt.value as StatTimeFrame)}
+                                            className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${trendTimeFrame === opt.value ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
                                 </div>
                             </h3>
                             
