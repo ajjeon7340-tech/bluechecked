@@ -1609,6 +1609,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         const isLastInGroup = !nextMsg || nextMsg.role !== chat.role || nextBucket !== currentBucket;
                                         const isFirstInGroup = !prevMsg || prevMsg.role !== chat.role || prevBucket !== currentBucket;
                                         return (
+                                            <React.Fragment key={`${msg.id}-${index}`}>
                                             <div key={`${msg.id}-${index}`} className={`flex gap-4 ${isMe ? 'flex-row-reverse' : ''} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}>
                                                 {!isMe && (
                                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border bg-indigo-100 text-indigo-600 border-indigo-200 ${isFirstInGroup ? '' : 'opacity-0 border-transparent'} overflow-hidden`}>
@@ -1638,6 +1639,21 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     )}
                                                 </div>
                                             </div>
+
+                                            {/* Auto-Reply Visualization for Creator */}
+                                            {index === 0 && (
+                                                <div className="flex gap-4 flex-row-reverse mt-4 opacity-80">
+                                                    <div className="space-y-1 max-w-[85%] text-right">
+                                                        <div className="p-4 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap text-left bg-slate-50 text-slate-600 border border-slate-200 rounded-tr-none">
+                                                            <div className="flex items-center gap-1.5 mb-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                                                <Sparkles size={10} /> Automated Welcome Message
+                                                            </div>
+                                                            {creator.welcomeMessage || "Thanks for your request! I've received it and will get back to you shortly."}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            </React.Fragment>
                                         );
                                     })}
                                         </div>
