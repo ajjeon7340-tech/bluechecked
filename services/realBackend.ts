@@ -1343,37 +1343,42 @@ export const getFeaturedCreators = async (): Promise<CreatorProfile[]> => {
 
     if (error || !data) return [];
 
-    // Fetch stats (ratings) for these creators
+    // Fetch real likes (Publicly readable)
     const creatorIds = data.map(p => p.id);
-    const { data: messages } = await supabase
-        .from('messages')
-        .select('creator_id, rating')
-        .in('creator_id', creatorIds)
-        .gt('rating', 0);
-        
-    // Fetch real likes
     const { data: allLikes } = await supabase.from('creator_likes').select('creator_id').in('creator_id', creatorIds);
 
-    const stats: Record<string, { count: number, sum: number, likes: number }> = {};
-    
-    if (messages) {
-        messages.forEach(m => {
-            if (!stats[m.creator_id]) stats[m.creator_id] = { count: 0, sum: 0, likes: 0 };
-            stats[m.creator_id].count++;
-            stats[m.creator_id].sum += m.rating;
-        });
-    }
-    
+    const likesMap: Record<string, number> = {};
     if (allLikes) {
         allLikes.forEach(l => {
-            if (!stats[l.creator_id]) stats[l.creator_id] = { count: 0, sum: 0, likes: 0 };
-            stats[l.creator_id].likes++;
+            likesMap[l.creator_id] = (likesMap[l.creator_id] || 0) + 1;
         });
     }
 
-    return data.map(p => {
-        const s = stats[p.id] || { count: 0, sum: 0, likes: 0 };
-        const avg = s.count > 0 ? parseFloat((s.sum / s.count).toFixed(1)) : 5.0;
+    // Fetch stats securely for each creator using RPC to bypass RLS
+    const creatorsWithStats = await Promise.all(data.map(async (p) => {
+        let averageRating = 5.0;
+        let reviewCount = 0;
+        
+        // Try RPC
+        const { data: rpcStats, error: rpcError } = await supabase.rpc('get_creator_stats', { target_creator_id: p.id });
+
+        if (!rpcError && rpcStats) {
+            averageRating = rpcStats.averageRating;
+            reviewCount = rpcStats.reviewCount;
+        } else {
+            // Fallback (RLS restricted)
+             const { count, data: msgs } = await supabase
+                .from('messages')
+                .select('rating', { count: 'exact' })
+                .eq('creator_id', p.id)
+                .gt('rating', 0);
+             
+             if (msgs && msgs.length > 0) {
+                 const sum = msgs.reduce((acc, m) => acc + m.rating, 0);
+                 averageRating = parseFloat((sum / msgs.length).toFixed(1));
+             }
+             reviewCount = count || 0;
+        }
 
         return {
             id: p.id,
@@ -1384,12 +1389,12 @@ export const getFeaturedCreators = async (): Promise<CreatorProfile[]> => {
             pricePerMessage: p.price_per_message || 50,
             responseWindowHours: p.response_window_hours || 48,
             welcomeMessage: p.welcome_message,
-            likesCount: s.likes,
+            likesCount: likesMap[p.id] || 0,
             stats: { 
                 responseTimeAvg: 'Expert', 
                 replyRate: '98%', 
-                profileViews: s.count * 15 + 100, 
-                averageRating: avg 
+                profileViews: reviewCount * 15 + 100, 
+                averageRating: averageRating 
             },
             customQuestions: [],
             tags: [],
@@ -1397,7 +1402,9 @@ export const getFeaturedCreators = async (): Promise<CreatorProfile[]> => {
             products: p.products || [],
             platforms: p.platforms || []
         };
-    });
+    }));
+
+    return creatorsWithStats;
 };
 
 export const toggleCreatorLike = async (creatorId: string): Promise<{ likes: number, hasLiked: boolean }> => {
