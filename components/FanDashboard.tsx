@@ -235,13 +235,15 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
   // Memoize sprinkles to prevent re-render jitter
   const sprinkles = useMemo(() => {
-      return Array.from({ length: 50 }).map((_, i) => ({
+      const colors = ['#FFD700', '#FF69B4', '#00FFFF', '#00FF00', '#9D00FF', '#FF4500'];
+      return Array.from({ length: 80 }).map((_, i) => ({
           id: i,
-          left: `${Math.random() * 100}%`,
-          animationDelay: `${Math.random() * 2}s`,
-          fontSize: `${Math.random() * 10 + 8}px`,
-          color: ['#FFD700', '#FF69B4', '#6366F1', '#10B981', '#F59E0B'][Math.floor(Math.random() * 5)],
-          char: ['●', '★', '✦', '▪', '✿'][Math.floor(Math.random() * 5)]
+          left: Math.random() * 100,
+          animationDelay: Math.random() * 0.8,
+          animationDuration: 2 + Math.random() * 2.5,
+          size: 6 + Math.random() * 8,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          type: ['circle', 'square', 'triangle'][Math.floor(Math.random() * 3)]
       }));
   }, []);
 
@@ -636,12 +638,15 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         {/* Inject Animation Styles Globally for the Component */}
         <style>{`
             @keyframes sprinkle-fall {
-                0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
-                20% { opacity: 1; }
-                100% { transform: translateY(400px) rotate(360deg); opacity: 0; }
+                0% { transform: translateY(-10vh) rotate(0deg) translateX(0); opacity: 1; }
+                25% { transform: translateY(20vh) rotate(90deg) translateX(15px); }
+                50% { transform: translateY(50vh) rotate(180deg) translateX(-15px); }
+                75% { transform: translateY(75vh) rotate(270deg) translateX(10px); }
+                100% { transform: translateY(100vh) rotate(360deg) translateX(0); opacity: 0; }
             }
             .animate-sprinkle {
                 animation: sprinkle-fall 3s linear forwards;
+                will-change: transform;
             }
         `}</style>
 
@@ -1373,15 +1378,17 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         key={s.id}
                                         className="absolute animate-sprinkle"
                                         style={{
-                                            left: s.left,
+                                            left: `${s.left}%`,
                                             top: '-20px',
-                                            color: s.color,
-                                            fontSize: s.fontSize,
-                                            animationDelay: s.animationDelay
+                                            width: `${s.size}px`,
+                                            height: `${s.size}px`,
+                                            backgroundColor: s.color,
+                                            borderRadius: s.type === 'circle' ? '50%' : s.type === 'square' ? '2px' : '0',
+                                            clipPath: s.type === 'triangle' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : 'none',
+                                            animationDelay: `${s.animationDelay}s`,
+                                            animationDuration: `${s.animationDuration}s`
                                         }}
-                                    >
-                                        {s.char}
-                                    </div>
+                                    />
                                 ))}
                             </div>
                         )}
