@@ -1453,14 +1453,16 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             const isCreatorReplied = lastChat?.role === 'CREATOR';
                                             
                                             if (isCreatorReplied) {
+                                                const diff = new Date(latestMessage.expiresAt).getTime() - Date.now();
+                                                const hours = Math.max(0, Math.floor(diff / (1000 * 60 * 60)));
                                                 return (
                                                     <>
                                                         <div className="bg-white p-2 rounded-full border border-slate-200 shadow-sm">
                                                             <MessageSquare size={20} className="text-blue-500" />
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-bold text-slate-700">Creator answered</p>
-                                                            <p className="text-xs text-slate-400">Request expires in {getTimeLeft(latestMessage.expiresAt).text}</p>
+                                                            <p className="text-sm font-bold text-slate-700">Creator answering</p>
+                                                            <p className="text-xs text-slate-400">Creator has {hours} hours left to complete the answer</p>
                                                         </div>
                                                     </>
                                                 );
