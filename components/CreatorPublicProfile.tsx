@@ -15,9 +15,9 @@ interface Props {
 }
 
 const getResponseTimeTooltip = (status: string) => {
-    if (status === 'Super Responsive') return 'Typically replies in under 1 hour';
-    if (status === 'Expert') return 'Typically replies in under 4 hours';
-    if (status === 'Lightning') return 'Typically replies within 24 hours';
+    if (status === 'Lightning') return 'Typically replies in under 1 hour';
+    if (status === 'Very Fast') return 'Typically replies in under 4 hours';
+    if (status === 'Fast') return 'Typically replies within 24 hours';
     return 'Replies within the guaranteed response window';
 };
 

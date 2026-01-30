@@ -13,9 +13,9 @@ interface Props {
 }
 
 const getResponseTimeTooltip = (status: string) => {
-    if (status === 'Super Responsive') return 'Typically replies in under 1 hour';
-    if (status === 'Expert') return 'Typically replies in under 4 hours';
-    if (status === 'Lightning') return 'Typically replies within 24 hours';
+    if (status === 'Lightning') return 'Typically replies in under 1 hour';
+    if (status === 'Very Fast') return 'Typically replies in under 4 hours';
+    if (status === 'Fast') return 'Typically replies within 24 hours';
     return 'Replies within the guaranteed response window';
 };
 
@@ -200,7 +200,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
             avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
             pricePerMessage: 150,
             responseWindowHours: 24,
-            stats: { averageRating: 5.0, responseTimeAvg: 'Expert', profileViews: 1200, replyRate: '100%' },
+            stats: { averageRating: 5.0, responseTimeAvg: 'Very Fast', profileViews: 1200, replyRate: '100%' },
             tags: ['Design', 'UX'],
             likesCount: 45,
             platforms: ['instagram', 'linkedin'],

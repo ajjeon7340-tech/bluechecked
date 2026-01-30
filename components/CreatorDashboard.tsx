@@ -33,6 +33,13 @@ const SUPPORTED_PLATFORMS = [
     { id: 'twitch', label: 'Twitch', icon: Twitch },
 ];
 
+const getResponseCategory = (hours: number) => {
+    if (hours < 1) return 'Lightning';
+    if (hours < 4) return 'Very Fast';
+    if (hours < 24) return 'Fast';
+    return 'Standard';
+};
+
 const DUMMY_PRO_DATA: ProAnalyticsData = {
     trafficSources: [
         { name: 'YouTube', value: 45, color: '#FF0000' },

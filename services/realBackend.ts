@@ -476,11 +476,11 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
         replyRate = `${rpcStats.replyRate}%`;
         
         const hours = rpcStats.avgResponseHours;
-        if (hours === null || hours === undefined) responseTimeAvg = 'Within Guaranteed';
-        else if (hours < 1) responseTimeAvg = 'Super Responsive';
-        else if (hours < 4) responseTimeAvg = 'Expert';
-        else if (hours < 24) responseTimeAvg = 'Lightning';
-        else responseTimeAvg = 'Within Guaranteed';
+        if (hours === null || hours === undefined) responseTimeAvg = 'Standard';
+        else if (hours < 1) responseTimeAvg = 'Lightning';
+        else if (hours < 4) responseTimeAvg = 'Very Fast';
+        else if (hours < 24) responseTimeAvg = 'Fast';
+        else responseTimeAvg = 'Standard';
     } else {
         // 2. Fallback: Client-side calculation (Subject to RLS, mostly for Creator's own view if RPC fails)
         const { data: statMessages } = await supabase
@@ -496,12 +496,12 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
                 const totalTimeMs = repliedMsgs.reduce((acc, m) => acc + (new Date(m.reply_at).getTime() - new Date(m.created_at).getTime()), 0);
                 const avgHours = totalTimeMs / repliedMsgs.length / (1000 * 60 * 60);
                 
-                if (avgHours < 1) responseTimeAvg = 'Super Responsive';
-                else if (avgHours < 4) responseTimeAvg = 'Expert';
-                else if (avgHours < 24) responseTimeAvg = 'Lightning';
-                else responseTimeAvg = 'Within Guaranteed';
+                if (avgHours < 1) responseTimeAvg = 'Lightning';
+                else if (avgHours < 4) responseTimeAvg = 'Very Fast';
+                else if (avgHours < 24) responseTimeAvg = 'Fast';
+                else responseTimeAvg = 'Standard';
             } else {
-                responseTimeAvg = 'Within Guaranteed';
+                responseTimeAvg = 'Standard';
             }
 
             const repliedCount = statMessages.filter(m => m.status === 'REPLIED').length;
