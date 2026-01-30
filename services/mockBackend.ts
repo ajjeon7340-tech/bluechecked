@@ -730,6 +730,7 @@ export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date
     const views = analyticsEvents.filter(e => e.creatorId === creatorProfile.id && e.eventType === 'VIEW' && new Date(e.createdAt) >= startDate && new Date(e.createdAt) <= endDate);
     const likes = mockLikesLog.filter(l => l.creatorId === creatorProfile.id && new Date(l.timestamp) >= startDate && new Date(l.timestamp) <= endDate);
     const ratings = messages.filter(m => m.creatorId === creatorProfile.id && m.rating && m.rating > 0 && new Date(m.createdAt) >= startDate && new Date(m.createdAt) <= endDate);
+    const repliedMessages = messages.filter(m => m.creatorId === creatorProfile.id && m.status === 'REPLIED' && m.replyAt && new Date(m.createdAt) >= startDate && new Date(m.createdAt) <= endDate);
 
     // Initialize Buckets
     const stats: DetailedStat[] = [];
@@ -767,7 +768,14 @@ export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date
         const bucketRatings = ratings.filter(r => new Date(r.createdAt) >= bucketStart && new Date(r.createdAt) <= bucketEnd);
         const avgRating = bucketRatings.length > 0 ? bucketRatings.reduce((sum, r) => sum + (r.rating || 0), 0) / bucketRatings.length : 0;
 
-        stats.push({ date: label, views: bucketViews, likes: bucketLikes, rating: parseFloat(avgRating.toFixed(1)) });
+        const bucketReplied = repliedMessages.filter(m => new Date(m.createdAt) >= bucketStart && new Date(m.createdAt) <= bucketEnd);
+        let avgResponseTime = 0;
+        if (bucketReplied.length > 0) {
+             const totalTime = bucketReplied.reduce((acc, m) => acc + (new Date(m.replyAt!).getTime() - new Date(m.createdAt).getTime()), 0);
+             avgResponseTime = totalTime / bucketReplied.length / (1000 * 60 * 60);
+        }
+
+        stats.push({ date: label, views: bucketViews, likes: bucketLikes, rating: parseFloat(avgRating.toFixed(1)), responseTime: parseFloat(avgResponseTime.toFixed(1)) });
     }
 
     return stats;

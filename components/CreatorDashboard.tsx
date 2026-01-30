@@ -1058,7 +1058,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                      {/* CONTENT FOR STATISTICS (ACTIVITY) */}
                      {currentView === 'STATISTICS' && (
                          <>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in zoom-in-95 duration-300">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in zoom-in-95 duration-300">
                                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group">
                                     <div className="absolute right-0 top-0 w-24 h-24 bg-purple-50 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
                                     <div className="relative z-10">
@@ -1095,6 +1095,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 const valid = detailedStats.filter(s => s.rating > 0);
                                                 const avg = valid.length > 0 ? valid.reduce((acc, curr) => acc + curr.rating, 0) / valid.length : 0;
                                                 return avg.toFixed(1);
+                                            })()}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group">
+                                    <div className="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
+                                    <div className="relative z-10">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><Clock size={16}/></div>
+                                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Avg Response</span>
+                                        </div>
+                                        <div className="text-3xl font-black text-slate-900">
+                                            {(() => {
+                                                const valid = detailedStats.filter(s => s.responseTime > 0);
+                                                const avg = valid.length > 0 ? valid.reduce((acc, curr) => acc + curr.responseTime, 0) / valid.length : 0;
+                                                return avg > 0 ? `${avg.toFixed(1)}h` : 'N/A';
                                             })()}
                                         </div>
                                     </div>

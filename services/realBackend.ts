@@ -1103,15 +1103,17 @@ export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date
     }
 
     // Fetch Data
-    const [viewsResult, likesResult, ratingsResult] = await Promise.all([
+    const [viewsResult, likesResult, ratingsResult, repliedResult] = await Promise.all([
         supabase.from('analytics_events').select('created_at').eq('creator_id', creatorId).eq('event_type', 'VIEW').gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString()),
         supabase.from('creator_likes').select('created_at').eq('creator_id', creatorId).gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString()),
-        supabase.from('messages').select('created_at, rating').eq('creator_id', creatorId).gt('rating', 0).gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString())
+        supabase.from('messages').select('created_at, rating').eq('creator_id', creatorId).gt('rating', 0).gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString()),
+        supabase.from('messages').select('created_at, reply_at').eq('creator_id', creatorId).eq('status', 'REPLIED').not('reply_at', 'is', null).gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString())
     ]);
 
     const views = viewsResult.data || [];
     const likes = likesResult.data || [];
     const ratings = ratingsResult.data || [];
+    const repliedMessages = repliedResult.data || [];
 
     // Initialize Buckets
     const stats: DetailedStat[] = [];
@@ -1149,7 +1151,14 @@ export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date
         const bucketRatings = ratings.filter(r => new Date(r.created_at) >= bucketStart && new Date(r.created_at) <= bucketEnd);
         const avgRating = bucketRatings.length > 0 ? bucketRatings.reduce((sum, r) => sum + (r.rating || 0), 0) / bucketRatings.length : 0;
 
-        stats.push({ date: label, views: bucketViews, likes: bucketLikes, rating: parseFloat(avgRating.toFixed(1)) });
+        const bucketReplied = repliedMessages.filter(m => new Date(m.created_at) >= bucketStart && new Date(m.created_at) <= bucketEnd);
+        let avgResponseTime = 0;
+        if (bucketReplied.length > 0) {
+             const totalTime = bucketReplied.reduce((acc, m) => acc + (new Date(m.reply_at).getTime() - new Date(m.created_at).getTime()), 0);
+             avgResponseTime = totalTime / bucketReplied.length / (1000 * 60 * 60);
+        }
+
+        stats.push({ date: label, views: bucketViews, likes: bucketLikes, rating: parseFloat(avgRating.toFixed(1)), responseTime: parseFloat(avgResponseTime.toFixed(1)) });
     }
 
     return stats;

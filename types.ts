@@ -134,6 +134,7 @@ export interface DetailedStat {
     views: number;
     likes: number;
     rating: number;
+    responseTime: number; // Average hours
 }
 
 export interface DetailedFinancialStat {
