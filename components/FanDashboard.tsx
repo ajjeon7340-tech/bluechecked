@@ -1478,11 +1478,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             } else {
                                                 return (
                                                     <>
-                                                        <div className="bg-white p-2 rounded-full border border-slate-200 shadow-sm animate-pulse">
-                                                            <Clock size={20} className="text-amber-500" />
+                                                        <div className="bg-white p-2 rounded-full border border-slate-200 shadow-sm">
+                                                            <Clock size={20} className="text-slate-400" />
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-bold text-slate-700">Waiting for reply...</p>
+                                                            <p className="text-sm font-bold text-slate-700">Not yet read</p>
                                                             <p className="text-xs text-slate-400">Request expires in {getTimeLeft(latestMessage.expiresAt).text}</p>
                                                         </div>
                                                     </>
