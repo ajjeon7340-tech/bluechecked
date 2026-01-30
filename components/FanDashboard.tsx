@@ -1423,17 +1423,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                                             {/* Status Indicator */}
                                             {!isRefunded && (
-                                                <div className="flex justify-end mt-2 px-1">
-                                                    {(() => {
-                                                        const status = getSessionStatus(msg);
-                                                        return (
+                                                (() => {
+                                                    const status = getSessionStatus(msg);
+                                                    if (status.label === 'Creator answered') return null;
+                                                    return (
+                                                        <div className="flex justify-end mt-2 px-1">
                                                             <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider ${status.color} bg-white/50 px-2 py-1 rounded-full`}>
                                                                 <status.icon size={12} />
                                                                 <span>{status.label}</span>
                                                             </div>
-                                                        );
-                                                    })()}
-                                                </div>
+                                                        </div>
+                                                    );
+                                                })()
                                             )}
                                         </div>
                                     </div>
