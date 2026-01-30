@@ -1168,8 +1168,8 @@ export const getFinancialStatistics = async (timeFrame: StatTimeFrame, date: Dat
         startDate.setDate(1);
         count = 6;
     } else { // YEARLY
-        startDate.setMonth(endDate.getMonth() - 11); // 12 months
-        startDate.setDate(1);
+        startDate.setFullYear(endDate.getFullYear(), 0, 1); // Jan 1st of current year
+        startDate.setHours(0, 0, 0, 0);
         count = 12;
     }
 

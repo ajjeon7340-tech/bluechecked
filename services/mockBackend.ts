@@ -591,6 +591,25 @@ export const getProAnalytics = async (): Promise<ProAnalyticsData> => {
 };
 
 export const getFinancialStatistics = async (timeFrame: StatTimeFrame, date: Date): Promise<DetailedFinancialStat[]> => {
+    if (timeFrame === 'YEARLY') {
+        return Array.from({ length: 12 }).map((_, i) => {
+            const d = new Date(date.getFullYear(), i, 1);
+            const label = d.toLocaleDateString('en-US', { month: 'short' });
+            
+            const msgRev = 1000 + (i * 100);
+            const prodRev = 500 + (i * 50);
+            const tips = 100 + (i * 10);
+
+            return {
+                date: label,
+                totalRevenue: msgRev + prodRev + tips,
+                messageRevenue: msgRev,
+                productRevenue: prodRev,
+                tips: tips
+            };
+        });
+    }
+
     const count = timeFrame === 'DAILY' ? 7 : timeFrame === 'WEEKLY' ? 4 : timeFrame === 'MONTHLY' ? 6 : 12;
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     

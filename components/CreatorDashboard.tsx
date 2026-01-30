@@ -921,7 +921,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             </linearGradient>
                                         </defs>
                                         <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} domain={[0, (dataMax: number) => Math.max(dataMax, 10000)]} />
                                         <Tooltip cursor={{fill: '#f1f5f9'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}} />
                                         <Area type="monotone" dataKey="totalRevenue" stroke="#6366f1" fillOpacity={1} fill="url(#colorEarnings)" />
                                     </AreaChart>
