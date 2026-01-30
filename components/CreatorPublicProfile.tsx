@@ -31,8 +31,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   onRefreshData
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [step, setStep] = useState<'compose' | 'payment' | 'topup' | 'success' | 'product_confirm' | 'product_payment' | 'product_success'>('compose');
-  const [email, setEmail] = useState('');
+  const [step, setStep] = useState<'compose' | 'payment' | 'topup' | 'success' | 'product_confirm' | 'product_payment' | 'product_success'
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -43,6 +42,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
   // Product Purchase State
   const [selectedProductLink, setSelectedProductLink] = useState<AffiliateLink | null>(null);
+
+  // Support / Tip State
+  const [supportAmount, setSupportAmount] = useState(100);
+  const [supportMessage, setSupportMessage] = useState('');
 
   // Customization State
   const [isCustomizeMode, setIsCustomizeMode] = useState(false);
@@ -110,6 +113,14 @@ export const CreatorPublicProfile: React.FC<Props> = ({
       setIsModalOpen(true);
   };
 
+  const handleSupportClick = () => {
+      if (isCustomizeMode) return;
+      setSupportAmount(100);
+      setSupportMessage('');
+      setStep('support_confirm');
+      setIsModalOpen(true);
+  };
+
   const checkBalance = (cost: number) => {
       if (!currentUser) return false;
       return currentUser.credits >= cost;
@@ -126,6 +137,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           // Return to previous flow
           if (selectedProductLink) {
               setStep('product_payment');
+          } else if (step === 'support_payment' || step === 'support_confirm') {
+              setStep('support_payment');
           } else {
               setStep('payment');
           }
@@ -166,6 +179,23 @@ export const CreatorPublicProfile: React.FC<Props> = ({
         logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'PRODUCT', id: selectedProductLink.id });
         setIsSubmitting(false);
         setStep('product_success');
+      } catch (e: any) {
+          setIsSubmitting(false);
+          if (e.message.includes("Insufficient")) {
+              setStep('topup');
+          } else {
+              alert(e.message);
+          }
+      }
+  };
+
+  const handleSupportPayment = async () => {
+      setIsSubmitting(true);
+      try {
+        await sendMessage(creator.id, name, email, `Fan Tip: ${supportMessage || 'Just a token of appreciation!'}`, supportAmount);
+        logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'TIP', amount: supportAmount });
+        setIsSubmitting(false);
+        setStep('support_success');
       } catch (e: any) {
           setIsSubmitting(false);
           if (e.message.includes("Insufficient")) {
@@ -677,6 +707,26 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                 {displayedLinks.length > 0 ? (
                     <div className="grid gap-3">
+                        {/* Support Card */}
+                        {!isCustomizeMode && (
+                            <button
+                                onClick={handleSupportClick}
+                                className="w-full text-left bg-gradient-to-r from-pink-50 to-rose-50 p-4 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-4 group cursor-pointer hover:border-pink-300 transition-all hover:shadow-md relative overflow-hidden"
+                            >
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-full blur-2xl -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
+                                <div className="w-10 h-10 rounded-full bg-white text-pink-500 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+                                    <Heart size={20} className="fill-pink-500" />
+                                </div>
+                                <div className="flex-1 relative z-10">
+                                    <h4 className="font-bold text-slate-900 text-sm group-hover:text-pink-600 transition-colors">Support My Work</h4>
+                                    <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Send a tip to show appreciation</p>
+                                </div>
+                                <div className="bg-white/80 text-pink-600 px-3 py-1.5 rounded-lg text-xs font-bold group-hover:bg-white transition-colors flex items-center gap-1 flex-shrink-0 shadow-sm">
+                                    <Heart size={12} /> Tip
+                                </div>
+                            </button>
+                        )}
+
                         {displayedLinks.map((link) => {
                             const isProduct = link.type === 'DIGITAL_PRODUCT';
                             return (
@@ -780,6 +830,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                 {step === 'product_confirm' && 'Checkout'}
                 {step === 'product_payment' && 'Confirm Payment'}
                 {step === 'product_success' && 'Ready to Download'}
+                {step === 'support_confirm' && 'Send a Tip'}
+                {step === 'support_payment' && 'Confirm Tip'}
+                {step === 'support_success' && 'Thank You!'}
               </h3>
               <button onClick={closeModal} className="p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors hover:rotate-90 duration-200">
                 <X size={18} />
@@ -1069,6 +1122,95 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         </a>
                         
                         <button onClick={closeModal} className="mt-4 text-sm font-medium text-slate-400 hover:text-slate-600">
+                            Close
+                        </button>
+                  </div>
+              )}
+
+              {/* --- SUPPORT / TIP FLOW --- */}
+              {step === 'support_confirm' && (
+                  <div className="space-y-6">
+                      <div className="text-center">
+                          <div className="w-16 h-16 bg-pink-50 rounded-full flex items-center justify-center mx-auto mb-4 text-pink-500">
+                              <Heart size={32} className="fill-pink-500" />
+                          </div>
+                          <h4 className="font-bold text-slate-900 text-lg">Support {creator.displayName}</h4>
+                          <p className="text-slate-500 text-sm">Select an amount to tip.</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                          {[100, 300, 500, 1000].map(amt => (
+                              <button 
+                                key={amt}
+                                onClick={() => setSupportAmount(amt)}
+                                className={`p-4 rounded-xl border text-center transition-all ${supportAmount === amt ? 'bg-pink-50 border-pink-500 ring-1 ring-pink-500 text-pink-700' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+                              >
+                                  <div className="font-black text-xl mb-1 flex items-center justify-center gap-1"><Coins size={16}/> {amt}</div>
+                              </button>
+                          ))}
+                      </div>
+
+                      <div>
+                          <label className="block text-sm font-bold text-slate-900 mb-2">Message (Optional)</label>
+                          <textarea 
+                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none h-24 resize-none text-sm"
+                              placeholder="Say something nice..."
+                              value={supportMessage}
+                              onChange={e => setSupportMessage(e.target.value)}
+                          />
+                      </div>
+
+                      <Button 
+                        fullWidth 
+                        onClick={() => setStep('support_payment')}
+                        className="bg-slate-900 hover:bg-slate-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-slate-900/20 text-lg"
+                      >
+                        Continue
+                      </Button>
+                  </div>
+              )}
+
+              {step === 'support_payment' && (
+                  <div className="space-y-6">
+                      <div className="bg-pink-50 p-6 rounded-[2rem] border border-pink-100">
+                         <div className="flex justify-between items-end">
+                           <span className="font-bold text-slate-900 text-lg">Total Tip</span>
+                           <span className="font-black text-slate-900 text-3xl tracking-tight flex items-center gap-2"><Coins/> {supportAmount}</span>
+                         </div>
+                         <div className="mt-4 pt-4 border-t border-dashed border-pink-200">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-slate-500">Your Wallet Balance:</span>
+                                <span className={`font-bold ${checkBalance(supportAmount) ? 'text-green-600' : 'text-red-500'}`}>
+                                    {currentUser?.credits || 0} Credits
+                                </span>
+                            </div>
+                         </div>
+                      </div>
+
+                      <div className="flex gap-3 pt-2">
+                        <Button variant="ghost" onClick={() => setStep('support_confirm')} className="flex-1 rounded-2xl font-semibold">Back</Button>
+                        {checkBalance(supportAmount) ? (
+                            <Button fullWidth onClick={handleSupportPayment} isLoading={isSubmitting} className="flex-[2] bg-slate-900 hover:bg-slate-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-slate-900/20 text-lg">
+                                Pay & Send Tip
+                            </Button>
+                        ) : (
+                            <Button fullWidth onClick={() => setStep('topup')} className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl h-14 font-bold shadow-lg shadow-indigo-600/20 text-lg">
+                                Top Up Credits
+                            </Button>
+                        )}
+                      </div>
+                  </div>
+              )}
+
+              {step === 'support_success' && (
+                  <div className="py-8 relative overflow-hidden flex flex-col items-center justify-center text-center">
+                        <div className="w-20 h-20 bg-pink-100 rounded-full flex items-center justify-center text-pink-600 mb-6 animate-in zoom-in">
+                            <Heart size={40} className="fill-pink-600" />
+                        </div>
+                        <h3 className="text-2xl font-black text-slate-900 mb-2">Thank You!</h3>
+                        <p className="text-slate-500 text-sm mb-8">Your support means the world to {creator.displayName}.</p>
+                        
+                        <button onClick={closeModal} className="w-full bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-2xl h-12 font-bold text-sm">
                             Close
                         </button>
                   </div>

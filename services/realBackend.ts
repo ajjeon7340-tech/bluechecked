@@ -631,6 +631,7 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
     
     const userId = session.session.user.id;
     const isProductPurchase = content.startsWith('Purchased Product:');
+    const isTip = content.startsWith('Fan Tip:');
 
     // 1. Check Balance
     const { data: profile } = await supabase.from('profiles').select('credits').eq('id', userId).single();
@@ -640,7 +641,7 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
 
     // Check for existing pending request
     // Skip check if this is a product purchase
-    if (!isProductPurchase) {
+    if (!isProductPurchase && !isTip) {
         const { data: pendingMessages } = await supabase
             .from('messages')
             .select('id, content')
@@ -657,7 +658,7 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
                 throw new Error("You already have a pending request with this creator. Please wait for a reply.");
             }
         }
-    } else {
+    } else if (isProductPurchase) {
         // Check for duplicate purchase
         const { count } = await supabase
             .from('messages')
@@ -681,7 +682,7 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
     await supabase.from('profiles').update({ credits: profile.credits - amount }).eq('id', userId);
 
     // If product purchase, immediately transfer credits to creator (since it's instant delivery)
-    if (isProductPurchase) {
+    if (isProductPurchase || isTip) {
          const { data: creator } = await supabase.from('profiles').select('credits').eq('id', creatorId).single();
          if (creator) {
              await supabase.from('profiles').update({ credits: creator.credits + amount }).eq('id', creatorId);
@@ -696,11 +697,11 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
             creator_id: creatorId,
             content: content,
             amount: amount,
-            status: isProductPurchase ? 'REPLIED' : 'PENDING',
+            status: (isProductPurchase || isTip) ? 'REPLIED' : 'PENDING',
             attachment_url: attachmentUrl,
             expires_at: new Date(Date.now() + (responseWindow * 3600000)).toISOString(),
-            reply_at: isProductPurchase ? new Date().toISOString() : null,
-            is_read: isProductPurchase // Mark as read if product purchase
+            reply_at: (isProductPurchase || isTip) ? new Date().toISOString() : null,
+            is_read: (isProductPurchase || isTip) // Mark as read if product purchase or tip
         })
         .select()
         .single();

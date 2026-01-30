@@ -233,6 +233,7 @@ export const getMessages = async (): Promise<Message[]> => {
 export const sendMessage = async (creatorId: string, name: string, email: string, content: string, amount: number, attachmentUrl?: string): Promise<Message> => {
     
     const isProductPurchase = content.startsWith('Purchased Product:');
+    const isTip = content.startsWith('Fan Tip:');
 
     if (isProductPurchase) {
         const hasPurchased = messages.some(m => 
@@ -267,9 +268,9 @@ export const sendMessage = async (creatorId: string, name: string, email: string
         amount,
         createdAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 172800000).toISOString(),
-        status: isProductPurchase ? 'REPLIED' as MessageStatus : 'PENDING' as MessageStatus,
-        isRead: isProductPurchase,
-        replyAt: isProductPurchase ? new Date().toISOString() : undefined,
+        status: (isProductPurchase || isTip) ? 'REPLIED' as MessageStatus : 'PENDING' as MessageStatus,
+        isRead: (isProductPurchase || isTip),
+        replyAt: (isProductPurchase || isTip) ? new Date().toISOString() : undefined,
         conversation: [
             { id: `c${Date.now()}`, role: 'FAN', content, timestamp: new Date().toISOString() }
         ]
