@@ -228,6 +228,24 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       return featuredCreators.find(c => c.id === selectedCreatorId);
   }, [featuredCreators, selectedCreatorId]);
 
+  const getSessionStatus = (msg: Message) => {
+      if (msg.status === 'REPLIED') return { label: 'Creator collected', color: 'text-emerald-600', icon: CheckCircle2 };
+      if (msg.status === 'EXPIRED') return { label: 'Expired', color: 'text-slate-400', icon: Ban };
+      if (msg.status === 'CANCELLED') return { label: 'Cancelled', color: 'text-red-600', icon: Ban };
+      
+      // PENDING
+      const lastChat = msg.conversation[msg.conversation.length - 1];
+      if (lastChat?.role === 'CREATOR') {
+          return { label: 'Creator answered', color: 'text-blue-600', icon: MessageSquare };
+      }
+      
+      if (msg.isRead) {
+          return { label: 'Read', color: 'text-indigo-600', icon: Check };
+      }
+      
+      return { label: 'Not yet read', color: 'text-slate-400', icon: Clock };
+  };
+
   // Derived state for UI logic
   const hasRated = !!(latestMessage?.rating && latestMessage.rating > 0);
   const hasThanked = useMemo(() => {
@@ -1400,6 +1418,21 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     <div className="bg-slate-100 text-slate-500 text-xs px-3 py-1.5 rounded-full border border-slate-200 flex items-center gap-2">
                                                         <Ban size={12} /> This session was refunded.
                                                     </div>
+                                                </div>
+                                            )}
+
+                                            {/* Status Indicator */}
+                                            {!isRefunded && (
+                                                <div className="flex justify-end mt-2 px-1">
+                                                    {(() => {
+                                                        const status = getSessionStatus(msg);
+                                                        return (
+                                                            <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider ${status.color} bg-white/50 px-2 py-1 rounded-full`}>
+                                                                <status.icon size={12} />
+                                                                <span>{status.label}</span>
+                                                            </div>
+                                                        );
+                                                    })()}
                                                 </div>
                                             )}
                                         </div>
