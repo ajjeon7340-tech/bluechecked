@@ -1588,14 +1588,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30 scroll-smooth flex flex-col" ref={scrollRef}>
                                     {threadMessages.map((msg, msgIndex) => (
                                         <div key={msg.id} className="mb-8">
-                                            {/* Optional: Separator between requests if needed, or just stack them */}
-                                            {msgIndex > 0 && (
-                                                <div className="flex items-center justify-center my-6 opacity-40">
-                                                    <div className="h-px bg-slate-300 w-16"></div>
-                                                    <span className="text-[10px] font-bold text-slate-400 uppercase px-2">New Request</span>
-                                                    <div className="h-px bg-slate-300 w-16"></div>
-                                                </div>
-                                            )}
+                                            <div className="flex items-center justify-center gap-4 mb-6 opacity-60">
+                                                <div className="h-px bg-slate-300 flex-1"></div>
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 flex items-center gap-1">
+                                                    Session {msgIndex + 1} • {new Date(msg.createdAt).toLocaleDateString()}
+                                                </span>
+                                                <div className="h-px bg-slate-300 flex-1"></div>
+                                            </div>
                                             {msg.conversation.map((chat, index) => {
                                         const isMe = chat.role === 'CREATOR';
                                         const nextMsg = msg.conversation[index + 1];
