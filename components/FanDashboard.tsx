@@ -1447,13 +1447,48 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             {latestMessage && latestMessage.status === 'PENDING' && (
                                 <div className="p-4 flex items-center justify-between bg-slate-50">
                                     <div className="flex items-center gap-3">
-                                        <div className="bg-white p-2 rounded-full border border-slate-200 shadow-sm animate-pulse">
-                                            <Clock size={20} className="text-amber-500" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-slate-700">Waiting for reply...</p>
-                                            <p className="text-xs text-slate-400">Request expires in {getTimeLeft(latestMessage.expiresAt).text}</p>
-                                        </div>
+                                        {(() => {
+                                            const lastChat = latestMessage.conversation[latestMessage.conversation.length - 1];
+                                            const isCreatorReplied = lastChat?.role === 'CREATOR';
+                                            
+                                            if (isCreatorReplied) {
+                                                return (
+                                                    <>
+                                                        <div className="bg-white p-2 rounded-full border border-slate-200 shadow-sm">
+                                                            <MessageSquare size={20} className="text-blue-500" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-bold text-slate-700">Creator answered</p>
+                                                            <p className="text-xs text-slate-400">Request expires in {getTimeLeft(latestMessage.expiresAt).text}</p>
+                                                        </div>
+                                                    </>
+                                                );
+                                            } else if (latestMessage.isRead) {
+                                                return (
+                                                    <>
+                                                        <div className="bg-white p-2 rounded-full border border-slate-200 shadow-sm">
+                                                            <Check size={20} className="text-indigo-500" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-bold text-slate-700">Read</p>
+                                                            <p className="text-xs text-slate-400">Request expires in {getTimeLeft(latestMessage.expiresAt).text}</p>
+                                                        </div>
+                                                    </>
+                                                );
+                                            } else {
+                                                return (
+                                                    <>
+                                                        <div className="bg-white p-2 rounded-full border border-slate-200 shadow-sm animate-pulse">
+                                                            <Clock size={20} className="text-amber-500" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-bold text-slate-700">Waiting for reply...</p>
+                                                            <p className="text-xs text-slate-400">Request expires in {getTimeLeft(latestMessage.expiresAt).text}</p>
+                                                        </div>
+                                                    </>
+                                                );
+                                            }
+                                        })()}
                                     </div>
                                     
                                     {confirmCancelId === latestMessage.id ? (
