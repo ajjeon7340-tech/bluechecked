@@ -232,6 +232,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const lastReadStatusRef = useRef<boolean>(false);
   const lastMessageIdRef = useRef<string | null>(null);
 
+  // Memoize sprinkles to prevent re-render jitter
+  const sprinkles = useMemo(() => {
+      return Array.from({ length: 50 }).map((_, i) => ({
+          id: i,
+          left: `${Math.random() * 100}%`,
+          animationDelay: `${Math.random() * 2}s`,
+          fontSize: `${Math.random() * 10 + 8}px`,
+          color: ['#FFD700', '#FF69B4', '#6366F1', '#10B981', '#F59E0B'][Math.floor(Math.random() * 5)],
+          char: ['●', '★', '✦', '▪', '✿'][Math.floor(Math.random() * 5)]
+      }));
+  }, []);
+
   useEffect(() => {
       if (latestMessage) {
           // If we switched to a new message thread or a new message was sent, reset the tracker
@@ -617,14 +629,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
     <div className="min-h-screen bg-[#F7F9FC] flex font-sans text-slate-900 overflow-hidden">
         {/* Inject Animation Styles Globally for the Component */}
         <style>{`
-            @keyframes float-up-fade {
-                0% { transform: translateY(50px) scale(0.5); opacity: 0; }
-                20% { opacity: 1; transform: translateY(0px) scale(1.2); }
-                80% { opacity: 1; transform: translateY(-50px) scale(1); }
-                100% { transform: translateY(-100px) scale(0.8); opacity: 0; }
+            @keyframes sprinkle-fall {
+                0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
+                20% { opacity: 1; }
+                100% { transform: translateY(400px) rotate(360deg); opacity: 0; }
             }
-            .animate-float-up {
-                animation: float-up-fade 3s ease-out forwards;
+            .animate-sprinkle {
+                animation: sprinkle-fall 3s linear forwards;
             }
         `}</style>
 
@@ -1350,12 +1361,22 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                      <div className="h-full flex flex-col bg-[#F0F2F5] animate-in slide-in-from-right-4 relative">
                         {/* Celebration Overlay */}
                         {showReadCelebration && (
-                            <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden flex justify-center items-end pb-32">
-                                <div className="animate-float-up text-4xl absolute" style={{left: '20%', animationDelay: '0s'}}>✨</div>
-                                <div className="animate-float-up text-5xl absolute" style={{left: '50%', animationDelay: '0.2s'}}>👀</div>
-                                <div className="animate-float-up text-4xl absolute" style={{left: '80%', animationDelay: '0.4s'}}>🎉</div>
-                                <div className="animate-float-up text-3xl absolute" style={{left: '35%', animationDelay: '0.6s'}}>✨</div>
-                                <div className="animate-float-up text-5xl absolute" style={{left: '65%', animationDelay: '0.8s'}}>💖</div>
+                            <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
+                                {sprinkles.map((s) => (
+                                    <div 
+                                        key={s.id}
+                                        className="absolute animate-sprinkle"
+                                        style={{
+                                            left: s.left,
+                                            top: '-20px',
+                                            color: s.color,
+                                            fontSize: s.fontSize,
+                                            animationDelay: s.animationDelay
+                                        }}
+                                    >
+                                        {s.char}
+                                    </div>
+                                ))}
                             </div>
                         )}
 
