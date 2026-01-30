@@ -61,6 +61,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [isLoading, setIsLoading] = useState(true);
   const [historicalStats, setHistoricalStats] = useState<MonthlyStat[]>([]);
   
+  // Credit Trend Chart State
+  const [trendTimeFrame, setTrendTimeFrame] = useState<StatTimeFrame>('DAILY'); // Default to 'Week' view (Daily data)
+  const [trendData, setTrendData] = useState<DetailedFinancialStat[]>([]);
+  
   // Analytics State
   const [proData, setProData] = useState<ProAnalyticsData | null>(null);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
@@ -212,6 +216,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   }, [currentUser]);
 
   useEffect(() => {
+      loadTrendData();
+  }, [trendTimeFrame]);
+
+  useEffect(() => {
     // Load pro analytics if user is premium and on analytics tab
     if (currentView === 'ANALYTICS' && creator.isPremium && !proData) {
         loadProAnalytics();
@@ -242,8 +250,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     const msgs = await getMessages();
     setMessages(msgs);
 
-    const history = await getHistoricalStats();
-    setHistoricalStats(history);
+    // Initial load for trend data
+    if (trendData.length === 0) {
+        const data = await getFinancialStatistics(trendTimeFrame, new Date());
+        setTrendData(data);
+    }
 
     // If we have a selected message, update it with fresh data
     // If we have a selected sender, refresh their thread implicitly by updating 'messages'
@@ -252,6 +263,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
         // But we keep selectedMessage sync for safety if used elsewhere
     }
     if (!silent) setIsLoading(false);
+  };
+
+  const loadTrendData = async () => {
+      const data = await getFinancialStatistics(trendTimeFrame, new Date());
+      setTrendData(data);
   };
 
   const loadProAnalytics = async () => {
@@ -363,7 +379,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       responseRate,
       // @ts-ignore - Adding temporary field to stats object
       avgResponseTime,
-      monthlyStats: historicalStats
+      monthlyStats: [] // Deprecated in favor of trendData
     };
   }, [incomingMessages, historicalStats]);
 
@@ -877,23 +893,39 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden h-96 flex flex-col">
                             <h3 className="font-bold text-slate-900 mb-6 flex items-center justify-between flex-shrink-0">
-                                <span>Credit Trend</span>
-                                <span className="text-xs font-normal text-slate-400 bg-slate-50 px-2 py-1 rounded">Last 6 Months</span>
+                                <div className="flex items-center gap-2">
+                                    <span>Credit Trend</span>
+                                    <div className="flex bg-slate-100 p-0.5 rounded-lg">
+                                        {[
+                                            { label: 'Week', value: 'DAILY' },
+                                            { label: 'Month', value: 'WEEKLY' },
+                                            { label: 'Year', value: 'YEARLY' }
+                                        ].map((opt) => (
+                                            <button
+                                                key={opt.value}
+                                                onClick={() => setTrendTimeFrame(opt.value as StatTimeFrame)}
+                                                className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${trendTimeFrame === opt.value ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                             </h3>
                             
                             <div className={`flex-1 w-full min-h-0 ${!creator.isPremium ? 'blur-sm select-none opacity-50' : ''}`}>
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={stats.monthlyStats}>
+                                    <AreaChart data={trendData}>
                                         <defs>
                                             <linearGradient id="colorEarnings" x1="0" y1="0" x2="0" y2="1">
                                                 <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
                                                 <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                                             </linearGradient>
                                         </defs>
-                                        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
                                         <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
                                         <Tooltip cursor={{fill: '#f1f5f9'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}} />
-                                        <Area type="monotone" dataKey="earnings" stroke="#6366f1" fillOpacity={1} fill="url(#colorEarnings)" />
+                                        <Area type="monotone" dataKey="totalRevenue" stroke="#6366f1" fillOpacity={1} fill="url(#colorEarnings)" />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </div>

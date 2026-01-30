@@ -591,7 +591,7 @@ export const getProAnalytics = async (): Promise<ProAnalyticsData> => {
 };
 
 export const getFinancialStatistics = async (timeFrame: StatTimeFrame, date: Date): Promise<DetailedFinancialStat[]> => {
-    const count = timeFrame === 'DAILY' ? 7 : timeFrame === 'WEEKLY' ? 4 : 6;
+    const count = timeFrame === 'DAILY' ? 7 : timeFrame === 'WEEKLY' ? 4 : timeFrame === 'MONTHLY' ? 6 : 12;
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     
     return Array.from({ length: count }).map((_, i) => {
@@ -714,7 +714,7 @@ export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date
 
     // Initialize Buckets
     const stats: DetailedStat[] = [];
-    const count = timeFrame === 'DAILY' ? 7 : timeFrame === 'WEEKLY' ? 4 : 6;
+    const count = timeFrame === 'DAILY' ? 7 : timeFrame === 'WEEKLY' ? 4 : timeFrame === 'MONTHLY' ? 6 : 12;
 
     for (let i = 0; i < count; i++) {
         let label = '';

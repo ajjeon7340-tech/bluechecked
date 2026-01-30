@@ -127,7 +127,7 @@ export interface ProAnalyticsData {
 }
 
 // --- NEW STATISTICS TYPES ---
-export type StatTimeFrame = 'DAILY' | 'WEEKLY' | 'MONTHLY';
+export type StatTimeFrame = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
 
 export interface DetailedStat {
     date: string;

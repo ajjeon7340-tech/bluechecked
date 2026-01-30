@@ -1081,8 +1081,11 @@ export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date
         startDate.setDate(endDate.getDate() - 6);
     } else if (timeFrame === 'WEEKLY') {
         startDate.setDate(endDate.getDate() - 27); // 4 weeks
-    } else {
+    } else if (timeFrame === 'MONTHLY') {
         startDate.setMonth(endDate.getMonth() - 5); // 6 months
+        startDate.setDate(1);
+    } else {
+        startDate.setMonth(endDate.getMonth() - 11); // 12 months
         startDate.setDate(1);
     }
 
@@ -1099,7 +1102,7 @@ export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date
 
     // Initialize Buckets
     const stats: DetailedStat[] = [];
-    const count = timeFrame === 'DAILY' ? 7 : timeFrame === 'WEEKLY' ? 4 : 6;
+    const count = timeFrame === 'DAILY' ? 7 : timeFrame === 'WEEKLY' ? 4 : timeFrame === 'MONTHLY' ? 6 : 12;
 
     for (let i = 0; i < count; i++) {
         let label = '';
@@ -1139,7 +1142,96 @@ export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date
     return stats;
 };
 
-export const getFinancialStatistics = async (timeFrame: StatTimeFrame, date: Date): Promise<DetailedFinancialStat[]> => MockBackend.getFinancialStatistics(timeFrame, date);
+export const getFinancialStatistics = async (timeFrame: StatTimeFrame, date: Date): Promise<DetailedFinancialStat[]> => {
+    if (!isConfigured) return MockBackend.getFinancialStatistics(timeFrame, date);
+
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) return [];
+    const creatorId = session.session.user.id;
+
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+    
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+
+    let count = 0;
+
+    if (timeFrame === 'DAILY') {
+        startDate.setDate(endDate.getDate() - 6);
+        count = 7;
+    } else if (timeFrame === 'WEEKLY') {
+        startDate.setDate(endDate.getDate() - 27); // 4 weeks
+        count = 4;
+    } else if (timeFrame === 'MONTHLY') {
+        startDate.setMonth(endDate.getMonth() - 5); // 6 months
+        startDate.setDate(1);
+        count = 6;
+    } else { // YEARLY
+        startDate.setMonth(endDate.getMonth() - 11); // 12 months
+        startDate.setDate(1);
+        count = 12;
+    }
+
+    // Fetch messages (Earnings)
+    // We include 'REPLIED' messages. Product purchases are 'REPLIED' immediately.
+    const { data: messages } = await supabase
+        .from('messages')
+        .select('created_at, amount, content')
+        .eq('creator_id', creatorId)
+        .eq('status', 'REPLIED')
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endDate.toISOString());
+
+    const msgs = messages || [];
+
+    // Bucketing
+    const stats: DetailedFinancialStat[] = [];
+
+    for (let i = 0; i < count; i++) {
+        let label = '';
+        let bucketStart = new Date();
+        let bucketEnd = new Date();
+
+        if (timeFrame === 'DAILY') {
+            const d = new Date(startDate);
+            d.setDate(startDate.getDate() + i);
+            label = d.toLocaleDateString('en-US', { weekday: 'short' });
+            bucketStart = new Date(d.setHours(0,0,0,0));
+            bucketEnd = new Date(d.setHours(23,59,59,999));
+        } else if (timeFrame === 'WEEKLY') {
+            label = `Wk ${i + 1}`;
+            const d = new Date(startDate);
+            d.setDate(startDate.getDate() + (i * 7));
+            bucketStart = new Date(d.setHours(0,0,0,0));
+            const e = new Date(d);
+            e.setDate(d.getDate() + 6);
+            bucketEnd = new Date(e.setHours(23,59,59,999));
+        } else { // MONTHLY or YEARLY
+            const d = new Date(startDate);
+            d.setMonth(startDate.getMonth() + i);
+            label = d.toLocaleDateString('en-US', { month: 'short' });
+            bucketStart = new Date(d.getFullYear(), d.getMonth(), 1);
+            bucketEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
+        }
+
+        const bucketMsgs = msgs.filter(m => new Date(m.created_at) >= bucketStart && new Date(m.created_at) <= bucketEnd);
+        
+        const totalRevenue = bucketMsgs.reduce((sum, m) => sum + m.amount, 0);
+        const productRevenue = bucketMsgs.filter(m => m.content.startsWith('Purchased Product:')).reduce((sum, m) => sum + m.amount, 0);
+        const messageRevenue = totalRevenue - productRevenue;
+        
+        stats.push({
+            date: label,
+            totalRevenue,
+            messageRevenue,
+            productRevenue,
+            tips: 0 // Not tracking tips in this query yet
+        });
+    }
+
+    return stats;
+};
 
 export const rateMessage = async (messageId: string, rating: number, reviewContent?: string): Promise<void> => {
     if (!isConfigured) return MockBackend.rateMessage(messageId, rating, reviewContent);
