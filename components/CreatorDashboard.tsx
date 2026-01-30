@@ -63,6 +63,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   
   // Credit Trend Chart State
   const [trendTimeFrame, setTrendTimeFrame] = useState<StatTimeFrame>('DAILY'); // Default to 'Week' view (Daily data)
+  const [trendDate, setTrendDate] = useState<Date>(new Date());
   const [trendData, setTrendData] = useState<DetailedFinancialStat[]>([]);
   
   // Analytics State
@@ -217,7 +218,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   useEffect(() => {
       loadTrendData();
-  }, [trendTimeFrame]);
+  }, [trendTimeFrame, trendDate]);
 
   useEffect(() => {
     // Load pro analytics if user is premium and on analytics tab
@@ -252,7 +253,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
     // Initial load for trend data
     if (trendData.length === 0) {
-        const data = await getFinancialStatistics(trendTimeFrame, new Date());
+        const data = await getFinancialStatistics(trendTimeFrame, trendDate);
         setTrendData(data);
     }
 
@@ -266,8 +267,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   };
 
   const loadTrendData = async () => {
-      const data = await getFinancialStatistics(trendTimeFrame, new Date());
+      const data = await getFinancialStatistics(trendTimeFrame, trendDate);
       setTrendData(data);
+  };
+
+  const handleTrendDateNavigate = (direction: 'PREV' | 'NEXT') => {
+      const newDate = new Date(trendDate);
+      newDate.setFullYear(newDate.getFullYear() + (direction === 'NEXT' ? 1 : -1));
+      setTrendDate(newDate);
   };
 
   const loadProAnalytics = async () => {
@@ -893,7 +900,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden h-96 flex flex-col">
                             <h3 className="font-bold text-slate-900 mb-6 flex items-center justify-between flex-shrink-0">
-                                <span>Credit Trend</span>
+                                <div className="flex items-center gap-2">
+                                    <span>Credit Trend</span>
+                                    {trendTimeFrame === 'YEARLY' && (
+                                        <div className="flex items-center gap-1 ml-2 bg-slate-50 rounded-lg p-0.5 border border-slate-100">
+                                            <button onClick={() => handleTrendDateNavigate('PREV')} className="p-0.5 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-600 transition-colors">
+                                                <ChevronLeft size={14} />
+                                            </button>
+                                            <span className="text-[10px] font-bold text-slate-600 px-1 min-w-[32px] text-center">{trendDate.getFullYear()}</span>
+                                            <button onClick={() => handleTrendDateNavigate('NEXT')} className="p-0.5 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-600 transition-colors">
+                                                <ChevronRight size={14} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                                 <div className="flex bg-slate-100 p-0.5 rounded-lg">
                                     {[
                                         { label: 'Daily', value: 'DAILY' },
@@ -902,7 +922,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     ].map((opt) => (
                                         <button
                                             key={opt.value}
-                                            onClick={() => setTrendTimeFrame(opt.value as StatTimeFrame)}
+                                            onClick={() => { setTrendTimeFrame(opt.value as StatTimeFrame); setTrendDate(new Date()); }}
                                             className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${trendTimeFrame === opt.value ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                                         >
                                             {opt.label}
