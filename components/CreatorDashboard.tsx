@@ -1110,7 +1110,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             {(() => {
                                                 const valid = detailedStats.filter(s => s.responseTime > 0);
                                                 const avg = valid.length > 0 ? valid.reduce((acc, curr) => acc + curr.responseTime, 0) / valid.length : 0;
-                                                return avg > 0 ? `${avg.toFixed(1)}h` : 'N/A';
+                                                
+                                                if (avg <= 0) return 'N/A';
+
+                                                return (
+                                                    <div className="flex items-baseline gap-2">
+                                                        <span>{avg.toFixed(1)}h</span>
+                                                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wide border border-blue-100 transform -translate-y-1">
+                                                            {getResponseCategory(avg)}
+                                                        </span>
+                                                    </div>
+                                                );
                                             })()}
                                         </div>
                                     </div>
