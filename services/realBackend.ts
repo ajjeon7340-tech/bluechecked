@@ -462,47 +462,60 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
     }
 
     // Calculate Real Stats from Messages
-    const { data: statMessages } = await supabase
-        .from('messages')
-        .select('created_at, reply_at, status, rating')
-        .eq('creator_id', data.id);
-
     let responseTimeAvg = 'N/A';
     let replyRate = '100%';
     let totalRequests = 0;
     let averageRating = 5.0;
-    let reviewCount = 0;
 
-    if (statMessages && statMessages.length > 0) {
-        totalRequests = statMessages.length;
+    // 1. Try RPC for accurate public stats (bypassing RLS)
+    const { data: rpcStats, error: rpcError } = await supabase.rpc('get_creator_stats', { target_creator_id: data.id });
 
-        // 1. Avg Response Time
-        const repliedMsgs = statMessages.filter(m => m.status === 'REPLIED' && m.reply_at);
-        if (repliedMsgs.length > 0) {
-            const totalTimeMs = repliedMsgs.reduce((acc, m) => acc + (new Date(m.reply_at).getTime() - new Date(m.created_at).getTime()), 0);
-            const avgHours = totalTimeMs / repliedMsgs.length / (1000 * 60 * 60);
-            
-            if (avgHours < 1) responseTimeAvg = 'Super Responsive';
-            else if (avgHours < 4) responseTimeAvg = 'Expert';
-            else if (avgHours < 24) responseTimeAvg = 'Lightning';
-            else responseTimeAvg = 'Within Guaranteed';
-        }
-        if (responseTimeAvg === 'N/A') responseTimeAvg = 'Within Guaranteed';
+    if (!rpcError && rpcStats) {
+        averageRating = rpcStats.averageRating;
+        totalRequests = rpcStats.totalRequests;
+        replyRate = `${rpcStats.replyRate}%`;
+        
+        const hours = rpcStats.avgResponseHours;
+        if (hours === null || hours === undefined) responseTimeAvg = 'Within Guaranteed';
+        else if (hours < 1) responseTimeAvg = 'Super Responsive';
+        else if (hours < 4) responseTimeAvg = 'Expert';
+        else if (hours < 24) responseTimeAvg = 'Lightning';
+        else responseTimeAvg = 'Within Guaranteed';
+    } else {
+        // 2. Fallback: Client-side calculation (Subject to RLS, mostly for Creator's own view if RPC fails)
+        const { data: statMessages } = await supabase
+            .from('messages')
+            .select('created_at, reply_at, status, rating')
+            .eq('creator_id', data.id);
 
-        // 2. Reply Rate (Replied / (Replied + Expired))
-        const repliedCount = statMessages.filter(m => m.status === 'REPLIED').length;
-        const expiredCount = statMessages.filter(m => m.status === 'EXPIRED').length;
-        const totalProcessed = repliedCount + expiredCount;
-        if (totalProcessed > 0) {
-            replyRate = `${Math.round((repliedCount / totalProcessed) * 100)}%`;
-        }
+        if (statMessages && statMessages.length > 0) {
+            totalRequests = statMessages.length;
 
-        // 3. Average Rating
-        const ratedMessages = statMessages.filter(m => m.rating && m.rating > 0);
-        if (ratedMessages.length > 0) {
-            const totalRating = ratedMessages.reduce((sum, m) => sum + m.rating, 0);
-            averageRating = parseFloat((totalRating / ratedMessages.length).toFixed(1));
-            reviewCount = ratedMessages.length;
+            const repliedMsgs = statMessages.filter(m => m.status === 'REPLIED' && m.reply_at);
+            if (repliedMsgs.length > 0) {
+                const totalTimeMs = repliedMsgs.reduce((acc, m) => acc + (new Date(m.reply_at).getTime() - new Date(m.created_at).getTime()), 0);
+                const avgHours = totalTimeMs / repliedMsgs.length / (1000 * 60 * 60);
+                
+                if (avgHours < 1) responseTimeAvg = 'Super Responsive';
+                else if (avgHours < 4) responseTimeAvg = 'Expert';
+                else if (avgHours < 24) responseTimeAvg = 'Lightning';
+                else responseTimeAvg = 'Within Guaranteed';
+            } else {
+                responseTimeAvg = 'Within Guaranteed';
+            }
+
+            const repliedCount = statMessages.filter(m => m.status === 'REPLIED').length;
+            const expiredCount = statMessages.filter(m => m.status === 'EXPIRED').length;
+            const totalProcessed = repliedCount + expiredCount;
+            if (totalProcessed > 0) {
+                replyRate = `${Math.round((repliedCount / totalProcessed) * 100)}%`;
+            }
+
+            const ratedMessages = statMessages.filter(m => m.rating && m.rating > 0);
+            if (ratedMessages.length > 0) {
+                const totalRating = ratedMessages.reduce((sum, m) => sum + m.rating, 0);
+                averageRating = parseFloat((totalRating / ratedMessages.length).toFixed(1));
+            }
         }
     }
 
