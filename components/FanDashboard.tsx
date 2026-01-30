@@ -229,6 +229,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   }, [featuredCreators, selectedCreatorId]);
 
   const [showReadCelebration, setShowReadCelebration] = useState(false);
+  const [showReadBanner, setShowReadBanner] = useState(false);
   const lastReadStatusRef = useRef<boolean>(false);
   const lastMessageIdRef = useRef<string | null>(null);
 
@@ -247,9 +248,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   useEffect(() => {
       if (latestMessage) {
           // If we switched to a new message thread or a new message was sent, reset the tracker
-          if (latestMessage.id !== lastMessageIdRef.current && !latestMessage.isRead) {
+          if (latestMessage.id !== lastMessageIdRef.current) {
               lastReadStatusRef.current = latestMessage.isRead;
               lastMessageIdRef.current = latestMessage.id;
+              setShowReadBanner(false);
+              return;
           }
 
           // Trigger only on transition from Unread -> Read for the current message
@@ -258,6 +261,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
               if (!lastChat || lastChat.role === 'FAN') {
                   setShowReadCelebration(true);
                   setTimeout(() => setShowReadCelebration(false), 4000);
+                  
+                  setShowReadBanner(true);
+                  setTimeout(() => setShowReadBanner(false), 2000);
               }
           }
           lastReadStatusRef.current = latestMessage.isRead;
@@ -1394,7 +1400,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </div>
 
                         {/* Read Banner */}
-                        {latestMessage?.isRead && latestMessage.status === 'PENDING' && (
+                        {showReadBanner && latestMessage?.isRead && latestMessage.status === 'PENDING' && (
                             (() => {
                                 const lastChat = latestMessage.conversation[latestMessage.conversation.length - 1];
                                 if (!lastChat || lastChat.role === 'FAN') {
