@@ -234,12 +234,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
   useEffect(() => {
       if (latestMessage) {
-          if (latestMessage.id !== lastMessageIdRef.current) {
+          // If we switched to a new message thread or a new message was sent, reset the tracker
+          if (latestMessage.id !== lastMessageIdRef.current && !latestMessage.isRead) {
               lastReadStatusRef.current = latestMessage.isRead;
               lastMessageIdRef.current = latestMessage.id;
-              return;
           }
 
+          // Trigger only on transition from Unread -> Read for the current message
           if (latestMessage.isRead && !lastReadStatusRef.current) {
               const lastChat = latestMessage.conversation[latestMessage.conversation.length - 1];
               if (!lastChat || lastChat.role === 'FAN') {
@@ -614,6 +615,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
   return (
     <div className="min-h-screen bg-[#F7F9FC] flex font-sans text-slate-900 overflow-hidden">
+        {/* Inject Animation Styles Globally for the Component */}
+        <style>{`
+            @keyframes float-up-fade {
+                0% { transform: translateY(50px) scale(0.5); opacity: 0; }
+                20% { opacity: 1; transform: translateY(0px) scale(1.2); }
+                80% { opacity: 1; transform: translateY(-50px) scale(1); }
+                100% { transform: translateY(-100px) scale(0.8); opacity: 0; }
+            }
+            .animate-float-up {
+                animation: float-up-fade 3s ease-out forwards;
+            }
+        `}</style>
 
         {/* Mobile Sidebar Overlay */}
         {isSidebarOpen && (
@@ -1335,18 +1348,6 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                 {/* --- VIEW: CHAT (Sub-view of Overview) --- */}
                 {selectedCreatorId && (
                      <div className="h-full flex flex-col bg-[#F0F2F5] animate-in slide-in-from-right-4 relative">
-                        <style>{`
-                            @keyframes float-up-fade {
-                                0% { transform: translateY(50px) scale(0.5); opacity: 0; }
-                                20% { opacity: 1; transform: translateY(0px) scale(1.2); }
-                                80% { opacity: 1; transform: translateY(-50px) scale(1); }
-                                100% { transform: translateY(-100px) scale(0.8); opacity: 0; }
-                            }
-                            .animate-float-up {
-                                animation: float-up-fade 3s ease-out forwards;
-                            }
-                        `}</style>
-
                         {/* Celebration Overlay */}
                         {showReadCelebration && (
                             <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden flex justify-center items-end pb-32">
