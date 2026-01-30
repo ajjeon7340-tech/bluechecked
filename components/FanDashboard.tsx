@@ -1377,10 +1377,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                                 )}
                                                             </div>
                                                             <div className="space-y-1 w-full text-left">
-                                                                <div className="px-4 py-3 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap inline-block text-left bg-white text-slate-800 border border-slate-200 rounded-tl-sm">
+                                                                <div className="px-4 py-3 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap inline-block text-left bg-slate-50 text-slate-600 border border-slate-200 rounded-tl-sm">
+                                                                    <div className="flex items-center gap-1.5 mb-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                                                        <Sparkles size={10} /> Automated Welcome Message
+                                                                    </div>
                                                                     {currentCreator?.welcomeMessage || "Thanks for your request! I've received it and will get back to you shortly."}
                                                                     {isPending && (
-                                                                        <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 uppercase tracking-wide">
+                                                                        <div className="mt-2 pt-2 border-t border-slate-200 flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 uppercase tracking-wide">
                                                                             <ShieldCheck size={12} /> 
                                                                             <span>Priority Active • {getTimeLeft(msg.expiresAt).text}</span>
                                                                         </div>
