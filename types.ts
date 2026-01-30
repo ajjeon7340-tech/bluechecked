@@ -72,6 +72,7 @@ export interface Message {
   id: string;
   senderName: string;
   senderEmail: string;
+  senderAvatarUrl?: string;
   content: string;
   attachmentUrl?: string; 
   amount: number; // In Credits

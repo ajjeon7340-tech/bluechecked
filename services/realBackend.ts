@@ -72,6 +72,7 @@ const mapDbMessageToAppMessage = (m: any, currentUserId: string): Message => {
         id: m.id,
         senderName: m.sender?.display_name || 'Fan',
         senderEmail: m.sender?.email || '',
+        senderAvatarUrl: m.sender?.avatar_url,
         content: m.content,
         amount: m.amount,
         creatorId: m.creator_id,
@@ -594,7 +595,7 @@ export const getMessages = async (): Promise<Message[]> => {
         .from('messages')
         .select(`
             *,
-            sender:profiles!sender_id(display_name, email),
+            sender:profiles!sender_id(display_name, email, avatar_url),
             creator:profiles!creator_id(display_name, avatar_url),
             chat_lines(*)
         `)

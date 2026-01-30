@@ -1561,8 +1561,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         return (
                                             <div key={`${msg.id}-${index}`} className={`flex gap-4 ${isMe ? 'flex-row-reverse' : ''} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}>
                                                 {!isMe && (
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border bg-indigo-100 text-indigo-600 border-indigo-200 ${isFirstInGroup ? '' : 'opacity-0 border-transparent'}`}>
-                                                        {isFirstInGroup && <User size={18} />}
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border bg-indigo-100 text-indigo-600 border-indigo-200 ${isFirstInGroup ? '' : 'opacity-0 border-transparent'} overflow-hidden`}>
+                                                        {isFirstInGroup && (
+                                                            msg.senderAvatarUrl ? (
+                                                                <img src={msg.senderAvatarUrl} alt={msg.senderName} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <User size={18} />
+                                                            )
+                                                        )}
                                                     </div>
                                                 )}
                                                 
