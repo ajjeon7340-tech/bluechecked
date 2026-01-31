@@ -675,7 +675,7 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
     }
 
     // 2. Get Creator
-    const { data: creatorProfile } = await supabase.from('profiles').select('response_window_hours').eq('id', creatorId).single();
+    const { data: creatorProfile } = await supabase.from('profiles').select('response_window_hours, email').eq('id', creatorId).single();
     if (!creatorProfile) throw new Error("Creator not found");
     const responseWindow = creatorProfile.response_window_hours || 48;
 
@@ -717,6 +717,25 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
         role: 'FAN',
         content: content
     });
+
+    // D. Send Email Notification to Creator (via Edge Function)
+    // We don't await this to keep the UI responsive
+    if (creatorProfile.email) {
+        supabase.functions.invoke('send-email', {
+            body: {
+                to: creatorProfile.email,
+                subject: `New Request from ${senderName}`,
+                html: `
+                    <h1>New Priority Request</h1>
+                    <p><strong>${senderName}</strong> has sent you a request for ${amount} credits.</p>
+                    <p>"${content}"</p>
+                    <a href="${window.location.origin}">View Request</a>
+                `
+            }
+        }).then(({ error }) => {
+            if (error) console.error("Failed to send email notification:", error);
+        });
+    }
 
     // Return formatted
     return mapDbMessageToAppMessage(message, userId);
