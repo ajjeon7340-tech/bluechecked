@@ -98,6 +98,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [isRejecting, setIsRejecting] = useState(false);
   const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null);
   const [showCollectAnimation, setShowCollectAnimation] = useState(false);
+  const [showReadCelebration, setShowReadCelebration] = useState(false);
   const [collectedAmount, setCollectedAmount] = useState(0);
 
   // Edit Profile State
@@ -137,6 +138,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   useEffect(() => {
       localStorage.setItem('bluechecked_creator_deleted_notifications', JSON.stringify(deletedNotificationIds));
   }, [deletedNotificationIds]);
+
+  // Memoize sprinkles to prevent re-render jitter (Copied from FanDashboard for consistency)
+  const sprinkles = useMemo(() => {
+      const colors = ['#FFD700', '#FF69B4', '#00FFFF', '#00FF00', '#9D00FF', '#FF4500'];
+      return Array.from({ length: 80 }).map((_, i) => ({
+          id: i,
+          left: Math.random() * 100,
+          animationDelay: Math.random() * 0.8,
+          animationDuration: 2 + Math.random() * 2.5,
+          size: 6 + Math.random() * 8,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          type: ['circle', 'square', 'triangle'][Math.floor(Math.random() * 3)]
+      }));
+  }, []);
 
   const notifications = useMemo(() => {
       const list: { id: string, icon: any, text: string, time: Date, color: string }[] = [];
@@ -482,6 +497,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     if (isComplete) {
         setCollectedAmount(activeMessage.amount);
         setShowCollectAnimation(true);
+        setShowReadCelebration(true); // Trigger confetti
+        setTimeout(() => setShowReadCelebration(false), 4000);
         setTimeout(() => setShowCollectAnimation(false), 3500);
     }
   };
@@ -1553,6 +1570,28 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     <div className={`flex-1 flex flex-col bg-slate-50 ${!selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
                         {!activeMessage ? (
                             <div className="flex-1 flex flex-col items-center justify-center text-slate-400 bg-slate-50/50">
+                                {/* Celebration Overlay (Reused from FanDashboard logic but triggered on Collect) */}
+                                {showReadCelebration && (
+                                    <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
+                                        {sprinkles.map((s: any) => (
+                                            <div 
+                                                key={s.id}
+                                                className="absolute animate-sprinkle"
+                                                style={{
+                                                    left: `${s.left}%`,
+                                                    top: '-20px',
+                                                    width: `${s.size}px`,
+                                                    height: `${s.size}px`,
+                                                    backgroundColor: s.color,
+                                                    borderRadius: s.type === 'circle' ? '50%' : s.type === 'square' ? '2px' : '0',
+                                                    clipPath: s.type === 'triangle' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : 'none',
+                                                    animationDelay: `${s.animationDelay}s`,
+                                                    animationDuration: `${s.animationDuration}s`
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
                                 <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
                                     <Users size={32} className="text-slate-300" />
                                 </div>
@@ -1560,6 +1599,28 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             </div>
                         ) : (
                              <div className="h-full flex flex-col bg-white relative overflow-hidden">
+                                {/* Celebration Overlay (Inside Chat View) */}
+                                {showReadCelebration && (
+                                    <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
+                                        {sprinkles.map((s: any) => (
+                                            <div 
+                                                key={s.id}
+                                                className="absolute animate-sprinkle"
+                                                style={{
+                                                    left: `${s.left}%`,
+                                                    top: '-20px',
+                                                    width: `${s.size}px`,
+                                                    height: `${s.size}px`,
+                                                    backgroundColor: s.color,
+                                                    borderRadius: s.type === 'circle' ? '50%' : s.type === 'square' ? '2px' : '0',
+                                                    clipPath: s.type === 'triangle' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : 'none',
+                                                    animationDelay: `${s.animationDelay}s`,
+                                                    animationDuration: `${s.animationDuration}s`
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
                                 {/* Collection Animation Overlay */}
                                 {showCollectAnimation && (
                                     <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-4 fade-in duration-500">
@@ -1742,6 +1803,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <div className="relative">
                                             <textarea 
                                                 value={replyText}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                                        e.preventDefault();
+                                                        handleSendReply(false);
+                                                    }
+                                                }}
                                                 onChange={(e) => setReplyText(e.target.value)}
                                                 placeholder="Write your reply..."
                                                 className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 pb-12 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none min-h-[100px] text-slate-900"
@@ -1751,10 +1818,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 <button 
                                                     onClick={() => handleSendReply(false)} 
                                                     disabled={!replyText.trim() || isSendingReply || isRejecting}
-                                                    className="h-10 w-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-white hover:shadow-md hover:text-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed group border border-transparent hover:border-slate-100"
+                                                    className="h-10 px-4 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-bold text-xs"
                                                     title="Send reply (Keep Pending)"
                                                 >
-                                                    <Send size={18} className="ml-0.5 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+                                                    <span>Send</span> <Send size={14} />
                                                 </button>
 
                                                 <button 
