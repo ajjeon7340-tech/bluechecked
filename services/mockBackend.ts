@@ -22,7 +22,8 @@ const INITIAL_CREATOR: CreatorProfile = {
   links: [
     { id: 'l1', title: 'Join my Discord Community', url: '#', isPromoted: true },
     { id: 'l2', title: 'My VS Code Setup & Theme', url: '#' },
-    { id: 'l3', title: 'Weekly Newsletter', url: '#' },
+    { id: 'l3', title: 'Support My Work', url: '#', type: 'SUPPORT' },
+    { id: 'l4', title: 'Weekly Newsletter', url: '#' },
     { 
       id: 'p1', 
       title: 'React Performance Masterclass', 

@@ -20,7 +20,7 @@ export interface AffiliateLink {
   title: string;
   url: string;
   isPromoted?: boolean;
-  type?: 'EXTERNAL' | 'DIGITAL_PRODUCT';
+  type?: 'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT';
   price?: number; // In Credits
 }
 

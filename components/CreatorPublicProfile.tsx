@@ -31,7 +31,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   onRefreshData
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [step, setStep] = useState<'compose' | 'payment' | 'topup' | 'success' | 'product_confirm' | 'product_payment' | 'product_success'
+  const [step, setStep] = useState<'compose' | 'payment' | 'topup' | 'success' | 'product_confirm' | 'product_payment' | 'product_success' | 'support_confirm' | 'support_payment' | 'support_success'>('compose');
+  const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -113,9 +114,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
       setIsModalOpen(true);
   };
 
-  const handleSupportClick = () => {
+  const handleSupportClick = (defaultAmount?: number) => {
       if (isCustomizeMode) return;
-      setSupportAmount(100);
+      setSupportAmount(defaultAmount || 100);
       setSupportMessage('');
       setStep('support_confirm');
       setIsModalOpen(true);
@@ -241,7 +242,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   };
 
   const handleAddLink = () => {
-    if (!newLinkTitle.trim() || !newLinkUrl.trim()) return;
+    if (!newLinkTitle.trim()) return;
     const newLink: AffiliateLink = {
         id: `l-${Date.now()}`,
         title: newLinkTitle,
@@ -707,32 +708,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                 {displayedLinks.length > 0 ? (
                     <div className="grid gap-3">
-                        {/* Support Card */}
-                        {!isCustomizeMode && (
-                            <button
-                                onClick={handleSupportClick}
-                                className="w-full text-left bg-gradient-to-r from-pink-50 to-rose-50 p-4 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-4 group cursor-pointer hover:border-pink-300 transition-all hover:shadow-md relative overflow-hidden"
-                            >
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-full blur-2xl -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
-                                <div className="w-10 h-10 rounded-full bg-white text-pink-500 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform">
-                                    <Heart size={20} className="fill-pink-500" />
-                                </div>
-                                <div className="flex-1 relative z-10">
-                                    <h4 className="font-bold text-slate-900 text-sm group-hover:text-pink-600 transition-colors">Support My Work</h4>
-                                    <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Send a tip to show appreciation</p>
-                                </div>
-                                <div className="bg-white/80 text-pink-600 px-3 py-1.5 rounded-lg text-xs font-bold group-hover:bg-white transition-colors flex items-center gap-1 flex-shrink-0 shadow-sm">
-                                    <Heart size={12} /> Tip
-                                </div>
-                            </button>
-                        )}
-
                         {displayedLinks.map((link) => {
                             const isProduct = link.type === 'DIGITAL_PRODUCT';
+                            const isSupport = link.type === 'SUPPORT';
                             return (
                                 <div key={link.id} className="relative group">
                                     {isCustomizeMode ? (
-                                         <div className={`relative rounded-2xl p-4 pr-12 border border-dashed flex items-center transition-all ${isProduct ? 'bg-purple-50 border-purple-200' : 'bg-white border-slate-300'}`}>
+                                         <div className={`relative rounded-2xl p-4 pr-12 border border-dashed flex items-center transition-all ${isProduct ? 'bg-purple-50 border-purple-200' : isSupport ? 'bg-pink-50 border-pink-200' : 'bg-white border-slate-300'}`}>
                                             <button 
                                                 onClick={() => handleUpdateLink(link.id, 'isPromoted', !link.isPromoted)}
                                                 className={`w-10 h-10 rounded-xl flex items-center justify-center mr-4 transition-colors hover:bg-slate-100 ${link.isPromoted ? 'bg-indigo-50 text-indigo-600' : 'bg-white text-slate-400'}`}
@@ -742,7 +724,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                             </button>
                                             <div className="flex-1 min-w-0">
                                                  <div className="flex items-center gap-2 mb-1">
-                                                     {isProduct && <span className="text-[10px] font-bold bg-purple-200 text-purple-700 px-1.5 rounded uppercase">Product</span>}
+                                                     {isProduct ? <span className="text-[10px] font-bold bg-purple-200 text-purple-700 px-1.5 rounded uppercase">Product</span> : isSupport ? <span className="text-[10px] font-bold bg-pink-200 text-pink-700 px-1.5 rounded uppercase">Support</span> : null}
                                                      <input 
                                                         className="block w-full font-bold text-slate-800 text-lg leading-tight bg-transparent outline-none border-b border-transparent focus:border-slate-300 placeholder-slate-300"
                                                         value={link.title}
@@ -760,7 +742,24 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         </div>
                                     ) : (
                                         // RENDER PRODUCT VS LINK
-                                        isProduct ? (
+                                        isSupport ? (
+                                            <button
+                                                onClick={() => handleSupportClick(link.price)}
+                                                className="w-full text-left bg-gradient-to-r from-pink-50 to-rose-50 p-4 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-4 group cursor-pointer hover:border-pink-300 transition-all hover:shadow-md relative overflow-hidden"
+                                            >
+                                                <div className="absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-full blur-2xl -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
+                                                <div className="w-10 h-10 rounded-full bg-white text-pink-500 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+                                                    <Heart size={20} className="fill-pink-500" />
+                                                </div>
+                                                <div className="flex-1 relative z-10">
+                                                    <h4 className="font-bold text-slate-900 text-sm group-hover:text-pink-600 transition-colors">{link.title}</h4>
+                                                    <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Send a tip to show appreciation</p>
+                                                </div>
+                                                <div className="bg-white/80 text-pink-600 px-3 py-1.5 rounded-lg text-xs font-bold group-hover:bg-white transition-colors flex items-center gap-1 flex-shrink-0 shadow-sm">
+                                                    <Heart size={12} /> Tip
+                                                </div>
+                                            </button>
+                                        ) : isProduct ? (
                                             <button
                                                 onClick={() => handleProductClick(link)}
                                                 className="w-full text-left bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 group cursor-pointer hover:border-indigo-300 transition-all hover:shadow-md"

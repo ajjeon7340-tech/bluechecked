@@ -108,7 +108,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Link Editing State
   const [newLinkTitle, setNewLinkTitle] = useState('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
-  const [newLinkType, setNewLinkType] = useState<'EXTERNAL' | 'DIGITAL_PRODUCT'>('EXTERNAL');
+  const [newLinkType, setNewLinkType] = useState<'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT'>('EXTERNAL');
   const [newLinkPrice, setNewLinkPrice] = useState('');
 
   // Mobile Sidebar Toggle
@@ -582,7 +582,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   };
 
   const handleAddLink = () => {
-    if (!newLinkTitle.trim() || !newLinkUrl.trim()) return;
+    if (!newLinkTitle.trim()) return;
+    if (newLinkType !== 'SUPPORT' && !newLinkUrl.trim()) return;
     
     // Price validation for products
     if (newLinkType === 'DIGITAL_PRODUCT' && (!newLinkPrice || isNaN(Number(newLinkPrice)))) {
@@ -593,10 +594,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     const newLink: AffiliateLink = {
       id: `l-${Date.now()}`,
       title: newLinkTitle,
-      url: newLinkUrl,
+      url: newLinkType === 'SUPPORT' ? '#' : newLinkUrl,
       isPromoted: false,
       type: newLinkType,
-      price: newLinkType === 'DIGITAL_PRODUCT' ? Number(newLinkPrice) : undefined
+      price: (newLinkType === 'DIGITAL_PRODUCT' || newLinkType === 'SUPPORT') && newLinkPrice ? Number(newLinkPrice) : undefined
     };
     
     setEditedCreator(prev => ({ ...prev, links: [...(prev.links || []), newLink] }));
@@ -1938,14 +1939,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="space-y-3 mb-3">
                                     {(editedCreator.links || []).map(link => {
                                         const isProduct = link.type === 'DIGITAL_PRODUCT';
+                                        const isSupport = link.type === 'SUPPORT';
                                         return (
-                                            <div key={link.id} className={`flex items-start gap-3 p-3 rounded-lg border ${isProduct ? 'bg-purple-50 border-purple-100' : 'bg-slate-50 border-slate-200'}`}>
+                                            <div key={link.id} className={`flex items-start gap-3 p-3 rounded-lg border ${isProduct ? 'bg-purple-50 border-purple-100' : isSupport ? 'bg-pink-50 border-pink-100' : 'bg-slate-50 border-slate-200'}`}>
                                                 <div className="flex-1 min-w-0 space-y-2">
                                                     <div className="flex items-center justify-between gap-2">
-                                                        <div className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit ${isProduct ? 'bg-purple-100 text-purple-600' : 'bg-slate-200 text-slate-500'}`}>
-                                                            {isProduct ? 'Digital Download' : 'Link'}
+                                                        <div className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit ${isProduct ? 'bg-purple-100 text-purple-600' : isSupport ? 'bg-pink-100 text-pink-600' : 'bg-slate-200 text-slate-500'}`}>
+                                                            {isProduct ? 'Digital Download' : isSupport ? 'Support / Tip' : 'Link'}
                                                         </div>
-                                                        {isProduct && <span className="text-xs font-bold text-slate-900">{link.price} Credits</span>}
+                                                        {(isProduct || (isSupport && link.price)) && <span className="text-xs font-bold text-slate-900">{link.price} Credits</span>}
                                                     </div>
                                                     
                                                     <input 
@@ -1986,6 +1988,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 <span className="text-[10px] font-bold text-indigo-600">Drop new file to replace</span>
                                                             </div>
                                                         </div>
+                                                     ) : isSupport ? (
+                                                        <input 
+                                                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-500 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                            value={link.url}
+                                                            onChange={(e) => handleUpdateLink(link.id, 'url', e.target.value)}
+                                                            placeholder="#"
+                                                            disabled
+                                                        />
                                                     ) : (
                                                         <input 
                                                             className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-500 focus:ring-2 focus:ring-indigo-500 outline-none"
@@ -2025,6 +2035,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             >
                                                 Link
                                             </button>
+                                             <button 
+                                                 onClick={() => setNewLinkType('SUPPORT')}
+                                                 className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${newLinkType === 'SUPPORT' ? 'bg-pink-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                                             >
+                                                 Support / Tip
+                                             </button>
                                             <button 
                                                 onClick={() => setNewLinkType('DIGITAL_PRODUCT')}
                                                 className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${newLinkType === 'DIGITAL_PRODUCT' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
@@ -2037,7 +2053,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     <div className="flex flex-col gap-2">
                                         <input 
                                             type="text" 
-                                            placeholder="Title (e.g. My Course / Portfolio)" 
+                                             placeholder={newLinkType === 'SUPPORT' ? "Title (e.g. Buy me a coffee)" : "Title (e.g. My Course / Portfolio)"}
                                             className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                                             value={newLinkTitle}
                                             onChange={e => setNewLinkTitle(e.target.value)}
@@ -2080,7 +2096,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     </>
                                                 )}
                                             </div>
-                                        ) : (
+                                         ) : newLinkType !== 'SUPPORT' && (
                                             <input 
                                                 type="text" 
                                                 placeholder="URL (https://...)"
@@ -2089,12 +2105,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 onChange={e => setNewLinkUrl(e.target.value)}
                                             />
                                         )}
-                                        {newLinkType === 'DIGITAL_PRODUCT' && (
+                                        {(newLinkType === 'DIGITAL_PRODUCT' || newLinkType === 'SUPPORT') && (
                                             <div className="relative">
                                                 <span className="absolute left-3 top-2 text-slate-500 text-sm"><Coins size={14}/></span>
                                                 <input 
                                                     type="number" 
-                                                    placeholder="Price (Credits)"
+                                                    placeholder={newLinkType === 'SUPPORT' ? "Default Tip (Credits)" : "Price (Credits)"}
                                                     className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                                                     value={newLinkPrice}
                                                     onChange={e => setNewLinkPrice(e.target.value)}
@@ -2103,7 +2119,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         )}
                                     </div>
                                     <Button size="sm" onClick={handleAddLink} type="button" fullWidth className="mt-2">
-                                        <Plus size={16} className="mr-1"/> Add {newLinkType === 'DIGITAL_PRODUCT' ? 'Product' : 'Link'}
+                                         <Plus size={16} className="mr-1"/> Add {newLinkType === 'DIGITAL_PRODUCT' ? 'Product' : newLinkType === 'SUPPORT' ? 'Support Item' : 'Link'}
                                     </Button>
                                 </div>
                             </div>
