@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Button } from './Button';
 import { CheckCircle2, Lock, GoogleLogo, InstagramLogo, Mail, User, MessageSquare, Camera, X, Plus, YouTubeLogo, XLogo, TikTokLogo, Twitch, Check, Phone } from './Icons';
 import { CurrentUser } from '../types';
-import { loginUser, updateCreatorProfile, getCreatorProfile, updateCurrentUser, signInWithSocial, resendConfirmationEmail } from '../services/realBackend';
+import { loginUser, updateCreatorProfile, getCreatorProfile, updateCurrentUser, signInWithSocial, resendConfirmationEmail, sendPasswordResetEmail } from '../services/realBackend';
 
 interface Props {
   onLoginSuccess: (user: CurrentUser) => void;
@@ -23,6 +23,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   const [isSignUp, setIsSignUp] = useState(false);
   const [role, setRole] = useState<'CREATOR' | 'FAN'>(currentUser?.role || 'CREATOR'); 
   const [authMethod, setAuthMethod] = useState<'EMAIL' | 'PHONE'>('EMAIL');
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -190,6 +191,25 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
      }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!email) {
+          alert("Please enter your email address.");
+          return;
+      }
+      setIsLoading(true);
+      try {
+          await sendPasswordResetEmail(email.trim());
+          alert("Password reset email sent! Please check your inbox.");
+          setIsForgotPassword(false);
+      } catch (error: any) {
+          console.error("Reset Password Error:", error);
+          alert(error.message || "Failed to send reset email.");
+      } finally {
+          setIsLoading(false);
+      }
+  };
+
   if (step === 'SETUP_PROFILE') {
     return (
        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
@@ -308,6 +328,50 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
     );
   }
 
+  if (isForgotPassword) {
+      return (
+          <div className="min-h-screen bg-white relative flex flex-col items-center justify-center p-4 font-sans">
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+              
+              <div className="relative z-10 w-full max-w-md">
+                  <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100">
+                      <h2 className="text-2xl font-bold text-slate-900 mb-2 text-center">Reset Password</h2>
+                      <p className="text-slate-500 text-center mb-6">Enter your email to receive a reset link.</p>
+                      
+                      <form onSubmit={handleForgotPassword} className="space-y-4">
+                          <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">Email Address</label>
+                              <div className="relative">
+                                  <Mail className="absolute left-3.5 top-3 text-slate-400" size={18} />
+                                  <input 
+                                      type="email" 
+                                      required
+                                      className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                      placeholder="you@example.com"
+                                      value={email}
+                                      onChange={(e) => setEmail(e.target.value)}
+                                  />
+                              </div>
+                          </div>
+                          <Button fullWidth size="lg" type="submit" isLoading={isLoading} className="mt-2 h-11 shadow-lg shadow-blue-500/20">
+                              Send Reset Link
+                          </Button>
+                      </form>
+                      
+                      <div className="mt-6 text-center">
+                          <button 
+                              onClick={() => setIsForgotPassword(false)}
+                              className="text-sm font-semibold text-slate-500 hover:text-slate-700 transition-colors"
+                          >
+                              Back to Sign In
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      );
+  }
+
   return (
     <div className="min-h-screen bg-white relative flex flex-col items-center justify-center p-4 font-sans">
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"></div>
@@ -361,7 +425,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
             </div>
 
             {/* Social Login Buttons */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
                 <button
                 type="button"
                 onClick={() => handleSocialLogin('google')}
@@ -370,16 +434,6 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 >
                 <GoogleLogo className="w-5 h-5" />
                 <span className="text-sm">Google {role === 'CREATOR' ? '(Creator)' : '(Fan)'}</span>
-                </button>
-
-                <button
-                type="button"
-                onClick={() => handleSocialLogin('instagram')}
-                disabled={isSocialLoading || isLoading}
-                className="flex items-center justify-center gap-2 bg-white border border-slate-300 text-slate-700 font-medium py-2.5 rounded-xl hover:bg-slate-50 hover:border-slate-400 transition-all"
-                >
-                <InstagramLogo className="w-5 h-5 text-pink-600" />
-                <span className="text-sm">Instagram {role === 'CREATOR' ? '(Creator)' : '(Fan)'}</span>
                 </button>
             </div>
 
@@ -458,7 +512,18 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
               )}
               
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">Password</label>
+                <div className="flex justify-between items-center mb-1.5 ml-1">
+                    <label className="block text-sm font-medium text-slate-700">Password</label>
+                    {!isSignUp && authMethod === 'EMAIL' && (
+                        <button 
+                            type="button"
+                            onClick={() => setIsForgotPassword(true)}
+                            className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+                        >
+                            Forgot Password?
+                        </button>
+                    )}
+                </div>
                 <div className="relative">
                    <Lock className="absolute left-3.5 top-3 text-slate-400" size={18} />
                    <input 

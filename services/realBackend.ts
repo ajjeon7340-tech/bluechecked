@@ -260,6 +260,18 @@ export const resendConfirmationEmail = async (email: string) => {
     if (error) throw error;
 };
 
+export const sendPasswordResetEmail = async (email: string) => {
+    if (!isConfigured) {
+        console.log(`[Mock] Sending password reset to ${email}`);
+        await new Promise(r => setTimeout(r, 1000));
+        return;
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+    });
+    if (error) throw error;
+};
+
 export const signInWithSocial = async (provider: 'google' | 'instagram', role: UserRole) => {
     if (!isConfigured) {
         return MockBackend.signInWithSocial(provider, role);
@@ -720,8 +732,7 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
 
     // D. Send Email Notification to Creator (via Edge Function)
     // We don't await this to keep the UI responsive
-    /*
-    // NOTE: Enable this section only after deploying the 'send-email' Edge Function via Supabase CLI.
+    // NOTE: This will log an error to the console if the 'send-email' Edge Function is not deployed.
     if (creatorProfile.email) {
         supabase.functions.invoke('send-email', {
             body: {
@@ -738,7 +749,6 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
             if (error) console.error("Failed to send email notification (Edge Function):", error);
         });
     }
-    */
 
     // Return formatted
     return mapDbMessageToAppMessage(message, userId);
