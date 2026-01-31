@@ -28,6 +28,7 @@ const INITIAL_CREATOR: CreatorProfile = {
       id: 'p1', 
       title: 'React Performance Masterclass', 
       url: '#', 
+      fileName: 'react-performance.pdf',
       type: 'DIGITAL_PRODUCT', 
       price: 1500,
       isPromoted: false 
@@ -256,6 +257,7 @@ export const sendMessage = async (creatorId: string, name: string, email: string
         // Deduct credits
         currentUser.credits -= amount;
         localStorage.setItem('bluechecked_current_user', JSON.stringify(currentUser));
+        // Note: In real backend, this is handled transactionally. Here we update local state.
     }
 
     const newMessage: Message = {

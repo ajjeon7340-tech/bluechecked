@@ -121,7 +121,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   useEffect(() => {
     if (selectedCreatorId && scrollRef.current) {
         setTimeout(() => {
-            if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+            if (scrollRef.current) scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
         }, 100);
     }
   }, [messages, selectedCreatorId, showFollowUpInput, customAppreciationMode]);

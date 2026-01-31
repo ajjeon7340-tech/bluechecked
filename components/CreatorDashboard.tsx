@@ -22,7 +22,7 @@ interface Props {
   onRefreshData: () => Promise<void>;
 }
 
-type DashboardView = 'OVERVIEW' | 'INBOX' | 'FINANCE' | 'ANALYTICS' | 'STATISTICS' | 'SETTINGS' | 'NOTIFICATIONS' | 'REVIEWS';
+type DashboardView = 'OVERVIEW' | 'INBOX' | 'FINANCE' | 'ANALYTICS' | 'STATISTICS' | 'SETTINGS' | 'NOTIFICATIONS' | 'REVIEWS' | 'SUPPORT';
 type InboxFilter = 'ALL' | 'PENDING' | 'REPLIED' | 'REJECTED';
 
 const SUPPORTED_PLATFORMS = [
@@ -251,7 +251,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   useEffect(() => {
     // Auto scroll to bottom when conversation changes
     if (scrollRef.current && selectedMessage) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        setTimeout(() => { if (scrollRef.current) scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' }); }, 100);
     }
   }, [selectedMessage?.conversation, selectedMessage?.id]);
 
@@ -598,6 +598,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       id: `l-${Date.now()}`,
       title: newLinkTitle,
       url: newLinkType === 'SUPPORT' ? '#' : newLinkUrl,
+      fileName: newFileName,
       isPromoted: false,
       type: newLinkType,
       price: (newLinkType === 'DIGITAL_PRODUCT' || newLinkType === 'SUPPORT') && newLinkPrice ? Number(newLinkPrice) : undefined
@@ -663,6 +664,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           // For MVP, we rely on the async update.
           const url = await uploadProductFile(file, creator.id);
           handleUpdateLink(linkId, 'url', url);
+          handleUpdateLink(linkId, 'fileName', file.name);
       } catch (error) {
           console.error("Upload failed", error);
           alert("Failed to upload file.");
@@ -679,6 +681,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       try {
           const url = await uploadProductFile(file, creator.id);
           handleUpdateLink(linkId, 'url', url);
+          handleUpdateLink(linkId, 'fileName', file.name);
       } catch (error) {
           console.error("Upload failed", error);
           alert("Failed to upload file.");
@@ -783,6 +786,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <SidebarItem icon={Bell} label="Notifications" view="NOTIFICATIONS" badge={notifications.length > 0 ? notifications.length : undefined} />
                 <SidebarItem icon={Star} label="Reviews" view="REVIEWS" />
                 <SidebarItem icon={TrendingUp} label="Analytics" view="ANALYTICS" />
+                <SidebarItem icon={AlertCircle} label="Support" view="SUPPORT" />
                 <SidebarItem icon={PieIcon} label="Statistics" view="STATISTICS" />
                 
                 <div className="px-3 mt-8 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Settings</div>
@@ -1969,7 +1973,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             <div className="flex gap-2">
                                                                 <input 
                                                                     className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-500 focus:ring-2 focus:ring-indigo-500 outline-none pr-8"
-                                                                    value={link.url.startsWith('data:') ? 'Uploaded File' : link.url.split('/').pop()?.split('?')[0] || link.url}
+                                                                    value={link.fileName || (link.url.startsWith('data:') ? 'Uploaded File' : link.url.split('/').pop()?.split('?')[0] || link.url)}
                                                                     onChange={(e) => handleUpdateLink(link.id, 'url', e.target.value)}
                                                                     placeholder="File URL"
                                                                     readOnly
@@ -2213,6 +2217,36 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             )}
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* --- VIEW: SUPPORT --- */}
+            {currentView === 'SUPPORT' && (
+                <div className="p-6 max-w-2xl mx-auto animate-in fade-in flex items-center justify-center min-h-[500px]">
+                     <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 text-center space-y-6 max-w-md w-full relative overflow-hidden">
+                         {/* Decorative Background */}
+                         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+                         
+                         <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto mb-4 shadow-inner ring-4 ring-blue-50/50">
+                             <AlertCircle size={40} />
+                         </div>
+                         
+                         <div>
+                            <h3 className="text-2xl font-black text-slate-900 mb-2">Creator Support</h3>
+                            <p className="text-slate-500 text-sm leading-relaxed">
+                                Need help with your account or payments? Our team is here for you.
+                            </p>
+                         </div>
+
+                         <div className="space-y-3 pt-2">
+                             <Button fullWidth className="h-12 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-900/10">
+                                <MessageSquare size={18}/> Contact Support
+                             </Button>
+                             <Button fullWidth variant="secondary" className="h-12 rounded-xl flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 border border-slate-200">
+                                <FileText size={18}/> Creator Guide
+                             </Button>
+                         </div>
+                     </div>
                 </div>
             )}
         </div>
