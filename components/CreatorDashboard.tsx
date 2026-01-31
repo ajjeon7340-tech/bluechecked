@@ -421,9 +421,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
         return !lastMsg || lastMsg.role === 'FAN';
     });
     if (unread.length > 0) {
-        await Promise.all(unread.map(m => markMessageAsRead(m.id)));
-        // Optimistic update
+        // Optimistic update first for immediate UI feedback
         setMessages(prev => prev.map(m => (m.senderEmail === senderEmail && !m.isRead) ? { ...m, isRead: true } : m));
+        await Promise.all(unread.map(m => markMessageAsRead(m.id)));
     }
     setReplyText(''); // Reset reply input for fresh chat
     setConfirmRejectId(null);
