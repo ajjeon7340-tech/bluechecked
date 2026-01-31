@@ -263,13 +263,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setEditedCreator(creator);
   }, [creator]);
 
-  useEffect(() => {
-    // Auto scroll to bottom when conversation changes
-    if (scrollRef.current && selectedMessage) {
-        setTimeout(() => { if (scrollRef.current) scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' }); }, 100);
-    }
-  }, [selectedMessage?.conversation, selectedMessage?.id]);
-
   const loadData = async (silent = false) => {
     if (!silent) setIsLoading(true);
     const msgs = await getMessages();
@@ -460,6 +453,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       const pending = [...threadMessages].reverse().find(m => m.status === 'PENDING');
       return pending || threadMessages[threadMessages.length - 1];
   }, [threadMessages]);
+
+  useEffect(() => {
+    // Auto scroll to bottom when conversation changes
+    if (scrollRef.current && activeMessage) {
+        setTimeout(() => { if (scrollRef.current) scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' }); }, 100);
+    }
+  }, [activeMessage?.conversation, activeMessage?.id]);
 
   const handleGenerateAI = async () => {
     if (!activeMessage) return;
