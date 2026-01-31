@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CreatorPublicProfile } from './components/CreatorPublicProfile';
 import { CreatorDashboard } from './components/CreatorDashboard';
 import { LandingPage } from './components/LandingPage';
@@ -18,6 +18,11 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSignUpConfirm, setShowSignUpConfirm] = useState(false);
+
+  const currentUserRef = useRef<CurrentUser | null>(null);
+  useEffect(() => {
+      currentUserRef.current = currentUser;
+  }, [currentUser]);
 
   const loadCreatorData = async (specificCreatorId?: string, stopLoading = true): Promise<CreatorProfile | null> => {
     try {
@@ -41,7 +46,7 @@ function App() {
       } catch (e: any) {
         // Only ignore error if we are NOT looking for a specific creator (i.e. app init)
         // BUT if we are logged in as a CREATOR, we expect to find our profile, so don't ignore.
-        const role = userData?.role || currentUser?.role;
+        const role = userData?.role || currentUserRef.current?.role;
         if (!specificCreatorId && role !== 'CREATOR') {
              console.warn("No creator profile found (DB might be empty). App running in setup mode.");
              setCreator(null);
@@ -68,19 +73,20 @@ function App() {
     // Handle Browser Back Button
     const handlePopState = (event: PopStateEvent) => {
       const state = event.state;
+      const user = currentUserRef.current;
       if (state && state.page) {
         if (state.page === 'PROFILE' && state.creatorId) {
              setIsLoading(true);
              loadCreatorData(state.creatorId);
-        } else if (state.page === 'DASHBOARD' && currentUser?.role === 'CREATOR') {
+        } else if (state.page === 'DASHBOARD' && user?.role === 'CREATOR') {
              setIsLoading(true);
-             loadCreatorData(currentUser.id);
+             loadCreatorData(user.id);
         }
         setCurrentPage(state.page);
       } else {
         // Fallback if state is missing (e.g. initial entry popped)
-        if (currentUser) {
-             setCurrentPage(currentUser.role === 'CREATOR' ? 'DASHBOARD' : 'FAN_DASHBOARD');
+        if (user) {
+             setCurrentPage(user.role === 'CREATOR' ? 'DASHBOARD' : 'FAN_DASHBOARD');
         } else {
              setCurrentPage('LANDING');
         }
