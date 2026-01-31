@@ -497,7 +497,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     if (isComplete) {
         setCollectedAmount(activeMessage.amount);
         setShowCollectAnimation(true);
-        setShowReadCelebration(true); // Trigger confetti
+        setShowReadCelebration(true); // Trigger confetti for collection
         setTimeout(() => setShowReadCelebration(false), 4000);
         setTimeout(() => setShowCollectAnimation(false), 3500);
     }

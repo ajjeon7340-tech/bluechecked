@@ -271,6 +271,17 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       if (latestMessage) {
           // If we switched to a new message thread or a new message was sent, reset the tracker
           if (latestMessage.id !== lastMessageIdRef.current) {
+              // If entering a chat that is already read and pending, show the celebration
+              if (latestMessage.isRead && latestMessage.status === 'PENDING') {
+                  const lastChat = latestMessage.conversation[latestMessage.conversation.length - 1];
+                  if (!lastChat || lastChat.role === 'FAN') {
+                      setShowReadCelebration(true);
+                      setTimeout(() => setShowReadCelebration(false), 4000);
+                      
+                      setShowReadBanner(true);
+                      setTimeout(() => setShowReadBanner(false), 2000);
+                  }
+              }
               lastReadStatusRef.current = latestMessage.isRead;
               lastMessageIdRef.current = latestMessage.id;
               setShowReadBanner(false);
