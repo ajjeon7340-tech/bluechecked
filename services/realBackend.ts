@@ -13,6 +13,8 @@ const getColorForSource = (source: string) => {
     if (s.includes('x') || s.includes('twitter')) return '#000000';
     if (s.includes('tiktok')) return '#000000';
     if (s.includes('linkedin')) return '#0077B5';
+    if (s.includes('facebook')) return '#1877F2';
+    if (s.includes('google')) return '#4285F4';
     if (s.includes('direct')) return '#64748b';
     return '#94a3b8';
 };
@@ -956,19 +958,32 @@ export const logAnalyticsEvent = async (creatorId: string, eventType: 'VIEW' | '
         if (referrer) {
             try {
                 const url = new URL(referrer);
-                if (url.hostname.includes('youtube')) source = 'YouTube';
-                else if (url.hostname.includes('instagram')) source = 'Instagram';
-                else if (url.hostname.includes('twitter') || url.hostname.includes('x.com')) source = 'X';
-                else if (url.hostname.includes('tiktok')) source = 'TikTok';
-                else if (url.hostname.includes('linkedin')) source = 'LinkedIn';
-                else if (url.hostname.includes('facebook')) source = 'Facebook';
-                else source = url.hostname;
+                const hostname = url.hostname.toLowerCase();
+
+                if (hostname.includes('youtube') || hostname.includes('youtu.be')) source = 'YouTube';
+                else if (hostname.includes('instagram')) source = 'Instagram';
+                else if (hostname.includes('twitter') || hostname.includes('x.com') || hostname.includes('t.co')) source = 'X (Twitter)';
+                else if (hostname.includes('tiktok')) source = 'TikTok';
+                else if (hostname.includes('linkedin')) source = 'LinkedIn';
+                else if (hostname.includes('facebook') || hostname.includes('fb.com')) source = 'Facebook';
+                else if (hostname.includes('google')) source = 'Google Search';
+                else if (hostname.includes('bing')) source = 'Bing Search';
+                else source = hostname.replace(/^www\./, '');
             } catch {
-                source = 'Other';
+                source = 'Other Website';
             }
         } else {
-            source = 'Direct';
+            source = 'Direct Link / Bookmark';
         }
+    } else {
+        // Make technical UTM tags friendlier
+        const s = source.toLowerCase();
+        if (s === 'ig_bio') source = 'Instagram Bio';
+        else if (s === 'ig_story') source = 'Instagram Story';
+        else if (s === 'yt_desc') source = 'YouTube Description';
+        else if (s === 'tw_bio') source = 'X (Twitter) Bio';
+        else if (s === 'tt_bio') source = 'TikTok Bio';
+        else if (s === 'ln_bio') source = 'LinkedIn Bio';
     }
 
     const { error } = await supabase.from('analytics_events').insert({
@@ -1021,7 +1036,7 @@ export const getProAnalytics = async (): Promise<ProAnalyticsData | null> => {
     const views = events.filter(e => e.event_type === 'VIEW');
     const sources: Record<string, number> = {};
     views.forEach(v => {
-        const s = v.source || 'Direct';
+        const s = v.source || 'Direct Link / Bookmark';
         sources[s] = (sources[s] || 0) + 1;
     });
 

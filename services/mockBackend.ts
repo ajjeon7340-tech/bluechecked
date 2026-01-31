@@ -473,7 +473,7 @@ export const getSecureDownloadUrl = async (productId: string, productUrl: string
 
 export const logAnalyticsEvent = async (creatorId: string, eventType: 'VIEW' | 'CLICK' | 'CONVERSION', metadata: any = {}) => {
     const params = new URLSearchParams(window.location.search);
-    let source = params.get('source') || 'Direct';
+    let source = params.get('source') || 'Direct Link / Bookmark';
 
     analyticsEvents.push({
         id: `evt-${Date.now()}`,
