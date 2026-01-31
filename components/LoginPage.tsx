@@ -22,11 +22,9 @@ const SUPPORTED_PLATFORMS = [
 export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep = 'LOGIN', currentUser }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [role, setRole] = useState<'CREATOR' | 'FAN'>(currentUser?.role || 'CREATOR'); 
-  const [authMethod, setAuthMethod] = useState<'EMAIL' | 'PHONE'>('EMAIL');
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   
   const [email, setEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   
@@ -56,10 +54,10 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
     
     try {
         // Determine Identifier
-        const identifier = (authMethod === 'EMAIL' ? email : phoneNumber).trim();
+        const identifier = email.trim();
         
         // Only pass name if signing up. This tells the backend to use the SignUp flow.
-        const user = await loginUser(role, identifier, password, authMethod, isSignUp ? fullName.trim() : undefined);
+        const user = await loginUser(role, identifier, password, 'EMAIL', isSignUp ? fullName.trim() : undefined);
         
         if (isSignUp) {
             setTempUser(user);
@@ -504,60 +502,25 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 </div>
               )}
 
-              {/* Auth Method Toggle */}
-              <div className="bg-slate-100 p-1 rounded-xl flex">
-                  <button
-                    type="button"
-                    onClick={() => setAuthMethod('EMAIL')}
-                    className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${authMethod === 'EMAIL' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                      Email
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAuthMethod('PHONE')}
-                    className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${authMethod === 'PHONE' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                      Phone
-                  </button>
+              <div className="animate-in fade-in zoom-in-95 duration-200">
+                <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-3 text-slate-400" size={18} />
+                  <input 
+                    type="email" 
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
               </div>
-              
-              {authMethod === 'EMAIL' ? (
-                  <div className="animate-in fade-in zoom-in-95 duration-200">
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">Email Address</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3.5 top-3 text-slate-400" size={18} />
-                      <input 
-                        type="email" 
-                        required
-                        className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                      />
-                    </div>
-                  </div>
-              ) : (
-                  <div className="animate-in fade-in zoom-in-95 duration-200">
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">Phone Number</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3.5 top-3 text-slate-400" size={18} />
-                      <input 
-                        type="tel" 
-                        required
-                        className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                        placeholder="+1 (555) 000-0000"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                      />
-                    </div>
-                  </div>
-              )}
               
               <div>
                 <div className="flex justify-between items-center mb-1.5 ml-1">
                     <label className="block text-sm font-medium text-slate-700">Password</label>
-                    {!isSignUp && authMethod === 'EMAIL' && (
+                    {!isSignUp && (
                         <button 
                             type="button"
                             onClick={() => setIsForgotPassword(true)}
@@ -595,7 +558,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
               </Button>
             </form>
 
-            {showResend && authMethod === 'EMAIL' && (
+            {showResend && (
                 <button onClick={handleResend} className="w-full text-center text-xs text-blue-600 hover:underline mt-2">
                     Didn't receive the email? Click to resend.
                 </button>
@@ -610,7 +573,6 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                   setIsSignUp(!isSignUp);
                   setEmail('');
                   setPassword('');
-                  setPhoneNumber('');
                 }}
                 className={`ml-1.5 font-semibold transition-colors ${role === 'FAN' ? 'text-purple-600 hover:text-purple-700' : 'text-blue-600 hover:text-blue-700'}`}
               >
