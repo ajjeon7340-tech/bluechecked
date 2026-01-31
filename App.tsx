@@ -5,7 +5,7 @@ import { CreatorDashboard } from './components/CreatorDashboard';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { FanDashboard } from './components/FanDashboard';
-import { getCreatorProfile, checkAndSyncSession, isBackendConfigured, completeOAuthSignup, signOut } from './services/realBackend';
+import { getCreatorProfile, checkAndSyncSession, isBackendConfigured, completeOAuthSignup, signOut, subscribeToAuthChanges } from './services/realBackend';
 import { CreatorProfile, CurrentUser, UserRole } from './types';
 
 type PageState = 'LANDING' | 'LOGIN' | 'DASHBOARD' | 'PROFILE' | 'FAN_DASHBOARD' | 'SETUP_PROFILE';
@@ -18,6 +18,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSignUpConfirm, setShowSignUpConfirm] = useState(false);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   const currentUserRef = useRef<CurrentUser | null>(null);
   useEffect(() => {
@@ -98,6 +99,13 @@ function App() {
     console.log("Bluechecked App Version: 3.6.32");
     console.log("Backend Connection:", isBackendConfigured() ? "✅ Connected to Supabase" : "⚠️ Using Mock Data");
     
+    // Listen for Password Recovery Event
+    const authSubscription = subscribeToAuthChanges((event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
+            setIsPasswordRecovery(true);
+        }
+    });
+
     // Optimistically load session from local storage
     // const storedUser = localStorage.getItem('bluechecked_current_user');
     // if (storedUser) {
@@ -158,7 +166,10 @@ function App() {
         }
     };
     initSession();
-    return () => window.removeEventListener('popstate', handlePopState);
+    return () => {
+        window.removeEventListener('popstate', handlePopState);
+        authSubscription.unsubscribe();
+    };
   }, []); // Removed currentUser dependency to prevent infinite loop
 
   // Redirect to Landing if we are on a creator page but have no creator data (e.g. empty DB)
@@ -287,10 +298,13 @@ function App() {
         />
       )}
 
-      {currentPage === 'LOGIN' && (
+      {(currentPage === 'LOGIN' || isPasswordRecovery) && (
         <LoginPage 
           onLoginSuccess={handleLoginSuccess}
+          initialStep={isPasswordRecovery ? 'RESET_PASSWORD' : 'LOGIN'}
+          currentUser={currentUser}
           onBack={() => {
+              setIsPasswordRecovery(false);
               window.history.pushState({ page: 'LANDING' }, '', '');
               setCurrentPage('LANDING');
           }}

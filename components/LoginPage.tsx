@@ -2,12 +2,12 @@ import React, { useState, useRef } from 'react';
 import { Button } from './Button';
 import { CheckCircle2, Lock, GoogleLogo, InstagramLogo, Mail, User, MessageSquare, Camera, X, Plus, YouTubeLogo, XLogo, TikTokLogo, Twitch, Check, Phone } from './Icons';
 import { CurrentUser } from '../types';
-import { loginUser, updateCreatorProfile, getCreatorProfile, updateCurrentUser, signInWithSocial, resendConfirmationEmail, sendPasswordResetEmail } from '../services/realBackend';
+import { loginUser, updateCreatorProfile, getCreatorProfile, updateCurrentUser, signInWithSocial, resendConfirmationEmail, sendPasswordResetEmail, updatePassword } from '../services/realBackend';
 
 interface Props {
   onLoginSuccess: (user: CurrentUser) => void;
   onBack: () => void;
-  initialStep?: 'LOGIN' | 'SETUP_PROFILE';
+  initialStep?: 'LOGIN' | 'SETUP_PROFILE' | 'RESET_PASSWORD';
   currentUser?: CurrentUser | null;
 }
 
@@ -35,7 +35,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   const [showResend, setShowResend] = useState(false);
 
   // Setup / Onboarding State
-  const [step, setStep] = useState<'LOGIN' | 'SETUP_PROFILE'>(initialStep);
+  const [step, setStep] = useState<'LOGIN' | 'SETUP_PROFILE' | 'RESET_PASSWORD'>(initialStep);
   const [tempUser, setTempUser] = useState<CurrentUser | null>(currentUser || null);
   
   // Creator Config
@@ -48,6 +48,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   const [bio, setBio] = useState(currentUser?.bio || '');
   const [avatarUrl, setAvatarUrl] = useState(currentUser?.avatarUrl || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [newPassword, setNewPassword] = useState('');
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,6 +210,48 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
           setIsLoading(false);
       }
   };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (newPassword.length < 6) {
+          alert("Password must be at least 6 characters.");
+          return;
+      }
+      setIsLoading(true);
+      try {
+          await updatePassword(newPassword);
+          alert("Password updated successfully!");
+          // If we have a user, proceed to dashboard, otherwise go to login
+          if (currentUser) {
+              onLoginSuccess(currentUser);
+          } else {
+              setStep('LOGIN');
+          }
+      } catch (error: any) {
+          console.error("Update Password Error:", error);
+          alert(error.message || "Failed to update password.");
+      } finally {
+          setIsLoading(false);
+      }
+  };
+
+  if (step === 'RESET_PASSWORD') {
+      return (
+          <div className="min-h-screen bg-white relative flex flex-col items-center justify-center p-4 font-sans">
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+              <div className="relative z-10 w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
+                  <h2 className="text-2xl font-bold text-slate-900 mb-2 text-center">Set New Password</h2>
+                  <form onSubmit={handleUpdatePassword} className="space-y-4 mt-6">
+                      <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">New Password</label>
+                          <input type="password" required className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                      </div>
+                      <Button fullWidth size="lg" type="submit" isLoading={isLoading}>Update Password</Button>
+                  </form>
+              </div>
+          </div>
+      );
+  }
 
   if (step === 'SETUP_PROFILE') {
     return (

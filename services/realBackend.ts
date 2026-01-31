@@ -272,6 +272,20 @@ export const sendPasswordResetEmail = async (email: string) => {
     if (error) throw error;
 };
 
+export const updatePassword = async (newPassword: string) => {
+    if (!isConfigured) return;
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+};
+
+export const subscribeToAuthChanges = (callback: (event: string, session: any) => void) => {
+    if (!isConfigured) return { unsubscribe: () => {} };
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+        callback(event, session);
+    });
+    return data.subscription;
+};
+
 export const signInWithSocial = async (provider: 'google' | 'instagram', role: UserRole) => {
     if (!isConfigured) {
         return MockBackend.signInWithSocial(provider, role);
