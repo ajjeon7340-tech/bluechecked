@@ -433,7 +433,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 className="flex items-center justify-center gap-2 bg-white border border-slate-300 text-slate-700 font-medium py-2.5 rounded-xl hover:bg-slate-50 hover:border-slate-400 transition-all"
                 >
                 <GoogleLogo className="w-5 h-5" />
-                <span className="text-sm">Google {role === 'CREATOR' ? '(Creator)' : '(Fan)'}</span>
+                <span className="text-sm">{role === 'CREATOR' ? 'Log in as Creator' : 'Log in as Fan'}</span>
                 </button>
             </div>
 
