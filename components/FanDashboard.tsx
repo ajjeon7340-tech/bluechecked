@@ -250,8 +250,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
   const [showReadCelebration, setShowReadCelebration] = useState(false);
   const [showReadBanner, setShowReadBanner] = useState(false);
-  const lastReadStatusRef = useRef<boolean>(false);
-  const lastMessageIdRef = useRef<string | null>(null);
+  const [celebratedMessageIds, setCelebratedMessageIds] = useState<Set<string>>(new Set());
 
   // Memoize sprinkles to prevent re-render jitter
   const sprinkles = useMemo(() => {
@@ -269,39 +268,23 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
   useEffect(() => {
       if (latestMessage) {
-          // If we switched to a new message thread or a new message was sent, reset the tracker
-          if (latestMessage.id !== lastMessageIdRef.current) {
-              // If entering a chat that is already read and pending, show the celebration
-              if (latestMessage.isRead && latestMessage.status === 'PENDING') {
-                  const lastChat = latestMessage.conversation[latestMessage.conversation.length - 1];
-                  if (!lastChat || lastChat.role === 'FAN') {
-                      setShowReadCelebration(true);
-                      setTimeout(() => setShowReadCelebration(false), 4000);
-                      
-                      setShowReadBanner(true);
-                      setTimeout(() => setShowReadBanner(false), 2000);
-                  }
-              }
-              lastReadStatusRef.current = latestMessage.isRead;
-              lastMessageIdRef.current = latestMessage.id;
-              setShowReadBanner(false);
-              return;
-          }
-
-          // Trigger only on transition from Unread -> Read for the current message
-          if (latestMessage.isRead && !lastReadStatusRef.current) {
+          // Check if we should celebrate this message being read
+          // We celebrate if it's Read, Pending, and hasn't been celebrated in this session yet
+          if (latestMessage.isRead && latestMessage.status === 'PENDING' && !celebratedMessageIds.has(latestMessage.id)) {
               const lastChat = latestMessage.conversation[latestMessage.conversation.length - 1];
+              // Only celebrate if the last message was from the fan (waiting for reply)
               if (!lastChat || lastChat.role === 'FAN') {
                   setShowReadCelebration(true);
                   setTimeout(() => setShowReadCelebration(false), 4000);
                   
                   setShowReadBanner(true);
                   setTimeout(() => setShowReadBanner(false), 2000);
+                  
+                  setCelebratedMessageIds(prev => new Set(prev).add(latestMessage.id));
               }
           }
-          lastReadStatusRef.current = latestMessage.isRead;
       }
-  }, [latestMessage]);
+  }, [latestMessage, celebratedMessageIds]);
 
   const getSessionStatus = (msg: Message) => {
       if (msg.status === 'REPLIED') return { label: 'Creator collected', color: 'text-emerald-600', icon: CheckCircle2 };
@@ -336,6 +319,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       setRating(0);
       setHoveredStar(0);
       setConfirmCancelId(null);
+      setShowReadBanner(false);
       // Ensure we stay in Overview when opening chat, but the 'selectedCreatorId' acts as a sub-view
       setCurrentView('OVERVIEW');
   };
