@@ -478,7 +478,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
         
           {/* 1. PROFILE INFO & STATS */}
           <div className="w-full">
-             <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden transition-all hover:shadow-md">
+             <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm relative transition-all hover:shadow-md">
                 <div className="p-6 sm:p-8 flex flex-col sm:flex-row gap-6 items-start relative z-10">
                     {/* Avatar Section */}
                     <div className="relative group flex-shrink-0">
@@ -541,13 +541,16 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         Active
                                     </span>
 
-                                    <button 
-                                        onClick={handleLike}
-                                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border whitespace-nowrap transition-colors ${hasLiked ? 'bg-pink-50 text-pink-600 border-pink-100' : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100'}`}
-                                    >
-                                        <Heart size={10} className={hasLiked ? "fill-current" : ""} />
-                                        {likes} Likes
-                                    </button>
+                                    <div className="relative group/tooltip inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-50 text-slate-600 text-[10px] font-bold uppercase tracking-wide border border-slate-100 whitespace-nowrap cursor-help hover:bg-slate-100 transition-colors">
+                                        <Clock size={10} />
+                                        {creator.stats.responseTimeAvg}
+                                        
+                                        {/* Custom Tooltip */}
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[140px] bg-slate-800 text-white text-[10px] font-medium py-1.5 px-2.5 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50 text-center shadow-xl normal-case tracking-normal whitespace-normal">
+                                            {getResponseTimeTooltip(creator.stats.responseTimeAvg)}
+                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="flex justify-between items-start w-full gap-4 mb-1">
@@ -561,18 +564,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         {/* Stats Pill */}
                                         <div className="flex flex-wrap items-center gap-2 mt-2">
                                             <div className="inline-flex flex-wrap items-center gap-3 sm:gap-4 bg-slate-50 p-2 px-3 rounded-xl border border-slate-100 text-xs font-medium text-slate-500">
-                                                <div 
-                                                    className="relative group/tooltip flex items-center gap-1.5 cursor-help"
+                                                <button 
+                                                    onClick={handleLike}
+                                                    className={`flex items-center gap-1.5 transition-colors ${hasLiked ? 'text-pink-600' : 'text-slate-500 hover:text-pink-600'}`}
                                                 >
-                                                    <Clock size={14} className="text-slate-400" />
-                                                    <span>{creator.stats.responseTimeAvg}</span>
-                                                    
-                                                    {/* Custom Tooltip */}
-                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[140px] bg-slate-800 text-white text-[10px] font-medium py-1.5 px-2.5 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50 text-center shadow-xl">
-                                                        {getResponseTimeTooltip(creator.stats.responseTimeAvg)}
-                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
-                                                    </div>
-                                                </div>
+                                                    <Heart size={14} className={hasLiked ? "fill-current" : ""} />
+                                                    <span className={hasLiked ? "font-bold" : ""}>{likes} Likes</span>
+                                                </button>
                                                 <div className="w-px h-3 bg-slate-200"></div>
                                                 <div className="flex items-center gap-1.5">
                                                         <Star size={14} className="text-yellow-400 fill-yellow-400" />
@@ -612,7 +610,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                 <div className="w-full h-px bg-slate-100"></div>
 
-                <div className="p-6 sm:p-8 bg-slate-50/30">
+                <div className="p-6 sm:p-8 bg-slate-50/30 rounded-b-[2rem]">
                     {isCustomizeMode ? (
                         <textarea 
                            value={editedCreator.bio} 

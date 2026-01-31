@@ -108,6 +108,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Link Editing State
   const [newLinkTitle, setNewLinkTitle] = useState('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
+  const [newFileName, setNewFileName] = useState('');
+  const [avatarFileName, setAvatarFileName] = useState('');
   const [newLinkType, setNewLinkType] = useState<'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT'>('EXTERNAL');
   const [newLinkPrice, setNewLinkPrice] = useState('');
 
@@ -517,6 +519,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
+          setAvatarFileName(file.name);
           if (!file.type.startsWith('image/')) {
               alert("Please upload a valid image file (JPEG, PNG).");
               return;
@@ -603,6 +606,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setEditedCreator(prev => ({ ...prev, links: [...(prev.links || []), newLink] }));
     setNewLinkTitle('');
     setNewLinkUrl('');
+    setNewFileName('');
     setNewLinkPrice('');
     setNewLinkType('EXTERNAL');
   };
@@ -619,6 +623,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       try {
           const url = await uploadProductFile(file, creator.id);
           setNewLinkUrl(url);
+          setNewFileName(file.name);
       } catch (error) {
           console.error("Upload failed", error);
           alert("Failed to upload file.");
@@ -640,6 +645,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       try {
           const url = await uploadProductFile(file, creator.id);
           setNewLinkUrl(url);
+          setNewFileName(file.name);
       } catch (error) {
           console.error("Upload failed", error);
           alert("Failed to upload file.");
@@ -1824,19 +1830,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="flex-1">
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Profile Photo</label>
                                     <div className="flex gap-2">
-                                        {editedCreator.avatarUrl?.startsWith('data:') || (editedCreator.avatarUrl?.length || 0) > 1000 ? (
+                                        {editedCreator.avatarUrl ? (
                                             <div className="flex items-center gap-2 w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-500 text-sm">
-                                                <span className="truncate flex-1">Image uploaded from device</span>
-                                                <button onClick={() => setEditedCreator({...editedCreator, avatarUrl: ''})} className="text-red-500 hover:text-red-700"><X size={14}/></button>
+                                                <span className="truncate flex-1">
+                                                    {avatarFileName || (editedCreator.avatarUrl.startsWith('data:') ? "Uploaded Image" : "Current Profile Photo")}
+                                                </span>
+                                                <button onClick={() => { setEditedCreator({...editedCreator, avatarUrl: ''}); setAvatarFileName(''); }} className="text-red-500 hover:text-red-700"><X size={14}/></button>
                                             </div>
                                         ) : (
-                                            <input 
-                                                type="text" 
-                                                value={editedCreator.avatarUrl}
-                                                onChange={e => setEditedCreator({...editedCreator, avatarUrl: e.target.value})}
-                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                                                placeholder="https://..."
-                                            />
+                                            <div className="flex items-center gap-2 w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-400 text-sm italic">
+                                                No image selected
+                                            </div>
                                         )}
                                         <button 
                                             onClick={() => fileInputRef.current?.click()}
@@ -1846,7 +1850,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </button>
                                         <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarFileChange} />
                                     </div>
-                                    <p className="text-[10px] text-slate-400 mt-1">Upload from desktop or paste an image URL.</p>
+                                    <p className="text-[10px] text-slate-400 mt-1">Upload from desktop.</p>
                                 </div>
                             </div>
 
@@ -1965,7 +1969,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             <div className="flex gap-2">
                                                                 <input 
                                                                     className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-500 focus:ring-2 focus:ring-indigo-500 outline-none pr-8"
-                                                                    value={link.url}
+                                                                    value={link.url.startsWith('data:') ? 'Uploaded File' : link.url.split('/').pop()?.split('?')[0] || link.url}
                                                                     onChange={(e) => handleUpdateLink(link.id, 'url', e.target.value)}
                                                                     placeholder="File URL"
                                                                     readOnly
@@ -2078,9 +2082,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             <Check size={20} />
                                                         </div>
                                                         <p className="text-sm font-medium text-slate-900">File Ready</p>
-                                                        <p className="text-xs text-slate-400 break-all max-w-full truncate px-4">{newLinkUrl.length > 30 ? '...' + newLinkUrl.slice(-20) : newLinkUrl}</p>
+                                                         <p className="text-xs text-slate-400 break-all max-w-full truncate px-4">{newFileName || newLinkUrl}</p>
                                                         <button 
-                                                            onClick={(e) => { e.stopPropagation(); setNewLinkUrl(''); }}
+                                                             onClick={(e) => { e.stopPropagation(); setNewLinkUrl(''); setNewFileName(''); }}
                                                             className="text-xs text-red-500 hover:text-red-700 font-bold mt-2 bg-red-50 px-3 py-1.5 rounded-full"
                                                         >
                                                             Remove File

@@ -25,6 +25,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const [purchasedProducts, setPurchasedProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
+  const [productFilter, setProductFilter] = useState<'ALL' | 'DOCUMENT' | 'IMAGE' | 'VIDEO'>('ALL');
   
   // Navigation State
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -75,6 +76,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   });
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
+  const [avatarFileName, setAvatarFileName] = useState('');
 
   // Wallet / Top Up State
   const [showTopUpModal, setShowTopUpModal] = useState(false);
@@ -149,6 +151,24 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       setPurchasedProducts(products);
       setIsLoading(false);
   };
+
+  const getFileType = (url: string) => {
+      if (!url) return 'OTHER';
+      if (url.startsWith('data:image')) return 'IMAGE';
+      if (url.startsWith('data:application/pdf')) return 'DOCUMENT';
+      if (url.startsWith('data:video')) return 'VIDEO';
+      
+      const ext = url.split('.').pop()?.split('?')[0].toLowerCase();
+      if (['pdf', 'doc', 'docx', 'txt'].includes(ext || '')) return 'DOCUMENT';
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '')) return 'IMAGE';
+      if (['mp4', 'mov', 'avi', 'webm', 'mkv'].includes(ext || '')) return 'VIDEO';
+      return 'OTHER';
+  };
+
+  const filteredProducts = useMemo(() => {
+      if (productFilter === 'ALL') return purchasedProducts;
+      return purchasedProducts.filter(p => getFileType(p.url) === productFilter);
+  }, [purchasedProducts, productFilter]);
 
   // Group messages for List View (Simulating grouping by Creator)
   const conversationGroups = useMemo(() => {
@@ -434,6 +454,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
+          setAvatarFileName(file.name);
           if (!file.type.startsWith('image/')) {
               alert("Please upload a valid image file (JPEG, PNG).");
               return;
@@ -815,26 +836,42 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             </div>
                         </div>
 
-                        {/* Content Filter Tabs (Mock) */}
+                        {/* Content Filter Tabs */}
                         <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                             <button className="px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-bold whitespace-nowrap shadow-md">All Content</button>
-                             <button className="px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-full text-xs font-bold hover:bg-slate-50 whitespace-nowrap">Documents (PDF)</button>
-                             <button className="px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-full text-xs font-bold hover:bg-slate-50 whitespace-nowrap">Images</button>
-                             <button className="px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-full text-xs font-bold hover:bg-slate-50 whitespace-nowrap">Videos</button>
+                             {(['ALL', 'DOCUMENT', 'IMAGE', 'VIDEO'] as const).map(type => (
+                                 <button 
+                                    key={type}
+                                    onClick={() => setProductFilter(type)}
+                                    className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                                        productFilter === type 
+                                        ? 'bg-slate-900 text-white shadow-md' 
+                                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                                    }`}
+                                 >
+                                     {type === 'ALL' ? 'All Content' : type === 'DOCUMENT' ? 'Documents' : type === 'IMAGE' ? 'Images' : 'Videos'}
+                                 </button>
+                             ))}
                         </div>
 
                         {isLoading ? (
                             <div className="text-center py-20 text-slate-400">Loading library...</div>
-                        ) : purchasedProducts.length > 0 ? (
+                        ) : filteredProducts.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {purchasedProducts.map((product, idx) => (
+                                {filteredProducts.map((product, idx) => (
                                     <div key={idx} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col h-full relative">
                                 <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden flex items-center justify-center p-8 group-hover:bg-indigo-50 transition-colors">
                                      <div className="bg-white shadow-lg p-0 w-24 h-32 rounded-sm border border-slate-200 relative transform group-hover:-rotate-3 transition-transform duration-500 flex items-center justify-center">
                                          <div className="absolute inset-x-2 top-2 bottom-2 border-2 border-dashed border-slate-100"></div>
-                                         <FileText size={32} className="text-red-500" />
+                                         {(() => {
+                                             const type = getFileType(product.url);
+                                             if (type === 'IMAGE') return <ImageIcon size={32} className="text-purple-500" />;
+                                             if (type === 'VIDEO') return <Video size={32} className="text-blue-500" />;
+                                             return <FileText size={32} className="text-red-500" />;
+                                         })()}
                                      </div>
-                                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-slate-500 border border-slate-200">PDF</div>
+                                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-slate-500 border border-slate-200">
+                                         {getFileType(product.url)}
+                                     </div>
                                 </div>
                                 <div className="p-5 flex flex-col flex-1">
                                     <div className="flex items-center gap-2 mb-2">
@@ -879,8 +916,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         ) : (
                             <div className="text-center py-20 text-slate-400 bg-white rounded-3xl border border-slate-100 shadow-sm">
                                 <ShoppingBag size={48} className="mx-auto mb-4 opacity-20" />
-                                <p className="text-lg font-bold text-slate-500">No purchases yet</p>
-                                <p className="text-sm">Support creators by purchasing their digital products.</p>
+                                <p className="text-lg font-bold text-slate-500">
+                                    {purchasedProducts.length > 0 ? 'No matching content found' : 'No purchases yet'}
+                                </p>
+                                <p className="text-sm">
+                                    {purchasedProducts.length > 0 ? 'Try selecting a different filter.' : 'Support creators by purchasing their digital products.'}
+                                </p>
                             </div>
                         )}
 
@@ -1156,19 +1197,17 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     <div className="flex-1">
                                         <label className="block text-sm font-medium text-slate-700 mb-1">Profile Photo</label>
                                         <div className="flex gap-2">
-                                            {profileForm.avatarUrl?.startsWith('data:') ? (
+                                            {profileForm.avatarUrl ? (
                                                 <div className="flex items-center gap-2 w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-500 text-sm">
-                                                    <span className="truncate flex-1">Image uploaded from device</span>
-                                                    <button onClick={() => setProfileForm(p => ({...p, avatarUrl: ''}))} className="text-red-500 hover:text-red-700"><X size={14}/></button>
+                                                    <span className="truncate flex-1">
+                                                        {avatarFileName || (profileForm.avatarUrl.startsWith('data:') ? "Uploaded Image" : "Current Profile Photo")}
+                                                    </span>
+                                                    <button onClick={() => { setProfileForm(p => ({...p, avatarUrl: ''})); setAvatarFileName(''); }} className="text-red-500 hover:text-red-700"><X size={14}/></button>
                                                 </div>
                                             ) : (
-                                                <input 
-                                                    type="text" 
-                                                    value={profileForm.avatarUrl}
-                                                    onChange={e => setProfileForm(p => ({...p, avatarUrl: e.target.value}))}
-                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none"
-                                                    placeholder="https://..."
-                                                />
+                                                <div className="flex items-center gap-2 w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-400 text-sm italic">
+                                                    No image selected
+                                                </div>
                                             )}
                                             <button 
                                                 onClick={() => fileInputRef.current?.click()}
@@ -1178,7 +1217,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             </button>
                                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarFileChange} />
                                         </div>
-                                        <p className="text-[10px] text-slate-400 mt-1">Upload from desktop or paste an image URL.</p>
+                                        <p className="text-[10px] text-slate-400 mt-1">Upload from desktop.</p>
                                     </div>
                                 </div>
                                 <div>
