@@ -500,6 +500,16 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                </div>
                            )}
                         </div>
+                        
+                        {!isCustomizeMode && (
+                            <div className="absolute bottom-1 right-1 z-20" title="Active Now">
+                                <span className="relative flex h-5 w-5">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-[3px] border-white"></span>
+                                </span>
+                            </div>
+                        )}
+
                         {isCustomizeMode && (
                             <div 
                                 className="absolute inset-0 flex items-center justify-center rounded-full cursor-pointer pointer-events-none z-20"
@@ -531,32 +541,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                 </div>
                         ) : (
                             <>
-                                {/* Active Badge on Top */}
-                                <div className="mb-1 flex items-center gap-2">
-                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wide border border-emerald-100 whitespace-nowrap">
-                                        <span className="relative flex h-1.5 w-1.5">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                                        </span>
-                                        Active
-                                    </span>
-
-                                    <div className="relative group/tooltip inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-50 text-slate-600 text-[10px] font-bold uppercase tracking-wide border border-slate-100 whitespace-nowrap cursor-help hover:bg-slate-100 transition-colors">
-                                        <Clock size={10} />
-                                        {creator.stats.responseTimeAvg}
-                                        
-                                        {/* Custom Tooltip */}
-                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[140px] bg-slate-800 text-white text-[10px] font-medium py-1.5 px-2.5 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50 text-center shadow-xl normal-case tracking-normal whitespace-normal">
-                                            {getResponseTimeTooltip(creator.stats.responseTimeAvg)}
-                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex justify-between items-start w-full gap-4 mb-1">
+                                <div className="flex justify-between items-center w-full gap-4 mb-1 mt-4">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                                            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight">
+                                            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-tight">
                                                 {creator.displayName}
                                             </h1>
                                         </div>
@@ -572,10 +560,21 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                     <span className={hasLiked ? "font-bold" : ""}>{likes} Likes</span>
                                                 </button>
                                                 <div className="w-px h-3 bg-slate-200"></div>
-                                                <div className="flex items-center gap-1.5">
+                                                <div className="relative group/tooltip flex items-center gap-1.5 cursor-help">
                                                         <Star size={14} className="text-yellow-400 fill-yellow-400" />
                                                         <span className="font-bold text-slate-700">{creator.stats.averageRating}</span>
                                                         <span className="text-slate-400">Rating</span>
+                                                        
+                                                        {/* Response Time Tooltip */}
+                                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[160px] bg-slate-900 text-white text-[10px] font-medium py-2 px-3 rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-all duration-200 pointer-events-none z-50 text-center shadow-xl normal-case tracking-normal whitespace-normal transform translate-y-2 group-hover/tooltip:translate-y-0">
+                                                            <div className="font-bold text-emerald-400 mb-0.5 flex items-center justify-center gap-1">
+                                                                <Clock size={10} /> {creator.stats.responseTimeAvg} Response
+                                                            </div>
+                                                            <div className="text-slate-300 leading-snug">
+                                                                {getResponseTimeTooltip(creator.stats.responseTimeAvg)}
+                                                            </div>
+                                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
+                                                        </div>
                                                 </div>
                                                 <div className="w-px h-3 bg-slate-200"></div>
                                                 <div className="flex items-center gap-2">
@@ -746,31 +745,31 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 className="w-full text-left bg-gradient-to-r from-pink-50 to-rose-50 p-4 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-4 group cursor-pointer hover:border-pink-300 transition-all hover:shadow-md relative overflow-hidden"
                                             >
                                                 <div className="absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-full blur-2xl -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
-                                                <div className="w-10 h-10 rounded-full bg-white text-pink-500 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform">
-                                                    <Heart size={20} className="fill-pink-500" />
+                                                <div className="w-12 h-12 rounded-full bg-white text-pink-500 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+                                                    <Heart size={24} className="fill-pink-500" />
                                                 </div>
-                                                <div className="flex-1 relative z-10">
-                                                    <h4 className="font-bold text-slate-900 text-sm group-hover:text-pink-600 transition-colors">{link.title}</h4>
-                                                    <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Send a tip to show appreciation</p>
+                                                <div className="flex-1 relative z-10 min-w-0">
+                                                    <h4 className="font-bold text-slate-900 text-base group-hover:text-pink-600 transition-colors">{link.title}</h4>
+                                                    <p className="text-xs text-slate-500 mt-0.5 font-medium">Send a tip to show appreciation</p>
                                                 </div>
-                                                <div className="bg-white/80 text-pink-600 px-3 py-1.5 rounded-lg text-xs font-bold group-hover:bg-white transition-colors flex items-center gap-1 flex-shrink-0 shadow-sm">
+                                                <div className="bg-blue-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
                                                     <Heart size={12} /> Tip
                                                 </div>
                                             </button>
                                         ) : isProduct ? (
                                             <button
                                                 onClick={() => handleProductClick(link)}
-                                                className="w-full text-left bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 group cursor-pointer hover:border-indigo-300 transition-all hover:shadow-md"
+                                                className="w-full text-left bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 group cursor-pointer hover:border-indigo-300 transition-all hover:shadow-md"
                                             >
-                                                <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
-                                                    <FileText size={18} />
+                                                <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                                                    <FileText size={24} />
                                                 </div>
-                                                <div className="flex-1">
-                                                    <h4 className="font-bold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors">{link.title}</h4>
-                                                    <p className="text-[10px] text-slate-400 mt-0.5 font-medium">Digital Download • Instant Access</p>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-bold text-slate-900 text-base group-hover:text-indigo-600 transition-colors">{link.title}</h4>
+                                                    <p className="text-xs text-slate-500 mt-0.5 font-medium">Digital Download • Instant Access</p>
                                                 </div>
-                                                <div className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold group-hover:bg-indigo-600 transition-colors flex items-center gap-1 flex-shrink-0 whitespace-nowrap">
-                                                    <Coins size={10} /> {link.price}
+                                                <div className="bg-blue-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
+                                                    <Coins size={12} /> {link.price}
                                                 </div>
                                             </button>
                                         ) : (
