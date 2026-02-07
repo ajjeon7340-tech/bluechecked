@@ -482,18 +482,18 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                 <div className="p-6 sm:p-8 flex flex-col sm:flex-row gap-6 items-start relative z-10">
                     {/* Avatar Section */}
                     <div className="relative group flex-shrink-0">
-                        <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm bg-white">
+                        <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full p-1 overflow-hidden border border-slate-100 shadow-sm bg-white">
                            {!imgError && (editedCreator.avatarUrl || DEFAULT_AVATAR) ? (
                                <img 
                                     src={editedCreator.avatarUrl || DEFAULT_AVATAR} 
                                     alt={editedCreator.displayName} 
-                                    className={`w-full h-full object-cover bg-slate-100 ${isCustomizeMode ? 'cursor-pointer hover:opacity-80' : ''}`}
+                                    className={`w-full h-full rounded-full object-cover bg-slate-100 ${isCustomizeMode ? 'cursor-pointer hover:opacity-80' : ''}`}
                                     onClick={isCustomizeMode ? handleAvatarEdit : undefined}
                                     onError={() => setImgError(true)}
                                 />
                            ) : (
                                <div 
-                                    className={`w-full h-full bg-slate-100 flex items-center justify-center text-slate-300 ${isCustomizeMode ? 'cursor-pointer hover:bg-slate-200' : ''}`}
+                                    className={`w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-300 ${isCustomizeMode ? 'cursor-pointer hover:bg-slate-200' : ''}`}
                                     onClick={isCustomizeMode ? handleAvatarEdit : undefined}
                                >
                                    <User size={40} />
@@ -502,7 +502,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         </div>
                         {isCustomizeMode && (
                             <div 
-                                className="absolute inset-0 flex items-center justify-center rounded-[2rem] cursor-pointer pointer-events-none z-20"
+                                className="absolute inset-0 flex items-center justify-center rounded-full cursor-pointer pointer-events-none z-20"
                             >
                                 <div className="bg-black/50 p-2 rounded-full text-white backdrop-blur-sm"><Camera size={16} /></div>
                             </div>
