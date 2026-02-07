@@ -768,9 +768,10 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
     // D. Send Email Notification to Creator (via Edge Function)
     // We don't await this to keep the UI responsive
     // NOTE: This will log an error to the console if the 'send-email' Edge Function is not deployed.
-    if (creatorProfile.email) {
+    // We attempt to send even if email is missing on client (RLS), hoping Edge Function can resolve it via creatorId
         supabase.functions.invoke('send-email', {
             body: {
+                creatorId: creatorId,
                 to: creatorProfile.email,
                 subject: `New Request from ${senderName}`,
                 html: `
@@ -787,9 +788,6 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
         }).then(({ error }) => {
             if (error) console.error("Failed to send email notification (Edge Function):", error);
         });
-    } else {
-        console.warn("Creator email not found. Email notification skipped.");
-    }
 
     // Return formatted
     return mapDbMessageToAppMessage(message, userId);
