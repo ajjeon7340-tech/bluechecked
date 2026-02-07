@@ -142,7 +142,7 @@ const ConnectionArcs = () => {
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-      <svg className="w-full h-full opacity-30">
+      <svg className="w-full h-full opacity-30" viewBox="0 0 100 100" preserveAspectRatio="none">
         <defs>
           <linearGradient id="arc-gradient" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="rgba(99, 102, 241, 0)" />
@@ -156,10 +156,11 @@ const ConnectionArcs = () => {
            return (
              <path
                key={arc.id}
-               d={`M${arc.startX}% ${arc.startY}% Q ${midX}% ${midY}% ${arc.endX}% ${arc.endY}%`}
+               d={`M${arc.startX} ${arc.startY} Q ${midX} ${midY} ${arc.endX} ${arc.endY}`}
                fill="none"
                stroke="url(#arc-gradient)"
-               strokeWidth="1.5"
+               strokeWidth="2"
+               vectorEffect="non-scaling-stroke"
                className="animate-draw-line"
                style={{
                  animationDelay: `${arc.delay}s`,
