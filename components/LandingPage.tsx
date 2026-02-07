@@ -156,7 +156,7 @@ const ConnectionArcs = () => {
            return (
              <path
                key={arc.id}
-               d={`M${arc.startX} ${arc.startY} Q ${midX} ${midY} ${arc.endX} ${arc.endY}`}
+               d={`M${arc.startX.toFixed(1)} ${arc.startY.toFixed(1)} Q ${midX.toFixed(1)} ${midY.toFixed(1)} ${arc.endX.toFixed(1)} ${arc.endY.toFixed(1)}`}
                fill="none"
                stroke="url(#arc-gradient)"
                strokeWidth="2"

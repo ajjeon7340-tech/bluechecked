@@ -19,6 +19,16 @@ const getColorForSource = (source: string) => {
     return '#94a3b8';
 };
 
+// Helper to enforce timeouts on Supabase calls that might hang (like SMTP issues)
+const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
+    return Promise.race([
+        promise,
+        new Promise<T>((_, reject) => 
+            setTimeout(() => reject(new Error("TIMEOUT")), ms)
+        )
+    ]);
+};
+
 // --- HELPER: MAP DB OBJECTS TO TYPES ---
 
 const mapProfileToUser = (profile: any): CurrentUser => ({
@@ -137,15 +147,15 @@ export const loginUser = async (role: UserRole, identifier: string, password?: s
         let signUpData, signUpError;
         
         try {
-            const result = await supabase.auth.signUp(
+            const result = await withTimeout(supabase.auth.signUp(
                 method === 'EMAIL' 
                     ? { email: cleanIdentifier, ...signUpOptions }
                     : { phone: cleanIdentifier, ...signUpOptions }
-            );
+            ), 15000); // 15s timeout
             signUpData = result.data;
             signUpError = result.error;
         } catch (e: any) {
-            if (e.name === 'AuthRetryableFetchError' || e.status === 504) {
+            if (e.message === 'TIMEOUT' || e.name === 'AuthRetryableFetchError' || e.status === 504) {
                 throw new Error("Sign up timed out. This is likely due to incorrect SMTP settings in Supabase.");
             }
             throw e;
