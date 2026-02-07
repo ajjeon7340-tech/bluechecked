@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Button } from './Button';
 import { BlueCheckLogo, CheckCircle2, Lock, GoogleLogo, InstagramLogo, Mail, User, MessageSquare, Camera, X, Plus, YouTubeLogo, XLogo, TikTokLogo, Twitch, Check, Phone } from './Icons';
 import { CurrentUser } from '../types';
-import { loginUser, updateCreatorProfile, getCreatorProfile, updateCurrentUser, signInWithSocial, resendConfirmationEmail, sendPasswordResetEmail, updatePassword } from '../services/realBackend';
+import { loginUser, updateCreatorProfile, getCreatorProfile, updateCurrentUser, signInWithSocial, resendConfirmationEmail, sendPasswordResetEmail, updatePassword, signOut } from '../services/realBackend';
 
 interface Props {
   onLoginSuccess: (user: CurrentUser) => void;
@@ -73,9 +73,12 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
             setShowResend(true);
         } else {
             console.error("Login Error:", error, JSON.stringify(error));
+            console.error("Login Error:", error);
             let msg = error.message || "Login failed. Please try again.";
             if (error.name === 'AuthRetryableFetchError' || error.status === 504) {
                 msg = "Server timeout. Please check your SMTP settings in Supabase.";
+            if (msg.includes("timed out") || error.name === 'AuthRetryableFetchError' || error.status === 504) {
+                msg = "Connection Timeout: The email service is not responding. Please check Supabase SMTP settings.";
             }
             alert(msg);
         }
@@ -222,13 +225,10 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
       setIsLoading(true);
       try {
           await updatePassword(newPassword);
-          alert("Password updated successfully!");
-          // If we have a user, proceed to dashboard, otherwise go to login
-          if (currentUser) {
-              onLoginSuccess(currentUser);
-          } else {
-              setStep('LOGIN');
-          }
+          alert("Password updated successfully! Please log in again.");
+          
+          await signOut();
+          onBack();
       } catch (error: any) {
           console.error("Update Password Error:", error);
           alert(error.message || "Failed to update password.");
