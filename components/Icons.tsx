@@ -119,6 +119,21 @@ export const Coins = ({ className, size = 24, ...props }: any) => (
   </svg>
 );
 
+export const BlueCheckLogo = ({ className, size = 24, ...props }: any) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    <rect x="2" y="2" width="20" height="20" rx="6" fill="currentColor" />
+    <path d="M7.5 12L10.5 15L16.5 9" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 export {
   CheckCircle2, 
   Clock, 

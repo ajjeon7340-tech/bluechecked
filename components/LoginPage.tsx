@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Button } from './Button';
-import { CheckCircle2, Lock, GoogleLogo, InstagramLogo, Mail, User, MessageSquare, Camera, X, Plus, YouTubeLogo, XLogo, TikTokLogo, Twitch, Check, Phone } from './Icons';
+import { BlueCheckLogo, CheckCircle2, Lock, GoogleLogo, InstagramLogo, Mail, User, MessageSquare, Camera, X, Plus, YouTubeLogo, XLogo, TikTokLogo, Twitch, Check, Phone } from './Icons';
 import { CurrentUser } from '../types';
 import { loginUser, updateCreatorProfile, getCreatorProfile, updateCurrentUser, signInWithSocial, resendConfirmationEmail, sendPasswordResetEmail, updatePassword } from '../services/realBackend';
 
@@ -73,7 +73,11 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
             setShowResend(true);
         } else {
             console.error("Login Error:", error);
-            alert(error.message || "Login failed. Please try again.");
+            let msg = error.message || "Login failed. Please try again.";
+            if (error.name === 'AuthRetryableFetchError' || error.status === 504) {
+                msg = "Server timeout. Please check your SMTP settings in Supabase.";
+            }
+            alert(msg);
         }
     } finally {
         setIsLoading(false);
@@ -422,9 +426,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
           onClick={onBack}
           className="mb-8 flex justify-center items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
         >
-          <div className="bg-blue-600 p-1.5 rounded-lg shadow-lg shadow-blue-500/20">
-            <CheckCircle2 className="text-white" size={20} />
-          </div>
+          <BlueCheckLogo size={32} className="text-blue-600" />
           <span className="font-bold text-xl tracking-tighter text-slate-900">BLUECHECKED</span>
         </div>
 

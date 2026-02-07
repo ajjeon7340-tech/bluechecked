@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CreatorProfile, CurrentUser, AffiliateLink, Product } from '../types';
-import { CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share } from './Icons';
+import { BlueCheckLogo, CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share } from './Icons';
 import { Button } from './Button';
 import { sendMessage, updateCreatorProfile, addCredits, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus, getSecureDownloadUrl, logAnalyticsEvent } from '../services/realBackend';
 
@@ -421,7 +421,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
             onClick={onCreateOwn} 
             className="flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity pl-1"
             >
-            <div className="bg-blue-600 text-white rounded-full p-1"><CheckCircle2 size={14} /></div>
+            <BlueCheckLogo size={24} className="text-blue-600" />
             <span className="font-bold tracking-tight text-sm text-slate-900">Bluechecked</span>
             </div>
             

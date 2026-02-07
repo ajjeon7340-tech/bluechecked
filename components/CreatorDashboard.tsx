@@ -5,7 +5,7 @@ import { getMessages, replyToMessage, updateCreatorProfile, markMessageAsRead, c
 import { generateReplyDraft } from '../services/geminiService';
 import { 
   Clock, CheckCircle2, AlertCircle, DollarSign, Sparkles, ChevronLeft, LogOut, 
-  ExternalLink, User, Settings, Plus, Trash, X, Camera, Paperclip, Send, 
+  ExternalLink, User, Settings, Plus, Trash, X, Camera, Paperclip, Send, BlueCheckLogo,
   Home, BarChart3, Wallet, Users, Bell, Search, Menu, ChevronDown, Ban, Check,
   Heart, Star, Eye, TrendingUp, MessageSquare, ArrowRight, Lock, 
   InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Download, ShoppingBag, FileText, PieChart as PieIcon, LayoutGrid, MonitorPlay, Link as LinkIcon, Calendar, ChevronRight, Coins, CreditCard
@@ -785,9 +785,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 onClick={() => { setCurrentView('OVERVIEW'); setSelectedSenderEmail(null); }}
                 className="flex items-center gap-2 px-3 py-4 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
             >
-                <div className="bg-blue-600 text-white p-1 rounded-md shadow-lg shadow-blue-500/20">
-                    <CheckCircle2 size={16} />
-                </div>
+                <BlueCheckLogo size={28} className="text-blue-600" />
                 <span className="font-bold text-slate-900 tracking-tight">BLUECHECKED</span>
                 {creator.isPremium && (
                    <span className="bg-yellow-100 text-yellow-700 text-[9px] font-bold px-1.5 py-0.5 rounded border border-yellow-200 ml-1">PRO</span>

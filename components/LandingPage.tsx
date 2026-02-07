@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from './Button';
-import { CheckCircle2, ShieldCheck, MessageSquare, ArrowRight, DollarSign, Clock, Sparkles, User, Heart, Lock, Check, ShoppingBag, FileText, ExternalLink, Download, Play, Image as ImageIcon, TrendingUp, BarChart3, Coins, Wallet } from './Icons';
+import { BlueCheckLogo, CheckCircle2, ShieldCheck, MessageSquare, ArrowRight, DollarSign, Clock, Sparkles, User, Heart, Lock, Check, ShoppingBag, FileText, ExternalLink, Download, Play, Image as ImageIcon, TrendingUp, BarChart3, Coins, Wallet } from './Icons';
 
 interface Props {
   onLoginClick: () => void;
@@ -124,6 +124,55 @@ const CHART_CONFIG: Record<TimePeriod, {
   }
 };
 
+const ConnectionArcs = () => {
+  const [arcs, setArcs] = useState<any[]>([]);
+
+  useEffect(() => {
+    const newArcs = Array.from({ length: 20 }).map((_, i) => ({
+      id: i,
+      startX: Math.random() * 100,
+      startY: Math.random() * 100,
+      endX: Math.random() * 100,
+      endY: Math.random() * 100,
+      delay: Math.random() * 5,
+      duration: 3 + Math.random() * 2
+    }));
+    setArcs(newArcs);
+  }, []);
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+      <svg className="w-full h-full opacity-30">
+        <defs>
+          <linearGradient id="arc-gradient" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="rgba(99, 102, 241, 0)" />
+            <stop offset="50%" stopColor="rgba(99, 102, 241, 0.8)" />
+            <stop offset="100%" stopColor="rgba(99, 102, 241, 0)" />
+          </linearGradient>
+        </defs>
+        {arcs.map(arc => {
+           const midX = (arc.startX + arc.endX) / 2;
+           const midY = Math.min(arc.startY, arc.endY) - 20;
+           return (
+             <path
+               key={arc.id}
+               d={`M${arc.startX}% ${arc.startY}% Q ${midX}% ${midY}% ${arc.endX}% ${arc.endY}%`}
+               fill="none"
+               stroke="url(#arc-gradient)"
+               strokeWidth="1.5"
+               className="animate-draw-line"
+               style={{
+                 animationDelay: `${arc.delay}s`,
+                 animationDuration: `${arc.duration}s`
+               }}
+             />
+           )
+        })}
+      </svg>
+    </div>
+  );
+};
+
 export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
   const [activeThemeIndex, setActiveThemeIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -179,6 +228,11 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
           }
+          @keyframes drawLine {
+            0% { stroke-dasharray: 0, 1000; stroke-dashoffset: 0; opacity: 0; }
+            10% { opacity: 1; }
+            100% { stroke-dasharray: 1000, 1000; stroke-dashoffset: -1000; opacity: 0; }
+          }
           .animate-fill-bar {
             animation: fillBar 8000ms linear forwards;
           }
@@ -197,6 +251,9 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
            .animate-shimmer-slow {
             animation: shimmer-slow 3s infinite linear;
           }
+          .animate-draw-line {
+            animation: drawLine 4s ease-in-out infinite;
+          }
           .transition-smooth {
              transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
           }
@@ -204,13 +261,13 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
 
         {/* Global Noise Texture */}
         <div className="fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none z-50 mix-blend-darken"></div>
+        
+        <ConnectionArcs />
 
         {/* Navigation */}
         <nav className="relative z-50 max-w-7xl mx-auto px-6 py-6 flex items-center justify-between transition-colors duration-1000">
             <div className="flex items-center gap-2 font-bold text-xl tracking-tight cursor-pointer select-none" onClick={() => window.location.reload()}>
-                <div className="bg-slate-900 p-1.5 rounded-lg shadow-md shadow-slate-900/20">
-                    <CheckCircle2 size={20} className="text-white" />
-                </div>
+                <BlueCheckLogo size={32} className="text-slate-900" />
                 <div className="flex flex-col leading-none">
                     <span className="text-slate-900">BLUECHECKED</span>
                     <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1 rounded w-fit mt-0.5">BETA</span>
@@ -740,9 +797,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
              <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
                  <div className="flex flex-col items-center md:items-start gap-4">
                     <div className="flex items-center gap-2">
-                        <div className="bg-slate-900 p-1 rounded-md">
-                            <CheckCircle2 size={16} className="text-white"/>
-                        </div>
+                        <BlueCheckLogo size={24} className="text-slate-900" />
                         <div className="flex flex-col leading-none">
                             <span className="font-bold text-slate-900 tracking-wide">BLUECHECKED</span>
                             <span className="text-[9px] font-bold text-slate-400">BETA</span>

@@ -134,11 +134,22 @@ export const loginUser = async (role: UserRole, identifier: string, password?: s
             }
         };
 
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp(
-            method === 'EMAIL' 
-                ? { email: cleanIdentifier, ...signUpOptions }
-                : { phone: cleanIdentifier, ...signUpOptions }
-        );
+        let signUpData, signUpError;
+        
+        try {
+            const result = await supabase.auth.signUp(
+                method === 'EMAIL' 
+                    ? { email: cleanIdentifier, ...signUpOptions }
+                    : { phone: cleanIdentifier, ...signUpOptions }
+            );
+            signUpData = result.data;
+            signUpError = result.error;
+        } catch (e: any) {
+            if (e.name === 'AuthRetryableFetchError' || e.status === 504) {
+                throw new Error("Sign up timed out. This is likely due to incorrect SMTP settings in Supabase.");
+            }
+            throw e;
+        }
 
         if (signUpError) throw signUpError;
         data = signUpData;
