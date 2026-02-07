@@ -875,9 +875,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         className="pl-9 pr-4 py-2 bg-slate-100 border-none rounded-lg text-sm text-slate-600 focus:ring-2 focus:ring-slate-200 outline-none w-64 transition-all"
                     />
                 </div>
-                <button className="relative text-slate-400 hover:text-slate-600">
+                <button 
+                    onClick={() => setCurrentView('NOTIFICATIONS')}
+                    className="relative text-slate-400 hover:text-slate-600"
+                >
                     <Bell size={20} />
-                    <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                    {notifications.length > 0 && <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
                 </button>
                 <div className="h-6 w-px bg-slate-200"></div>
                 <button onClick={onViewProfile} className="text-sm font-medium text-slate-600 hover:text-indigo-600 flex items-center gap-1">

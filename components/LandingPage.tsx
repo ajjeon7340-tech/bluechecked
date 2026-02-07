@@ -431,14 +431,18 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                 {[
                     { icon: Lock, title: 'Secure Escrow', desc: 'Credits are held safely in escrow. You only pay when you get a reply.', color: 'indigo' },
                     { icon: Clock, title: 'Auto-Refunds', desc: 'If the 48h deadline is missed, you get a 100% refund instantly.', color: 'cyan' },
-                    { icon: Sparkles, title: 'AI Drafting', desc: 'Creators use Gemini AI to draft personalized, high-quality replies faster.', color: 'purple' },
+                    { icon: Sparkles, title: 'AI Drafting', desc: 'Creators use Gemini AI to draft personalized, high-quality replies faster.', color: 'purple', isBeta: true },
                     { icon: User, title: 'Creator Controlled', desc: 'Creators set their own rates and response windows. No subscriptions.', color: 'emerald' }
                 ].map((feature, idx) => (
                     <div key={idx} className="group p-8 rounded-[2rem] bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300">
                         <div className={`w-14 h-14 rounded-2xl bg-${feature.color}-50 text-${feature.color}-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm`}>
                             <feature.icon size={26} />
                         </div>
-                        <h3 className="font-bold text-slate-900 text-xl mb-3">{feature.title}</h3>
+                        <h3 className="font-bold text-slate-900 text-xl mb-3 flex items-center gap-2">
+                            {feature.title}
+                            {/* @ts-ignore */}
+                            {feature.isBeta && <span className="bg-purple-100 text-purple-600 text-[10px] px-2 py-0.5 rounded-full border border-purple-200 uppercase tracking-wide">Beta</span>}
+                        </h3>
                         <p className="text-slate-500 leading-relaxed text-sm font-medium">
                             {feature.desc}
                         </p>

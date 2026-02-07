@@ -579,7 +579,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 <div className="w-px h-3 bg-slate-200"></div>
                                                 <div className="flex items-center gap-2">
                                                     {platforms.map(platform => (
-                                                        <div key={platform} className="hover:scale-110 transition-transform cursor-pointer flex items-center">
+                                                        <div key={platform} className="flex items-center">
                                                             {getPlatformIcon(platform)}
                                                         </div>
                                                     ))}
