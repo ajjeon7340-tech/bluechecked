@@ -72,11 +72,8 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
             setIsSignUp(false); // Switch back to login mode so they are ready to sign in after clicking link
             setShowResend(true);
         } else {
-            console.error("Login Error:", error, JSON.stringify(error));
             console.error("Login Error:", error);
             let msg = error.message || "Login failed. Please try again.";
-            if (error.name === 'AuthRetryableFetchError' || error.status === 504) {
-                msg = "Server timeout. Please check your SMTP settings in Supabase.";
             if (msg.includes("timed out") || error.name === 'AuthRetryableFetchError' || error.status === 504) {
                 msg = "Connection Timeout: The email service is not responding. Please check Supabase SMTP settings.";
             }
