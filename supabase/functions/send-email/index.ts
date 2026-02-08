@@ -20,9 +20,24 @@ Deno.serve(async (req) => {
     let recipientEmail = to
 
     // If email is missing (due to RLS on client), fetch it using Service Role
-    if (!recipientEmail && creatorId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+    if (!recipientEmail) {
+        if (!creatorId) {
+             throw new Error("Missing 'to' email and 'creatorId'")
+        }
+
+        if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+            console.error("Missing Supabase secrets (URL or Service Role Key)")
+            throw new Error("Server configuration error: Missing Supabase secrets")
+        }
+
         const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-        const { data: user } = await supabaseAdmin.auth.admin.getUserById(creatorId)
+        const { data: user, error: userError } = await supabaseAdmin.auth.admin.getUserById(creatorId)
+        
+        if (userError) {
+            console.error("Error fetching user by ID:", userError)
+            throw new Error(`Failed to resolve creator email: ${userError.message}`)
+        }
+
         if (user && user.user) {
             recipientEmail = user.user.email
         }
@@ -52,11 +67,20 @@ Deno.serve(async (req) => {
 
     const data = await res.json()
 
+    if (!res.ok) {
+        console.error("Resend API Error:", data)
+        return new Response(JSON.stringify(data), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400,
+        })
+    }
+
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: res.ok ? 200 : 400,
+      status: 200,
     })
   } catch (error: any) {
+    console.error("Edge Function Error:", error.message)
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
