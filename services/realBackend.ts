@@ -789,8 +789,18 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
             headers: {
                 Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
             }
-        }).then(({ error }) => {
-            if (error) console.error("Failed to send email notification (Edge Function):", error);
+        }).then(async ({ error }) => {
+            if (error) {
+                console.error("Failed to send email notification (Edge Function):", error);
+                // Try to read the specific error message from the response body
+                if (error instanceof Error && 'context' in error) {
+                    const response = (error as any).context as Response;
+                    if (response && typeof response.json === 'function') {
+                        const body = await response.json().catch(() => ({}));
+                        console.error("Edge Function Error Details:", body);
+                    }
+                }
+            }
         });
     }
 

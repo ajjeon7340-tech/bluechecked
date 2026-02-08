@@ -25,9 +25,13 @@ Deno.serve(async (req) => {
              throw new Error("Missing 'to' email and 'creatorId'")
         }
 
-        if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-            console.error("Missing Supabase secrets (URL or Service Role Key)")
-            throw new Error("Server configuration error: Missing Supabase secrets")
+        if (!SUPABASE_URL) {
+            console.error("Missing SUPABASE_URL")
+            throw new Error("Server configuration error: Missing SUPABASE_URL")
+        }
+        if (!SUPABASE_SERVICE_ROLE_KEY) {
+            console.error("Missing SUPABASE_SERVICE_ROLE_KEY")
+            throw new Error("Server configuration error: Missing SUPABASE_SERVICE_ROLE_KEY")
         }
 
         const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
@@ -40,6 +44,10 @@ Deno.serve(async (req) => {
 
         if (user && user.user) {
             recipientEmail = user.user.email
+        }
+
+        if (!recipientEmail) {
+             throw new Error(`Could not resolve email for creatorId: ${creatorId}`)
         }
     }
 
