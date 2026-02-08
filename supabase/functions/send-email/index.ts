@@ -59,6 +59,10 @@ Deno.serve(async (req) => {
         recipientEmail = TEST_EMAIL_RECIPIENT
     }
 
+    if (RESEND_FROM_EMAIL.includes('your-new-domain.com')) {
+        throw new Error("Configuration Error: RESEND_FROM_EMAIL is set to a placeholder. Please run: supabase secrets set RESEND_FROM_EMAIL=\"Bluechecked <onboarding@resend.dev>\"")
+    }
+
     if (!recipientEmail) {
         throw new Error("No recipient email found")
     }
