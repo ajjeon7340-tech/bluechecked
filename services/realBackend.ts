@@ -787,10 +787,6 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
                     </div>
                 `
             },
-            headers: {
-                // Use the anon key to ensure the request passes the Gateway auth check
-                Authorization: `Bearer ${(supabase as any).supabaseKey}`
-            }
         }).then(({ error }) => {
             if (error) console.error("Failed to send email notification (Edge Function):", error);
         });
