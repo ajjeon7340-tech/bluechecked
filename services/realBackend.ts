@@ -770,6 +770,7 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
     // NOTE: This will log an error to the console if the 'send-email' Edge Function is not deployed.
     // We attempt to send even if email is missing on client (RLS), hoping Edge Function can resolve it via creatorId
     if (session.session) {
+        console.log("Invoking send-email function...");
         supabase.functions.invoke('send-email', {
             body: {
                 creatorId: creatorId,
@@ -785,9 +786,6 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
                         <a href="${window.location.origin}" style="background: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">View Request</a>
                     </div>
                 `
-            },
-            headers: {
-                Authorization: `Bearer ${session.session.access_token}`
             }
         }).then(({ error }) => {
             if (error) console.error("Failed to send email notification (Edge Function):", error);
