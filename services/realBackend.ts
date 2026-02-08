@@ -786,7 +786,7 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
                 `
             }
         }).then(({ error }) => {
-            if (error) console.warn("Email notification skipped: Edge Function not deployed or CORS error.");
+            if (error) console.error("Failed to send email notification (Edge Function):", error);
         });
 
     // Return formatted
