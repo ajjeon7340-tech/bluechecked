@@ -3,6 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+const TEST_EMAIL_RECIPIENT = Deno.env.get('TEST_EMAIL_RECIPIENT') || 'ajjeon7340@gmail.com'
+const RESEND_FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') || 'Bluechecked <onboarding@resend.dev>'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -51,6 +53,12 @@ Deno.serve(async (req) => {
         }
     }
 
+    // Override recipient for testing (Resend Free Tier restriction)
+    if (TEST_EMAIL_RECIPIENT) {
+        console.log(`[Dev] Overriding recipient ${recipientEmail} with test email: ${TEST_EMAIL_RECIPIENT}`)
+        recipientEmail = TEST_EMAIL_RECIPIENT
+    }
+
     if (!recipientEmail) {
         throw new Error("No recipient email found")
     }
@@ -66,7 +74,7 @@ Deno.serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Bluechecked <onboarding@resend.dev>', // Change this to your verified domain in production
+        from: RESEND_FROM_EMAIL,
         to: [recipientEmail],
         subject: subject,
         html: html,
