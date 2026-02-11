@@ -486,11 +486,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     if (isComplete && !hasText && !hasManualReply) return;
 
     setIsSendingReply(true);
-    await new Promise(r => setTimeout(r, 800)); // Simulate delay
-    
+
     // The backend now handles empty replyText by skipping message creation but updating status
     await replyToMessage(activeMessage.id, replyText, isComplete);
-    await loadData(true); 
+
+    // Refresh data in background, don't block UI
+    loadData(true).catch(console.error);
+
     setReplyText('');
     setIsSendingReply(false);
 

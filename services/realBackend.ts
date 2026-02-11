@@ -784,13 +784,18 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
 export const replyToMessage = async (messageId: string, replyText: string, isComplete: boolean): Promise<void> => {
     if (!isConfigured) return MockBackend.replyToMessage(messageId, replyText, isComplete);
 
-    const { data: session } = await supabase.auth.getSession();
-    if (!session.session) throw new Error("Not logged in");
+    // Get session and message data in PARALLEL
+    const [sessionResult, msgResult] = await Promise.all([
+        supabase.auth.getSession(),
+        supabase.from('messages').select('status, expires_at, amount').eq('id', messageId).single()
+    ]);
 
-    // Check status before replying
-    const { data: msgCheck } = await supabase.from('messages').select('status, expires_at').eq('id', messageId).single();
+    const session = sessionResult.data;
+    const msgCheck = msgResult.data;
+
+    if (!session.session) throw new Error("Not logged in");
     if (!msgCheck) throw new Error("Message not found");
-    
+
     if (msgCheck.status !== 'PENDING') {
          throw new Error(`Cannot reply. Message is ${msgCheck.status}`);
     }
@@ -798,46 +803,72 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
         throw new Error("Message has expired and cannot be replied to.");
     }
 
-    // 1. Add Chat Line
-    if (replyText.trim()) {
-        const { error: chatError } = await supabase.from('chat_lines').insert({
-            message_id: messageId,
-            sender_id: session.session.user.id,
-            role: 'CREATOR',
-            content: replyText
-        });
-        if (chatError) throw chatError;
+    const userId = session.session.user.id;
+    const operations: Promise<any>[] = [];
 
-        // Touch the message to trigger realtime updates for listeners (Fan Dashboard)
-        // Also set is_read to false so the recipient (Fan) sees it as unread
-        await supabase.from('messages').update({ 
-            is_read: false,
-            updated_at: new Date().toISOString()
-        }).eq('id', messageId);
+    // 1. Add Chat Line (if there's text)
+    if (replyText.trim()) {
+        operations.push(
+            supabase.from('chat_lines').insert({
+                message_id: messageId,
+                sender_id: userId,
+                role: 'CREATOR',
+                content: replyText
+            })
+        );
     }
 
-    // 2. Update Status if Complete
+    // 2. Update message status
     if (isComplete) {
-        // In a real app, use RPC to atomically transfer held credits to Creator's balance here
-        // For now, just update status
-        const { error: msgError } = await supabase
-            .from('messages')
-            .update({ 
-                status: 'REPLIED', 
-                reply_at: new Date().toISOString() 
+        // Mark as replied
+        operations.push(
+            supabase.from('messages').update({
+                status: 'REPLIED',
+                reply_at: new Date().toISOString(),
+                is_read: false,
+                updated_at: new Date().toISOString()
+            }).eq('id', messageId)
+        );
+
+        // Add credits to creator (use RPC if available, otherwise increment)
+        operations.push(
+            supabase.rpc('increment_credits', {
+                user_id: userId,
+                amount: msgCheck.amount
+            }).then(res => {
+                // Fallback if RPC doesn't exist
+                if (res.error) {
+                    return supabase.from('profiles')
+                        .select('credits')
+                        .eq('id', userId)
+                        .single()
+                        .then(({ data }) => {
+                            if (data) {
+                                return supabase.from('profiles')
+                                    .update({ credits: data.credits + msgCheck.amount })
+                                    .eq('id', userId);
+                            }
+                        });
+                }
             })
-            .eq('id', messageId);
-            
-        if (msgError) throw msgError;
-        
-        // Add credits to creator
-        const { data: creator } = await supabase.from('profiles').select('credits').eq('id', session.session.user.id).single();
-        if (creator) {
-             // Retrieve message amount to add
-             const { data: msg } = await supabase.from('messages').select('amount').eq('id', messageId).single();
-             if (msg) {
-                 await supabase.from('profiles').update({ credits: creator.credits + msg.amount }).eq('id', session.session.user.id);
-             }
+        );
+    } else if (replyText.trim()) {
+        // Just touch the message for realtime updates
+        operations.push(
+            supabase.from('messages').update({
+                is_read: false,
+                updated_at: new Date().toISOString()
+            }).eq('id', messageId)
+        );
+    }
+
+    // Run all operations in PARALLEL
+    const results = await Promise.allSettled(operations);
+
+    // Check for critical errors
+    for (const result of results) {
+        if (result.status === 'rejected') {
+            console.error('Reply operation failed:', result.reason);
         }
     }
 };
