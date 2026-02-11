@@ -202,7 +202,7 @@ function App() {
 
   // Redirect to Landing if we are on a creator page but have no creator data (e.g. empty DB)
   useEffect(() => {
-    if (!isLoading && !creator) {
+    if (!isLoading && !isProfileLoading && !creator) {
       if (currentPage === 'DASHBOARD' || currentPage === 'PROFILE') {
         setCurrentPage('LANDING');
       }
@@ -293,11 +293,21 @@ function App() {
         setCreator(fullProfile);
       }).catch(e => console.warn("Failed to load stats:", e));
 
-    } catch (e) {
-      console.error("Failed to load creator:", e);
-      setCurrentPage('LANDING');
-      setIsProfileLoading(false);
-      setLoadingCreatorId(null);
+    } catch (e: any) {
+      console.error("Failed to load creator (fast):", e);
+      // Fallback to full load
+      try {
+        const fullProfile = await getCreatorProfile(creatorId);
+        setCreator(fullProfile);
+        setIsProfileLoading(false);
+        setLoadingCreatorId(null);
+      } catch (e2) {
+        console.error("Failed to load creator (full):", e2);
+        // Only go back if both methods fail
+        window.history.back();
+        setIsProfileLoading(false);
+        setLoadingCreatorId(null);
+      }
     }
   };
 
