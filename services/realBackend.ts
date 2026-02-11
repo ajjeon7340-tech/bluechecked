@@ -482,7 +482,7 @@ export const completeOAuthSignup = async (roleOverride?: UserRole): Promise<Curr
 
 // --- PROFILES ---
 
-export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProfile> => {
+export const getCreatorProfile = async (creatorId?: string, skipStats = false): Promise<CreatorProfile> => {
     if (!isConfigured) {
         console.log("%c[Backend] Using Mock Data (Supabase not configured)", "background: #f59e0b; color: black; padding: 2px 4px; border-radius: 2px; font-weight: bold;");
         return MockBackend.getCreatorProfile(creatorId);
@@ -510,36 +510,37 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
         throw new Error("No creator profile found. Please run the Seed Script in Supabase.");
     }
 
-    // Fetch stats and likes count IN PARALLEL for faster loading
-    const [statsResult, likesResult] = await Promise.allSettled([
-        supabase.rpc('get_creator_stats', { target_creator_id: data.id }),
-        supabase.from('creator_likes').select('*', { count: 'exact', head: true }).eq('creator_id', data.id)
-    ]);
-
-    // Process stats
-    let responseTimeAvg = 'Standard';
+    // Default stats - return immediately if skipStats is true
+    let responseTimeAvg = 'Fast';
     let replyRate = '100%';
     let totalRequests = 0;
     let averageRating = 5.0;
-
-    if (statsResult.status === 'fulfilled' && !statsResult.value.error && statsResult.value.data) {
-        const rpcStats = statsResult.value.data;
-        averageRating = rpcStats.averageRating;
-        totalRequests = rpcStats.totalRequests;
-        replyRate = `${rpcStats.replyRate}%`;
-
-        const hours = rpcStats.avgResponseHours;
-        if (hours === null || hours === undefined) responseTimeAvg = 'Standard';
-        else if (hours < 1) responseTimeAvg = 'Lightning';
-        else if (hours < 4) responseTimeAvg = 'Very Fast';
-        else if (hours < 24) responseTimeAvg = 'Fast';
-        else responseTimeAvg = 'Standard';
-    }
-
-    // Process likes count
     let realLikesCount = 0;
-    if (likesResult.status === 'fulfilled' && !likesResult.value.error) {
-        realLikesCount = likesResult.value.count || 0;
+
+    if (!skipStats) {
+        // Fetch stats and likes count IN PARALLEL
+        const [statsResult, likesResult] = await Promise.allSettled([
+            supabase.rpc('get_creator_stats', { target_creator_id: data.id }),
+            supabase.from('creator_likes').select('*', { count: 'exact', head: true }).eq('creator_id', data.id)
+        ]);
+
+        if (statsResult.status === 'fulfilled' && !statsResult.value.error && statsResult.value.data) {
+            const rpcStats = statsResult.value.data;
+            averageRating = rpcStats.averageRating;
+            totalRequests = rpcStats.totalRequests;
+            replyRate = `${rpcStats.replyRate}%`;
+
+            const hours = rpcStats.avgResponseHours;
+            if (hours === null || hours === undefined) responseTimeAvg = 'Standard';
+            else if (hours < 1) responseTimeAvg = 'Lightning';
+            else if (hours < 4) responseTimeAvg = 'Very Fast';
+            else if (hours < 24) responseTimeAvg = 'Fast';
+            else responseTimeAvg = 'Standard';
+        }
+
+        if (likesResult.status === 'fulfilled' && !likesResult.value.error) {
+            realLikesCount = likesResult.value.count || 0;
+        }
     }
 
     return {
@@ -564,6 +565,11 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
         platforms: data.platforms || [],
         isPremium: data.is_premium || false
     };
+};
+
+// Fast version that skips stats - for initial page load
+export const getCreatorProfileFast = (creatorId?: string): Promise<CreatorProfile> => {
+    return getCreatorProfile(creatorId, true);
 };
 
 export const updateCreatorProfile = async (profile: CreatorProfile): Promise<CreatorProfile> => {

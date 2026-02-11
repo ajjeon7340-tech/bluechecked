@@ -5,7 +5,7 @@ import { CreatorDashboard } from './components/CreatorDashboard';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { FanDashboard } from './components/FanDashboard';
-import { getCreatorProfile, checkAndSyncSession, isBackendConfigured, completeOAuthSignup, signOut, subscribeToAuthChanges } from './services/realBackend';
+import { getCreatorProfile, checkAndSyncSession, isBackendConfigured, completeOAuthSignup, signOut, subscribeToAuthChanges, getCreatorProfileFast } from './services/realBackend';
 import { CreatorProfile, CurrentUser, UserRole } from './types';
 
 type PageState = 'LANDING' | 'LOGIN' | 'DASHBOARD' | 'PROFILE' | 'FAN_DASHBOARD' | 'SETUP_PROFILE';
@@ -91,10 +91,19 @@ function App() {
       const user = currentUserRef.current;
       if (state && state.page) {
         if (state.page === 'PROFILE' && state.creatorId) {
-             // Use skeleton loading instead of full-screen spinner
+             // Use fast loading for immediate display
              setLoadingCreatorId(state.creatorId);
              setIsProfileLoading(true);
-             loadCreatorData(state.creatorId).finally(() => {
+             getCreatorProfileFast(state.creatorId).then(fastProfile => {
+               setCreator(fastProfile);
+               setIsProfileLoading(false);
+               setLoadingCreatorId(null);
+               // Load full stats in background
+               getCreatorProfile(state.creatorId).then(fullProfile => {
+                 setCreator(fullProfile);
+               }).catch(e => console.warn("Failed to load stats:", e));
+             }).catch(e => {
+               console.error("Failed to load creator:", e);
                setIsProfileLoading(false);
                setLoadingCreatorId(null);
              });
@@ -272,13 +281,21 @@ function App() {
     window.history.pushState({ page: 'PROFILE', creatorId }, '', '');
     setCurrentPage('PROFILE');
 
-    // Load data in background - page will show loading state until ready
     try {
-      await loadCreatorData(creatorId, false);
+      // Fast load - just get profile without stats
+      const fastProfile = await getCreatorProfileFast(creatorId);
+      setCreator(fastProfile);
+      setIsProfileLoading(false);
+      setLoadingCreatorId(null);
+
+      // Load full stats in background (non-blocking)
+      getCreatorProfile(creatorId).then(fullProfile => {
+        setCreator(fullProfile);
+      }).catch(e => console.warn("Failed to load stats:", e));
+
     } catch (e) {
       console.error("Failed to load creator:", e);
       setCurrentPage('LANDING');
-    } finally {
       setIsProfileLoading(false);
       setLoadingCreatorId(null);
     }
