@@ -135,9 +135,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       }
   });
 
+  const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>(() => {
+      try {
+          const saved = localStorage.getItem('bluechecked_creator_seen_notifications');
+          return saved ? JSON.parse(saved) : [];
+      } catch {
+          return [];
+      }
+  });
+
   useEffect(() => {
       localStorage.setItem('bluechecked_creator_deleted_notifications', JSON.stringify(deletedNotificationIds));
   }, [deletedNotificationIds]);
+
+  useEffect(() => {
+      localStorage.setItem('bluechecked_creator_seen_notifications', JSON.stringify(seenNotificationIds));
+  }, [seenNotificationIds]);
 
   // Memoize sprinkles to prevent re-render jitter (Copied from FanDashboard for consistency)
   const sprinkles = useMemo(() => {
@@ -214,6 +227,23 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
         .filter(n => !deletedNotificationIds.includes(n.id))
         .sort((a, b) => b.time.getTime() - a.time.getTime());
   }, [messages, creator.id, deletedNotificationIds]);
+
+  // Count unseen notifications for badge
+  const unseenNotificationCount = useMemo(() => {
+      return notifications.filter(n => !seenNotificationIds.includes(n.id)).length;
+  }, [notifications, seenNotificationIds]);
+
+  // Mark all notifications as seen when viewing NOTIFICATIONS tab
+  useEffect(() => {
+      if (currentView === 'NOTIFICATIONS' && notifications.length > 0) {
+          const unseenIds = notifications
+              .filter(n => !seenNotificationIds.includes(n.id))
+              .map(n => n.id);
+          if (unseenIds.length > 0) {
+              setSeenNotificationIds(prev => [...prev, ...unseenIds]);
+          }
+      }
+  }, [currentView, notifications, seenNotificationIds]);
 
   const handleDeleteNotification = (e: React.MouseEvent, id: string) => {
       e.stopPropagation();
@@ -800,7 +830,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <SidebarItem icon={Home} label="Overview" view="OVERVIEW" />
                 <SidebarItem icon={Users} label="Inbox" view="INBOX" badge={stats.pendingCount > 0 ? stats.pendingCount : undefined} />
                 <SidebarItem icon={Wallet} label="Finance" view="FINANCE" />
-                <SidebarItem icon={Bell} label="Notifications" view="NOTIFICATIONS" badge={notifications.length > 0 ? notifications.length : undefined} />
+                <SidebarItem icon={Bell} label="Notifications" view="NOTIFICATIONS" badge={unseenNotificationCount > 0 ? unseenNotificationCount : undefined} />
                 <SidebarItem icon={Star} label="Reviews" view="REVIEWS" />
                 <SidebarItem icon={TrendingUp} label="Analytics" view="ANALYTICS" />
                 <SidebarItem icon={AlertCircle} label="Support" view="SUPPORT" />
@@ -875,12 +905,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         className="pl-9 pr-4 py-2 bg-slate-100 border-none rounded-lg text-sm text-slate-600 focus:ring-2 focus:ring-slate-200 outline-none w-64 transition-all"
                     />
                 </div>
-                <button 
+                <button
                     onClick={() => setCurrentView('NOTIFICATIONS')}
                     className="relative text-slate-400 hover:text-slate-600"
                 >
                     <Bell size={20} />
-                    {notifications.length > 0 && <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
+                    {unseenNotificationCount > 0 && <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
                 </button>
                 <div className="h-6 w-px bg-slate-200"></div>
                 <button onClick={onViewProfile} className="text-sm font-medium text-slate-600 hover:text-indigo-600 flex items-center gap-1">
