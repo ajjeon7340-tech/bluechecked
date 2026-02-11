@@ -352,11 +352,11 @@ function App() {
       )}
 
       {currentPage === 'PROFILE' && (isProfileLoading || !creator || (loadingCreatorId && creator.id !== loadingCreatorId)) && (
-        <div className="min-h-screen bg-[#F8FAFC] pt-24 px-4">
-          <div className="max-w-2xl mx-auto space-y-6">
+        <div className="min-h-screen bg-[#F8FAFC] pt-20 sm:pt-24 px-4">
+          <div className="max-w-2xl mx-auto space-y-4">
             {/* Skeleton Header */}
-            <div className="bg-white rounded-[2rem] border border-slate-200 p-6 sm:p-8">
-              <div className="flex gap-4 sm:gap-6 items-center">
+            <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-slate-200 p-4 sm:p-6">
+              <div className="flex gap-3 sm:gap-5 items-center">
                 <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-slate-200 animate-pulse flex-shrink-0"></div>
                 <div className="flex-1 space-y-3">
                   <div className="h-6 bg-slate-200 rounded-lg w-32 animate-pulse"></div>
@@ -367,15 +367,15 @@ function App() {
                   </div>
                 </div>
               </div>
-              <div className="mt-6 pt-6 border-t border-slate-100 space-y-2">
+              <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
                 <div className="h-4 bg-slate-100 rounded w-full animate-pulse"></div>
                 <div className="h-4 bg-slate-100 rounded w-3/4 animate-pulse"></div>
               </div>
             </div>
             {/* Skeleton Service Card */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-4">
-              <div className="flex gap-4 items-center">
-                <div className="w-12 h-12 rounded-full bg-slate-200 animate-pulse"></div>
+            <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4">
+              <div className="flex gap-3 items-center">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-200 animate-pulse"></div>
                 <div className="flex-1 space-y-2">
                   <div className="h-5 bg-slate-200 rounded w-24 animate-pulse"></div>
                   <div className="h-3 bg-slate-100 rounded w-32 animate-pulse"></div>

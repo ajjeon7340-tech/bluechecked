@@ -474,12 +474,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
         )}
 
       {/* Main Layout - Single Column / Vertical Stack */}
-      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-32 flex flex-col gap-6 items-center">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-20 sm:pt-24 flex flex-col gap-4 items-center">
         
           {/* 1. PROFILE INFO & STATS */}
           <div className="w-full">
-             <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm relative transition-all hover:shadow-md">
-                <div className="p-6 sm:p-8 flex flex-row gap-4 sm:gap-6 items-center sm:items-start relative z-10">
+             <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-slate-200 shadow-sm relative transition-all hover:shadow-md">
+                <div className="p-4 sm:p-6 flex flex-row gap-3 sm:gap-5 items-center sm:items-start relative z-10">
                     {/* Avatar Section */}
                     <div className="relative group flex-shrink-0">
                         <div className="relative w-20 h-20 sm:w-28 sm:h-28 rounded-full p-1 overflow-hidden border border-slate-100 shadow-sm bg-white">
@@ -603,12 +603,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                 <div className="w-full h-px bg-slate-100"></div>
 
-                <div className="p-6 sm:p-8 bg-slate-50/30 rounded-b-[2rem]">
+                <div className="p-4 sm:p-6 bg-slate-50/30 rounded-b-[2rem]">
                     {isCustomizeMode ? (
-                        <textarea 
-                           value={editedCreator.bio} 
+                        <textarea
+                           value={editedCreator.bio}
                            onChange={(e) => updateField('bio', e.target.value)}
-                           className="block w-full text-slate-600 border border-dashed border-slate-300 rounded-xl p-3 focus:ring-1 focus:ring-black min-h-[80px] bg-white text-sm"
+                           className="block w-full text-slate-600 border border-dashed border-slate-300 rounded-xl p-3 focus:ring-1 focus:ring-black min-h-[60px] bg-white text-sm"
                            placeholder="Your bio..."
                         />
                     ) : (
