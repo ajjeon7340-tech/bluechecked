@@ -4,7 +4,7 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 const TEST_EMAIL_RECIPIENT = Deno.env.get('TEST_EMAIL_RECIPIENT') || 'ajjeon7340@gmail.com'
-const RESEND_FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') || 'Bluechecked <onboarding@resend.dev>'
+const RESEND_FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') || 'Bluechecked <admin@telepossible.com>'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -57,10 +57,6 @@ Deno.serve(async (req) => {
     if (TEST_EMAIL_RECIPIENT) {
         console.log(`[Dev] Overriding recipient ${recipientEmail} with test email: ${TEST_EMAIL_RECIPIENT}`)
         recipientEmail = TEST_EMAIL_RECIPIENT
-    }
-
-    if (RESEND_FROM_EMAIL.includes('your-new-domain.com')) {
-        throw new Error("Configuration Error: RESEND_FROM_EMAIL is set to a placeholder. Please run: supabase secrets set RESEND_FROM_EMAIL=\"Bluechecked <onboarding@resend.dev>\"")
     }
 
     if (!recipientEmail) {

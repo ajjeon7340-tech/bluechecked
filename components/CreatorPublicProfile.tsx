@@ -479,10 +479,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           {/* 1. PROFILE INFO & STATS */}
           <div className="w-full">
              <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm relative transition-all hover:shadow-md">
-                <div className="p-6 sm:p-8 flex flex-col sm:flex-row gap-6 items-start relative z-10">
+                <div className="p-6 sm:p-8 flex flex-row gap-4 sm:gap-6 items-center sm:items-start relative z-10">
                     {/* Avatar Section */}
                     <div className="relative group flex-shrink-0">
-                        <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full p-1 overflow-hidden border border-slate-100 shadow-sm bg-white">
+                        <div className="relative w-20 h-20 sm:w-28 sm:h-28 rounded-full p-1 overflow-hidden border border-slate-100 shadow-sm bg-white">
                            {!imgError && (editedCreator.avatarUrl || DEFAULT_AVATAR) ? (
                                <img 
                                     src={editedCreator.avatarUrl || DEFAULT_AVATAR} 
@@ -748,9 +748,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 <div className="w-12 h-12 rounded-full bg-white text-pink-500 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform">
                                                     <Heart size={24} className="fill-pink-500" />
                                                 </div>
-                                                <div className="flex-1 relative z-10 min-w-0">
-                                                    <h4 className="font-bold text-slate-900 text-base group-hover:text-pink-600 transition-colors">{link.title}</h4>
-                                                    <p className="text-xs text-slate-500 mt-0.5 font-medium">Send a tip to show appreciation</p>
+                                                <div className="flex-1 relative z-10 min-w-0 text-left">
+                                                    <h4 className="font-bold text-slate-900 text-base group-hover:text-pink-600 transition-colors truncate">{link.title}</h4>
+                                                    <p className="text-xs text-slate-500 mt-0.5 font-medium truncate">Send a tip to show appreciation</p>
                                                 </div>
                                                 <div className="bg-blue-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
                                                     <Heart size={12} /> Tip
@@ -764,9 +764,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
                                                     <FileText size={24} />
                                                 </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="font-bold text-slate-900 text-base group-hover:text-indigo-600 transition-colors">{link.title}</h4>
-                                                    <p className="text-xs text-slate-500 mt-0.5 font-medium">Digital Download • Instant Access</p>
+                                                <div className="flex-1 min-w-0 text-left">
+                                                    <h4 className="font-bold text-slate-900 text-base group-hover:text-indigo-600 transition-colors truncate">{link.title}</h4>
+                                                    <p className="text-xs text-slate-500 mt-0.5 font-medium truncate">Digital Download • Instant Access</p>
                                                 </div>
                                                 <div className="bg-blue-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
                                                     <Coins size={12} /> {link.price}
@@ -783,9 +783,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${link.isPromoted ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-600'}`}>
                                                     {link.isPromoted ? <Sparkles size={18} /> : <ExternalLink size={18} />}
                                                 </div>
-                                                <div className="flex-1">
-                                                    <h4 className="font-bold text-slate-900 text-sm group-hover:text-slate-700 transition-colors">{link.title}</h4>
-                                                    <p className="text-[10px] text-slate-400 mt-0.5 font-medium">{link.isPromoted ? 'Recommended' : 'External Link'}</p>
+                                                <div className="flex-1 min-w-0 text-left">
+                                                    <h4 className="font-bold text-slate-900 text-sm group-hover:text-slate-700 transition-colors truncate">{link.title}</h4>
+                                                    <p className="text-[10px] text-slate-400 mt-0.5 font-medium truncate">{link.isPromoted ? 'Recommended' : 'External Link'}</p>
                                                 </div>
                                                 <ExternalLink size={14} className={`transition-colors ${link.isPromoted ? 'text-slate-300 group-hover:text-amber-500' : 'text-slate-300 group-hover:text-slate-500'}`} />
                                             </a>
