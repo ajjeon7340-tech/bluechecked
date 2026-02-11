@@ -260,10 +260,8 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
           }
         `}</style>
 
-        {/* Global Noise Texture */}
-        <div className="fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none z-50 mix-blend-darken"></div>
-        
-        <ConnectionArcs />
+        {/* Global Noise Texture - Hidden on mobile */}
+        <div className="hidden sm:block fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none z-50 mix-blend-darken"></div>
 
         {/* Navigation */}
         <nav className="relative z-50 max-w-7xl mx-auto px-6 py-6 flex items-center justify-between transition-colors duration-1000">
