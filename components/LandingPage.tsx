@@ -292,15 +292,15 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
 
         {/* Hero Section */}
         <div className="relative pt-12 pb-24 lg:pt-20 lg:pb-40 overflow-hidden transition-all duration-1000 ease-in-out">
-            {/* Background Gradient Mesh */}
-            <div className={`absolute top-[-20%] left-[-10%] w-[80vw] h-[80vw] bg-gradient-to-br ${theme.gradient} rounded-full blur-[100px] opacity-60 animate-pulse duration-[4000ms] mix-blend-multiply transition-colors duration-1000`}></div>
-            <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-pink-100 rounded-full blur-[100px] opacity-60 mix-blend-multiply"></div>
+            {/* Background Gradient Mesh - Hidden on mobile for performance */}
+            <div className={`hidden sm:block absolute top-[-20%] left-[-10%] w-[80vw] h-[80vw] bg-gradient-to-br ${theme.gradient} rounded-full blur-[100px] opacity-60 mix-blend-multiply transition-colors duration-1000`}></div>
+            <div className="hidden sm:block absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-pink-100 rounded-full blur-[100px] opacity-60 mix-blend-multiply"></div>
 
             <div className="relative z-10 max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
                 {/* Text Content */}
                 <div className="space-y-8">
                     <div className="space-y-3">
-                         <div className="inline-flex items-center gap-2 bg-white/60 border border-slate-200 text-slate-600 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md shadow-sm">
+                         <div className="inline-flex items-center gap-2 bg-white/90 sm:bg-white/60 border border-slate-200 text-slate-600 px-3 py-1 rounded-full text-xs font-bold sm:backdrop-blur-md shadow-sm">
                             <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -367,10 +367,10 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                         style={{ transform: 'rotateY(-12deg) rotateX(6deg)' }}
                     >
                         {/* Main Glass App Container */}
-                        <div className="absolute inset-0 bg-white/60 backdrop-blur-2xl rounded-[2.5rem] border border-white/80 shadow-[0_30px_80px_-15px_rgba(0,0,0,0.15)] flex flex-col ring-1 ring-white/50 overflow-hidden transition-all duration-500">
+                        <div className="absolute inset-0 bg-white/95 sm:bg-white/60 sm:backdrop-blur-2xl rounded-[2.5rem] border border-white/80 shadow-[0_30px_80px_-15px_rgba(0,0,0,0.15)] flex flex-col ring-1 ring-white/50 overflow-hidden transition-all duration-500">
 
                             {/* App Header */}
-                            <div className="relative z-20 flex justify-between items-center px-8 pt-8 pb-4 border-b border-white/40 bg-white/40 backdrop-blur-sm">
+                            <div className="relative z-20 flex justify-between items-center px-8 pt-8 pb-4 border-b border-white/40 bg-white/80 sm:bg-white/40 sm:backdrop-blur-sm">
                                 <div className="flex flex-col">
                                     <h3 className="text-lg font-black text-slate-900 tracking-tight">Verified Inbox</h3>
                                     <div className="flex items-center gap-1.5">
@@ -426,14 +426,14 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                                     {/* Magical Bluechecked Animation - Last - CENTERED & SIMPLE */}
                                     <div className="pt-4 pb-2 flex justify-center animate-fade-in-up" style={{ opacity: 0, animationDelay: '3.5s' }}>
                                         <div className="relative group cursor-default transform transition-transform hover:scale-105 duration-300">
-                                            <div className="absolute inset-0 bg-indigo-500 blur-2xl opacity-20"></div>
+                                            <div className="hidden sm:block absolute inset-0 bg-indigo-500 blur-2xl opacity-20"></div>
                                             
                                             <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 rounded-xl px-5 py-3 shadow-2xl shadow-indigo-500/40 ring-1 ring-white/20 flex items-center gap-3">
                                                 {/* Particles/Noise */}
                                                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
                                                 
                                                 {/* Simple Icon */}
-                                                <div className="relative z-10 bg-white/20 p-1.5 rounded-full backdrop-blur-md">
+                                                <div className="relative z-10 bg-white/40 sm:bg-white/20 p-1.5 rounded-full sm:backdrop-blur-md">
                                                      <Check size={16} className="text-white" strokeWidth={3} />
                                                 </div>
                                                 
@@ -450,7 +450,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                             </div>
                             
                             {/* Bottom Funds Bar (Static Container - Dynamic Value) */}
-                            <div className="h-16 border-t border-slate-200/60 bg-white/40 backdrop-blur-md flex items-center justify-between px-6 z-20 relative">
+                            <div className="h-16 border-t border-slate-200/60 bg-white/80 sm:bg-white/40 sm:backdrop-blur-md flex items-center justify-between px-6 z-20 relative">
                                 <div className="flex items-center gap-3">
                                     <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 border border-emerald-500/20">
                                         <Coins size={16} />
@@ -468,9 +468,9 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                             </div>
                         </div>
                         
-                        {/* Floating elements behind */}
-                        <div className={`absolute -z-10 top-20 -right-12 w-48 h-48 bg-gradient-to-br ${theme.gradient} rounded-full blur-[60px] opacity-60 animate-pulse`}></div>
-                        <div className="absolute -z-10 -bottom-10 -left-10 w-40 h-40 bg-pink-200 rounded-full blur-[50px] opacity-60"></div>
+                        {/* Floating elements behind - Hidden on mobile */}
+                        <div className={`hidden sm:block absolute -z-10 top-20 -right-12 w-48 h-48 bg-gradient-to-br ${theme.gradient} rounded-full blur-[60px] opacity-60`}></div>
+                        <div className="hidden sm:block absolute -z-10 -bottom-10 -left-10 w-40 h-40 bg-pink-200 rounded-full blur-[50px] opacity-60"></div>
                      </div>
                 </div>
             </div>
@@ -516,8 +516,8 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                     
                     {/* Visual: Content Access Management Mockup - UPDATED */}
                     <div className="flex-1 w-full relative">
-                        {/* Abstract Background blob */}
-                        <div className="absolute inset-0 bg-gradient-to-tr from-blue-100 to-purple-100 rounded-full blur-[100px] opacity-60 transform -rotate-12"></div>
+                        {/* Abstract Background blob - Hidden on mobile */}
+                        <div className="hidden sm:block absolute inset-0 bg-gradient-to-tr from-blue-100 to-purple-100 rounded-full blur-[100px] opacity-60 transform -rotate-12"></div>
                         
                         {/* Main Container - "My Links & Content" View */}
                         <div className="relative z-10 bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100 max-w-md mx-auto rotate-[-2deg] hover:rotate-0 transition-transform duration-500 overflow-hidden">
@@ -641,7 +641,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
         {/* Premium Analytics Section - Modernized Chart with Hover Tooltips */}
         <div className="bg-white py-24 relative overflow-hidden border-t border-slate-100">
             <div className="absolute inset-0 bg-slate-50/50"></div>
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-b from-blue-50 to-transparent opacity-60 rounded-full blur-[80px] pointer-events-none"></div>
+            <div className="hidden sm:block absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-b from-blue-50 to-transparent opacity-60 rounded-full blur-[80px] pointer-events-none"></div>
 
             <div className="max-w-7xl mx-auto px-6 relative z-10">
                 <div className="flex flex-col lg:flex-row items-center gap-16">

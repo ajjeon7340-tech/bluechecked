@@ -403,20 +403,18 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           .animate-shimmer { animation: shimmer 2s infinite; }
       `}</style>
       
-      {/* Aesthetic Background Elements - Adjusted Contrast */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-          <div className="absolute -top-[10%] -right-[10%] w-[800px] h-[800px] bg-indigo-200/10 rounded-full blur-[120px] mix-blend-multiply animate-pulse duration-[8000ms]"></div>
+      {/* Aesthetic Background Elements - Simplified for mobile performance */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 hidden sm:block">
+          <div className="absolute -top-[10%] -right-[10%] w-[800px] h-[800px] bg-indigo-200/10 rounded-full blur-[120px] mix-blend-multiply"></div>
           <div className="absolute top-[20%] -left-[10%] w-[600px] h-[600px] bg-purple-100/20 rounded-full blur-[100px] mix-blend-multiply"></div>
           <div className="absolute bottom-[0%] right-[20%] w-[500px] h-[500px] bg-blue-100/20 rounded-full blur-[100px] mix-blend-multiply"></div>
-          {/* Subtle noise texture */}
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.02]"></div>
       </div>
 
       {/* Navigation / Header */}
       <div 
         className="fixed top-0 left-0 w-full z-40 px-4 py-4 transition-all"
       >
-        <div className="max-w-2xl mx-auto bg-white/70 backdrop-blur-xl border border-white/50 shadow-[0_2px_20px_-10px_rgba(0,0,0,0.05)] rounded-full py-3 px-5 flex justify-between items-center">
+        <div className="max-w-2xl mx-auto bg-white/95 sm:bg-white/70 sm:backdrop-blur-xl border border-white/50 shadow-[0_2px_20px_-10px_rgba(0,0,0,0.05)] rounded-full py-3 px-5 flex justify-between items-center">
             <div 
             onClick={onCreateOwn} 
             className="flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity pl-1"
@@ -504,7 +502,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         {!isCustomizeMode && (
                             <div className="absolute bottom-1 right-1 z-20" title="Active Now">
                                 <span className="relative flex h-5 w-5">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                  <span className="hidden sm:inline-flex animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                   <span className="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-[3px] border-white"></span>
                                 </span>
                             </div>
@@ -739,7 +737,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 onClick={() => handleSupportClick(link.price)}
                                                 className="w-full text-left bg-gradient-to-r from-pink-50 to-rose-50 p-3 sm:p-4 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-3 sm:gap-4 group cursor-pointer hover:border-pink-300 transition-all hover:shadow-md relative overflow-hidden"
                                             >
-                                                <div className="absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-full blur-2xl -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
+                                                <div className="hidden sm:block absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-full blur-2xl -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
                                                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white text-pink-500 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform">
                                                     <Heart size={20} className="sm:hidden fill-pink-500" />
                                                     <Heart size={24} className="hidden sm:block fill-pink-500" />
@@ -811,10 +809,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
       {/* Message & Payment Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 sm:bg-slate-900/60 sm:backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-white rounded-[2rem] w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col ring-1 ring-white/50">
             {/* Modal Header */}
-            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white/80 backdrop-blur-xl sticky top-0 z-10">
+            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white sm:bg-white/80 sm:backdrop-blur-xl sticky top-0 z-10">
               <h3 className="font-bold text-slate-900 text-lg">
                 {step === 'compose' && 'New Request'}
                 {step === 'payment' && 'Confirm Payment'}
