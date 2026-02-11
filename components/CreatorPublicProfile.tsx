@@ -541,63 +541,55 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                 </div>
                         ) : (
                             <>
-                                <div className="flex justify-between items-center w-full gap-4 mb-1 mt-4">
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                                            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-tight">
-                                                {creator.displayName}
-                                            </h1>
+                                {/* Share button - absolute positioned */}
+                                <button
+                                    onClick={handleShare}
+                                    className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 rounded-full border border-slate-100 bg-white shadow-sm text-slate-400 hover:text-indigo-500 hover:border-indigo-100 hover:bg-indigo-50 transition-all z-20"
+                                >
+                                    <Share size={18} className="transition-transform active:scale-90" />
+                                </button>
+
+                                <div className="w-full mt-2">
+                                    <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-tight mb-3">
+                                        {creator.displayName}
+                                    </h1>
+
+                                    {/* Stats Row - Horizontal */}
+                                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                                        {/* Likes */}
+                                        <button
+                                            onClick={handleLike}
+                                            className={`flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100 text-xs font-medium transition-colors ${hasLiked ? 'text-pink-600 bg-pink-50 border-pink-100' : 'text-slate-500 hover:text-pink-600 hover:bg-pink-50'}`}
+                                        >
+                                            <Heart size={14} className={hasLiked ? "fill-current" : ""} />
+                                            <span className={hasLiked ? "font-bold" : ""}>{likes}</span>
+                                        </button>
+
+                                        {/* Rating */}
+                                        <div className="relative group/tooltip flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100 text-xs font-medium text-slate-500 cursor-help">
+                                            <Star size={14} className="text-yellow-400 fill-yellow-400" />
+                                            <span className="font-bold text-slate-700">{creator.stats.averageRating}</span>
+
+                                            {/* Response Time Tooltip */}
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[160px] bg-slate-900 text-white text-[10px] font-medium py-2 px-3 rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-all duration-200 pointer-events-none z-50 text-center shadow-xl normal-case tracking-normal whitespace-normal transform translate-y-2 group-hover/tooltip:translate-y-0">
+                                                <div className="font-bold text-emerald-400 mb-0.5 flex items-center justify-center gap-1">
+                                                    <Clock size={10} /> {creator.stats.responseTimeAvg} Response
+                                                </div>
+                                                <div className="text-slate-300 leading-snug">
+                                                    {getResponseTimeTooltip(creator.stats.responseTimeAvg)}
+                                                </div>
+                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
+                                            </div>
                                         </div>
 
-                                        {/* Stats Pill */}
-                                        <div className="flex flex-wrap items-center gap-2 mt-2">
-                                            <div className="inline-flex flex-wrap items-center gap-3 sm:gap-4 bg-slate-50 p-2 px-3 rounded-xl border border-slate-100 text-xs font-medium text-slate-500">
-                                                <button 
-                                                    onClick={handleLike}
-                                                    className={`flex items-center gap-1.5 transition-colors ${hasLiked ? 'text-pink-600' : 'text-slate-500 hover:text-pink-600'}`}
-                                                >
-                                                    <Heart size={14} className={hasLiked ? "fill-current" : ""} />
-                                                    <span className={hasLiked ? "font-bold" : ""}>{likes} Likes</span>
-                                                </button>
-                                                <div className="w-px h-3 bg-slate-200"></div>
-                                                <div className="relative group/tooltip flex items-center gap-1.5 cursor-help">
-                                                        <Star size={14} className="text-yellow-400 fill-yellow-400" />
-                                                        <span className="font-bold text-slate-700">{creator.stats.averageRating}</span>
-                                                        <span className="text-slate-400">Rating</span>
-                                                        
-                                                        {/* Response Time Tooltip */}
-                                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[160px] bg-slate-900 text-white text-[10px] font-medium py-2 px-3 rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-all duration-200 pointer-events-none z-50 text-center shadow-xl normal-case tracking-normal whitespace-normal transform translate-y-2 group-hover/tooltip:translate-y-0">
-                                                            <div className="font-bold text-emerald-400 mb-0.5 flex items-center justify-center gap-1">
-                                                                <Clock size={10} /> {creator.stats.responseTimeAvg} Response
-                                                            </div>
-                                                            <div className="text-slate-300 leading-snug">
-                                                                {getResponseTimeTooltip(creator.stats.responseTimeAvg)}
-                                                            </div>
-                                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
-                                                        </div>
+                                        {/* Platform Icons */}
+                                        <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+                                            {platforms.map(platform => (
+                                                <div key={platform} className="flex items-center">
+                                                    {getPlatformIcon(platform)}
                                                 </div>
-                                                <div className="w-px h-3 bg-slate-200"></div>
-                                                <div className="flex items-center gap-2">
-                                                    {platforms.map(platform => (
-                                                        <div key={platform} className="flex items-center">
-                                                            {getPlatformIcon(platform)}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
+                                            ))}
                                         </div>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-3">
-                                        <button 
-                                            onClick={handleShare}
-                                            className="group flex flex-col items-center gap-1 transition-all text-slate-400 hover:text-indigo-500"
-                                        >
-                                            <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm transition-all group-hover:border-indigo-100 group-hover:bg-indigo-50">
-                                                <Share size={20} className="transition-transform group-active:scale-90" />
-                                            </div>
-                                            <span className="text-[10px] font-bold">Share</span>
-                                        </button>
                                     </div>
                                 </div>
                             </>
