@@ -584,13 +584,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                             </div>
                                         </div>
 
-                                        {/* Response Time - Desktop only */}
-                                        <div className="hidden sm:flex items-center gap-1.5 bg-emerald-50 px-3 py-2 rounded-lg border border-emerald-100 text-xs font-medium text-emerald-600">
-                                            <Clock size={14} />
-                                            <span className="font-bold">{creator.stats.responseTimeAvg}</span>
-                                            <span className="text-emerald-500">Response</span>
-                                        </div>
-
                                         {/* Platform Icons */}
                                         <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-50 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-slate-100">
                                             {platforms.map(platform => (
@@ -635,21 +628,22 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                     </h3>
                 </div>
 
-               <div className="w-full bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 group transition-all hover:shadow-md hover:border-indigo-300 relative overflow-hidden">
+               <div className="w-full bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3 sm:gap-4 group transition-all hover:shadow-md hover:border-indigo-300 relative overflow-hidden">
                     {/* Icon */}
-                    <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
-                        <MessageSquare size={24} />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                        <MessageSquare size={20} className="sm:hidden" />
+                        <MessageSquare size={24} className="hidden sm:block" />
                     </div>
-                    
+
                     {/* Text */}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                            <h4 className="font-bold text-slate-900 text-base group-hover:text-indigo-600 transition-colors">Priority DM</h4>
-                            <span className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide border border-indigo-100">Guaranteed</span>
+                            <h4 className="font-bold text-slate-900 text-sm sm:text-base group-hover:text-indigo-600 transition-colors">Priority DM</h4>
+                            <span className="hidden sm:inline bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide border border-indigo-100">Guaranteed</span>
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-slate-500">
-                            <span className="flex items-center gap-1"><Clock size={12} className="text-slate-400"/> {creator.responseWindowHours}h turnaround</span>
-                            <span className="flex items-center gap-1"><ShieldCheck size={12} className="text-slate-400"/> Auto-refund</span>
+                        <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-slate-500">
+                            <span className="flex items-center gap-1"><Clock size={10} className="sm:hidden text-slate-400"/><Clock size={12} className="hidden sm:block text-slate-400"/> {creator.responseWindowHours}h</span>
+                            <span className="hidden sm:flex items-center gap-1"><ShieldCheck size={12} className="text-slate-400"/> Auto-refund</span>
                         </div>
                     </div>
 
@@ -658,7 +652,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         {isCustomizeMode && (
                              <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
                                 <Coins size={12} className="text-slate-400"/>
-                                <input 
+                                <input
                                     type="number"
                                     value={editedCreator.pricePerMessage}
                                     onChange={(e) => updateField('pricePerMessage', Number(e.target.value))}
@@ -666,11 +660,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                 />
                              </div>
                         )}
-                        
-                        <button 
+
+                        <button
                             onClick={currentUser ? handleOpenModal : onLoginRequest}
                             disabled={isCustomizeMode}
-                            className="bg-blue-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-2 whitespace-nowrap"
+                            className="bg-blue-600 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap"
                         >
                             {isCustomizeMode ? (
                                 <>Preview <ArrowRight size={12} className="opacity-50"/></>
@@ -743,33 +737,35 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         isSupport ? (
                                             <button
                                                 onClick={() => handleSupportClick(link.price)}
-                                                className="w-full text-left bg-gradient-to-r from-pink-50 to-rose-50 p-4 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-4 group cursor-pointer hover:border-pink-300 transition-all hover:shadow-md relative overflow-hidden"
+                                                className="w-full text-left bg-gradient-to-r from-pink-50 to-rose-50 p-3 sm:p-4 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-3 sm:gap-4 group cursor-pointer hover:border-pink-300 transition-all hover:shadow-md relative overflow-hidden"
                                             >
                                                 <div className="absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-full blur-2xl -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
-                                                <div className="w-12 h-12 rounded-full bg-white text-pink-500 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform">
-                                                    <Heart size={24} className="fill-pink-500" />
+                                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white text-pink-500 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+                                                    <Heart size={20} className="sm:hidden fill-pink-500" />
+                                                    <Heart size={24} className="hidden sm:block fill-pink-500" />
                                                 </div>
                                                 <div className="flex-1 relative z-10 min-w-0 text-left">
-                                                    <h4 className="font-bold text-slate-900 text-base group-hover:text-pink-600 transition-colors truncate">{link.title}</h4>
-                                                    <p className="text-xs text-slate-500 mt-0.5 font-medium truncate">Send a tip to show appreciation</p>
+                                                    <h4 className="font-bold text-slate-900 text-sm sm:text-base group-hover:text-pink-600 transition-colors truncate">{link.title}</h4>
+                                                    <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 font-medium truncate">Send a tip</p>
                                                 </div>
-                                                <div className="bg-blue-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
+                                                <div className="bg-blue-600 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
                                                     <Heart size={12} /> Tip
                                                 </div>
                                             </button>
                                         ) : isProduct ? (
                                             <button
                                                 onClick={() => handleProductClick(link)}
-                                                className="w-full text-left bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 group cursor-pointer hover:border-indigo-300 transition-all hover:shadow-md"
+                                                className="w-full text-left bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3 sm:gap-4 group cursor-pointer hover:border-indigo-300 transition-all hover:shadow-md"
                                             >
-                                                <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
-                                                    <FileText size={24} />
+                                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                                                    <FileText size={20} className="sm:hidden" />
+                                                    <FileText size={24} className="hidden sm:block" />
                                                 </div>
                                                 <div className="flex-1 min-w-0 text-left">
-                                                    <h4 className="font-bold text-slate-900 text-base group-hover:text-indigo-600 transition-colors truncate">{link.title}</h4>
-                                                    <p className="text-xs text-slate-500 mt-0.5 font-medium truncate">Digital Download • Instant Access</p>
+                                                    <h4 className="font-bold text-slate-900 text-sm sm:text-base group-hover:text-indigo-600 transition-colors truncate">{link.title}</h4>
+                                                    <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 font-medium truncate">Digital Download</p>
                                                 </div>
-                                                <div className="bg-blue-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
+                                                <div className="bg-blue-600 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
                                                     <Coins size={12} /> {link.price}
                                                 </div>
                                             </button>
@@ -779,16 +775,16 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 onClick={() => logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'LINK', id: link.id, title: link.title, url: link.url })}
-                                                className={`block bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 group cursor-pointer transition-all ${link.isPromoted ? 'hover:border-amber-300' : 'hover:border-slate-300'}`}
+                                                className={`block bg-white p-3 sm:p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all ${link.isPromoted ? 'hover:border-amber-300' : 'hover:border-slate-300'}`}
                                             >
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${link.isPromoted ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-600'}`}>
-                                                    {link.isPromoted ? <Sparkles size={18} /> : <ExternalLink size={18} />}
+                                                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${link.isPromoted ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-600'}`}>
+                                                    {link.isPromoted ? <Sparkles size={16} /> : <ExternalLink size={16} />}
                                                 </div>
                                                 <div className="flex-1 min-w-0 text-left">
                                                     <h4 className="font-bold text-slate-900 text-sm group-hover:text-slate-700 transition-colors truncate">{link.title}</h4>
                                                     <p className="text-[10px] text-slate-400 mt-0.5 font-medium truncate">{link.isPromoted ? 'Recommended' : 'External Link'}</p>
                                                 </div>
-                                                <ExternalLink size={14} className={`transition-colors ${link.isPromoted ? 'text-slate-300 group-hover:text-amber-500' : 'text-slate-300 group-hover:text-slate-500'}`} />
+                                                <ExternalLink size={14} className={`flex-shrink-0 transition-colors ${link.isPromoted ? 'text-slate-300 group-hover:text-amber-500' : 'text-slate-300 group-hover:text-slate-500'}`} />
                                             </a>
                                         )
                                     )}
