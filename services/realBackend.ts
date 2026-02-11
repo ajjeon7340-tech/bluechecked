@@ -510,69 +510,36 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
         throw new Error("No creator profile found. Please run the Seed Script in Supabase.");
     }
 
-    // Calculate Real Stats from Messages
-    let responseTimeAvg = 'N/A';
+    // Fetch stats and likes count IN PARALLEL for faster loading
+    const [statsResult, likesResult] = await Promise.allSettled([
+        supabase.rpc('get_creator_stats', { target_creator_id: data.id }),
+        supabase.from('creator_likes').select('*', { count: 'exact', head: true }).eq('creator_id', data.id)
+    ]);
+
+    // Process stats
+    let responseTimeAvg = 'Standard';
     let replyRate = '100%';
     let totalRequests = 0;
     let averageRating = 5.0;
 
-    // 1. Try RPC for accurate public stats (bypassing RLS)
-    const { data: rpcStats, error: rpcError } = await supabase.rpc('get_creator_stats', { target_creator_id: data.id });
-
-    if (!rpcError && rpcStats) {
+    if (statsResult.status === 'fulfilled' && !statsResult.value.error && statsResult.value.data) {
+        const rpcStats = statsResult.value.data;
         averageRating = rpcStats.averageRating;
         totalRequests = rpcStats.totalRequests;
         replyRate = `${rpcStats.replyRate}%`;
-        
+
         const hours = rpcStats.avgResponseHours;
         if (hours === null || hours === undefined) responseTimeAvg = 'Standard';
         else if (hours < 1) responseTimeAvg = 'Lightning';
         else if (hours < 4) responseTimeAvg = 'Very Fast';
         else if (hours < 24) responseTimeAvg = 'Fast';
         else responseTimeAvg = 'Standard';
-    } else {
-        // 2. Fallback: Client-side calculation (Subject to RLS, mostly for Creator's own view if RPC fails)
-        const { data: statMessages } = await supabase
-            .from('messages')
-            .select('created_at, reply_at, status, rating')
-            .eq('creator_id', data.id);
-
-        if (statMessages && statMessages.length > 0) {
-            totalRequests = statMessages.length;
-
-            const repliedMsgs = statMessages.filter(m => m.status === 'REPLIED' && m.reply_at);
-            if (repliedMsgs.length > 0) {
-                const totalTimeMs = repliedMsgs.reduce((acc, m) => acc + (new Date(m.reply_at).getTime() - new Date(m.created_at).getTime()), 0);
-                const avgHours = totalTimeMs / repliedMsgs.length / (1000 * 60 * 60);
-                
-                if (avgHours < 1) responseTimeAvg = 'Lightning';
-                else if (avgHours < 4) responseTimeAvg = 'Very Fast';
-                else if (avgHours < 24) responseTimeAvg = 'Fast';
-                else responseTimeAvg = 'Standard';
-            } else {
-                responseTimeAvg = 'Standard';
-            }
-
-            const repliedCount = statMessages.filter(m => m.status === 'REPLIED').length;
-            const expiredCount = statMessages.filter(m => m.status === 'EXPIRED').length;
-            const totalProcessed = repliedCount + expiredCount;
-            if (totalProcessed > 0) {
-                replyRate = `${Math.round((repliedCount / totalProcessed) * 100)}%`;
-            }
-
-            const ratedMessages = statMessages.filter(m => m.rating && m.rating > 0);
-            if (ratedMessages.length > 0) {
-                const totalRating = ratedMessages.reduce((sum, m) => sum + m.rating, 0);
-                averageRating = parseFloat((totalRating / ratedMessages.length).toFixed(1));
-            }
-        }
     }
 
-    // 4. Get Real Likes Count
-    const { count: realLikesCount, error: likesError } = await supabase.from('creator_likes').select('*', { count: 'exact', head: true }).eq('creator_id', data.id);
-
-    if (likesError && likesError.code !== '42P01') {
-        console.warn("Failed to fetch likes count:", likesError);
+    // Process likes count
+    let realLikesCount = 0;
+    if (likesResult.status === 'fulfilled' && !likesResult.value.error) {
+        realLikesCount = likesResult.value.count || 0;
     }
 
     return {
@@ -583,12 +550,12 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
         avatarUrl: data.avatar_url || DEFAULT_AVATAR,
         pricePerMessage: data.price_per_message || 50,
         responseWindowHours: data.response_window_hours || 48,
-        likesCount: realLikesCount || 0,
-        stats: { 
+        likesCount: realLikesCount,
+        stats: {
             responseTimeAvg,
-            replyRate, 
-            profileViews: totalRequests, // Using Total Requests as a proxy for views/activity
-            averageRating 
+            replyRate,
+            profileViews: totalRequests,
+            averageRating
         },
         customQuestions: [],
         tags: [],

@@ -29,31 +29,43 @@ function App() {
     try {
       // Don't set isLoading(true) here to avoid flashing the loading screen on background refreshes
       setError(null);
-      
-      // Fetch Creator Profile AND Refresh User Session (to update credits)
-      const userData = await checkAndSyncSession();
-      if (userData) {
-          setCurrentUser(userData);
-      } else {
-          // Session is invalid (e.g. user deleted from DB), clear local state
+
+      // Fetch Creator Profile AND Refresh User Session IN PARALLEL for faster loading
+      const [userData, creatorResult] = await Promise.allSettled([
+        checkAndSyncSession(),
+        getCreatorProfile(specificCreatorId)
+      ]);
+
+      // Handle user session result
+      if (userData.status === 'fulfilled') {
+        if (userData.value) {
+          setCurrentUser(userData.value);
+        } else {
           setCurrentUser(null);
           localStorage.removeItem('bluechecked_current_user');
+        }
+      } else {
+        // Session check failed - check for PROFILE_MISSING
+        if (userData.reason?.code === 'PROFILE_MISSING') {
+          setShowSignUpConfirm(true);
+          if (stopLoading) setIsLoading(false);
+          return null;
+        }
       }
 
-      try {
-        const creatorData = await getCreatorProfile(specificCreatorId);
-        setCreator(creatorData);
-        return creatorData;
-      } catch (e: any) {
-        // Only ignore error if we are NOT looking for a specific creator (i.e. app init)
-        // BUT if we are logged in as a CREATOR, we expect to find our profile, so don't ignore.
-        const role = userData?.role || currentUserRef.current?.role;
+      // Handle creator profile result
+      if (creatorResult.status === 'fulfilled') {
+        setCreator(creatorResult.value);
+        return creatorResult.value;
+      } else {
+        // Creator fetch failed
+        const role = (userData.status === 'fulfilled' ? userData.value?.role : null) || currentUserRef.current?.role;
         if (!specificCreatorId && role !== 'CREATOR') {
-             console.warn("No creator profile found (DB might be empty). App running in setup mode.");
-             setCreator(null);
-             return null;
+          console.warn("No creator profile found (DB might be empty). App running in setup mode.");
+          setCreator(null);
+          return null;
         }
-        throw e;
+        throw creatorResult.reason;
       }
 
     } catch (err: any) {
