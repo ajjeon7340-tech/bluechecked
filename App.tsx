@@ -16,6 +16,8 @@ function App() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [loadingCreatorId, setLoadingCreatorId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSignUpConfirm, setShowSignUpConfirm] = useState(false);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
@@ -259,14 +261,21 @@ function App() {
   };
 
   const handleCreatorSelect = async (creatorId: string) => {
+    // Navigate immediately for faster perceived performance
+    setLoadingCreatorId(creatorId);
+    setIsProfileLoading(true);
+    window.history.pushState({ page: 'PROFILE', creatorId }, '', '');
+    setCurrentPage('PROFILE');
+
+    // Load data in background - page will show loading state until ready
     try {
-      setIsLoading(true);
       await loadCreatorData(creatorId, false);
-      window.history.pushState({ page: 'PROFILE', creatorId }, '', '');
-      setCurrentPage('PROFILE');
-      setIsLoading(false);
     } catch (e) {
-      setIsLoading(false);
+      console.error("Failed to load creator:", e);
+      setCurrentPage('LANDING');
+    } finally {
+      setIsProfileLoading(false);
+      setLoadingCreatorId(null);
     }
   };
 
