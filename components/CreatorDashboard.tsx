@@ -141,6 +141,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       } catch { return 0; }
   });
 
+  // Pagination State
+  const [financePage, setFinancePage] = useState(1);
+  const [notificationPage, setNotificationPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
   useEffect(() => {
       localStorage.setItem('bluechecked_creator_deleted_notifications', JSON.stringify(deletedNotificationIds));
   }, [deletedNotificationIds]);
@@ -1313,6 +1318,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             </div>
 
                             {/* --- TRANSACTION HISTORY TABLE --- */}
+                            {(() => {
+                                const financeMessages = messages.filter(m => m.status === 'REPLIED');
+                                const totalPages = Math.ceil(financeMessages.length / ITEMS_PER_PAGE);
+                                const displayedFinance = financeMessages.slice((financePage - 1) * ITEMS_PER_PAGE, financePage * ITEMS_PER_PAGE);
+                                return (
                             <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-3">
                                 <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                                      <h3 className="text-sm font-bold text-slate-900">Credit History</h3>
@@ -1330,7 +1340,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                            </tr>
                                        </thead>
                                        <tbody className="divide-y divide-slate-100">
-                                           {messages.filter(m => m.status === 'REPLIED').map(msg => {
+                                           {displayedFinance.map(msg => {
                                                const isProduct = msg.content.startsWith('Purchased Product:');
                                                const isTip = msg.conversation.some(c => c.role === 'FAN' && c.content.startsWith('Fan Appreciation:'));
                                                
@@ -1355,7 +1365,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                </tr>
                                                );
                                            })}
-                                           {messages.length === 0 && (
+                                           {displayedFinance.length === 0 && (
                                                <tr><td colSpan={5} className="p-12 text-center text-slate-400">No transaction history available.</td></tr>
                                            )}
                                        </tbody>
@@ -1364,7 +1374,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 
                                 {/* Mobile List View */}
                                 <div className="md:hidden divide-y divide-slate-100">
-                                    {messages.filter(m => m.status === 'REPLIED').map(msg => {
+                                    {displayedFinance.map(msg => {
                                         const isProduct = msg.content.startsWith('Purchased Product:');
                                         const isTip = msg.conversation.some(c => c.role === 'FAN' && c.content.startsWith('Fan Appreciation:'));
                                         
@@ -1390,11 +1400,34 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             </div>
                                         );
                                     })}
-                                    {messages.filter(m => m.status === 'REPLIED').length === 0 && (
+                                    {displayedFinance.length === 0 && (
                                         <div className="p-8 text-center text-slate-400 text-sm">No transaction history available.</div>
                                     )}
                                 </div>
+
+                                {/* Pagination Controls */}
+                                {totalPages > 1 && (
+                                    <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-center gap-4">
+                                        <button 
+                                            onClick={() => setFinancePage(p => Math.max(1, p - 1))}
+                                            disabled={financePage === 1}
+                                            className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 transition-colors"
+                                        >
+                                            <ChevronLeft size={16} />
+                                        </button>
+                                        <span className="text-xs font-bold text-slate-600">Page {financePage} of {totalPages}</span>
+                                        <button 
+                                            onClick={() => setFinancePage(p => Math.min(totalPages, p + 1))}
+                                            disabled={financePage === totalPages}
+                                            className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 transition-colors"
+                                        >
+                                            <ChevronRight size={16} />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
+                            );
+                            })()}
                          </>
                      )}
                 </div>
@@ -2304,6 +2337,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             {/* --- VIEW: NOTIFICATIONS --- */}
             {currentView === 'NOTIFICATIONS' && (
                 <div className="p-6 max-w-3xl mx-auto animate-in fade-in">
+                    {(() => {
+                        const totalPages = Math.ceil(notifications.length / ITEMS_PER_PAGE);
+                        const displayedNotifications = notifications.slice((notificationPage - 1) * ITEMS_PER_PAGE, notificationPage * ITEMS_PER_PAGE);
+                        return (
                     <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                             <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
@@ -2320,10 +2357,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             </div>
                         </div>
                         <div className="divide-y divide-slate-100">
-                            {notifications.length === 0 ? (
+                            {displayedNotifications.length === 0 ? (
                                 <div className="p-12 text-center text-slate-400 text-sm">No notifications yet.</div>
                             ) : (
-                                notifications.map(notif => (
+                                displayedNotifications.map(notif => (
                                     <div 
                                         key={notif.id} 
                                         onClick={() => handleNotificationClick(notif)}
@@ -2343,7 +2380,30 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 ))
                             )}
                         </div>
+
+                        {/* Pagination Controls */}
+                        {totalPages > 1 && (
+                            <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-center gap-4">
+                                <button 
+                                    onClick={() => setNotificationPage(p => Math.max(1, p - 1))}
+                                    disabled={notificationPage === 1}
+                                    className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 transition-colors"
+                                >
+                                    <ChevronLeft size={16} />
+                                </button>
+                                <span className="text-xs font-bold text-slate-600">Page {notificationPage} of {totalPages}</span>
+                                <button 
+                                    onClick={() => setNotificationPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={notificationPage === totalPages}
+                                    className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 transition-colors"
+                                >
+                                    <ChevronRight size={16} />
+                                </button>
+                            </div>
+                        )}
                     </div>
+                    );
+                    })()}
                 </div>
             )}
 
