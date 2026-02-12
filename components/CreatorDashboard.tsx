@@ -586,13 +586,26 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       );
 
       if (existingIndex >= 0) {
-          setEditedCreator(prev => ({
-              ...prev,
-              platforms: prev.platforms?.filter((_, i) => i !== existingIndex)
-          }));
+          const existingPlatform = currentPlatforms[existingIndex];
+          const currentUrl = typeof existingPlatform === 'object' ? existingPlatform.url : '';
+          const url = window.prompt(`Edit URL for ${platformId} (Leave empty to remove):`, currentUrl);
+          
+          if (url === null) return;
+
+          if (url.trim() === '') {
+              setEditedCreator(prev => ({
+                  ...prev,
+                  platforms: prev.platforms?.filter((_, i) => i !== existingIndex)
+              }));
+          } else {
+              const updatedPlatforms = [...currentPlatforms];
+              updatedPlatforms[existingIndex] = { id: platformId, url: url.trim() };
+              setEditedCreator(prev => ({ ...prev, platforms: updatedPlatforms }));
+          }
       } else {
           const url = window.prompt(`Enter URL for ${platformId} (optional):`);
-          const newPlatform = url ? { id: platformId, url } : platformId;
+          if (url === null) return;
+          const newPlatform = url.trim() ? { id: platformId, url: url.trim() } : platformId;
 
           setEditedCreator(prev => ({
               ...prev,
