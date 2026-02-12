@@ -1554,18 +1554,19 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             </div>
                                         </div>
 
-                                        {/* Creator Replies Section */}
+                                        {/* Creator Replies Section - Thread Style */}
                                         {creatorReplies.length > 0 && (
-                                            <div className="mt-3 ml-4 sm:ml-6 border-l-2 border-indigo-200 pl-4">
-                                                <div className="flex items-center gap-2 mb-3">
+                                            <div className="mt-4 ml-5">
+                                                <div className="flex items-center gap-2 mb-3 ml-11">
                                                     <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Creator's Reply</span>
-                                                    <span className="text-xs text-slate-400">{creatorReplies.length}</span>
+                                                    <span className="text-xs text-slate-400">{creatorReplies.length}/{creatorReplies.length}</span>
                                                 </div>
 
                                                 {creatorReplies.map((reply, idx) => (
-                                                    <div key={reply.id} className={`bg-white rounded-xl border border-slate-200 p-4 shadow-sm ${idx > 0 ? 'mt-3' : ''}`}>
-                                                        <div className="flex items-start gap-3">
-                                                            <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 border-2 border-white shadow-sm">
+                                                    <div key={reply.id} className="flex gap-3">
+                                                        {/* Avatar with connecting line */}
+                                                        <div className="flex flex-col items-center">
+                                                            <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 border-2 border-white shadow-sm z-10">
                                                                 {msg.creatorAvatarUrl ? (
                                                                     <img src={msg.creatorAvatarUrl} alt={msg.creatorName} className="w-full h-full object-cover" />
                                                                 ) : (
@@ -1574,16 +1575,22 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="flex items-center gap-2 mb-1">
-                                                                    <span className="font-bold text-slate-900 text-sm">{msg.creatorName || 'Creator'}</span>
-                                                                    <CheckCircle2 size={14} className="text-blue-500 fill-blue-500" />
-                                                                    <span className="text-slate-400 text-xs">
-                                                                        {new Date(reply.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })} {new Date(reply.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                    </span>
-                                                                </div>
-                                                                <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{reply.content}</p>
+                                                            {/* Connecting line - show if not last reply */}
+                                                            {idx < creatorReplies.length - 1 && (
+                                                                <div className="w-0.5 flex-1 bg-slate-200 min-h-[16px]"></div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Reply content */}
+                                                        <div className={`flex-1 min-w-0 ${idx < creatorReplies.length - 1 ? 'pb-4' : ''}`}>
+                                                            <div className="flex items-center gap-2 mb-0.5">
+                                                                <span className="font-bold text-slate-900 text-sm">{msg.creatorName || 'Creator'}</span>
+                                                                <CheckCircle2 size={14} className="text-blue-500 fill-blue-500" />
+                                                                <span className="text-slate-400 text-xs">
+                                                                    {new Date(reply.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                                                </span>
                                                             </div>
+                                                            <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{reply.content}</p>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -1592,10 +1599,29 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                                         {/* Waiting for reply indicator */}
                                         {creatorReplies.length === 0 && isPending && (
-                                            <div className="mt-3 ml-4 sm:ml-6 border-l-2 border-slate-200 pl-4">
-                                                <div className="flex items-center gap-2 text-slate-400 text-xs py-2">
-                                                    <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
-                                                    <span>Waiting for {msg.creatorName || 'creator'}'s reply...</span>
+                                            <div className="mt-4 ml-5">
+                                                <div className="flex gap-3">
+                                                    {/* Avatar with pulsing border */}
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden bg-slate-100 border-2 border-slate-200 shadow-sm relative">
+                                                            {msg.creatorAvatarUrl ? (
+                                                                <img src={msg.creatorAvatarUrl} alt={msg.creatorName} className="w-full h-full object-cover opacity-50" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                                                    <User size={14} />
+                                                                </div>
+                                                            )}
+                                                            <div className="absolute inset-0 rounded-full border-2 border-amber-400 animate-pulse"></div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Waiting text */}
+                                                    <div className="flex-1 flex items-center">
+                                                        <div className="flex items-center gap-2 text-slate-400 text-sm">
+                                                            <div className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse"></div>
+                                                            <span>Waiting for {msg.creatorName || 'creator'}'s reply...</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}

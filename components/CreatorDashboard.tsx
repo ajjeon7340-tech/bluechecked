@@ -135,22 +135,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       }
   });
 
-  const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>(() => {
-      try {
-          const saved = localStorage.getItem('bluechecked_creator_seen_notifications');
-          return saved ? JSON.parse(saved) : [];
-      } catch {
-          return [];
-      }
-  });
-
   useEffect(() => {
       localStorage.setItem('bluechecked_creator_deleted_notifications', JSON.stringify(deletedNotificationIds));
   }, [deletedNotificationIds]);
-
-  useEffect(() => {
-      localStorage.setItem('bluechecked_creator_seen_notifications', JSON.stringify(seenNotificationIds));
-  }, [seenNotificationIds]);
 
   // Memoize sprinkles to prevent re-render jitter (Copied from FanDashboard for consistency)
   const sprinkles = useMemo(() => {
@@ -227,23 +214,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
         .filter(n => !deletedNotificationIds.includes(n.id))
         .sort((a, b) => b.time.getTime() - a.time.getTime());
   }, [messages, creator.id, deletedNotificationIds]);
-
-  // Count unseen notifications for badge
-  const unseenNotificationCount = useMemo(() => {
-      return notifications.filter(n => !seenNotificationIds.includes(n.id)).length;
-  }, [notifications, seenNotificationIds]);
-
-  // Mark all notifications as seen when viewing NOTIFICATIONS tab
-  useEffect(() => {
-      if (currentView === 'NOTIFICATIONS' && notifications.length > 0) {
-          const unseenIds = notifications
-              .filter(n => !seenNotificationIds.includes(n.id))
-              .map(n => n.id);
-          if (unseenIds.length > 0) {
-              setSeenNotificationIds(prev => [...prev, ...unseenIds]);
-          }
-      }
-  }, [currentView, notifications, seenNotificationIds]);
 
   const handleDeleteNotification = (e: React.MouseEvent, id: string) => {
       e.stopPropagation();
@@ -516,13 +486,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     if (isComplete && !hasText && !hasManualReply) return;
 
     setIsSendingReply(true);
-
+    await new Promise(r => setTimeout(r, 800)); // Simulate delay
+    
     // The backend now handles empty replyText by skipping message creation but updating status
     await replyToMessage(activeMessage.id, replyText, isComplete);
-
-    // Refresh data in background, don't block UI
-    loadData(true).catch(console.error);
-
+    await loadData(true); 
     setReplyText('');
     setIsSendingReply(false);
 
@@ -613,27 +581,24 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const handleTogglePlatform = (platformId: string) => {
       const currentPlatforms = editedCreator.platforms || [];
-      const existingPlatform = currentPlatforms.find(p => p.id === platformId);
-      if (existingPlatform) {
+      const existingIndex = currentPlatforms.findIndex(p => 
+          (typeof p === 'string' ? p : p.id) === platformId
+      );
+
+      if (existingIndex >= 0) {
           setEditedCreator(prev => ({
               ...prev,
-              platforms: prev.platforms?.filter(p => p.id !== platformId)
+              platforms: prev.platforms?.filter((_, i) => i !== existingIndex)
           }));
       } else {
+          const url = window.prompt(`Enter URL for ${platformId} (optional):`);
+          const newPlatform = url ? { id: platformId, url } : platformId;
+
           setEditedCreator(prev => ({
               ...prev,
-              platforms: [...(prev.platforms || []), { id: platformId, url: '' }]
+              platforms: [...(prev.platforms || []), newPlatform]
           }));
       }
-  };
-
-  const handleUpdatePlatformUrl = (platformId: string, url: string) => {
-      setEditedCreator(prev => ({
-          ...prev,
-          platforms: (prev.platforms || []).map(p =>
-              p.id === platformId ? { ...p, url } : p
-          )
-      }));
   };
 
   const handleUpdateLink = (id: string, field: keyof AffiliateLink, value: any) => {
@@ -840,7 +805,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <SidebarItem icon={Home} label="Overview" view="OVERVIEW" />
                 <SidebarItem icon={Users} label="Inbox" view="INBOX" badge={stats.pendingCount > 0 ? stats.pendingCount : undefined} />
                 <SidebarItem icon={Wallet} label="Finance" view="FINANCE" />
-                <SidebarItem icon={Bell} label="Notifications" view="NOTIFICATIONS" badge={unseenNotificationCount > 0 ? unseenNotificationCount : undefined} />
+                <SidebarItem icon={Bell} label="Notifications" view="NOTIFICATIONS" badge={notifications.length > 0 ? notifications.length : undefined} />
                 <SidebarItem icon={Star} label="Reviews" view="REVIEWS" />
                 <SidebarItem icon={TrendingUp} label="Analytics" view="ANALYTICS" />
                 <SidebarItem icon={AlertCircle} label="Support" view="SUPPORT" />
@@ -915,12 +880,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         className="pl-9 pr-4 py-2 bg-slate-100 border-none rounded-lg text-sm text-slate-600 focus:ring-2 focus:ring-slate-200 outline-none w-64 transition-all"
                     />
                 </div>
-                <button
+                <button 
                     onClick={() => setCurrentView('NOTIFICATIONS')}
                     className="relative text-slate-400 hover:text-slate-600"
                 >
                     <Bell size={20} />
-                    {unseenNotificationCount > 0 && <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
+                    {notifications.length > 0 && <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
                 </button>
                 <div className="h-6 w-px bg-slate-200"></div>
                 <button onClick={onViewProfile} className="text-sm font-medium text-slate-600 hover:text-indigo-600 flex items-center gap-1">
@@ -1733,118 +1698,78 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     </div>
                                 </div>
 
-                                <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/50 scroll-smooth flex flex-col" ref={scrollRef}>
-                                    {threadMessages.map((msg, msgIndex) => {
-                                        // Separate fan messages and creator replies
-                                        const fanMessages = msg.conversation.filter(c => c.role === 'FAN');
-                                        const creatorReplies = msg.conversation.filter(c => c.role === 'CREATOR' && !c.id.endsWith('-auto'));
+                                <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30 scroll-smooth flex flex-col" ref={scrollRef}>
+                                    {threadMessages.map((msg, msgIndex) => (
+                                        <div key={msg.id} className="mb-8">
+                                            <div className="flex items-center justify-center gap-4 mb-6 opacity-60">
+                                                <div className="h-px bg-slate-300 flex-1"></div>
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 flex items-center gap-1">
+                                                    Session {msgIndex + 1} • {new Date(msg.createdAt).toLocaleDateString()}
+                                                </span>
+                                                <div className="h-px bg-slate-300 flex-1"></div>
+                                            </div>
+                                            {msg.conversation.map((chat, index) => {
+                                        const isMe = chat.role === 'CREATOR';
+                                        const nextMsg = msg.conversation[index + 1];
+                                        const prevMsg = msg.conversation[index - 1];
+                                        
+                                        const getMinuteBucket = (ts: string) => Math.floor(new Date(ts).getTime() / 60000);
+                                        const currentBucket = getMinuteBucket(chat.timestamp);
+                                        const prevBucket = prevMsg ? getMinuteBucket(prevMsg.timestamp) : -1;
+                                        const nextBucket = nextMsg ? getMinuteBucket(nextMsg.timestamp) : -1;
 
+                                        const isLastInGroup = !nextMsg || nextMsg.role !== chat.role || nextBucket !== currentBucket;
+                                        const isFirstInGroup = !prevMsg || prevMsg.role !== chat.role || prevBucket !== currentBucket;
                                         return (
-                                        <div key={msg.id} className="mb-6">
-                                            {/* Session Divider */}
-                                            {msgIndex > 0 && (
-                                                <div className="flex items-center justify-center gap-4 mb-6 opacity-60">
-                                                    <div className="h-px bg-slate-200 flex-1"></div>
-                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">
-                                                        {new Date(msg.createdAt).toLocaleDateString()}
-                                                    </span>
-                                                    <div className="h-px bg-slate-200 flex-1"></div>
-                                                </div>
-                                            )}
-
-                                            {/* Fan's Original Note - Main Post Style */}
-                                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                                                {/* Fan Header */}
-                                                <div className="p-4 pb-0">
-                                                    <div className="flex items-start gap-3">
-                                                        <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 border border-slate-200">
-                                                            {msg.senderAvatarUrl ? (
+                                            <React.Fragment key={`${msg.id}-${index}`}>
+                                            <div key={`${msg.id}-${index}`} className={`flex gap-4 ${isMe ? 'flex-row-reverse' : ''} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}>
+                                                {!isMe && (
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border bg-indigo-100 text-indigo-600 border-indigo-200 ${isFirstInGroup ? '' : 'opacity-0 border-transparent'} overflow-hidden`}>
+                                                        {isFirstInGroup && (
+                                                            msg.senderAvatarUrl ? (
                                                                 <img src={msg.senderAvatarUrl} alt={msg.senderName} className="w-full h-full object-cover" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-indigo-500">
-                                                                    <User size={18} />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="font-bold text-slate-900 text-sm">{msg.senderName}</span>
-                                                                <span className="text-slate-400 text-xs">•</span>
-                                                                <span className="text-slate-400 text-xs">
-                                                                    {new Date(msg.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                </span>
+                                                                <User size={18} />
+                                                            )
+                                                        )}
+                                                    </div>
+                                                )}
+                                                
+                                                <div className={`space-y-1 max-w-[85%] ${isMe ? 'text-right' : 'text-left'}`}>
+                                                    <div className={`p-4 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap text-left ${isMe ? `bg-indigo-600 text-white ${isFirstInGroup ? 'rounded-tr-none' : 'rounded-tr-2xl'}` : `bg-white text-slate-800 border border-slate-200 ${isFirstInGroup ? 'rounded-tl-none' : 'rounded-tl-2xl'}`}`}>
+                                                        {chat.content}
+                                                        {!isMe && index === 0 && msg.attachmentUrl && (
+                                                            <div className="mt-3 rounded-lg overflow-hidden border border-black/10">
+                                                                <img src={msg.attachmentUrl} className="max-w-xs w-full object-cover" alt="attachment" />
                                                             </div>
-                                                        </div>
+                                                        )}
                                                     </div>
-                                                </div>
-
-                                                {/* Fan Message Content */}
-                                                <div className="px-4 py-3">
-                                                    {fanMessages.map((chat, idx) => (
-                                                        <div key={chat.id} className={idx > 0 ? 'mt-3 pt-3 border-t border-slate-100' : ''}>
-                                                            <p className="text-slate-800 text-sm leading-relaxed whitespace-pre-wrap">{chat.content}</p>
-                                                        </div>
-                                                    ))}
-
-                                                    {/* Attachment */}
-                                                    {msg.attachmentUrl && (
-                                                        <div className="mt-3 rounded-xl overflow-hidden border border-slate-200">
-                                                            <img src={msg.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
-                                                        </div>
+                                                    {isLastInGroup && (
+                                                        <span className="text-[10px] text-slate-400 block px-1">
+                                                            {new Date(chat.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                        </span>
                                                     )}
-                                                </div>
-
-                                                {/* Footer Stats */}
-                                                <div className="px-4 py-3 border-t border-slate-100 flex items-center gap-4 text-slate-400">
-                                                    <div className="flex items-center gap-1.5 text-xs">
-                                                        <Coins size={14} className="text-amber-500" />
-                                                        <span className="font-bold text-slate-600">{msg.amount}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5 text-xs">
-                                                        <MessageSquare size={14} />
-                                                        <span>{creatorReplies.length}</span>
-                                                    </div>
                                                 </div>
                                             </div>
 
-                                            {/* Creator Replies Section */}
-                                            {creatorReplies.length > 0 && (
-                                                <div className="mt-3 ml-4 sm:ml-6 border-l-2 border-indigo-200 pl-4">
-                                                    <div className="flex items-center gap-2 mb-3">
-                                                        <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Your Reply</span>
-                                                        <span className="text-xs text-slate-400">{creatorReplies.length}</span>
-                                                    </div>
-
-                                                    {creatorReplies.map((reply, idx) => (
-                                                        <div key={reply.id} className={`bg-white rounded-xl border border-slate-200 p-4 shadow-sm ${idx > 0 ? 'mt-3' : ''}`}>
-                                                            <div className="flex items-start gap-3">
-                                                                <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 border-2 border-white shadow-sm">
-                                                                    {creator.avatarUrl ? (
-                                                                        <img src={creator.avatarUrl} alt={creator.displayName} className="w-full h-full object-cover" />
-                                                                    ) : (
-                                                                        <div className="w-full h-full flex items-center justify-center text-white">
-                                                                            <User size={14} />
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="flex items-center gap-2 mb-1">
-                                                                        <span className="font-bold text-slate-900 text-sm">{creator.displayName}</span>
-                                                                        <CheckCircle2 size={14} className="text-blue-500 fill-blue-500" />
-                                                                        <span className="text-slate-400 text-xs">
-                                                                            {new Date(reply.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })} {new Date(reply.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                        </span>
-                                                                    </div>
-                                                                    <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{reply.content}</p>
-                                                                </div>
+                                            {/* Auto-Reply Visualization for Creator */}
+                                            {index === 0 && (
+                                                <div className="flex gap-4 flex-row-reverse mt-4 opacity-80">
+                                                    <div className="space-y-1 max-w-[85%] text-right">
+                                                        <div className="p-4 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap text-left bg-slate-50 text-slate-600 border border-slate-200 rounded-tr-none">
+                                                            <div className="flex items-center gap-1.5 mb-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                                                <Sparkles size={10} /> Automated Welcome Message
                                                             </div>
+                                                            {creator.welcomeMessage || "Thanks for your request! I've received it and will get back to you shortly."}
                                                         </div>
-                                                    ))}
+                                                    </div>
                                                 </div>
                                             )}
-                                        </div>
-                                    );
+                                            </React.Fragment>
+                                        );
                                     })}
+                                        </div>
+                                    ))}
 
                                     {activeMessage.status === 'EXPIRED' && (
                                         <div className="flex justify-center py-4 mt-4">
@@ -2068,17 +1993,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             {/* REPLACED TAGS WITH PLATFORM SELECTOR */}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-2">Connected Platforms</label>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                     {SUPPORTED_PLATFORMS.map(platform => {
-                                        const platformData = editedCreator.platforms?.find(p => p.id === platform.id);
-                                        const isSelected = !!platformData;
+                                        const isSelected = editedCreator.platforms?.some(p => (typeof p === 'string' ? p : p.id) === platform.id);
                                         return (
-                                            <button
+                                            <button 
                                                 key={platform.id}
                                                 onClick={() => handleTogglePlatform(platform.id)}
                                                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all ${
-                                                    isSelected
-                                                    ? 'bg-slate-900 text-white border-slate-900 shadow-md'
+                                                    isSelected 
+                                                    ? 'bg-slate-900 text-white border-slate-900 shadow-md' 
                                                     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                                                 }`}
                                             >
@@ -2089,32 +2013,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         )
                                     })}
                                 </div>
-
-                                {/* URL inputs for selected platforms */}
-                                {(editedCreator.platforms || []).length > 0 && (
-                                    <div className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Platform URLs</p>
-                                        {(editedCreator.platforms || []).map(platform => {
-                                            const platformInfo = SUPPORTED_PLATFORMS.find(p => p.id === platform.id);
-                                            if (!platformInfo) return null;
-                                            return (
-                                                <div key={platform.id} className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
-                                                        <platformInfo.icon className="w-4 h-4 text-slate-600" />
-                                                    </div>
-                                                    <input
-                                                        type="url"
-                                                        value={platform.url}
-                                                        onChange={(e) => handleUpdatePlatformUrl(platform.id, e.target.value)}
-                                                        placeholder={`Enter your ${platformInfo.label} URL`}
-                                                        className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none placeholder:text-slate-300"
-                                                    />
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                                <p className="text-[10px] text-slate-400 mt-2">These icons will appear on your public profile and link to your accounts.</p>
+                                <p className="text-[10px] text-slate-400 mt-2">These icons will appear on your public profile.</p>
                             </div>
                             
                             {/* Featured Links Section - UPDATED with Digital Products */}
