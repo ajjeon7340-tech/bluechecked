@@ -375,7 +375,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
   // Determine which links/products to show: the live ones or the edited ones
   const displayedLinks = isCustomizeMode ? (editedCreator.links || []) : (creator.links || []);
-  const platforms = isCustomizeMode ? (editedCreator.platforms || []) : (creator.platforms || ['youtube', 'x']);
+  const platforms = isCustomizeMode ? (editedCreator.platforms || []) : (creator.platforms || []);
 
   return (
     <div className="min-h-screen font-sans text-slate-900 pb-20 selection:bg-indigo-500 selection:text-white relative bg-[#F8FAFC]">
@@ -583,13 +583,34 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         </div>
 
                                         {/* Platform Icons */}
-                                        <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-50 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-slate-100">
-                                            {platforms.map(platform => (
-                                                <div key={platform} className="flex items-center">
-                                                    {getPlatformIcon(platform)}
-                                                </div>
-                                            ))}
-                                        </div>
+                                        {platforms.length > 0 && (
+                                            <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-50 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-slate-100">
+                                                {platforms.map(platform => {
+                                                    const platformId = typeof platform === 'string' ? platform : platform.id;
+                                                    const platformUrl = typeof platform === 'string' ? '' : platform.url;
+
+                                                    if (platformUrl) {
+                                                        return (
+                                                            <a
+                                                                key={platformId}
+                                                                href={platformUrl}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center hover:scale-110 transition-transform"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                {getPlatformIcon(platformId)}
+                                                            </a>
+                                                        );
+                                                    }
+                                                    return (
+                                                        <div key={platformId} className="flex items-center">
+                                                            {getPlatformIcon(platformId)}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </>

@@ -613,17 +613,27 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const handleTogglePlatform = (platformId: string) => {
       const currentPlatforms = editedCreator.platforms || [];
-      if (currentPlatforms.includes(platformId)) {
+      const existingPlatform = currentPlatforms.find(p => p.id === platformId);
+      if (existingPlatform) {
           setEditedCreator(prev => ({
               ...prev,
-              platforms: prev.platforms?.filter(p => p !== platformId)
+              platforms: prev.platforms?.filter(p => p.id !== platformId)
           }));
       } else {
           setEditedCreator(prev => ({
               ...prev,
-              platforms: [...(prev.platforms || []), platformId]
+              platforms: [...(prev.platforms || []), { id: platformId, url: '' }]
           }));
       }
+  };
+
+  const handleUpdatePlatformUrl = (platformId: string, url: string) => {
+      setEditedCreator(prev => ({
+          ...prev,
+          platforms: (prev.platforms || []).map(p =>
+              p.id === platformId ? { ...p, url } : p
+          )
+      }));
   };
 
   const handleUpdateLink = (id: string, field: keyof AffiliateLink, value: any) => {
@@ -2018,16 +2028,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             {/* REPLACED TAGS WITH PLATFORM SELECTOR */}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-2">Connected Platforms</label>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
                                     {SUPPORTED_PLATFORMS.map(platform => {
-                                        const isSelected = editedCreator.platforms?.includes(platform.id);
+                                        const platformData = editedCreator.platforms?.find(p => p.id === platform.id);
+                                        const isSelected = !!platformData;
                                         return (
-                                            <button 
+                                            <button
                                                 key={platform.id}
                                                 onClick={() => handleTogglePlatform(platform.id)}
                                                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all ${
-                                                    isSelected 
-                                                    ? 'bg-slate-900 text-white border-slate-900 shadow-md' 
+                                                    isSelected
+                                                    ? 'bg-slate-900 text-white border-slate-900 shadow-md'
                                                     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                                                 }`}
                                             >
@@ -2038,7 +2049,32 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         )
                                     })}
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-2">These icons will appear on your public profile.</p>
+
+                                {/* URL inputs for selected platforms */}
+                                {(editedCreator.platforms || []).length > 0 && (
+                                    <div className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Platform URLs</p>
+                                        {(editedCreator.platforms || []).map(platform => {
+                                            const platformInfo = SUPPORTED_PLATFORMS.find(p => p.id === platform.id);
+                                            if (!platformInfo) return null;
+                                            return (
+                                                <div key={platform.id} className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
+                                                        <platformInfo.icon className="w-4 h-4 text-slate-600" />
+                                                    </div>
+                                                    <input
+                                                        type="url"
+                                                        value={platform.url}
+                                                        onChange={(e) => handleUpdatePlatformUrl(platform.id, e.target.value)}
+                                                        placeholder={`Enter your ${platformInfo.label} URL`}
+                                                        className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none placeholder:text-slate-300"
+                                                    />
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                                <p className="text-[10px] text-slate-400 mt-2">These icons will appear on your public profile and link to your accounts.</p>
                             </div>
                             
                             {/* Featured Links Section - UPDATED with Digital Products */}

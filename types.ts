@@ -31,8 +31,13 @@ export interface Product {
   description?: string;
   price: number; // In Credits
   imageUrl?: string;
-  url: string; 
+  url: string;
   buttonText?: string;
+}
+
+export interface PlatformLink {
+  id: string; // e.g., 'youtube', 'instagram', 'x', etc.
+  url: string;
 }
 
 export interface CreatorProfile {
@@ -51,7 +56,7 @@ export interface CreatorProfile {
   products: Product[]; 
   likesCount: number;
   isPremium?: boolean; 
-  platforms?: string[]; 
+  platforms?: PlatformLink[]; 
   rankingTitle?: string; 
   bannerGradient?: string; 
   stats: {
