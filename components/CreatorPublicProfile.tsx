@@ -581,6 +581,36 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
                                             </div>
                                         </div>
+
+                                        {/* Platform Icons */}
+                                        {platforms.length > 0 && (
+                                            <div className="flex items-center gap-2 bg-slate-50 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-slate-100">
+                                                {platforms.map(platform => {
+                                                    const platformId = typeof platform === 'string' ? platform : platform.id;
+                                                    const platformUrl = typeof platform === 'string' ? '' : platform.url;
+
+                                                    if (platformUrl) {
+                                                        return (
+                                                            <a
+                                                                key={platformId}
+                                                                href={platformUrl}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center hover:scale-110 transition-transform"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                {getPlatformIcon(platformId)}
+                                                            </a>
+                                                        );
+                                                    }
+                                                    return (
+                                                        <div key={platformId} className="flex items-center opacity-50">
+                                                            {getPlatformIcon(platformId)}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </>
