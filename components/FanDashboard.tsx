@@ -1003,12 +1003,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     {isUnderReview ? 'Creator Name' : creator.displayName}
                                                 </h3>
                                                 <div className="flex items-center justify-center gap-1.5 mb-3 mt-2">
-                                                    {platforms.slice(0, 3).map((p: string, i: number) => (
-                                                        <div key={i} className="w-7 h-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center hover:scale-110 transition-transform shadow-sm">
-                                                            {/* @ts-ignore */}
-                                                            {getPlatformIcon(p, 'colored')}
-                                                        </div>
-                                                    ))}
+                                                    {platforms.slice(0, 3).map((p: any, i: number) => {
+                                                        const platformId = typeof p === 'string' ? p : p?.id || '';
+                                                        return (
+                                                            <div key={i} className="w-7 h-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center hover:scale-110 transition-transform shadow-sm">
+                                                                {getPlatformIcon(platformId, 'colored')}
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                                 <div className="flex items-center justify-center gap-3 text-xs text-slate-500 font-medium">
                                                     <span className="flex items-center gap-1"><Star size={10} className="fill-yellow-400 text-yellow-400"/> {creator.stats.averageRating}</span>
