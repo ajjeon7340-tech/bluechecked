@@ -47,6 +47,7 @@ Deno.serve(async (req) => {
         if (user && user.user) {
             recipientEmail = user.user.email
         }
+        console.log(`[Edge] Resolved email for creatorId ${creatorId}: ${recipientEmail}`)
 
         if (!recipientEmail) {
              throw new Error(`Could not resolve email for creatorId: ${creatorId}`)

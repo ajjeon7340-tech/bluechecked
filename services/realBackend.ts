@@ -829,10 +829,11 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
     // NOTE: This will log an error to the console if the 'send-email' Edge Function is not deployed.
     // We attempt to send even if email is missing on client (RLS), hoping Edge Function can resolve it via creatorId
     if (session.session) {
+        console.log(`[Email] Triggering notification for Creator ID: ${creatorId}`);
         supabase.functions.invoke('send-email', {
             body: {
                 creatorId: creatorId,
-                to: creatorProfile.email,
+                // to: creatorProfile.email, // Let Edge Function resolve email via Service Role to ensure accuracy
                 subject: `New Request from ${senderName}`,
                 html: `
                     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
