@@ -33,6 +33,7 @@ const getSiteUrl = () => {
     // Allow overriding the site URL via environment variable (e.g. VITE_SITE_URL=https://telepossible.com)
     if (import.meta.env.VITE_SITE_URL) {
         return import.meta.env.VITE_SITE_URL;
+        return import.meta.env.VITE_SITE_URL.replace(/\/$/, "");
     }
     return window.location.origin;
 };
@@ -341,6 +342,7 @@ export const signInWithSocial = async (provider: 'google' | 'instagram', role: U
     const redirectBase = getSiteUrl();
 
     console.log("Redirecting to:", `${redirectBase}?role=${role}`);
+    console.log(`[Auth] OAuth Redirect: ${redirectBase}?role=${role}`);
 
     const { error } = await supabase.auth.signInWithOAuth({
         provider: supabaseProvider as any,
@@ -597,6 +599,55 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
             replyRate, 
             profileViews: totalRequests, // Using Total Requests as a proxy for views/activity
             averageRating 
+        },
+        customQuestions: [],
+        tags: [],
+        links: data.links || [],
+        products: data.products || [],
+        platforms: data.platforms || [],
+        isPremium: data.is_premium || false
+    };
+};
+
+export const getCreatorProfileFast = async (creatorId?: string): Promise<CreatorProfile> => {
+    if (!isConfigured) return MockBackend.getCreatorProfile(creatorId);
+
+    let query = supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'CREATOR');
+
+    if (creatorId) {
+        query = query.eq('id', creatorId);
+    } else {
+        query = query.limit(1);
+    }
+
+    const { data, error } = await query.maybeSingle();
+
+    if (error) {
+        console.error("Supabase Error:", error);
+        throw new Error(`Database Error: ${error.message}`);
+    }
+
+    if (!data) {
+        throw new Error("No creator profile found.");
+    }
+
+    return {
+        id: data.id,
+        handle: data.handle || '@user',
+        displayName: data.display_name,
+        bio: data.bio || '',
+        avatarUrl: data.avatar_url || DEFAULT_AVATAR,
+        pricePerMessage: data.price_per_message || 50,
+        responseWindowHours: data.response_window_hours || 48,
+        likesCount: 0, // Placeholder for speed
+        stats: { 
+            responseTimeAvg: 'Standard',
+            replyRate: '100%', 
+            profileViews: 0, 
+            averageRating: 5.0 
         },
         customQuestions: [],
         tags: [],

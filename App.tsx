@@ -5,7 +5,7 @@ import { CreatorDashboard } from './components/CreatorDashboard';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { FanDashboard } from './components/FanDashboard';
-import { getCreatorProfile, checkAndSyncSession, isBackendConfigured, completeOAuthSignup, signOut, subscribeToAuthChanges, getCreatorProfileFast } from './services/realBackend';
+import { getCreatorProfile, checkAndSyncSession, completeOAuthSignup, signOut, subscribeToAuthChanges } from './services/realBackend';
 import { CreatorProfile, CurrentUser, UserRole } from './types';
 
 type PageState = 'LANDING' | 'LOGIN' | 'DASHBOARD' | 'PROFILE' | 'FAN_DASHBOARD' | 'SETUP_PROFILE';
@@ -16,8 +16,6 @@ function App() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isProfileLoading, setIsProfileLoading] = useState(false);
-  const [loadingCreatorId, setLoadingCreatorId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSignUpConfirm, setShowSignUpConfirm] = useState(false);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
@@ -31,43 +29,31 @@ function App() {
     try {
       // Don't set isLoading(true) here to avoid flashing the loading screen on background refreshes
       setError(null);
-
-      // Fetch Creator Profile AND Refresh User Session IN PARALLEL for faster loading
-      const [userData, creatorResult] = await Promise.allSettled([
-        checkAndSyncSession(),
-        getCreatorProfile(specificCreatorId)
-      ]);
-
-      // Handle user session result
-      if (userData.status === 'fulfilled') {
-        if (userData.value) {
-          setCurrentUser(userData.value);
-        } else {
+      
+      // Fetch Creator Profile AND Refresh User Session (to update credits)
+      const userData = await checkAndSyncSession();
+      if (userData) {
+          setCurrentUser(userData);
+      } else {
+          // Session is invalid (e.g. user deleted from DB), clear local state
           setCurrentUser(null);
           localStorage.removeItem('bluechecked_current_user');
-        }
-      } else {
-        // Session check failed - check for PROFILE_MISSING
-        if (userData.reason?.code === 'PROFILE_MISSING') {
-          setShowSignUpConfirm(true);
-          if (stopLoading) setIsLoading(false);
-          return null;
-        }
       }
 
-      // Handle creator profile result
-      if (creatorResult.status === 'fulfilled') {
-        setCreator(creatorResult.value);
-        return creatorResult.value;
-      } else {
-        // Creator fetch failed
-        const role = (userData.status === 'fulfilled' ? userData.value?.role : null) || currentUserRef.current?.role;
+      try {
+        const creatorData = await getCreatorProfile(specificCreatorId);
+        setCreator(creatorData);
+        return creatorData;
+      } catch (e: any) {
+        // Only ignore error if we are NOT looking for a specific creator (i.e. app init)
+        // BUT if we are logged in as a CREATOR, we expect to find our profile, so don't ignore.
+        const role = userData?.role || currentUserRef.current?.role;
         if (!specificCreatorId && role !== 'CREATOR') {
-          console.warn("No creator profile found (DB might be empty). App running in setup mode.");
-          setCreator(null);
-          return null;
+             console.warn("No creator profile found (DB might be empty). App running in setup mode.");
+             setCreator(null);
+             return null;
         }
-        throw creatorResult.reason;
+        throw e;
       }
 
     } catch (err: any) {
@@ -91,22 +77,8 @@ function App() {
       const user = currentUserRef.current;
       if (state && state.page) {
         if (state.page === 'PROFILE' && state.creatorId) {
-             // Use fast loading for immediate display
-             setLoadingCreatorId(state.creatorId);
-             setIsProfileLoading(true);
-             getCreatorProfileFast(state.creatorId).then(fastProfile => {
-               setCreator(fastProfile);
-               setIsProfileLoading(false);
-               setLoadingCreatorId(null);
-               // Load full stats in background
-               getCreatorProfile(state.creatorId).then(fullProfile => {
-                 setCreator(fullProfile);
-               }).catch(e => console.warn("Failed to load stats:", e));
-             }).catch(e => {
-               console.error("Failed to load creator:", e);
-               setIsProfileLoading(false);
-               setLoadingCreatorId(null);
-             });
+             setIsLoading(true);
+             loadCreatorData(state.creatorId);
         } else if (state.page === 'DASHBOARD' && user?.role === 'CREATOR') {
              setIsLoading(true);
              loadCreatorData(user.id);
@@ -124,9 +96,6 @@ function App() {
 
     window.addEventListener('popstate', handlePopState);
 
-    console.log("Bluechecked App Version: 3.6.32");
-    console.log("Backend Connection:", isBackendConfigured() ? "✅ Connected to Supabase" : "⚠️ Using Mock Data");
-    
     // Listen for Password Recovery Event
     const authSubscription = subscribeToAuthChanges((event, session) => {
         if (event === 'PASSWORD_RECOVERY') {
@@ -202,7 +171,7 @@ function App() {
 
   // Redirect to Landing if we are on a creator page but have no creator data (e.g. empty DB)
   useEffect(() => {
-    if (!isLoading && !isProfileLoading && !creator) {
+    if (!isLoading && !creator) {
       if (currentPage === 'DASHBOARD' || currentPage === 'PROFILE') {
         setCurrentPage('LANDING');
       }
@@ -275,39 +244,14 @@ function App() {
   };
 
   const handleCreatorSelect = async (creatorId: string) => {
-    // Navigate immediately for faster perceived performance
-    setLoadingCreatorId(creatorId);
-    setIsProfileLoading(true);
-    window.history.pushState({ page: 'PROFILE', creatorId }, '', '');
-    setCurrentPage('PROFILE');
-
     try {
-      // Fast load - just get profile without stats
-      const fastProfile = await getCreatorProfileFast(creatorId);
-      setCreator(fastProfile);
-      setIsProfileLoading(false);
-      setLoadingCreatorId(null);
-
-      // Load full stats in background (non-blocking)
-      getCreatorProfile(creatorId).then(fullProfile => {
-        setCreator(fullProfile);
-      }).catch(e => console.warn("Failed to load stats:", e));
-
-    } catch (e: any) {
-      console.error("Failed to load creator (fast):", e);
-      // Fallback to full load
-      try {
-        const fullProfile = await getCreatorProfile(creatorId);
-        setCreator(fullProfile);
-        setIsProfileLoading(false);
-        setLoadingCreatorId(null);
-      } catch (e2) {
-        console.error("Failed to load creator (full):", e2);
-        // Only go back if both methods fail
-        window.history.back();
-        setIsProfileLoading(false);
-        setLoadingCreatorId(null);
-      }
+      setIsLoading(true);
+      await loadCreatorData(creatorId, false);
+      window.history.pushState({ page: 'PROFILE', creatorId }, '', '');
+      setCurrentPage('PROFILE');
+      setIsLoading(false);
+    } catch (e) {
+      setIsLoading(false);
     }
   };
 
@@ -378,50 +322,14 @@ function App() {
         />
       )}
 
-      {currentPage === 'PROFILE' && (isProfileLoading || !creator || (loadingCreatorId && creator.id !== loadingCreatorId)) && (
-        <div className="min-h-screen bg-[#F8FAFC] pt-20 sm:pt-24 px-4">
-          <div className="max-w-2xl mx-auto space-y-4">
-            {/* Skeleton Header */}
-            <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-slate-200 p-4 sm:p-6">
-              <div className="flex gap-3 sm:gap-5 items-center">
-                <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-slate-200 animate-pulse flex-shrink-0"></div>
-                <div className="flex-1 space-y-3">
-                  <div className="h-6 bg-slate-200 rounded-lg w-32 animate-pulse"></div>
-                  <div className="flex gap-2">
-                    <div className="h-8 bg-slate-100 rounded-lg w-16 animate-pulse"></div>
-                    <div className="h-8 bg-slate-100 rounded-lg w-20 animate-pulse"></div>
-                    <div className="h-8 bg-slate-100 rounded-lg w-14 animate-pulse"></div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
-                <div className="h-4 bg-slate-100 rounded w-full animate-pulse"></div>
-                <div className="h-4 bg-slate-100 rounded w-3/4 animate-pulse"></div>
-              </div>
-            </div>
-            {/* Skeleton Service Card */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4">
-              <div className="flex gap-3 items-center">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-200 animate-pulse"></div>
-                <div className="flex-1 space-y-2">
-                  <div className="h-5 bg-slate-200 rounded w-24 animate-pulse"></div>
-                  <div className="h-3 bg-slate-100 rounded w-32 animate-pulse"></div>
-                </div>
-                <div className="h-10 bg-slate-200 rounded-xl w-20 animate-pulse"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {currentPage === 'PROFILE' && creator && !isProfileLoading && (
-        <CreatorPublicProfile
-          creator={creator}
+      {currentPage === 'PROFILE' && creator && (
+        <CreatorPublicProfile 
+          creator={creator} 
           currentUser={currentUser}
           onMessageSent={() => {
             setRefreshTrigger(p => p + 1);
             loadCreatorData(); // Refresh credits after sending
-          }}
+          }} 
           onCreateOwn={async () => {
             if (currentUser) {
               if (currentUser.role === 'CREATOR') {
