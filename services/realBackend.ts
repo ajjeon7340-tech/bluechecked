@@ -859,6 +859,8 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
                         console.error("Edge Function Error Details:", body);
                     }
                 }
+            } else {
+                console.log("[Email] Notification sent successfully");
             }
         });
     }
