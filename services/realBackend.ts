@@ -29,6 +29,14 @@ const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
     ]);
 };
 
+const getSiteUrl = () => {
+    // Allow overriding the site URL via environment variable (e.g. VITE_SITE_URL=https://telepossible.com)
+    if (import.meta.env.VITE_SITE_URL) {
+        return import.meta.env.VITE_SITE_URL;
+    }
+    return window.location.origin;
+};
+
 // --- HELPER: MAP DB OBJECTS TO TYPES ---
 
 const mapProfileToUser = (profile: any): CurrentUser => ({
@@ -136,7 +144,7 @@ export const loginUser = async (role: UserRole, identifier: string, password?: s
         const signUpOptions = {
             password: authPassword,
             options: {
-                emailRedirectTo: window.location.origin,
+                emailRedirectTo: getSiteUrl(),
                 data: {
                     name: name || 'New User',
                     role: role
@@ -276,7 +284,7 @@ export const resendConfirmationEmail = async (email: string) => {
     const { error } = await supabase.auth.resend({
         type: 'signup',
         email,
-        options: { emailRedirectTo: window.location.origin }
+        options: { emailRedirectTo: getSiteUrl() }
     });
     if (error) throw error;
 };
@@ -288,7 +296,7 @@ export const sendPasswordResetEmail = async (email: string) => {
         return;
     }
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin,
+        redirectTo: getSiteUrl(),
     });
     if (error) throw error;
 };
@@ -330,7 +338,7 @@ export const signInWithSocial = async (provider: 'google' | 'instagram', role: U
     // Use the current window origin. This ensures:
     // 1. Localhost -> Localhost
     // 2. Production -> Production
-    const redirectBase = window.location.origin;
+    const redirectBase = getSiteUrl();
 
     console.log("Redirecting to:", `${redirectBase}?role=${role}`);
 
@@ -482,7 +490,7 @@ export const completeOAuthSignup = async (roleOverride?: UserRole): Promise<Curr
 
 // --- PROFILES ---
 
-export const getCreatorProfile = async (creatorId?: string, skipStats = false): Promise<CreatorProfile> => {
+export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProfile> => {
     if (!isConfigured) {
         console.log("%c[Backend] Using Mock Data (Supabase not configured)", "background: #f59e0b; color: black; padding: 2px 4px; border-radius: 2px; font-weight: bold;");
         return MockBackend.getCreatorProfile(creatorId);
@@ -510,37 +518,69 @@ export const getCreatorProfile = async (creatorId?: string, skipStats = false): 
         throw new Error("No creator profile found. Please run the Seed Script in Supabase.");
     }
 
-    // Default stats - return immediately if skipStats is true
-    let responseTimeAvg = 'Fast';
+    // Calculate Real Stats from Messages
+    let responseTimeAvg = 'N/A';
     let replyRate = '100%';
     let totalRequests = 0;
     let averageRating = 5.0;
-    let realLikesCount = 0;
 
-    if (!skipStats) {
-        // Fetch stats and likes count IN PARALLEL
-        const [statsResult, likesResult] = await Promise.allSettled([
-            supabase.rpc('get_creator_stats', { target_creator_id: data.id }),
-            supabase.from('creator_likes').select('*', { count: 'exact', head: true }).eq('creator_id', data.id)
-        ]);
+    // 1. Try RPC for accurate public stats (bypassing RLS)
+    const { data: rpcStats, error: rpcError } = await supabase.rpc('get_creator_stats', { target_creator_id: data.id });
 
-        if (statsResult.status === 'fulfilled' && !statsResult.value.error && statsResult.value.data) {
-            const rpcStats = statsResult.value.data;
-            averageRating = rpcStats.averageRating;
-            totalRequests = rpcStats.totalRequests;
-            replyRate = `${rpcStats.replyRate}%`;
+    if (!rpcError && rpcStats) {
+        averageRating = rpcStats.averageRating;
+        totalRequests = rpcStats.totalRequests;
+        replyRate = `${rpcStats.replyRate}%`;
+        
+        const hours = rpcStats.avgResponseHours;
+        if (hours === null || hours === undefined) responseTimeAvg = 'Standard';
+        else if (hours < 1) responseTimeAvg = 'Lightning';
+        else if (hours < 4) responseTimeAvg = 'Very Fast';
+        else if (hours < 24) responseTimeAvg = 'Fast';
+        else responseTimeAvg = 'Standard';
+    } else {
+        // 2. Fallback: Client-side calculation (Subject to RLS, mostly for Creator's own view if RPC fails)
+        const { data: statMessages } = await supabase
+            .from('messages')
+            .select('created_at, reply_at, status, rating')
+            .eq('creator_id', data.id);
 
-            const hours = rpcStats.avgResponseHours;
-            if (hours === null || hours === undefined) responseTimeAvg = 'Standard';
-            else if (hours < 1) responseTimeAvg = 'Lightning';
-            else if (hours < 4) responseTimeAvg = 'Very Fast';
-            else if (hours < 24) responseTimeAvg = 'Fast';
-            else responseTimeAvg = 'Standard';
+        if (statMessages && statMessages.length > 0) {
+            totalRequests = statMessages.length;
+
+            const repliedMsgs = statMessages.filter(m => m.status === 'REPLIED' && m.reply_at);
+            if (repliedMsgs.length > 0) {
+                const totalTimeMs = repliedMsgs.reduce((acc, m) => acc + (new Date(m.reply_at).getTime() - new Date(m.created_at).getTime()), 0);
+                const avgHours = totalTimeMs / repliedMsgs.length / (1000 * 60 * 60);
+                
+                if (avgHours < 1) responseTimeAvg = 'Lightning';
+                else if (avgHours < 4) responseTimeAvg = 'Very Fast';
+                else if (avgHours < 24) responseTimeAvg = 'Fast';
+                else responseTimeAvg = 'Standard';
+            } else {
+                responseTimeAvg = 'Standard';
+            }
+
+            const repliedCount = statMessages.filter(m => m.status === 'REPLIED').length;
+            const expiredCount = statMessages.filter(m => m.status === 'EXPIRED').length;
+            const totalProcessed = repliedCount + expiredCount;
+            if (totalProcessed > 0) {
+                replyRate = `${Math.round((repliedCount / totalProcessed) * 100)}%`;
+            }
+
+            const ratedMessages = statMessages.filter(m => m.rating && m.rating > 0);
+            if (ratedMessages.length > 0) {
+                const totalRating = ratedMessages.reduce((sum, m) => sum + m.rating, 0);
+                averageRating = parseFloat((totalRating / ratedMessages.length).toFixed(1));
+            }
         }
+    }
 
-        if (likesResult.status === 'fulfilled' && !likesResult.value.error) {
-            realLikesCount = likesResult.value.count || 0;
-        }
+    // 4. Get Real Likes Count
+    const { count: realLikesCount, error: likesError } = await supabase.from('creator_likes').select('*', { count: 'exact', head: true }).eq('creator_id', data.id);
+
+    if (likesError && likesError.code !== '42P01') {
+        console.warn("Failed to fetch likes count:", likesError);
     }
 
     return {
@@ -551,12 +591,12 @@ export const getCreatorProfile = async (creatorId?: string, skipStats = false): 
         avatarUrl: data.avatar_url || DEFAULT_AVATAR,
         pricePerMessage: data.price_per_message || 50,
         responseWindowHours: data.response_window_hours || 48,
-        likesCount: realLikesCount,
-        stats: {
+        likesCount: realLikesCount || 0,
+        stats: { 
             responseTimeAvg,
-            replyRate,
-            profileViews: totalRequests,
-            averageRating
+            replyRate, 
+            profileViews: totalRequests, // Using Total Requests as a proxy for views/activity
+            averageRating 
         },
         customQuestions: [],
         tags: [],
@@ -565,11 +605,6 @@ export const getCreatorProfile = async (creatorId?: string, skipStats = false): 
         platforms: data.platforms || [],
         isPremium: data.is_premium || false
     };
-};
-
-// Fast version that skips stats - for initial page load
-export const getCreatorProfileFast = (creatorId?: string): Promise<CreatorProfile> => {
-    return getCreatorProfile(creatorId, true);
 };
 
 export const updateCreatorProfile = async (profile: CreatorProfile): Promise<CreatorProfile> => {
@@ -755,7 +790,7 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
                         <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;">
                             <p style="margin: 0; font-style: italic;">"${content}"</p>
                         </div>
-                        <a href="${window.location.origin}" style="background: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">View Request</a>
+                        <a href="${getSiteUrl()}" style="background: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">View Request</a>
                     </div>
                 `
             },
@@ -784,18 +819,13 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
 export const replyToMessage = async (messageId: string, replyText: string, isComplete: boolean): Promise<void> => {
     if (!isConfigured) return MockBackend.replyToMessage(messageId, replyText, isComplete);
 
-    // Get session and message data in PARALLEL
-    const [sessionResult, msgResult] = await Promise.all([
-        supabase.auth.getSession(),
-        supabase.from('messages').select('status, expires_at, amount').eq('id', messageId).single()
-    ]);
-
-    const session = sessionResult.data;
-    const msgCheck = msgResult.data;
-
+    const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error("Not logged in");
-    if (!msgCheck) throw new Error("Message not found");
 
+    // Check status before replying
+    const { data: msgCheck } = await supabase.from('messages').select('status, expires_at').eq('id', messageId).single();
+    if (!msgCheck) throw new Error("Message not found");
+    
     if (msgCheck.status !== 'PENDING') {
          throw new Error(`Cannot reply. Message is ${msgCheck.status}`);
     }
@@ -803,72 +833,46 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
         throw new Error("Message has expired and cannot be replied to.");
     }
 
-    const userId = session.session.user.id;
-    const operations: Promise<any>[] = [];
-
-    // 1. Add Chat Line (if there's text)
+    // 1. Add Chat Line
     if (replyText.trim()) {
-        operations.push(
-            supabase.from('chat_lines').insert({
-                message_id: messageId,
-                sender_id: userId,
-                role: 'CREATOR',
-                content: replyText
-            })
-        );
+        const { error: chatError } = await supabase.from('chat_lines').insert({
+            message_id: messageId,
+            sender_id: session.session.user.id,
+            role: 'CREATOR',
+            content: replyText
+        });
+        if (chatError) throw chatError;
+
+        // Touch the message to trigger realtime updates for listeners (Fan Dashboard)
+        // Also set is_read to false so the recipient (Fan) sees it as unread
+        await supabase.from('messages').update({ 
+            is_read: false,
+            updated_at: new Date().toISOString()
+        }).eq('id', messageId);
     }
 
-    // 2. Update message status
+    // 2. Update Status if Complete
     if (isComplete) {
-        // Mark as replied
-        operations.push(
-            supabase.from('messages').update({
-                status: 'REPLIED',
-                reply_at: new Date().toISOString(),
-                is_read: false,
-                updated_at: new Date().toISOString()
-            }).eq('id', messageId)
-        );
-
-        // Add credits to creator (use RPC if available, otherwise increment)
-        operations.push(
-            supabase.rpc('increment_credits', {
-                user_id: userId,
-                amount: msgCheck.amount
-            }).then(res => {
-                // Fallback if RPC doesn't exist
-                if (res.error) {
-                    return supabase.from('profiles')
-                        .select('credits')
-                        .eq('id', userId)
-                        .single()
-                        .then(({ data }) => {
-                            if (data) {
-                                return supabase.from('profiles')
-                                    .update({ credits: data.credits + msgCheck.amount })
-                                    .eq('id', userId);
-                            }
-                        });
-                }
+        // In a real app, use RPC to atomically transfer held credits to Creator's balance here
+        // For now, just update status
+        const { error: msgError } = await supabase
+            .from('messages')
+            .update({ 
+                status: 'REPLIED', 
+                reply_at: new Date().toISOString() 
             })
-        );
-    } else if (replyText.trim()) {
-        // Just touch the message for realtime updates
-        operations.push(
-            supabase.from('messages').update({
-                is_read: false,
-                updated_at: new Date().toISOString()
-            }).eq('id', messageId)
-        );
-    }
-
-    // Run all operations in PARALLEL
-    const results = await Promise.allSettled(operations);
-
-    // Check for critical errors
-    for (const result of results) {
-        if (result.status === 'rejected') {
-            console.error('Reply operation failed:', result.reason);
+            .eq('id', messageId);
+            
+        if (msgError) throw msgError;
+        
+        // Add credits to creator
+        const { data: creator } = await supabase.from('profiles').select('credits').eq('id', session.session.user.id).single();
+        if (creator) {
+             // Retrieve message amount to add
+             const { data: msg } = await supabase.from('messages').select('amount').eq('id', messageId).single();
+             if (msg) {
+                 await supabase.from('profiles').update({ credits: creator.credits + msg.amount }).eq('id', session.session.user.id);
+             }
         }
     }
 };
