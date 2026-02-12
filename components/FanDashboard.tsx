@@ -1454,118 +1454,151 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             })()
                         )}
 
-                        {/* Messages */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-8 scroll-smooth" ref={scrollRef}>
+                        {/* Messages - Thread/Note Style */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth" ref={scrollRef}>
                              {threadMessages.map((msg, msgIndex) => {
                                 const isPending = msg.status === 'PENDING';
                                 const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
-                                return (
-                                    <div key={msg.id} className="relative group">
-                                        <div className="flex items-center justify-center gap-4 mb-6 opacity-60">
-                                            <div className="h-px bg-slate-300 flex-1"></div>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-[#F0F2F5] px-2 flex items-center gap-1">
-                                                Session {msgIndex + 1} • {new Date(msg.createdAt).toLocaleDateString()}
-                                            </span>
-                                            <div className="h-px bg-slate-300 flex-1"></div>
-                                        </div>
-                                        <div className="flex flex-col">
-                                            {msg.conversation.map((chat, chatIndex) => {
-                                                const isMe = chat.role === 'FAN';
-                                                const nextChat = msg.conversation[chatIndex + 1];
-                                                const prevChat = msg.conversation[chatIndex - 1];
-                                                
-                                                const getMinuteBucket = (ts: string) => Math.floor(new Date(ts).getTime() / 60000);
-                                                const currentBucket = getMinuteBucket(chat.timestamp);
-                                                const prevBucket = prevChat ? getMinuteBucket(prevChat.timestamp) : -1;
-                                                const nextBucket = nextChat ? getMinuteBucket(nextChat.timestamp) : -1;
 
-                                                const isLastInGroup = !nextChat || nextChat.role !== chat.role || nextBucket !== currentBucket;
-                                                const isFirstInGroup = !prevChat || prevChat.role !== chat.role || prevBucket !== currentBucket;
-                                                return (
-                                                    <React.Fragment key={`${msg.id}-${chatIndex}`}>
-                                                    <div className={`flex gap-3 max-w-[85%] md:max-w-[75%] ${isMe ? 'ml-auto justify-end' : ''} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}>
-                                                        {!isMe && (
-                                                            <div className={`w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-300 shadow-sm mt-1 ${isFirstInGroup ? '' : 'opacity-0 border-transparent shadow-none'}`}>
-                                                                {isFirstInGroup && (
-                                                                    msg.creatorAvatarUrl ? (
-                                                                        <img src={msg.creatorAvatarUrl} alt="Creator" className="w-full h-full object-cover" />
-                                                                    ) : (
-                                                                        <User size={16} className="text-slate-400" />
-                                                                    )
-                                                                )}
+                                // Separate fan messages and creator replies
+                                const fanMessages = msg.conversation.filter(c => c.role === 'FAN');
+                                const creatorReplies = msg.conversation.filter(c => c.role === 'CREATOR' && !c.id.endsWith('-auto'));
+
+                                return (
+                                    <div key={msg.id} className="relative">
+                                        {/* Session Divider */}
+                                        {msgIndex > 0 && (
+                                            <div className="flex items-center justify-center gap-4 mb-6 opacity-60">
+                                                <div className="h-px bg-slate-200 flex-1"></div>
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">
+                                                    {new Date(msg.createdAt).toLocaleDateString()}
+                                                </span>
+                                                <div className="h-px bg-slate-200 flex-1"></div>
+                                            </div>
+                                        )}
+
+                                        {/* Your Note - Main Post Style */}
+                                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                            {/* Your Header */}
+                                            <div className="p-4 pb-0">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 border-2 border-white shadow-sm">
+                                                        {currentUser?.avatarUrl ? (
+                                                            <img src={currentUser.avatarUrl} alt="You" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-white">
+                                                                <User size={18} />
                                                             </div>
                                                         )}
-                                                        <div className={`space-y-1 w-full ${isMe ? 'text-right' : 'text-left'}`}>
-                                                            <div className={`px-4 py-3 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap inline-block text-left 
-                                                                ${isMe ? `bg-blue-600 text-white ${isFirstInGroup ? 'rounded-tr-sm' : 'rounded-tr-2xl'}` : `bg-white text-slate-800 border border-slate-200 ${isFirstInGroup ? 'rounded-tl-sm' : 'rounded-tl-2xl'}`}`}>
-                                                                {chat.content}
-                                                                {isMe && chatIndex === 0 && msg.attachmentUrl && (
-                                                                    <div className="mt-2 rounded-lg overflow-hidden border border-white/20">
-                                                                        <img src={msg.attachmentUrl} alt="Attachment" className="w-full h-auto max-w-[200px]" />
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                            {isLastInGroup && (
-                                                                <div className={`flex items-center gap-1.5 px-1 text-[10px] text-slate-400 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                                                    <span>{new Date(chat.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
                                                     </div>
-
-                                                    {/* Auto-Reply / Welcome Message (Always shown after first message) */}
-                                                    {chatIndex === 0 && (
-                                                        <div className="flex gap-3 max-w-[85%] md:max-w-[75%] mt-4">
-                                                            <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-300 shadow-sm mt-1">
-                                                                {msg.creatorAvatarUrl ? (
-                                                                    <img src={msg.creatorAvatarUrl} alt="Creator" className="w-full h-full object-cover" />
-                                                                ) : (
-                                                                    <User size={16} className="text-slate-400" />
-                                                                )}
-                                                            </div>
-                                                            <div className="space-y-1 w-full text-left">
-                                                                <div className="px-4 py-3 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap inline-block text-left bg-slate-50 text-slate-600 border border-slate-200 rounded-tl-sm">
-                                                                    <div className="flex items-center gap-1.5 mb-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                                                        <Sparkles size={10} /> Automated Welcome Message
-                                                                    </div>
-                                                                    {currentCreator?.welcomeMessage || "Thanks for your request! I've received it and will get back to you shortly."}
-                                                                    {isPending && (
-                                                                        <div className="mt-2 pt-2 border-t border-slate-200 flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 uppercase tracking-wide">
-                                                                            <ShieldCheck size={12} /> 
-                                                                            <span>Priority Active • {getTimeLeft(msg.expiresAt).text}</span>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-slate-900 text-sm">{currentUser?.name || 'You'}</span>
+                                                            <span className="text-slate-400 text-xs">•</span>
+                                                            <span className="text-slate-400 text-xs">
+                                                                {new Date(msg.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </span>
                                                         </div>
-                                                    )}
-                                                    </React.Fragment>
-                                                )
-                                            })}
-                                            {isRefunded && (
-                                                <div className="flex justify-center mt-4">
-                                                    <div className="bg-slate-100 text-slate-500 text-xs px-3 py-1.5 rounded-full border border-slate-200 flex items-center gap-2">
-                                                        <Ban size={12} /> This session was refunded.
                                                     </div>
                                                 </div>
-                                            )}
+                                            </div>
 
-                                            {/* Status Indicator */}
-                                            {!isRefunded && (
-                                                (() => {
-                                                    const status = getSessionStatus(msg);
-                                                    if (status.label === 'Creator answered') return null;
-                                                    return (
-                                                        <div className="flex justify-end mt-2 px-1">
-                                                            <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider ${status.color} bg-white/50 px-2 py-1 rounded-full`}>
-                                                                <status.icon size={12} />
-                                                                <span>{status.label}</span>
+                                            {/* Your Message Content */}
+                                            <div className="px-4 py-3">
+                                                {fanMessages.map((chat, idx) => (
+                                                    <div key={chat.id} className={idx > 0 ? 'mt-3 pt-3 border-t border-slate-100' : ''}>
+                                                        <p className="text-slate-800 text-sm leading-relaxed whitespace-pre-wrap">{chat.content}</p>
+                                                    </div>
+                                                ))}
+
+                                                {/* Attachment */}
+                                                {msg.attachmentUrl && (
+                                                    <div className="mt-3 rounded-xl overflow-hidden border border-slate-200">
+                                                        <img src={msg.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Footer Stats */}
+                                            <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between">
+                                                <div className="flex items-center gap-4 text-slate-400">
+                                                    <div className="flex items-center gap-1.5 text-xs">
+                                                        <Coins size={14} className="text-amber-500" />
+                                                        <span className="font-bold text-slate-600">{msg.amount}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-xs">
+                                                        <MessageSquare size={14} />
+                                                        <span>{creatorReplies.length}</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Status Badge */}
+                                                {isPending && (
+                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full border border-indigo-100">
+                                                        <Clock size={10} />
+                                                        <span>{getTimeLeft(msg.expiresAt).text}</span>
+                                                    </div>
+                                                )}
+                                                {msg.status === 'REPLIED' && (
+                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">
+                                                        <CheckCircle2 size={10} />
+                                                        <span>Completed</span>
+                                                    </div>
+                                                )}
+                                                {isRefunded && (
+                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-full border border-slate-200">
+                                                        <Ban size={10} />
+                                                        <span>Refunded</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Creator Replies Section */}
+                                        {creatorReplies.length > 0 && (
+                                            <div className="mt-3 ml-4 sm:ml-6 border-l-2 border-indigo-200 pl-4">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Creator's Reply</span>
+                                                    <span className="text-xs text-slate-400">{creatorReplies.length}</span>
+                                                </div>
+
+                                                {creatorReplies.map((reply, idx) => (
+                                                    <div key={reply.id} className={`bg-white rounded-xl border border-slate-200 p-4 shadow-sm ${idx > 0 ? 'mt-3' : ''}`}>
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 border-2 border-white shadow-sm">
+                                                                {msg.creatorAvatarUrl ? (
+                                                                    <img src={msg.creatorAvatarUrl} alt={msg.creatorName} className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <div className="w-full h-full flex items-center justify-center text-white">
+                                                                        <User size={14} />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <span className="font-bold text-slate-900 text-sm">{msg.creatorName || 'Creator'}</span>
+                                                                    <CheckCircle2 size={14} className="text-blue-500 fill-blue-500" />
+                                                                    <span className="text-slate-400 text-xs">
+                                                                        {new Date(reply.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })} {new Date(reply.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                    </span>
+                                                                </div>
+                                                                <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{reply.content}</p>
                                                             </div>
                                                         </div>
-                                                    );
-                                                })()
-                                            )}
-                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Waiting for reply indicator */}
+                                        {creatorReplies.length === 0 && isPending && (
+                                            <div className="mt-3 ml-4 sm:ml-6 border-l-2 border-slate-200 pl-4">
+                                                <div className="flex items-center gap-2 text-slate-400 text-xs py-2">
+                                                    <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                                                    <span>Waiting for {msg.creatorName || 'creator'}'s reply...</span>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
