@@ -14,6 +14,12 @@ interface Props {
   onRefreshData: () => Promise<void>;
 }
 
+const ensureProtocol = (url: string) => {
+    if (!url) return '';
+    if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)) return url;
+    return `https://${url}`;
+};
+
 const getResponseTimeTooltip = (status: string) => {
     if (status === 'Lightning') return 'Typically replies in under 1 hour';
     if (status === 'Very Fast') return 'Typically replies in under 4 hours';
@@ -593,7 +599,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                         return (
                                                             <a
                                                                 key={platformId}
-                                                                href={platformUrl}
+                                                                href={ensureProtocol(platformUrl)}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
                                                                 className="flex items-center hover:scale-110 transition-transform"
@@ -790,7 +796,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                             </button>
                                         ) : (
                                             <a
-                                                href={link.url}
+                                                href={ensureProtocol(link.url)}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 onClick={() => logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'LINK', id: link.id, title: link.title, url: link.url })}
