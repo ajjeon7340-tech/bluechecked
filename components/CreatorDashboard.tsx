@@ -1156,8 +1156,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                          <div className="space-y-4">
                              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col h-96">
                                 <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-50 flex-shrink-0">
-                                    <div className="text-slate-400 text-xs font-bold uppercase tracking-wider">Recent Reviews ({reviews.length})</div>
-                                    <div className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{reviews.length}</div>
+                                    <div className="text-slate-400 text-xs font-bold uppercase tracking-wider">Recent Reviews</div>
+                                    <button 
+                                        onClick={() => setCurrentView('REVIEWS')}
+                                        className="text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-2 py-1 rounded transition-colors"
+                                    >
+                                        View All ({reviews.length})
+                                    </button>
                                 </div>
                                 
                                 <div className="flex-1 overflow-y-auto pr-1 space-y-4">
@@ -1167,7 +1172,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <p className="text-xs text-slate-400">No reviews yet.</p>
                                         </div>
                                     ) : (
-                                        reviews.map(review => (
+                                        reviews.slice(0, 5).map(review => (
                                             <div key={review.id} className="group">
                                                 <div className="flex justify-between items-start mb-1">
                                                     <span className="font-bold text-slate-900 text-xs">{review.senderName}</span>
