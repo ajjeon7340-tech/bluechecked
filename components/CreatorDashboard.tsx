@@ -253,6 +253,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const handleNotificationClick = (notif: any) => {
       if (notif.senderEmail) {
+
           handleOpenChat(notif.senderEmail);
       }
       setDeletedNotificationIds(prev => [...prev, notif.id]);
@@ -931,6 +932,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     <Bell size={20} />
                     {notifications.filter(n => n.time.getTime() > lastReadTime).length > 0 && <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
                 </button>
+
+                <button 
+                    onClick={handleToggleNotifications}
+                    className="relative text-slate-400 hover:text-slate-600"
                 <div className="h-6 w-px bg-slate-200"></div>
                 <button onClick={onViewProfile} className="text-sm font-medium text-slate-600 hover:text-indigo-600 flex items-center gap-1">
                     Public Page <ExternalLink size={14} />

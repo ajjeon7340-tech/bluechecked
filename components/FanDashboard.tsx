@@ -609,6 +609,10 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       setShowNotifications(!showNotifications);
   };
 
+  const handleToggleNotifications = () => {
+      setShowNotifications(!showNotifications);
+  };
+
   const handleNotificationClick = (notif: any) => {
       if (notif.creatorId) {
           handleOpenChat(notif.creatorId);
