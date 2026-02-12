@@ -144,6 +144,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Pagination State
   const [financePage, setFinancePage] = useState(1);
   const [notificationPage, setNotificationPage] = useState(1);
+  const [reviewsPage, setReviewsPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
   // Drag and Drop State for Links
@@ -2548,16 +2549,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             {/* --- VIEW: REVIEWS --- */}
             {currentView === 'REVIEWS' && (
                 <div className="p-6 max-w-5xl mx-auto animate-in fade-in">
+                    {(() => {
+                        const totalPages = Math.ceil(reviews.length / ITEMS_PER_PAGE);
+                        const displayedReviews = reviews.slice((reviewsPage - 1) * ITEMS_PER_PAGE, reviewsPage * ITEMS_PER_PAGE);
+                        return (
                     <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                             <h3 className="text-sm font-bold text-slate-900">All Reviews</h3>
                             <span className="text-xs text-slate-500">{reviews.length} reviews</span>
                         </div>
                         <div className="divide-y divide-slate-100">
-                            {reviews.length === 0 ? (
+                            {displayedReviews.length === 0 ? (
                                 <div className="p-12 text-center text-slate-400 text-sm">No reviews yet.</div>
                             ) : (
-                                reviews.map(review => (
+                                displayedReviews.map(review => (
                                     <div key={review.id} className="p-6 hover:bg-slate-50 transition-colors">
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="flex items-center gap-2">
@@ -2579,7 +2584,29 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 ))
                             )}
                         </div>
+                        {/* Pagination Controls */}
+                        {totalPages > 1 && (
+                            <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-center gap-4">
+                                <button 
+                                    onClick={() => setReviewsPage(p => Math.max(1, p - 1))}
+                                    disabled={reviewsPage === 1}
+                                    className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 transition-colors"
+                                >
+                                    <ChevronLeft size={16} />
+                                </button>
+                                <span className="text-xs font-bold text-slate-600">Page {reviewsPage} of {totalPages}</span>
+                                <button 
+                                    onClick={() => setReviewsPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={reviewsPage === totalPages}
+                                    className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 transition-colors"
+                                >
+                                    <ChevronRight size={16} />
+                                </button>
+                            </div>
+                        )}
                     </div>
+                    );
+                    })()}
                 </div>
             )}
 
