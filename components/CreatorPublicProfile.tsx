@@ -780,17 +780,18 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         ) : isProduct ? (
                                             <button
                                                 onClick={() => handleProductClick(link)}
-                                                className="w-full text-left bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3 sm:gap-4 group cursor-pointer hover:border-indigo-300 transition-all hover:shadow-md"
+                                                className="w-full text-left bg-gradient-to-r from-purple-50 to-indigo-50 p-3 sm:p-4 rounded-2xl border border-purple-100 shadow-sm flex items-center gap-3 sm:gap-4 group cursor-pointer hover:border-purple-300 transition-all hover:shadow-md relative overflow-hidden"
                                             >
-                                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                                                <div className="hidden sm:block absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-full blur-2xl -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
+                                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white text-purple-600 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform">
                                                     <FileText size={20} className="sm:hidden" />
                                                     <FileText size={24} className="hidden sm:block" />
                                                 </div>
-                                                <div className="flex-1 min-w-0 text-left">
-                                                    <h4 className="font-bold text-slate-900 text-sm sm:text-base group-hover:text-indigo-600 transition-colors truncate">{link.title}</h4>
+                                                <div className="flex-1 relative z-10 min-w-0 text-left">
+                                                    <h4 className="font-bold text-slate-900 text-sm sm:text-base group-hover:text-purple-700 transition-colors truncate">{link.title}</h4>
                                                     <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 font-medium truncate">Digital Download</p>
                                                 </div>
-                                                <div className="bg-blue-600 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
+                                                <div className="bg-slate-900 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20 flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
                                                     <Coins size={12} /> {link.price}
                                                 </div>
                                             </button>
@@ -800,16 +801,32 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 onClick={() => logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'LINK', id: link.id, title: link.title, url: link.url })}
-                                                className={`block bg-white p-3 sm:p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all ${link.isPromoted ? 'hover:border-amber-300' : 'hover:border-slate-300'}`}
+                                                className={`block w-full text-left p-3 sm:p-4 rounded-2xl border shadow-sm flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-100 hover:border-amber-300' : 'bg-white border-slate-200 hover:border-slate-300'}`}
                                             >
-                                                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${link.isPromoted ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-600'}`}>
-                                                    {link.isPromoted ? <Sparkles size={16} /> : <ExternalLink size={16} />}
+                                                {link.isPromoted && <div className="hidden sm:block absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-full blur-2xl -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>}
+                                                
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform ${link.isPromoted ? 'bg-white text-amber-500' : 'bg-slate-50 text-slate-500 group-hover:bg-slate-100'}`}>
+                                                    {link.isPromoted ? (
+                                                        <>
+                                                            <Sparkles size={20} className="sm:hidden" />
+                                                            <Sparkles size={24} className="hidden sm:block" />
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <ExternalLink size={20} className="sm:hidden" />
+                                                            <ExternalLink size={24} className="hidden sm:block" />
+                                                        </>
+                                                    )}
                                                 </div>
-                                                <div className="flex-1 min-w-0 text-left">
-                                                    <h4 className="font-bold text-slate-900 text-sm group-hover:text-slate-700 transition-colors truncate">{link.title}</h4>
+                                                
+                                                <div className="flex-1 relative z-10 min-w-0 text-left">
+                                                    <h4 className={`font-bold text-sm sm:text-base transition-colors truncate ${link.isPromoted ? 'text-slate-900 group-hover:text-amber-700' : 'text-slate-900 group-hover:text-slate-700'}`}>{link.title}</h4>
                                                     <p className="text-[10px] text-slate-400 mt-0.5 font-medium truncate">{link.isPromoted ? 'Recommended' : 'External Link'}</p>
                                                 </div>
-                                                <ExternalLink size={14} className={`flex-shrink-0 transition-colors ${link.isPromoted ? 'text-slate-300 group-hover:text-amber-500' : 'text-slate-300 group-hover:text-slate-500'}`} />
+                                                
+                                                <div className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap ${link.isPromoted ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-lg shadow-amber-500/20' : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'}`}>
+                                                    {link.isPromoted ? 'Visit' : 'Open'} <ExternalLink size={12} />
+                                                </div>
                                             </a>
                                         )
                                     )}
