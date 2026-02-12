@@ -9,7 +9,7 @@ import {
   Home, BarChart3, Wallet, Users, Bell, Search, Menu, ChevronDown, Ban, Check,
   Heart, Star, Eye, TrendingUp, MessageSquare, ArrowRight, Lock, 
   InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Download, ShoppingBag, FileText, PieChart as PieIcon, LayoutGrid, MonitorPlay, Link as LinkIcon, Calendar, ChevronRight, Coins, CreditCard
-  , MousePointerClick
+  , MousePointerClick, GripVertical
 } from './Icons';
 import { Button } from './Button';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid, PieChart, Pie, Cell, Legend, ComposedChart, Line } from 'recharts';
@@ -145,6 +145,29 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [financePage, setFinancePage] = useState(1);
   const [notificationPage, setNotificationPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
+
+  // Drag and Drop State for Links
+  const [draggedLinkIndex, setDraggedLinkIndex] = useState<number | null>(null);
+
+  const handleDragStart = (index: number) => {
+      setDraggedLinkIndex(index);
+  };
+
+  const handleDragEnter = (index: number) => {
+      if (draggedLinkIndex === null || draggedLinkIndex === index) return;
+      
+      const newLinks = [...(editedCreator.links || [])];
+      const draggedItem = newLinks[draggedLinkIndex];
+      newLinks.splice(draggedLinkIndex, 1);
+      newLinks.splice(index, 0, draggedItem);
+      
+      setEditedCreator(prev => ({ ...prev, links: newLinks }));
+      setDraggedLinkIndex(index);
+  };
+
+  const handleDragEnd = () => {
+      setDraggedLinkIndex(null);
+  };
 
   useEffect(() => {
       localStorage.setItem('bluechecked_creator_deleted_notifications', JSON.stringify(deletedNotificationIds));
@@ -2243,11 +2266,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-2">Featured Links & Products</label>
                                 <div className="space-y-3 mb-3">
-                                    {(editedCreator.links || []).map(link => {
+                                    {(editedCreator.links || []).map((link, index) => {
                                         const isProduct = link.type === 'DIGITAL_PRODUCT';
                                         const isSupport = link.type === 'SUPPORT';
                                         return (
-                                            <div key={link.id} className={`flex items-start gap-3 p-3 rounded-lg border ${isProduct ? 'bg-purple-50 border-purple-100' : isSupport ? 'bg-pink-50 border-pink-100' : 'bg-slate-50 border-slate-200'}`}>
+                                            <div 
+                                                key={link.id} 
+                                                draggable
+                                                onDragStart={() => handleDragStart(index)}
+                                                onDragEnter={() => handleDragEnter(index)}
+                                                onDragEnd={handleDragEnd}
+                                                onDragOver={(e) => e.preventDefault()}
+                                                className={`flex items-start gap-3 p-3 rounded-lg border transition-all ${isProduct ? 'bg-purple-50 border-purple-100' : isSupport ? 'bg-pink-50 border-pink-100' : 'bg-slate-50 border-slate-200'} ${draggedLinkIndex === index ? 'opacity-50 border-dashed border-slate-400' : ''}`}
+                                            >
+                                                <div className="mt-2 text-slate-400 cursor-grab active:cursor-grabbing">
+                                                    <GripVertical size={16} />
+                                                </div>
                                                 <div className="flex-1 min-w-0 space-y-2">
                                                     <div className="flex items-center justify-between gap-2">
                                                         <div className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit ${isProduct ? 'bg-purple-100 text-purple-600' : isSupport ? 'bg-pink-100 text-pink-600' : 'bg-slate-200 text-slate-500'}`}>

@@ -62,7 +62,8 @@ import {
   PieChart,
   Calendar,
   RefreshCw,
-  MousePointerClick
+  MousePointerClick,
+  GripVertical
 } from 'lucide-react';
 
 export const GoogleLogo = ({ className }: { className?: string }) => (
@@ -196,5 +197,6 @@ export {
   PieChart,
   Calendar,
   RefreshCw,
-  MousePointerClick
+  MousePointerClick,
+  GripVertical
 };
