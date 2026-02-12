@@ -1995,20 +1995,28 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <label className="block text-sm font-medium text-slate-700 mb-2">Connected Platforms</label>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                     {SUPPORTED_PLATFORMS.map(platform => {
-                                        const isSelected = editedCreator.platforms?.some(p => (typeof p === 'string' ? p : p.id) === platform.id);
+                                        const platformData = editedCreator.platforms?.find(p => (typeof p === 'string' ? p : p.id) === platform.id);
+                                        const isSelected = !!platformData;
+                                        const url = typeof platformData === 'object' ? platformData.url : '';
+
                                         return (
                                             <button 
                                                 key={platform.id}
                                                 onClick={() => handleTogglePlatform(platform.id)}
-                                                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all ${
+                                                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all text-left ${
                                                     isSelected 
                                                     ? 'bg-slate-900 text-white border-slate-900 shadow-md' 
                                                     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                                                 }`}
                                             >
-                                                <platform.icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
-                                                <span className="text-xs font-bold">{platform.label}</span>
-                                                {isSelected && <Check size={12} className="ml-auto text-green-400" />}
+                                                <platform.icon className={`w-4 h-4 flex-shrink-0 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
+                                                <div className="flex-1 min-w-0">
+                                                    <span className="text-xs font-bold block">{platform.label}</span>
+                                                    {isSelected && url && (
+                                                        <span className="text-[9px] opacity-70 truncate block">{url.replace(/^https?:\/\/(www\.)?/, '')}</span>
+                                                    )}
+                                                </div>
+                                                {isSelected && <Check size={12} className="ml-auto text-green-400 flex-shrink-0" />}
                                             </button>
                                         )
                                     })}
