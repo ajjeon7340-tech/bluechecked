@@ -826,43 +826,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                     </div>
                 )}
           </div>
-
-          {/* 5. SOCIAL PLATFORMS */}
-          {platforms.length > 0 && (
-              <div className="w-full space-y-4">
-                    <div className="flex justify-between items-end mb-2">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                            <Share size={14} /> Social Platforms
-                        </h3>
-                    </div>
-                    <div className="grid gap-3">
-                        {platforms.map((platform) => {
-                            const platformId = typeof platform === 'string' ? platform : platform.id;
-                            const platformUrl = typeof platform === 'string' ? '' : platform.url;
-                            const platformName = platformId.charAt(0).toUpperCase() + platformId.slice(1);
-
-                            return (
-                                <a
-                                    key={platformId}
-                                    href={platformUrl || '#'}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={`block bg-white p-3 sm:p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:border-slate-300 ${!platformUrl ? 'pointer-events-none' : ''}`}
-                                >
-                                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-slate-50 group-hover:bg-slate-100 transition-colors">
-                                        {getPlatformIcon(platformId)}
-                                    </div>
-                                    <div className="flex-1 min-w-0 text-left">
-                                        <h4 className="font-bold text-slate-900 text-sm group-hover:text-slate-700 transition-colors truncate">{platformName}</h4>
-                                        <p className="text-[10px] text-slate-400 mt-0.5 font-medium truncate">{platformUrl ? 'View Profile' : 'Connected'}</p>
-                                    </div>
-                                    {platformUrl && <ExternalLink size={14} className="flex-shrink-0 text-slate-300 group-hover:text-slate-500 transition-colors" />}
-                                </a>
-                            )
-                        })}
-                    </div>
-              </div>
-          )}
       </div>
 
       {/* Message & Payment Modal */}
