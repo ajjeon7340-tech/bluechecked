@@ -135,6 +135,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       }
   });
 
+  const [lastReadTime, setLastReadTime] = useState<number>(() => {
+      try {
+          return parseInt(localStorage.getItem('bluechecked_creator_last_read_time') || '0');
+      } catch { return 0; }
+  });
+
   useEffect(() => {
       localStorage.setItem('bluechecked_creator_deleted_notifications', JSON.stringify(deletedNotificationIds));
   }, [deletedNotificationIds]);
@@ -154,7 +160,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   }, []);
 
   const notifications = useMemo(() => {
-      const list: { id: string, icon: any, text: string, time: Date, color: string }[] = [];
+      const list: { id: string, icon: any, text: string, time: Date, color: string, senderEmail?: string }[] = [];
       
       messages.forEach(msg => {
           // Only incoming messages (where I am creator)
@@ -169,7 +175,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                   icon: MessageSquare,
                   text: `New request from ${msg.senderName}`,
                   time: new Date(msg.createdAt),
-                  color: 'bg-blue-100 text-blue-600'
+                  color: 'bg-blue-100 text-blue-600',
+                  senderEmail: msg.senderEmail
               });
           }
 
@@ -181,7 +188,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                   icon: ShoppingBag,
                   text: `${msg.senderName} purchased ${productName}`,
                   time: new Date(msg.createdAt),
-                  color: 'bg-purple-100 text-purple-600'
+                  color: 'bg-purple-100 text-purple-600',
+                  senderEmail: msg.senderEmail
               });
           }
           
@@ -193,7 +201,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                       icon: Heart,
                       text: `${msg.senderName} sent a tip!`,
                       time: new Date(chat.timestamp),
-                      color: 'bg-pink-100 text-pink-600'
+                      color: 'bg-pink-100 text-pink-600',
+                      senderEmail: msg.senderEmail
                   });
               }
           });
@@ -205,7 +214,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                   icon: Star,
                   text: `${msg.senderName} left a ${msg.rating}-star review`,
                   time: msg.replyAt ? new Date(msg.replyAt) : new Date(msg.createdAt),
-                  color: 'bg-yellow-100 text-yellow-600'
+                  color: 'bg-yellow-100 text-yellow-600',
+                  senderEmail: msg.senderEmail
               });
           }
       });
@@ -226,6 +236,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           const allIds = notifications.map(n => n.id);
           setDeletedNotificationIds(prev => [...prev, ...allIds]);
       }
+  };
+
+  const handleToggleNotifications = () => {
+      if (currentView !== 'NOTIFICATIONS') {
+          setLastReadTime(Date.now());
+          localStorage.setItem('bluechecked_creator_last_read_time', Date.now().toString());
+          setCurrentView('NOTIFICATIONS');
+      }
+  };
+
+  const handleNotificationClick = (notif: any) => {
+      if (notif.senderEmail) {
+          handleOpenChat(notif.senderEmail);
+      }
+      setDeletedNotificationIds(prev => [...prev, notif.id]);
+      // If we are in notification view, we stay there, but the item disappears
   };
 
   useEffect(() => {
@@ -894,11 +920,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     />
                 </div>
                 <button 
-                    onClick={() => setCurrentView('NOTIFICATIONS')}
+                    onClick={handleToggleNotifications}
                     className="relative text-slate-400 hover:text-slate-600"
                 >
                     <Bell size={20} />
-                    {notifications.length > 0 && <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
+                    {notifications.filter(n => n.time.getTime() > lastReadTime).length > 0 && <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
                 </button>
                 <div className="h-6 w-px bg-slate-200"></div>
                 <button onClick={onViewProfile} className="text-sm font-medium text-slate-600 hover:text-indigo-600 flex items-center gap-1">
@@ -2259,7 +2285,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="p-12 text-center text-slate-400 text-sm">No notifications yet.</div>
                             ) : (
                                 notifications.map(notif => (
-                                    <div key={notif.id} className="px-6 py-4 hover:bg-slate-50 transition-colors flex gap-4 group relative">
+                                    <div 
+                                        key={notif.id} 
+                                        onClick={() => handleNotificationClick(notif)}
+                                        className="px-6 py-4 hover:bg-slate-50 transition-colors flex gap-4 group relative cursor-pointer"
+                                    >
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
                                             <notif.icon size={18} />
                                         </div>

@@ -45,6 +45,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       }
   });
 
+  const [lastReadTime, setLastReadTime] = useState<number>(() => {
+      try {
+          return parseInt(localStorage.getItem('bluechecked_fan_last_read_time') || '0');
+      } catch { return 0; }
+  });
+
   useEffect(() => {
       localStorage.setItem('bluechecked_deleted_notifications', JSON.stringify(deletedNotificationIds));
   }, [deletedNotificationIds]);
@@ -498,7 +504,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const activeRequests = messages.filter(m => m.status === 'PENDING').length;
   
   const notifications = useMemo(() => {
-      const list: { id: string, icon: any, text: string, time: Date, color: string }[] = [];
+      const list: { id: string, icon: any, text: string, time: Date, color: string, creatorId?: string }[] = [];
       
       // Add Welcome Notification (Ensures list is never empty on first load)
       list.push({
@@ -518,7 +524,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
               icon: Send,
               text: `You sent a request to ${msg.creatorName || 'Creator'}`,
               time: new Date(msg.createdAt),
-              color: 'bg-blue-100 text-blue-600'
+              color: 'bg-blue-100 text-blue-600',
+              creatorId: msg.creatorId
           });
 
           // 2. Reply Received
@@ -528,7 +535,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                   icon: MessageSquare,
                   text: `${msg.creatorName || 'Creator'} replied to your request!`,
                   time: new Date(msg.replyAt),
-                  color: 'bg-green-100 text-green-600'
+                  color: 'bg-green-100 text-green-600',
+                  creatorId: msg.creatorId
               });
           }
 
@@ -539,7 +547,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                   icon: Coins,
                   text: `Request to ${msg.creatorName || 'Creator'} expired. ${msg.amount} credits refunded.`,
                   time: new Date(msg.expiresAt),
-                  color: 'bg-amber-100 text-amber-600'
+                  color: 'bg-amber-100 text-amber-600',
+                  creatorId: msg.creatorId
               });
           }
 
@@ -550,7 +559,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                   icon: Ban,
                   text: `Request to ${msg.creatorName || 'Creator'} was rejected.`,
                   time: new Date(msg.createdAt), // Fallback
-                  color: 'bg-red-100 text-red-600'
+                  color: 'bg-red-100 text-red-600',
+                  creatorId: msg.creatorId
               });
           }
 
@@ -562,7 +572,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                   icon: ShoppingBag,
                   text: `You purchased ${productName}`,
                   time: new Date(msg.createdAt),
-                  color: 'bg-purple-100 text-purple-600'
+                  color: 'bg-purple-100 text-purple-600',
+                  creatorId: msg.creatorId
               });
           }
       });
@@ -583,6 +594,22 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           const allIds = notifications.map(n => n.id);
           setDeletedNotificationIds(prev => [...prev, ...allIds]);
       }
+  };
+
+  const handleToggleNotifications = () => {
+      if (!showNotifications) {
+          setLastReadTime(Date.now());
+          localStorage.setItem('bluechecked_fan_last_read_time', Date.now().toString());
+      }
+      setShowNotifications(!showNotifications);
+  };
+
+  const handleNotificationClick = (notif: any) => {
+      if (notif.creatorId) {
+          handleOpenChat(notif.creatorId);
+      }
+      setDeletedNotificationIds(prev => [...prev, notif.id]);
+      setShowNotifications(false);
   };
 
   const getPageTitle = () => {
@@ -755,11 +782,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </button>
                         <div className="relative">
                             <button 
-                                onClick={() => setShowNotifications(!showNotifications)}
+                                onClick={handleToggleNotifications}
                                 className="relative text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-100"
                             >
                                 <Bell size={20} />
-                                {notifications.length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
+                                {notifications.filter(n => n.time.getTime() > lastReadTime).length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
                             </button>
 
                             {showNotifications && (
@@ -775,7 +802,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 <div className="p-8 text-center text-slate-400 text-xs">No notifications yet.</div>
                                             ) : (
                                                 notifications.map(notif => (
-                                                    <div key={notif.id} className="px-4 py-3 hover:bg-slate-50 transition-colors flex gap-3 border-b border-slate-50 last:border-0 group relative pr-8">
+                                                    <div 
+                                                        key={notif.id} 
+                                                        onClick={() => handleNotificationClick(notif)}
+                                                        className="px-4 py-3 hover:bg-slate-50 transition-colors flex gap-3 border-b border-slate-50 last:border-0 group relative pr-8 cursor-pointer"
+                                                    >
                                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
                                                             <notif.icon size={14} />
                                                         </div>
