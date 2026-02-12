@@ -32,7 +32,6 @@ const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
 const getSiteUrl = () => {
     // Allow overriding the site URL via environment variable (e.g. VITE_SITE_URL=https://telepossible.com)
     if (import.meta.env.VITE_SITE_URL) {
-        return import.meta.env.VITE_SITE_URL;
         return import.meta.env.VITE_SITE_URL.replace(/\/$/, "");
     }
     return window.location.origin;

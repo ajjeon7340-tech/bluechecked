@@ -4,7 +4,7 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 const TEST_EMAIL_RECIPIENT = Deno.env.get('TEST_EMAIL_RECIPIENT')
-const RESEND_FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') || 'Bluechecked <no-reply@telepossible.com>'
+const RESEND_FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') || 'Bluechecked <team@telepossible.com>'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -56,8 +56,10 @@ Deno.serve(async (req) => {
 
     // Override recipient for testing (Resend Free Tier restriction)
     if (TEST_EMAIL_RECIPIENT) {
-        console.log(`[Dev] Overriding recipient ${recipientEmail} with test email: ${TEST_EMAIL_RECIPIENT}`)
+        console.log(`[Dev] Overriding recipient ${recipientEmail} with test email: ${TEST_EMAIL_RECIPIENT}`);
         recipientEmail = TEST_EMAIL_RECIPIENT
+    } else {
+        console.log(`[Edge] Sending to actual recipient: ${recipientEmail}. (Ensure domain is verified or use TEST_EMAIL_RECIPIENT)`);
     }
 
     if (!recipientEmail) {
@@ -86,6 +88,18 @@ Deno.serve(async (req) => {
 
     if (!res.ok) {
         console.error("Resend API Error:", data)
+        
+        // Handle Free Tier Restriction specifically to give a helpful hint
+        if (res.status === 403 && data.message?.includes("testing emails")) {
+             return new Response(JSON.stringify({ 
+                 error: "Resend Free Tier Restriction", 
+                 message: `Resend Free Tier only allows sending to your verified email. Please set the TEST_EMAIL_RECIPIENT secret in Supabase to your email address to intercept these emails during development.` 
+             }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 403,
+            })
+        }
+
         return new Response(JSON.stringify(data), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 400,
