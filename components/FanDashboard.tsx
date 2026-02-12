@@ -1100,7 +1100,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                  <h3 className="text-sm font-bold text-slate-900">Transaction History</h3>
                                  <Button variant="ghost" size="sm" className="text-xs"><ExternalLink size={14} className="mr-1"/> Export CSV</Button>
                              </div>
-                             <div className="overflow-x-auto">
+                             <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full text-left text-sm whitespace-nowrap">
                                     <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 text-xs uppercase tracking-wider">
                                         <tr>
@@ -1161,6 +1161,42 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         )}
                                     </tbody>
                                 </table>
+                             </div>
+
+                             {/* Mobile List View */}
+                             <div className="md:hidden divide-y divide-slate-100">
+                                {messages.map(msg => {
+                                    const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
+                                    const isProduct = msg.content.startsWith('Purchased Product:');
+                                    
+                                    return (
+                                        <div key={msg.id} className="p-4 flex flex-col gap-3">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                                                        {isProduct ? <FileText size={18} /> : <User size={18} />}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-slate-900 text-sm">
+                                                            {isProduct ? 'Digital Content' : 'Priority Request'}
+                                                        </div>
+                                                        <div className="text-xs text-slate-400">{new Date(msg.createdAt).toLocaleDateString()}</div>
+                                                    </div>
+                                                </div>
+                                                <div className={`font-mono font-bold ${isRefunded ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
+                                                    {msg.amount}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-between text-xs">
+                                                <div className="text-slate-500 truncate max-w-[200px]">{isProduct ? msg.content.replace('Purchased Product: ', '') : msg.content}</div>
+                                                {msg.status === 'PENDING' && <span className="font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Pending</span>}
+                                                {msg.status === 'REPLIED' && <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Completed</span>}
+                                                {isRefunded && <span className="font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">Refunded</span>}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                {messages.length === 0 && <div className="p-8 text-center text-slate-400 text-sm">No transactions found.</div>}
                              </div>
                         </div>
                     </div>

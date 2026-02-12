@@ -1318,7 +1318,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                      <h3 className="text-sm font-bold text-slate-900">Credit History</h3>
                                      <Button variant="ghost" size="sm" className="text-xs"><ExternalLink size={14} className="mr-1"/> Export CSV</Button>
                                 </div>
-                                <div className="overflow-x-auto">
+                                <div className="hidden md:block overflow-x-auto">
                                    <table className="w-full text-left text-sm whitespace-nowrap">
                                        <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 text-xs uppercase tracking-wider">
                                            <tr>
@@ -1330,13 +1330,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                            </tr>
                                        </thead>
                                        <tbody className="divide-y divide-slate-100">
-                                           {messages.filter(m => m.status === 'REPLIED').map(msg => (
+                                           {messages.filter(m => m.status === 'REPLIED').map(msg => {
+                                               const isProduct = msg.content.startsWith('Purchased Product:');
+                                               const isTip = msg.conversation.some(c => c.role === 'FAN' && c.content.startsWith('Fan Appreciation:'));
+                                               
+                                               return (
                                                <tr key={msg.id} className="hover:bg-slate-50 transition-colors">
                                                    <td className="px-6 py-4 text-slate-500 font-mono text-xs">{new Date(msg.createdAt).toLocaleDateString()}</td>
                                                    <td className="px-6 py-4 font-medium text-slate-900">{msg.senderName}</td>
                                                    <td className="px-6 py-4">
-                                                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-100">
-                                                           Message
+                                                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${isProduct ? 'bg-purple-50 text-purple-700 border-purple-100' : isTip ? 'bg-pink-50 text-pink-700 border-pink-100' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
+                                                           {isProduct ? <ShoppingBag size={12}/> : isTip ? <Heart size={12}/> : <MessageSquare size={12}/>}
+                                                           {isProduct ? 'Product' : isTip ? 'Tip' : 'Message'}
                                                        </span>
                                                    </td>
                                                    <td className="px-6 py-4">
@@ -1348,12 +1353,46 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                        <span className="font-mono font-bold text-emerald-600">+{msg.amount}</span>
                                                    </td>
                                                </tr>
-                                           ))}
+                                               );
+                                           })}
                                            {messages.length === 0 && (
                                                <tr><td colSpan={5} className="p-12 text-center text-slate-400">No transaction history available.</td></tr>
                                            )}
                                        </tbody>
                                    </table>
+                                </div>
+                                
+                                {/* Mobile List View */}
+                                <div className="md:hidden divide-y divide-slate-100">
+                                    {messages.filter(m => m.status === 'REPLIED').map(msg => {
+                                        const isProduct = msg.content.startsWith('Purchased Product:');
+                                        const isTip = msg.conversation.some(c => c.role === 'FAN' && c.content.startsWith('Fan Appreciation:'));
+                                        
+                                        return (
+                                            <div key={msg.id} className="p-4 flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isProduct ? 'bg-purple-100 text-purple-600' : isTip ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'}`}>
+                                                        {isProduct ? <ShoppingBag size={18}/> : isTip ? <Heart size={18}/> : <MessageSquare size={18}/>}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-slate-900 text-sm">{msg.senderName}</div>
+                                                        <div className="text-xs text-slate-500 flex items-center gap-1">
+                                                            <span>{new Date(msg.createdAt).toLocaleDateString()}</span>
+                                                            <span>•</span>
+                                                            <span>{isProduct ? 'Product' : isTip ? 'Tip' : 'Message'}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="font-mono font-bold text-emerald-600">+{msg.amount}</div>
+                                                    <div className="text-[10px] text-slate-400">Credits</div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {messages.filter(m => m.status === 'REPLIED').length === 0 && (
+                                        <div className="p-8 text-center text-slate-400 text-sm">No transaction history available.</div>
+                                    )}
                                 </div>
                             </div>
                          </>
