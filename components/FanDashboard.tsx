@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { CurrentUser, Message, CreatorProfile } from '../types';
 import { Button } from './Button';
-import { BlueCheckLogo, CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download } from './Icons';
+import { BlueCheckLogo, CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download, Smile } from './Icons';
 import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl } from '../services/realBackend';
 
 interface Props {
@@ -17,6 +17,25 @@ const getResponseTimeTooltip = (status: string) => {
     if (status === 'Very Fast') return 'Typically replies in under 4 hours';
     if (status === 'Fast') return 'Typically replies within 24 hours';
     return 'Replies within the guaranteed response window';
+};
+
+// Instagram/Threads style relative time
+const getRelativeTime = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffMs = now.getTime() - date.getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
+    const diffWeek = Math.floor(diffDay / 7);
+
+    if (diffSec < 60) return 'now';
+    if (diffMin < 60) return `${diffMin}m`;
+    if (diffHour < 24) return `${diffHour}h`;
+    if (diffDay < 7) return `${diffDay}d`;
+    if (diffWeek < 4) return `${diffWeek}w`;
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
 };
 
 export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseCreators, onUpdateUser }) => {
@@ -50,6 +69,23 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           return parseInt(localStorage.getItem('bluechecked_fan_last_read_time') || '0');
       } catch { return 0; }
   });
+
+  // Chat Reaction State
+  const [messageReactions, setMessageReactions] = useState<Record<string, string>>({});
+  const [activeReactionPicker, setActiveReactionPicker] = useState<string | null>(null);
+
+  const handleReactionClick = (msgId: string, emoji: string) => {
+      setMessageReactions(prev => {
+          const current = prev[msgId];
+          if (current === emoji) {
+              const next = { ...prev };
+              delete next[msgId];
+              return next;
+          }
+          return { ...prev, [msgId]: emoji };
+      });
+      setActiveReactionPicker(null);
+  };
 
   // Pagination State
   const [historyPage, setHistoryPage] = useState(1);
@@ -1555,8 +1591,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             })()
                         )}
 
-                        {/* Messages - Thread/Note Style */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth" ref={scrollRef}>
+                        {/* Messages - Threads Style */}
+                        <div className="flex-1 overflow-y-auto bg-white" ref={scrollRef}>
                              {threadMessages.map((msg, msgIndex) => {
                                 const isPending = msg.status === 'PENDING';
                                 const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
@@ -1564,165 +1600,184 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 // Separate fan messages and creator replies
                                 const fanMessages = msg.conversation.filter(c => c.role === 'FAN');
                                 const creatorReplies = msg.conversation.filter(c => c.role === 'CREATOR' && !c.id.endsWith('-auto'));
+                                const hasReplies = creatorReplies.length > 0;
+                                const showThreadLine = hasReplies || (isPending && !hasReplies);
 
                                 return (
-                                    <div key={msg.id} className="relative">
-                                        {/* Session Divider */}
-                                        {msgIndex > 0 && (
-                                            <div className="flex items-center justify-center gap-4 mb-6 opacity-60">
-                                                <div className="h-px bg-slate-200 flex-1"></div>
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">
-                                                    {new Date(msg.createdAt).toLocaleDateString()}
-                                                </span>
-                                                <div className="h-px bg-slate-200 flex-1"></div>
+                                    <div key={msg.id} className={`px-4 py-3 ${msgIndex > 0 ? 'border-t border-slate-100' : ''}`}>
+                                        {/* Main Post */}
+                                        <div className="flex">
+                                            {/* Left: Avatar + Thread Line */}
+                                            <div className="flex flex-col items-center mr-3">
+                                                <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
+                                                    {currentUser?.avatarUrl ? (
+                                                        <img src={currentUser.avatarUrl} alt="You" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-slate-200 flex items-center justify-center">
+                                                            <User size={16} className="text-slate-500" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {showThreadLine && (
+                                                    <div className="w-0.5 flex-1 bg-slate-200 my-1 min-h-[8px]"></div>
+                                                )}
                                             </div>
-                                        )}
 
-                                        {/* Your Note - Main Post Style */}
-                                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                                            {/* Your Header */}
-                                            <div className="p-4 pb-0">
-                                                <div className="flex items-start gap-3">
-                                                    <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 border-2 border-white shadow-sm">
-                                                        {currentUser?.avatarUrl ? (
-                                                            <img src={currentUser.avatarUrl} alt="You" className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-white">
-                                                                <User size={18} />
+                                            {/* Right: Content */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                                    {/* Header Row */}
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-semibold text-[15px] text-black">{currentUser?.name || 'You'}</span>
+                                                            <span className="text-[15px] text-slate-500">{getRelativeTime(msg.createdAt)}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Content */}
+                                                    <div className="mt-2">
+                                                        {fanMessages.map((chat, idx) => (
+                                                            <p key={chat.id} className="text-[15px] text-slate-800 leading-relaxed">
+                                                                {chat.content}
+                                                            </p>
+                                                        ))}
+
+                                                        {/* Attachment */}
+                                                        {msg.attachmentUrl && (
+                                                            <div className="mt-3 rounded-lg overflow-hidden border border-slate-200">
+                                                                <img src={msg.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="font-bold text-slate-900 text-sm">{currentUser?.name || 'You'}</span>
-                                                            <span className="text-slate-400 text-xs">•</span>
-                                                            <span className="text-slate-400 text-xs">
-                                                                {new Date(msg.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                            </span>
+
+                                                    {/* Action Row */}
+                                                    <div className="flex items-center gap-0 mt-2.5 -ml-2">
+                                                        <div className="relative">
+                                                            <button 
+                                                                onClick={() => setActiveReactionPicker(activeReactionPicker === msg.id ? null : msg.id)}
+                                                                className="p-2 text-slate-400 hover:text-slate-600 transition-colors relative group"
+                                                            >
+                                                                {messageReactions[msg.id] ? (
+                                                                    <span className="text-lg animate-in zoom-in">{messageReactions[msg.id]}</span>
+                                                                ) : (
+                                                                    <div className="w-6 h-6 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition-colors relative">
+                                                                        <Smile size={14} className="text-slate-400" />
+                                                                        <div className="absolute -top-0.5 -right-0.5 bg-white rounded-full border border-slate-100 p-[1px]">
+                                                                            <Plus size={6} className="text-slate-400" />
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </button>
+                                                            {activeReactionPicker === msg.id && (
+                                                                <div className="absolute bottom-full left-0 mb-1 bg-white border border-slate-200 shadow-lg rounded-full p-1 flex gap-1 z-10 animate-in zoom-in duration-200">
+                                                                    <button onClick={() => handleReactionClick(msg.id, '👍')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">👍</button>
+                                                                    <button onClick={() => handleReactionClick(msg.id, '❤️')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">❤️</button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 text-slate-500 ml-auto text-[13px]">
+                                                            <Coins size={14} className="text-amber-500" />
+                                                            <span>{msg.amount}</span>
+                                                            {isPending && (
+                                                                <>
+                                                                    <span className="mx-1">·</span>
+                                                                    <span className="text-amber-600">{getTimeLeft(msg.expiresAt).text}</span>
+                                                                </>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-
-                                            {/* Your Message Content */}
-                                            <div className="px-4 py-3">
-                                                {fanMessages.map((chat, idx) => (
-                                                    <div key={chat.id} className={idx > 0 ? 'mt-3 pt-3 border-t border-slate-100' : ''}>
-                                                        <p className="text-slate-800 text-sm leading-relaxed whitespace-pre-wrap">{chat.content}</p>
-                                                    </div>
-                                                ))}
-
-                                                {/* Attachment */}
-                                                {msg.attachmentUrl && (
-                                                    <div className="mt-3 rounded-xl overflow-hidden border border-slate-200">
-                                                        <img src={msg.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Footer Stats */}
-                                            <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between">
-                                                <div className="flex items-center gap-4 text-slate-400">
-                                                    <div className="flex items-center gap-1.5 text-xs">
-                                                        <Coins size={14} className="text-amber-500" />
-                                                        <span className="font-bold text-slate-600">{msg.amount}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5 text-xs">
-                                                        <MessageSquare size={14} />
-                                                        <span>{creatorReplies.length}</span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Status Badge */}
-                                                {isPending && (
-                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full border border-indigo-100">
-                                                        <Clock size={10} />
-                                                        <span>{getTimeLeft(msg.expiresAt).text}</span>
-                                                    </div>
-                                                )}
-                                                {msg.status === 'REPLIED' && (
-                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">
-                                                        <CheckCircle2 size={10} />
-                                                        <span>Completed</span>
-                                                    </div>
-                                                )}
-                                                {isRefunded && (
-                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-full border border-slate-200">
-                                                        <Ban size={10} />
-                                                        <span>Refunded</span>
+                                                {/* Reply count */}
+                                                {hasReplies && (
+                                                    <div className="text-[15px] text-slate-500 mt-2 ml-2">
+                                                        {creatorReplies.length} {creatorReplies.length === 1 ? 'reply' : 'replies'}
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
 
-                                        {/* Creator Replies Section - Thread Style */}
-                                        {creatorReplies.length > 0 && (
-                                            <div className="mt-4 ml-5">
-                                                <div className="flex items-center gap-2 mb-3 ml-11">
-                                                    <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Creator's Reply</span>
-                                                    <span className="text-xs text-slate-400">{creatorReplies.length}/{creatorReplies.length}</span>
+                                        {/* Creator Replies */}
+                                        {creatorReplies.map((reply, idx) => (
+                                            <div key={reply.id} className="flex mt-0">
+                                                {/* Left: Avatar + Thread Line */}
+                                                <div className="flex flex-col items-center mr-3">
+                                                    <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
+                                                        {msg.creatorAvatarUrl ? (
+                                                            <img src={msg.creatorAvatarUrl} alt={msg.creatorName} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full bg-slate-200 flex items-center justify-center">
+                                                                <User size={16} className="text-slate-500" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    {idx < creatorReplies.length - 1 && (
+                                                        <div className="w-0.5 flex-1 bg-slate-200 my-1 min-h-[8px]"></div>
+                                                    )}
                                                 </div>
 
-                                                {creatorReplies.map((reply, idx) => (
-                                                    <div key={reply.id} className="flex gap-3">
-                                                        {/* Avatar with connecting line */}
-                                                        <div className="flex flex-col items-center">
-                                                            <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 border-2 border-white shadow-sm z-10">
-                                                                {msg.creatorAvatarUrl ? (
-                                                                    <img src={msg.creatorAvatarUrl} alt={msg.creatorName} className="w-full h-full object-cover" />
+                                                {/* Right: Content */}
+                                                <div className="flex-1 min-w-0 pb-2">
+                                                    {/* Header Row */}
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-semibold text-[15px] text-black">{msg.creatorName || 'Creator'}</span>
+                                                            <div className="flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100">
+                                                                <CheckCircle2 size={10} className="fill-current" />
+                                                                <span className="text-[10px] font-bold uppercase">Certified</span>
+                                                            </div>
+                                                            <span className="text-xs text-slate-400 font-medium">{getRelativeTime(reply.timestamp)}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Content */}
+                                                    <p className="text-[15px] text-black leading-normal mt-0.5">{reply.content}</p>
+
+                                                    {/* Action Row */}
+                                                    <div className="flex items-center gap-0 mt-2.5 -ml-2">
+                                                        <div className="relative">
+                                                            <button 
+                                                                onClick={() => setActiveReactionPicker(activeReactionPicker === reply.id ? null : reply.id)}
+                                                                className="p-2 text-slate-400 hover:text-slate-600 transition-colors relative group"
+                                                            >
+                                                                {messageReactions[reply.id] ? (
+                                                                    <span className="text-lg animate-in zoom-in">{messageReactions[reply.id]}</span>
                                                                 ) : (
-                                                                    <div className="w-full h-full flex items-center justify-center text-white">
-                                                                        <User size={14} />
+                                                                    <div className="w-6 h-6 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition-colors relative">
+                                                                        <Smile size={14} className="text-slate-400" />
+                                                                        <div className="absolute -top-0.5 -right-0.5 bg-white rounded-full border border-slate-100 p-[1px]">
+                                                                            <Plus size={6} className="text-slate-400" />
+                                                                        </div>
                                                                     </div>
                                                                 )}
-                                                            </div>
-                                                            {/* Connecting line - show if not last reply */}
-                                                            {idx < creatorReplies.length - 1 && (
-                                                                <div className="w-0.5 flex-1 bg-slate-200 min-h-[16px]"></div>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Reply content */}
-                                                        <div className={`flex-1 min-w-0 ${idx < creatorReplies.length - 1 ? 'pb-4' : ''}`}>
-                                                            <div className="flex items-center gap-2 mb-0.5">
-                                                                <span className="font-bold text-slate-900 text-sm">{msg.creatorName || 'Creator'}</span>
-                                                                <CheckCircle2 size={14} className="text-blue-500 fill-blue-500" />
-                                                                <span className="text-slate-400 text-xs">
-                                                                    {new Date(reply.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{reply.content}</p>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-
-                                        {/* Waiting for reply indicator */}
-                                        {creatorReplies.length === 0 && isPending && (
-                                            <div className="mt-4 ml-5">
-                                                <div className="flex gap-3">
-                                                    {/* Avatar with pulsing border */}
-                                                    <div className="flex flex-col items-center">
-                                                        <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden bg-slate-100 border-2 border-slate-200 shadow-sm relative">
-                                                            {msg.creatorAvatarUrl ? (
-                                                                <img src={msg.creatorAvatarUrl} alt={msg.creatorName} className="w-full h-full object-cover opacity-50" />
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                                                    <User size={14} />
+                                                            </button>
+                                                            {activeReactionPicker === reply.id && (
+                                                                <div className="absolute bottom-full left-0 mb-1 bg-white border border-slate-200 shadow-lg rounded-full p-1 flex gap-1 z-10 animate-in zoom-in duration-200">
+                                                                    <button onClick={() => handleReactionClick(reply.id, '👍')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">👍</button>
+                                                                    <button onClick={() => handleReactionClick(reply.id, '❤️')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">❤️</button>
                                                                 </div>
                                                             )}
-                                                            <div className="absolute inset-0 rounded-full border-2 border-amber-400 animate-pulse"></div>
                                                         </div>
                                                     </div>
+                                                </div>
+                                            </div>
+                                        ))}
 
-                                                    {/* Waiting text */}
-                                                    <div className="flex-1 flex items-center">
-                                                        <div className="flex items-center gap-2 text-slate-400 text-sm">
-                                                            <div className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse"></div>
-                                                            <span>Waiting for {msg.creatorName || 'creator'}'s reply...</span>
-                                                        </div>
+                                        {/* Waiting for reply indicator */}
+                                        {!hasReplies && isPending && (
+                                            <div className="flex">
+                                                <div className="flex flex-col items-center mr-3">
+                                                    <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-dashed border-slate-300">
+                                                        {msg.creatorAvatarUrl ? (
+                                                            <img src={msg.creatorAvatarUrl} alt={msg.creatorName} className="w-full h-full object-cover opacity-30" />
+                                                        ) : (
+                                                            <div className="w-full h-full bg-slate-50 flex items-center justify-center">
+                                                                <User size={16} className="text-slate-300" />
+                                                            </div>
+                                                        )}
                                                     </div>
+                                                </div>
+                                                <div className="flex-1 flex items-center">
+                                                    <span className="text-[15px] text-slate-400">Waiting for {msg.creatorName || 'creator'}'s reply...</span>
                                                 </div>
                                             </div>
                                         )}
