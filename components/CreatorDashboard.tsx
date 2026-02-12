@@ -2026,7 +2026,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 <div className="flex-1 min-w-0">
                                                     <span className="text-xs font-bold block">{platform.label}</span>
                                                     {isSelected && url && (
-                                                        <span className="text-[9px] opacity-70 truncate block">{url.replace(/^https?:\/\/(www\.)?/, '')}</span>
+                                                        <span className="text-[9px] text-blue-200 truncate block">{url.replace(/^https?:\/\/(www\.)?/, '')}</span>
                                                     )}
                                                 </div>
                                                 {isSelected && <Check size={12} className="ml-auto text-green-400 flex-shrink-0" />}
