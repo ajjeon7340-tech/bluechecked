@@ -506,7 +506,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         </div>
                         
                         {!isCustomizeMode && (
-                            <div className="absolute bottom-1 right-1 z-20" title="Active Now">
+                            <div className="absolute top-1 right-1 z-20" title="Active Now">
                                 <span className="relative flex h-5 w-5">
                                   <span className="hidden sm:inline-flex animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                   <span className="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-[3px] border-white"></span>
