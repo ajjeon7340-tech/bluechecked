@@ -483,9 +483,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           {/* 1. PROFILE INFO & STATS */}
           <div className="w-full">
              <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-slate-200 shadow-sm relative transition-all hover:shadow-md">
-                <div className="p-6 sm:p-8 relative z-10 flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
-                    {/* LEFT: Avatar + Stats */}
-                    <div className="flex flex-col items-center gap-3 flex-shrink-0">
+                <div className="p-6 sm:p-8 relative z-10">
+                    <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
+                        {/* LEFT: Avatar + Stats */}
+                        <div className="flex flex-col items-center gap-3 flex-shrink-0">
                         <div className="relative w-24 h-24 rounded-full p-1 overflow-hidden border border-slate-100 shadow-sm bg-white group">
                            {!imgError && (editedCreator.avatarUrl || DEFAULT_AVATAR) ? (
                                <img 
@@ -504,15 +505,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                </div>
                            )}
                         
-                            {!isCustomizeMode && (
-                                <div className="absolute top-1 right-1 z-20" title="Active Now">
-                                    <span className="relative flex h-5 w-5">
-                                    <span className="hidden sm:inline-flex animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-[3px] border-white"></span>
-                                    </span>
-                                </div>
-                            )}
-
                             {isCustomizeMode && (
                                 <div 
                                     className="absolute inset-0 flex items-center justify-center rounded-full cursor-pointer pointer-events-none z-20"
@@ -550,13 +542,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                 </div>
                             </div>
                         )}
-                    </div>
+                        </div>
 
-                    {/* RIGHT: Content Wrapper */}
-                    <div className="flex-1 min-w-0 w-full">
-                        <div className="flex flex-col sm:flex-row gap-8">
-                            {/* LEFT: Name & Bio */}
-                            <div className="flex-1 min-w-0">
+                        {/* RIGHT: Content Wrapper */}
+                        <div className="flex-1 min-w-0 w-full">
+                            <div className="flex flex-col sm:flex-row gap-8">
+                                {/* LEFT: Name & Bio */}
+                                <div className="flex-1 min-w-0">
                                 {isCustomizeMode ? (
                                     <div className="space-y-2">
                                         <input 
@@ -592,53 +584,54 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         </div>
                                     </>
                                 )}
-                            </div>
+                                </div>
 
-                            {/* RIGHT: Platforms (Aligned with Name) */}
-                            <div className="w-full sm:w-auto flex-shrink-0 pt-1">
-                                {platforms.length > 0 ? (
-                                    <div className="flex flex-col gap-2">
-                                        {platforms.map(platform => {
-                                            const platformId = typeof platform === 'string' ? platform : platform.id;
-                                            const platformUrl = typeof platform === 'string' ? '' : platform.url;
+                                {/* RIGHT: Platforms (Aligned with Name) */}
+                                <div className="w-full sm:w-auto flex-shrink-0 pt-1">
+                                    {platforms.length > 0 ? (
+                                        <div className="flex flex-col gap-2">
+                                            {platforms.map(platform => {
+                                                const platformId = typeof platform === 'string' ? platform : platform.id;
+                                                const platformUrl = typeof platform === 'string' ? '' : platform.url;
 
-                                            return (
-                                                <a
-                                                    key={platformId}
-                                                    href={platformUrl ? ensureProtocol(platformUrl) : '#'}
-                                                    target={platformUrl ? "_blank" : undefined}
-                                                    rel="noopener noreferrer"
-                                                    className={`flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 transition-all w-full sm:w-40 ${platformUrl ? 'hover:border-indigo-300 hover:bg-white hover:shadow-sm cursor-pointer' : 'opacity-70 cursor-default'}`}
-                                                >
-                                                    {getPlatformIcon(platformId)}
-                                                    <span className="text-xs font-bold text-slate-700 capitalize">{platformId}</span>
-                                                </a>
-                                            );
-                                        })}
-                                    </div>
-                                ) : (
-                                    <p className="text-xs text-slate-400 italic">No platforms connected.</p>
-                                )}
+                                                return (
+                                                    <a
+                                                        key={platformId}
+                                                        href={platformUrl ? ensureProtocol(platformUrl) : '#'}
+                                                        target={platformUrl ? "_blank" : undefined}
+                                                        rel="noopener noreferrer"
+                                                        className={`flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 transition-all w-full sm:w-40 ${platformUrl ? 'hover:border-indigo-300 hover:bg-white hover:shadow-sm cursor-pointer' : 'opacity-70 cursor-default'}`}
+                                                    >
+                                                        {getPlatformIcon(platformId)}
+                                                        <span className="text-xs font-bold text-slate-700 capitalize">{platformId}</span>
+                                                    </a>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-slate-400 italic">No platforms connected.</p>
+                                    )}
+                                </div>
                             </div>
                         </div>
-
-                        {!isCustomizeMode && (
-                            <div className="flex gap-3 mt-6">
-                                <button
-                                    onClick={handleShare}
-                                    className="flex-1 bg-white border border-slate-200 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 shadow-sm"
-                                >
-                                    <Share size={18} /> Share
-                                </button>
-                                <button
-                                    onClick={currentUser ? handleOpenModal : onLoginRequest}
-                                    className="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-900/20"
-                                >
-                                    <MessageSquare size={18} /> Ask me anything
-                                </button>
-                            </div>
-                        )}
                     </div>
+
+                    {!isCustomizeMode && (
+                        <div className="flex gap-3 mt-8 max-w-md mx-auto">
+                            <button
+                                onClick={handleShare}
+                                className="flex-1 bg-white border border-slate-200 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 shadow-sm"
+                            >
+                                <Share size={18} /> Share
+                            </button>
+                            <button
+                                onClick={currentUser ? handleOpenModal : onLoginRequest}
+                                className="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-900/20"
+                            >
+                                <MessageSquare size={18} /> Ask me anything
+                            </button>
+                        </div>
+                    )}
                 </div>
              </div>
           </div>
