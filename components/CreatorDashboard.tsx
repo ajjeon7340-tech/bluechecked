@@ -1996,15 +1996,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         const isPending = msg.status === 'PENDING';
                                         const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
 
-                                        // Separate fan messages and creator replies
-                                        const fanMessages = msg.conversation.filter(c => c.role === 'FAN');
-                                        const creatorReplies = msg.conversation.filter(c => c.role === 'CREATOR' && !c.id.endsWith('-auto'));
-                                        const hasReplies = creatorReplies.length > 0;
-                                        const showThreadLine = hasReplies || (isPending && !hasReplies);
+                                        // Sort conversation by timestamp
+                                        const sortedConversation = [...msg.conversation].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+                                        const [firstChat, ...restChats] = sortedConversation;
 
                                         return (
                                             <div key={msg.id} className={`px-4 py-3 ${msgIndex > 0 ? 'border-t border-slate-100' : ''}`}>
-                                                {/* Main Post */}
+                                                {/* 1. First Message (The Request) */}
+                                                {firstChat && (
                                                 <div className="flex">
                                                     {/* Left: Avatar + Thread Line */}
                                                     <div className="flex flex-col items-center mr-3">
@@ -2017,7 +2016,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        {showThreadLine && (
+                                                        {(restChats.length > 0 || isPending) && (
                                                             <div className="w-0.5 flex-1 bg-slate-200 my-1 min-h-[8px]"></div>
                                                         )}
                                                     </div>
@@ -2029,17 +2028,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <div className="flex items-center justify-between mb-4">
                                                 <div className="flex items-center gap-3">
                                                     <span className="font-semibold text-lg tracking-tight text-[#1A1A1A]">{msg.senderName}</span>
-                                                    <span className="text-xs font-medium text-[#94A3B8]">• {getRelativeTime(msg.createdAt)}</span>
+                                                    <span className="text-xs font-medium text-[#94A3B8]">• {getRelativeTime(firstChat.timestamp)}</span>
                                                 </div>
                                                             </div>
 
                                             {/* Content */}
                                             <div className="mt-2">
-                                                {fanMessages.map((chat, idx) => (
-                                                    <p key={chat.id} className="text-base text-[#2D2D2D] leading-loose">
-                                                        {chat.content}
-                                                    </p>
-                                                ))}
+                                                <p className="text-base text-[#2D2D2D] leading-loose">{firstChat.content}</p>
 
                                                 {/* Attachment */}
                                                 {msg.attachmentUrl && (
@@ -2053,11 +2048,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <div className="flex items-center gap-0 mt-4 -ml-2">
                                                 <div className="relative">
                                                     <button 
-                                                        onClick={() => setActiveReactionPicker(activeReactionPicker === msg.id ? null : msg.id)}
+                                                        onClick={() => setActiveReactionPicker(activeReactionPicker === firstChat.id ? null : firstChat.id)}
                                                         className="p-2 text-slate-400 hover:text-slate-600 transition-colors relative group"
                                                     >
-                                                        {messageReactions[msg.id] ? (
-                                                            <span className="text-lg animate-in zoom-in">{messageReactions[msg.id]}</span>
+                                                        {messageReactions[firstChat.id] ? (
+                                                            <span className="text-lg animate-in zoom-in">{messageReactions[firstChat.id]}</span>
                                                         ) : (
                                                             <div className="w-6 h-6 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition-colors relative">
                                                                 <Smile size={14} className="text-slate-400" />
@@ -2067,10 +2062,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             </div>
                                                         )}
                                                     </button>
-                                                    {activeReactionPicker === msg.id && (
+                                                    {activeReactionPicker === firstChat.id && (
                                                         <div className="absolute bottom-full left-0 mb-1 bg-white border border-slate-200 shadow-lg rounded-full p-1 flex gap-1 z-10 animate-in zoom-in duration-200">
-                                                            <button onClick={() => handleReactionClick(msg.id, '👍')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">👍</button>
-                                                            <button onClick={() => handleReactionClick(msg.id, '❤️')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">❤️</button>
+                                                            <button onClick={() => handleReactionClick(firstChat.id, '👍')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">👍</button>
+                                                            <button onClick={() => handleReactionClick(firstChat.id, '❤️')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">❤️</button>
                                                         </div>
                                                     )}
                                                 </div>
@@ -2086,61 +2081,70 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 </div>
                                             </div>
                                                         </div>
-                                                        {/* Reply count */}
-                                                        {hasReplies && (
-                                            <div className="text-[15px] text-slate-500 mt-2 ml-2">
-                                                                {creatorReplies.length} {creatorReplies.length === 1 ? 'reply' : 'replies'}
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 </div>
+                                                )}
 
-                                                {/* Replies */}
-                                                {creatorReplies.map((reply, idx) => (
-                                                    <div key={reply.id} className="flex mt-0">
+                                                {/* 2. Subsequent Messages (Replies & Appreciation) */}
+                                                {restChats.map((chat, idx) => {
+                                                    const isCreator = chat.role === 'CREATOR';
+                                                    const isLast = idx === restChats.length - 1;
+
+                                                    return (
+                                                    <div key={chat.id} className="flex mt-0">
                                                         {/* Left: Avatar + Thread Line */}
                                                         <div className="flex flex-col items-center mr-3">
                                                             <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
-                                                                {creator.avatarUrl ? (
-                                                                    <img src={creator.avatarUrl} alt={creator.displayName} className="w-full h-full object-cover" />
+                                                                {isCreator ? (
+                                                                    creator.avatarUrl ? (
+                                                                        <img src={creator.avatarUrl} alt={creator.displayName} className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <div className="w-full h-full bg-slate-200 flex items-center justify-center"><User size={16} className="text-slate-500" /></div>
+                                                                    )
                                                                 ) : (
-                                                                    <div className="w-full h-full bg-slate-200 flex items-center justify-center">
-                                                                        <User size={16} className="text-slate-500" />
-                                                                    </div>
+                                                                    msg.senderAvatarUrl ? (
+                                                                        <img src={msg.senderAvatarUrl} alt={msg.senderName} className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <div className="w-full h-full bg-slate-200 flex items-center justify-center"><User size={16} className="text-slate-500" /></div>
+                                                                    )
                                                                 )}
                                                             </div>
-                                                            {idx < creatorReplies.length - 1 && (
+                                                            {(!isLast || (isPending && !isCreator)) && (
                                                                 <div className="w-0.5 flex-1 bg-slate-200 my-1 min-h-[8px]"></div>
                                                             )}
                                                         </div>
 
                                                         {/* Right: Content */}
                                                         <div className="flex-1 min-w-0 pb-2">
-                                                            <div className="bg-[#FAFAFA] p-6 sm:p-8 rounded-[2rem] shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 transition-transform duration-300">
+                                                            <div className={`${isCreator ? 'bg-[#FAFAFA]' : 'bg-white'} p-6 sm:p-8 rounded-[2rem] shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 transition-transform duration-300`}>
                                                                 {/* Header Row */}
                                                                 <div className="flex items-center justify-between mb-4">
                                                                     <div className="flex items-center gap-3">
-                                                                        <span className="font-semibold text-lg tracking-tight text-[#1A1A1A]">{creator.displayName || 'You'}</span>
-                                                                        <div className="flex items-center gap-1.5 bg-blue-50/50 text-blue-600 px-2.5 py-1 rounded-full">
-                                                                            <CheckCircle2 size={12} className="fill-current" />
-                                                                            <span className="text-[10px] font-bold uppercase tracking-wide">Certified</span>
-                                                                        </div>
-                                                                        <span className="text-xs font-medium text-[#94A3B8]">• {getRelativeTime(reply.timestamp)}</span>
+                                                                        <span className="font-semibold text-lg tracking-tight text-[#1A1A1A]">
+                                                                            {isCreator ? (creator.displayName || 'You') : msg.senderName}
+                                                                        </span>
+                                                                        {isCreator && (
+                                                                            <div className="flex items-center gap-1.5 bg-blue-50/50 text-blue-600 px-2.5 py-1 rounded-full">
+                                                                                <CheckCircle2 size={12} className="fill-current" />
+                                                                                <span className="text-[10px] font-bold uppercase tracking-wide">Certified</span>
+                                                                            </div>
+                                                                        )}
+                                                                        <span className="text-xs font-medium text-[#94A3B8]">• {getRelativeTime(chat.timestamp)}</span>
                                                                     </div>
                                                                 </div>
 
                                                                 {/* Content */}
-                                                                <p className="text-base text-[#2D2D2D] leading-loose">{reply.content}</p>
+                                                                <p className="text-base text-[#2D2D2D] leading-loose">{chat.content}</p>
 
                                                                 {/* Action Row */}
                                                                 <div className="flex items-center gap-0 mt-4 -ml-2">
                                                                 <div className="relative">
                                                                     <button 
-                                                                        onClick={() => setActiveReactionPicker(activeReactionPicker === reply.id ? null : reply.id)}
+                                                                        onClick={() => setActiveReactionPicker(activeReactionPicker === chat.id ? null : chat.id)}
                                                                         className="p-2 text-slate-400 hover:text-slate-600 transition-colors relative group"
                                                                     >
-                                                                        {messageReactions[reply.id] ? (
-                                                                            <span className="text-lg animate-in zoom-in">{messageReactions[reply.id]}</span>
+                                                                        {messageReactions[chat.id] ? (
+                                                                            <span className="text-lg animate-in zoom-in">{messageReactions[chat.id]}</span>
                                                                         ) : (
                                                                             <div className="w-6 h-6 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition-colors relative">
                                                                                 <Smile size={14} className="text-slate-400" />
@@ -2150,10 +2154,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                             </div>
                                                                         )}
                                                                     </button>
-                                                                    {activeReactionPicker === reply.id && (
+                                                                    {activeReactionPicker === chat.id && (
                                                                         <div className="absolute bottom-full left-0 mb-1 bg-white border border-slate-200 shadow-lg rounded-full p-1 flex gap-1 z-10 animate-in zoom-in duration-200">
-                                                                            <button onClick={() => handleReactionClick(reply.id, '👍')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">👍</button>
-                                                                            <button onClick={() => handleReactionClick(reply.id, '❤️')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">❤️</button>
+                                                                            <button onClick={() => handleReactionClick(chat.id, '👍')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">👍</button>
+                                                                            <button onClick={() => handleReactionClick(chat.id, '❤️')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">❤️</button>
                                                                         </div>
                                                                     )}
                                                                 </div>
@@ -2161,10 +2165,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             </div>
                                                         </div>
                                                     </div>
-                                                ))}
+                                                    );
+                                                })}
 
                                                 {/* Waiting indicator */}
-                                                {!hasReplies && isPending && (
+                                                {isPending && restChats.length > 0 && restChats[restChats.length - 1].role === 'FAN' && (
                                                     <div className="flex">
                                                         <div className="flex flex-col items-center mr-3">
                                                             <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-dashed border-slate-300">
