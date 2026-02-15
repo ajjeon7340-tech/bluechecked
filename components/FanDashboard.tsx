@@ -1601,10 +1601,15 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 const [firstChat, ...restChats] = sortedConversation;
 
                                 return (
-                                    <div key={msg.id} className={`px-4 py-3 ${msgIndex > 0 ? 'border-t border-slate-100' : ''}`}>
+                                    <div key={msg.id} className={`px-4 py-3 ${msgIndex > 0 ? 'border-t border-slate-100' : ''} relative`}>
+                                        {/* Main Thread Line */}
+                                        {(restChats.length > 0 || isPending) && (
+                                            <div className="absolute left-[2.125rem] top-12 bottom-6 w-0.5 bg-slate-200 -z-10"></div>
+                                        )}
+
                                         {/* 1. First Message (The Request) */}
                                         {firstChat && (
-                                        <div className="flex">
+                                        <div className="flex relative z-10">
                                             {/* Left: Avatar + Thread Line */}
                                             <div className="flex flex-col items-center mr-3">
                                                 <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
@@ -1616,9 +1621,6 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         </div>
                                                     )}
                                                 </div>
-                                                {(restChats.length > 0 || isPending) && (
-                                                    <div className="w-0.5 flex-1 bg-slate-200 my-1 min-h-[8px]"></div>
-                                                )}
                                             </div>
 
                                             {/* Right: Content */}
@@ -1691,7 +1693,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             const isLast = idx === restChats.length - 1;
 
                                             return (
-                                            <div key={chat.id} className={`flex mt-4 ${isCreator ? 'ml-8' : ''}`}>
+                                            <div key={chat.id} className={`flex mt-4 relative z-10 ${isCreator ? 'ml-8' : ''}`}>
+                                                {/* Connector for Creator Reply */}
+                                                {isCreator && (
+                                                    <div className="absolute -left-[0.875rem] top-0 h-[1.125rem] w-[0.875rem] border-l-2 border-b-2 border-slate-200 rounded-bl-xl -z-10"></div>
+                                                )}
+
                                                 {/* Left: Avatar + Thread Line */}
                                                 <div className="flex flex-col items-center mr-3">
                                                     <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
@@ -1709,9 +1716,6 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             )
                                                         )}
                                                     </div>
-                                                    {(!isLast || (isPending && !isCreator)) && (
-                                                        <div className="w-0.5 flex-1 bg-slate-200 my-1 min-h-[8px]"></div>
-                                                    )}
                                                 </div>
 
                                                 {/* Right: Content */}
@@ -1769,7 +1773,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                                         {/* Waiting for reply indicator */}
                                         {isPending && restChats.length > 0 && restChats[restChats.length - 1].role === 'FAN' && (
-                                            <div className="flex">
+                                            <div className="flex relative z-10">
                                                 <div className="flex flex-col items-center mr-3">
                                                     <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-dashed border-slate-300">
                                                         {msg.creatorAvatarUrl ? (
