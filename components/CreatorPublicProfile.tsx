@@ -653,50 +653,53 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                     </h3>
                 </div>
 
-               <div className="w-full bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3 sm:gap-4 group transition-all hover:shadow-md hover:border-indigo-300 relative overflow-hidden">
-                    {/* Icon */}
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
-                        <MessageSquare size={20} className="sm:hidden" />
-                        <MessageSquare size={24} className="hidden sm:block" />
-                    </div>
+               <div
+                    onClick={!isCustomizeMode ? (currentUser ? handleOpenModal : onLoginRequest) : undefined}
+                    className={`w-full text-left relative group transition-all duration-300 ${!isCustomizeMode ? 'hover:scale-[1.02] cursor-pointer' : ''}`}
+               >
+                    {/* Gradient Glow */}
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-[1.2rem] opacity-20 group-hover:opacity-50 blur transition duration-500"></div>
+                    
+                    <div className="relative bg-white p-1 rounded-[1rem] border border-slate-100 shadow-sm">
+                        <div className="bg-gradient-to-br from-slate-50 to-white p-4 rounded-[0.8rem] flex items-center gap-4">
+                            {/* Icon */}
+                            <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/30 group-hover:rotate-3 transition-transform duration-300">
+                                <MessageSquare size={24} className="fill-white/20" />
+                            </div>
 
-                    {/* Text */}
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                            <h4 className="font-bold text-slate-900 text-sm sm:text-base group-hover:text-indigo-600 transition-colors">Priority DM</h4>
-                            <span className="hidden sm:inline bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide border border-indigo-100">Guaranteed</span>
+                            {/* Text */}
+                            <div className="flex-1 min-w-0">
+                                <h4 className="font-black text-slate-900 text-lg leading-tight group-hover:text-blue-600 transition-colors">
+                                    Ask me anything
+                                </h4>
+                                <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-2">
+                                    <span className="flex items-center gap-1 bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide">
+                                        <Clock size={10} /> {creator.responseWindowHours}h
+                                    </span>
+                                    <span>or money back</span>
+                                </p>
+                            </div>
+
+                            {/* Action */}
+                            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                                {isCustomizeMode && (
+                                    <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-slate-200 mb-1 shadow-sm" onClick={(e) => e.stopPropagation()}>
+                                        <Coins size={12} className="text-slate-400"/>
+                                        <input
+                                            type="number"
+                                            value={editedCreator.pricePerMessage}
+                                            onChange={(e) => updateField('pricePerMessage', Number(e.target.value))}
+                                            className="w-12 font-bold text-slate-900 text-right bg-transparent outline-none text-sm"
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="bg-slate-900 text-white px-4 py-2.5 rounded-xl text-sm font-bold group-hover:bg-blue-600 transition-colors shadow-lg shadow-slate-900/10 flex items-center gap-1.5">
+                                    <Coins size={14} className="text-yellow-300" />
+                                    <span>{creator.pricePerMessage}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-slate-500">
-                            <span className="flex items-center gap-1"><Clock size={10} className="sm:hidden text-slate-400"/><Clock size={12} className="hidden sm:block text-slate-400"/> {creator.responseWindowHours}h</span>
-                            <span className="hidden sm:flex items-center gap-1"><ShieldCheck size={12} className="text-slate-400"/> Auto-refund</span>
-                        </div>
-                    </div>
-
-                    {/* Action */}
-                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                        {isCustomizeMode && (
-                             <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
-                                <Coins size={12} className="text-slate-400"/>
-                                <input
-                                    type="number"
-                                    value={editedCreator.pricePerMessage}
-                                    onChange={(e) => updateField('pricePerMessage', Number(e.target.value))}
-                                    className="w-12 font-bold text-slate-900 text-right bg-transparent outline-none text-sm"
-                                />
-                             </div>
-                        )}
-
-                        <button
-                            onClick={currentUser ? handleOpenModal : onLoginRequest}
-                            disabled={isCustomizeMode}
-                            className="bg-blue-600 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap"
-                        >
-                            {isCustomizeMode ? (
-                                <>Preview <ArrowRight size={12} className="opacity-50"/></>
-                            ) : (
-                                <><Coins size={12} /> {creator.pricePerMessage}</>
-                            )}
-                        </button>
                     </div>
                </div>
                 
