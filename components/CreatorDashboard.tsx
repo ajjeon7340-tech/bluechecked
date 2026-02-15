@@ -51,12 +51,13 @@ const getRelativeTime = (dateString: string) => {
     const diffDay = Math.floor(diffHour / 24);
     const diffWeek = Math.floor(diffDay / 7);
 
-    if (diffSec < 60) return 'now';
-    if (diffMin < 60) return `${diffMin}m`;
-    if (diffHour < 24) return `${diffHour}h`;
-    if (diffDay < 7) return `${diffDay}d`;
-    if (diffWeek < 4) return `${diffWeek}w`;
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    if (diffSec < 60) return 'Just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    if (diffHour < 24) return `${diffHour}h ago`;
+    if (diffDay < 7) return `${diffDay}d ago`;
+    
+    // Editorial style date: "Feb 15"
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
 const DUMMY_PRO_DATA: ProAnalyticsData = {
@@ -1952,19 +1953,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                                     {/* Right: Content */}
                                                     <div className="flex-1 min-w-0">
-                                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                        <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 transition-transform duration-300">
                                             {/* Header Row */}
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-semibold text-[15px] text-black">{msg.senderName}</span>
-                                                    <span className="text-[15px] text-slate-500">{getRelativeTime(msg.createdAt)}</span>
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="font-semibold text-lg tracking-tight text-[#1A1A1A]">{msg.senderName}</span>
+                                                    <span className="text-xs font-medium text-[#94A3B8]">• {getRelativeTime(msg.createdAt)}</span>
                                                 </div>
                                                             </div>
 
                                             {/* Content */}
                                             <div className="mt-2">
                                                 {fanMessages.map((chat, idx) => (
-                                                    <p key={chat.id} className="text-[15px] text-slate-800 leading-relaxed">
+                                                    <p key={chat.id} className="text-base text-[#2D2D2D] leading-loose">
                                                         {chat.content}
                                                     </p>
                                                 ))}
@@ -1978,7 +1979,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             </div>
 
                                             {/* Action Row */}
-                                            <div className="flex items-center gap-0 mt-2.5 -ml-2">
+                                            <div className="flex items-center gap-0 mt-4 -ml-2">
                                                 <div className="relative">
                                                     <button 
                                                         onClick={() => setActiveReactionPicker(activeReactionPicker === msg.id ? null : msg.id)}
@@ -2044,23 +2045,24 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                                         {/* Right: Content */}
                                                         <div className="flex-1 min-w-0 pb-2">
-                                                            {/* Header Row */}
-                                                            <div className="flex items-center justify-between mb-1">
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="font-semibold text-[15px] text-black">{creator.displayName || 'You'}</span>
-                                                                    <div className="flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100">
-                                                                        <CheckCircle2 size={10} className="fill-current" />
-                                                                        <span className="text-[10px] font-bold uppercase">Certified</span>
+                                                            <div className="bg-[#FAFAFA] p-6 sm:p-8 rounded-[2rem] shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 transition-transform duration-300">
+                                                                {/* Header Row */}
+                                                                <div className="flex items-center justify-between mb-4">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <span className="font-semibold text-lg tracking-tight text-[#1A1A1A]">{creator.displayName || 'You'}</span>
+                                                                        <div className="flex items-center gap-1.5 bg-blue-50/50 text-blue-600 px-2.5 py-1 rounded-full">
+                                                                            <CheckCircle2 size={12} className="fill-current" />
+                                                                            <span className="text-[10px] font-bold uppercase tracking-wide">Certified</span>
+                                                                        </div>
+                                                                        <span className="text-xs font-medium text-[#94A3B8]">• {getRelativeTime(reply.timestamp)}</span>
                                                                     </div>
-                                                                <span className="text-xs text-slate-400 font-medium">{getRelativeTime(reply.timestamp)}</span>
                                                                 </div>
-                                                            </div>
 
-                                                            {/* Content */}
-                                                            <p className="text-[15px] text-black leading-normal mt-0.5">{reply.content}</p>
+                                                                {/* Content */}
+                                                                <p className="text-base text-[#2D2D2D] leading-loose">{reply.content}</p>
 
-                                                            {/* Action Row */}
-                                                            <div className="flex items-center gap-0 mt-2.5 -ml-2">
+                                                                {/* Action Row */}
+                                                                <div className="flex items-center gap-0 mt-4 -ml-2">
                                                                 <div className="relative">
                                                                     <button 
                                                                         onClick={() => setActiveReactionPicker(activeReactionPicker === reply.id ? null : reply.id)}
@@ -2084,6 +2086,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                         </div>
                                                                     )}
                                                                 </div>
+                                                            </div>
                                                             </div>
                                                         </div>
                                                     </div>
