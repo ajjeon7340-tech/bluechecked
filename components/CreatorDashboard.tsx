@@ -166,7 +166,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [financePage, setFinancePage] = useState(1);
   const [notificationPage, setNotificationPage] = useState(1);
   const [reviewsPage, setReviewsPage] = useState(1);
+  const [overviewReviewsPage, setOverviewReviewsPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
+  const OVERVIEW_REVIEWS_PER_PAGE = 5;
 
   // Drag and Drop State for Links
   const [draggedLinkIndex, setDraggedLinkIndex] = useState<number | null>(null);
@@ -306,20 +308,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   };
 
   const handleToggleNotifications = () => {
-      if (currentView !== 'NOTIFICATIONS') {
+      if (!showNotifications) {
           setLastReadTime(Date.now());
           localStorage.setItem('bluechecked_creator_last_read_time', Date.now().toString());
-          setCurrentView('NOTIFICATIONS');
       }
+      setShowNotifications(!showNotifications);
   };
 
   const handleNotificationClick = (notif: any) => {
       if (notif.senderEmail) {
-
           handleOpenChat(notif.senderEmail);
       }
       setDeletedNotificationIds(prev => [...prev, notif.id]);
-      // If we are in notification view, we stay there, but the item disappears
+      setShowNotifications(false);
   };
 
   useEffect(() => {
@@ -1156,24 +1157,51 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         </div>
                          <div className="space-y-4">
                              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col h-96">
+                                {(() => {
+                                    const totalOverviewPages = Math.ceil(reviews.length / OVERVIEW_REVIEWS_PER_PAGE);
+                                    const displayedOverviewReviews = reviews.slice((overviewReviewsPage - 1) * OVERVIEW_REVIEWS_PER_PAGE, overviewReviewsPage * OVERVIEW_REVIEWS_PER_PAGE);
+                                    
+                                    return (
+                                        <>
                                 <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-50 flex-shrink-0">
                                     <div className="text-slate-400 text-xs font-bold uppercase tracking-wider">Recent Reviews</div>
-                                    <button 
-                                        onClick={() => setCurrentView('REVIEWS')}
-                                        className="text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-2 py-1 rounded transition-colors"
-                                    >
-                                        View All ({reviews.length})
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        {totalOverviewPages > 1 && (
+                                            <div className="flex items-center bg-slate-50 rounded-lg p-0.5 border border-slate-100">
+                                                <button 
+                                                    onClick={() => setOverviewReviewsPage(p => Math.max(1, p - 1))}
+                                                    disabled={overviewReviewsPage === 1}
+                                                    className="p-1 hover:bg-white rounded-md text-slate-400 hover:text-slate-600 disabled:opacity-30 transition-all"
+                                                >
+                                                    <ChevronLeft size={12} />
+                                                </button>
+                                                <span className="text-[9px] font-bold text-slate-500 px-1.5 min-w-[20px] text-center">{overviewReviewsPage}/{totalOverviewPages}</span>
+                                                <button 
+                                                    onClick={() => setOverviewReviewsPage(p => Math.min(totalOverviewPages, p + 1))}
+                                                    disabled={overviewReviewsPage === totalOverviewPages}
+                                                    className="p-1 hover:bg-white rounded-md text-slate-400 hover:text-slate-600 disabled:opacity-30 transition-all"
+                                                >
+                                                    <ChevronRight size={12} />
+                                                </button>
+                                            </div>
+                                        )}
+                                        <button 
+                                            onClick={() => setCurrentView('REVIEWS')}
+                                            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-2 py-1 rounded transition-colors"
+                                        >
+                                            View All
+                                        </button>
+                                    </div>
                                 </div>
                                 
                                 <div className="flex-1 overflow-y-auto pr-1 space-y-4">
-                                    {reviews.length === 0 ? (
+                                    {displayedOverviewReviews.length === 0 ? (
                                         <div className="text-center py-6">
                                             <Star size={24} className="mx-auto text-slate-200 mb-2" />
                                             <p className="text-xs text-slate-400">No reviews yet.</p>
                                         </div>
                                     ) : (
-                                        reviews.slice(0, 5).map(review => (
+                                        displayedOverviewReviews.map(review => (
                                             <div key={review.id} className="group">
                                                 <div className="flex justify-between items-start mb-1">
                                                     <span className="font-bold text-slate-900 text-xs">{review.senderName}</span>
@@ -1193,6 +1221,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         ))
                                     )}
                                 </div>
+                                        </>
+                                    );
+                                })()}
                             </div>
                         </div>
                     </div>
