@@ -485,7 +485,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
              <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-slate-200 shadow-sm relative transition-all hover:shadow-md">
                 <div className="p-6 sm:p-8 relative z-10 flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
                     {/* LEFT: Avatar + Stats */}
-                    <div className="flex flex-col items-start gap-3 flex-shrink-0">
+                    <div className="flex flex-col items-center gap-3 flex-shrink-0">
                         <div className="relative w-24 h-24 rounded-full p-1 overflow-hidden border border-slate-100 shadow-sm bg-white group">
                            {!imgError && (editedCreator.avatarUrl || DEFAULT_AVATAR) ? (
                                <img 
@@ -594,9 +594,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                             <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-tight mb-1">
                                                 {creator.displayName}
                                             </h1>
-                                            <p className="text-sm text-slate-600 leading-relaxed font-normal mt-2">
+                                            <p className="text-sm text-slate-600 leading-relaxed font-normal mt-2 truncate">
                                                 {creator.bio}
                                             </p>
+                                            <div className="flex items-center gap-1.5 mt-2 text-xs font-medium text-slate-500">
+                                                <Clock size={14} className="text-emerald-500" />
+                                                <span>{getResponseTimeTooltip(creator.stats.responseTimeAvg)}</span>
+                                            </div>
                                         </div>
                                     </>
                                 )}
@@ -1190,82 +1194,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       <Button 
                         fullWidth 
                         onClick={() => setStep('support_payment')}
-                        className="bg-slate-900 hover:bg-slate-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-slate-900/20 text-lg"
-                      >
-                        Continue
-                      </Button>
-                  </div>
-              )}
-
-              {step === 'support_payment' && (
-                  <div className="space-y-6">
-                      <div className="bg-pink-50 p-6 rounded-[2rem] border border-pink-100">
-                         <div className="flex justify-between items-end">
-                           <span className="font-bold text-slate-900 text-lg">Total Tip</span>
-                           <span className="font-black text-slate-900 text-3xl tracking-tight flex items-center gap-2"><Coins/> {supportAmount}</span>
-                         </div>
-                         <div className="mt-4 pt-4 border-t border-dashed border-pink-200">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-slate-500">Your Wallet Balance:</span>
-                                <span className={`font-bold ${checkBalance(supportAmount) ? 'text-green-600' : 'text-red-500'}`}>
-                                    {currentUser?.credits || 0} Credits
-                                </span>
-                            </div>
-                         </div>
-                      </div>
-
-                      <div className="flex gap-3 pt-2">
-                        <Button variant="ghost" onClick={() => setStep('support_confirm')} className="flex-1 rounded-2xl font-semibold">Back</Button>
-                        {checkBalance(supportAmount) ? (
-                            <Button fullWidth onClick={handleSupportPayment} isLoading={isSubmitting} className="flex-[2] bg-slate-900 hover:bg-slate-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-slate-900/20 text-lg">
-                                Pay & Send Tip
-                            </Button>
-                        ) : (
-                            <Button fullWidth onClick={() => setStep('topup')} className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl h-14 font-bold shadow-lg shadow-indigo-600/20 text-lg">
-                                Top Up Credits
-                            </Button>
-                        )}
-                      </div>
-                  </div>
-              )}
-
-              {step === 'support_success' && (
-                  <div className="py-8 relative overflow-hidden flex flex-col items-center justify-center text-center">
-                        <div className="w-20 h-20 bg-pink-100 rounded-full flex items-center justify-center text-pink-600 mb-6 animate-in zoom-in">
-                            <Heart size={40} className="fill-pink-600" />
-                        </div>
-                        <h3 className="text-2xl font-black text-slate-900 mb-2">Thank You!</h3>
-                        <p className="text-slate-500 text-sm mb-8">Your support means the world to {creator.displayName}.</p>
-                        
-                        <button onClick={closeModal} className="w-full bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-2xl h-12 font-bold text-sm">
-                            Close
-                        </button>
-                  </div>
-              )}
-
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showSuccessToast && (
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-4 fade-in duration-500">
-            <div className="relative overflow-hidden bg-slate-900 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-4 border border-white/10 ring-1 ring-white/20">
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-20"></div>
-                <div className="relative z-10 flex items-center gap-3">
-                    <div className="bg-gradient-to-tr from-yellow-400 to-orange-500 p-1.5 rounded-full shadow-lg shadow-orange-500/20">
-                        <Sparkles size={16} className="text-white fill-white" />
-                    </div>
-                    <div>
-                        <p className="text-sm font-bold text-white tracking-wide">Request Sent!</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-      )}
-    </div>
-  );
-};
                         className="bg-slate-900 hover:bg-slate-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-slate-900/20 text-lg"
                       >
                         Continue

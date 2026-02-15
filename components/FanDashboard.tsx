@@ -1691,7 +1691,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             const isLast = idx === restChats.length - 1;
 
                                             return (
-                                            <div key={chat.id} className="flex mt-0">
+                                            <div key={chat.id} className={`flex mt-4 ${isCreator ? 'ml-8' : ''}`}>
                                                 {/* Left: Avatar + Thread Line */}
                                                 <div className="flex flex-col items-center mr-3">
                                                     <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
@@ -1716,10 +1716,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                                                 {/* Right: Content */}
                                                 <div className="flex-1 min-w-0 pb-2">
-                                                    <div className={`${isCreator ? 'bg-[#FAFAFA]' : 'bg-white'} p-6 sm:p-8 rounded-[2rem] shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 transition-transform duration-300`}>
-                                                        {/* Header Row */}
-                                                        <div className="flex items-center justify-between mb-4">
-                                                            <div className="flex items-center gap-3">
+                                                    {/* Header Row - Moved Outside Card */}
+                                                    <div className="flex items-center justify-between mb-2 ml-1">
+                                                        <div className="flex items-center gap-3">
                                                                 <span className="font-semibold text-lg tracking-tight text-[#1A1A1A]">
                                                                     {isCreator ? (msg.creatorName || 'Creator') : (currentUser?.name || 'You')}
                                                                 </span>
@@ -1729,10 +1728,10 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                                         <span className="text-[10px] font-bold uppercase tracking-wide">Certified</span>
                                                                     </div>
                                                                 )}
-                                                                <span className="text-xs font-medium text-[#94A3B8]">• {getRelativeTime(chat.timestamp)}</span>
-                                                            </div>
+                                                            <span className="text-xs font-medium text-[#94A3B8]">• {getRelativeTime(chat.timestamp)}</span>
                                                         </div>
-
+                                                    </div>
+                                                    <div className={`${isCreator ? 'bg-[#FAFAFA]' : 'bg-white'} p-5 sm:p-6 rounded-[2rem] rounded-tl-none shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 transition-transform duration-300`}>
                                                         {/* Content */}
                                                         <p className="text-base text-[#2D2D2D] leading-loose">{chat.content}</p>
 
@@ -1762,8 +1761,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             )}
                                                         </div>
                                                     </div>
-                                                    </div>
                                                 </div>
+                                            </div>
                                             </div>
                                             );
                                         })}
