@@ -110,6 +110,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   // Withdrawal State
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [isStripeConnected, setIsStripeConnected] = useState(false);
+  const [isConnectingStripe, setIsConnectingStripe] = useState(false);
   
   // Reply State
   const [replyText, setReplyText] = useState('');
@@ -511,6 +513,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     await new Promise(r => setTimeout(r, 2000));
     setIsWithdrawing(false);
     alert(`Successfully transferred ${stats.totalEarnings} credits.`);
+  };
+
+  const handleConnectStripe = async () => {
+      if (isStripeConnected) return;
+      setIsConnectingStripe(true);
+      // Simulate Stripe OAuth flow
+      await new Promise(r => setTimeout(r, 2000));
+      setIsStripeConnected(true);
+      setIsConnectingStripe(false);
   };
 
   const handleOpenChat = async (senderEmail: string) => {
@@ -1457,6 +1468,35 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </p>
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* Payout Method (Stripe) */}
+                            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-bottom-2">
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${isStripeConnected ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-500'}`}>
+                                        {isStripeConnected ? <Check size={24} /> : <CreditCard size={24} />}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-900">Payout Method</h3>
+                                        <p className="text-sm text-slate-500">
+                                            {isStripeConnected 
+                                                ? "Connected to Stripe (•••• 4242). Automatic payouts enabled." 
+                                                : "Link your bank account via Stripe to receive payouts."}
+                                        </p>
+                                    </div>
+                                </div>
+                                <Button 
+                                    onClick={handleConnectStripe} 
+                                    isLoading={isConnectingStripe}
+                                    disabled={isStripeConnected}
+                                    className={isStripeConnected ? "bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 shadow-none" : "bg-[#635BFF] hover:bg-[#5851E8] text-white shadow-md shadow-indigo-500/20"}
+                                >
+                                    {isStripeConnected ? (
+                                        <span className="flex items-center gap-2"><Check size={16} /> Connected</span>
+                                    ) : (
+                                        "Connect Stripe"
+                                    )}
+                                </Button>
                             </div>
 
                             {/* --- TRANSACTION HISTORY TABLE --- */}
