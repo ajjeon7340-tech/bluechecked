@@ -524,18 +524,18 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                         {/* Likes & Rating (Moved below avatar) */}
                         {!isCustomizeMode && (
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 -mt-6 relative z-20">
                                 <button
                                     onClick={handleLike}
-                                    className={`flex items-center justify-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 text-xs font-medium transition-colors ${hasLiked ? 'text-pink-600 bg-pink-50 border-pink-100' : 'text-slate-500 hover:text-pink-600 hover:bg-pink-50'}`}
+                                    className={`flex items-center justify-center gap-1 bg-white px-2.5 py-1 rounded-full border border-slate-100 text-[10px] font-bold shadow-sm transition-colors ${hasLiked ? 'text-pink-600 border-pink-100' : 'text-slate-500 hover:text-pink-600 hover:bg-pink-50'}`}
                                 >
-                                    <Heart size={14} className={hasLiked ? "fill-current" : ""} />
-                                    <span className={hasLiked ? "font-bold" : ""}>{likes}</span>
+                                    <Heart size={12} className={hasLiked ? "fill-current" : ""} />
+                                    <span>{likes}</span>
                                 </button>
 
-                                <div className="relative group/tooltip flex items-center justify-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 text-xs font-medium text-slate-500 cursor-help">
-                                    <Star size={14} className="text-yellow-400 fill-yellow-400" />
-                                    <span className="font-bold text-slate-700">{creator.stats.averageRating}</span>
+                                <div className="relative group/tooltip flex items-center justify-center gap-1 bg-white px-2.5 py-1 rounded-full border border-slate-100 text-[10px] font-bold text-slate-500 shadow-sm cursor-help">
+                                    <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                                    <span className="text-slate-700">{creator.stats.averageRating}</span>
                                     
                                     {/* Response Time Tooltip */}
                                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[160px] bg-slate-900 text-white text-[10px] font-medium py-2 px-3 rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-all duration-200 pointer-events-none z-50 text-center shadow-xl normal-case tracking-normal whitespace-normal transform translate-y-2 group-hover/tooltip:translate-y-0">
