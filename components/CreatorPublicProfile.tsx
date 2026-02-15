@@ -483,10 +483,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           {/* 1. PROFILE INFO & STATS */}
           <div className="w-full">
              <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-slate-200 shadow-sm relative transition-all hover:shadow-md">
-                <div className="p-4 sm:p-6 flex flex-row gap-3 sm:gap-5 items-center sm:items-start relative z-10">
-                    {/* Avatar Section */}
-                    <div className="relative group flex-shrink-0">
-                        <div className="relative w-20 h-20 sm:w-28 sm:h-28 rounded-full p-1 overflow-hidden border border-slate-100 shadow-sm bg-white">
+                <div className="p-4 sm:p-6 flex flex-row gap-4 sm:gap-6 items-start relative z-10">
+                    {/* LEFT COLUMN: Avatar + Stats */}
+                    <div className="flex flex-col items-center gap-3 flex-shrink-0">
+                        <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 overflow-hidden border border-slate-100 shadow-sm bg-white group">
                            {!imgError && (editedCreator.avatarUrl || DEFAULT_AVATAR) ? (
                                <img 
                                     src={editedCreator.avatarUrl || DEFAULT_AVATAR} 
@@ -503,29 +503,57 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                    <User size={40} />
                                </div>
                            )}
-                        </div>
                         
-                        {!isCustomizeMode && (
-                            <div className="absolute top-1 right-1 z-20" title="Active Now">
-                                <span className="relative flex h-5 w-5">
-                                  <span className="hidden sm:inline-flex animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                  <span className="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-[3px] border-white"></span>
-                                </span>
-                            </div>
-                        )}
+                            {!isCustomizeMode && (
+                                <div className="absolute top-1 right-1 z-20" title="Active Now">
+                                    <span className="relative flex h-5 w-5">
+                                    <span className="hidden sm:inline-flex animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-[3px] border-white"></span>
+                                    </span>
+                                </div>
+                            )}
 
-                        {isCustomizeMode && (
-                            <div 
-                                className="absolute inset-0 flex items-center justify-center rounded-full cursor-pointer pointer-events-none z-20"
-                            >
-                                <div className="bg-black/50 p-2 rounded-full text-white backdrop-blur-sm"><Camera size={16} /></div>
+                            {isCustomizeMode && (
+                                <div 
+                                    className="absolute inset-0 flex items-center justify-center rounded-full cursor-pointer pointer-events-none z-20"
+                                >
+                                    <div className="bg-black/50 p-2 rounded-full text-white backdrop-blur-sm"><Camera size={16} /></div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Likes & Rating (Moved below avatar) */}
+                        {!isCustomizeMode && (
+                            <div className="flex flex-col gap-2 w-full items-center">
+                                <button
+                                    onClick={handleLike}
+                                    className={`flex items-center justify-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 text-xs font-medium transition-colors w-full ${hasLiked ? 'text-pink-600 bg-pink-50 border-pink-100' : 'text-slate-500 hover:text-pink-600 hover:bg-pink-50'}`}
+                                >
+                                    <Heart size={14} className={hasLiked ? "fill-current" : ""} />
+                                    <span className={hasLiked ? "font-bold" : ""}>{likes}</span>
+                                </button>
+
+                                <div className="relative group/tooltip flex items-center justify-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 text-xs font-medium text-slate-500 cursor-help w-full">
+                                    <Star size={14} className="text-yellow-400 fill-yellow-400" />
+                                    <span className="font-bold text-slate-700">{creator.stats.averageRating}</span>
+                                    
+                                    {/* Response Time Tooltip */}
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[160px] bg-slate-900 text-white text-[10px] font-medium py-2 px-3 rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-all duration-200 pointer-events-none z-50 text-center shadow-xl normal-case tracking-normal whitespace-normal transform translate-y-2 group-hover/tooltip:translate-y-0">
+                                        <div className="font-bold text-emerald-400 mb-0.5 flex items-center justify-center gap-1">
+                                            <Clock size={10} /> {creator.stats.responseTimeAvg} Response
+                                        </div>
+                                        <div className="text-slate-300 leading-snug">
+                                            {getResponseTimeTooltip(creator.stats.responseTimeAvg)}
+                                        </div>
+                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
 
-                    {/* Info Section */}
-                    <div className="flex-1 text-left w-full min-w-0">
-                        <div>
+                    {/* RIGHT COLUMN: Name + Bio */}
+                    <div className="flex-1 text-left w-full min-w-0 pt-1">
                         {isCustomizeMode ? (
                                 <div className="space-y-2">
                                     <input 
@@ -542,6 +570,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         className="block w-full text-sm text-slate-500 font-medium border-b border-dashed border-slate-300 focus:border-black focus:outline-none bg-transparent placeholder-slate-300 text-left"
                                         placeholder="@handle"
                                     />
+                                    <textarea
+                                        value={editedCreator.bio}
+                                        onChange={(e) => updateField('bio', e.target.value)}
+                                        className="block w-full text-slate-600 border border-dashed border-slate-300 rounded-xl p-3 focus:ring-1 focus:ring-black min-h-[80px] bg-white text-sm mt-2"
+                                        placeholder="Your bio..."
+                                    />
                                 </div>
                         ) : (
                             <>
@@ -553,94 +587,65 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                     <Share size={18} className="transition-transform active:scale-90" />
                                 </button>
 
-                                <div className="w-full mt-2">
-                                    <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-tight mb-3">
+                                <div className="w-full">
+                                    <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-tight mb-1">
                                         {creator.displayName}
                                     </h1>
-
-                                    {/* Stats Row - Horizontal */}
-                                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                                        {/* Likes */}
-                                        <button
-                                            onClick={handleLike}
-                                            className={`flex items-center gap-1.5 bg-slate-50 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-slate-100 text-xs font-medium transition-colors ${hasLiked ? 'text-pink-600 bg-pink-50 border-pink-100' : 'text-slate-500 hover:text-pink-600 hover:bg-pink-50'}`}
-                                        >
-                                            <Heart size={14} className={hasLiked ? "fill-current" : ""} />
-                                            <span className={hasLiked ? "font-bold" : ""}>{likes}</span>
-                                            <span className="hidden sm:inline text-slate-400">Likes</span>
-                                        </button>
-
-                                        {/* Rating */}
-                                        <div className="relative group/tooltip flex items-center gap-1.5 bg-slate-50 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-slate-100 text-xs font-medium text-slate-500 cursor-help">
-                                            <Star size={14} className="text-yellow-400 fill-yellow-400" />
-                                            <span className="font-bold text-slate-700">{creator.stats.averageRating}</span>
-                                            <span className="hidden sm:inline text-slate-400">Rating</span>
-
-                                            {/* Response Time Tooltip */}
-                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[160px] bg-slate-900 text-white text-[10px] font-medium py-2 px-3 rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-all duration-200 pointer-events-none z-50 text-center shadow-xl normal-case tracking-normal whitespace-normal transform translate-y-2 group-hover/tooltip:translate-y-0">
-                                                <div className="font-bold text-emerald-400 mb-0.5 flex items-center justify-center gap-1">
-                                                    <Clock size={10} /> {creator.stats.responseTimeAvg} Response
-                                                </div>
-                                                <div className="text-slate-300 leading-snug">
-                                                    {getResponseTimeTooltip(creator.stats.responseTimeAvg)}
-                                                </div>
-                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
-                                            </div>
-                                        </div>
-
-                                        {/* Platform Icons */}
-                                        {platforms.length > 0 && (
-                                            <div className="flex items-center gap-2 bg-slate-50 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-slate-100">
-                                                {platforms.map(platform => {
-                                                    const platformId = typeof platform === 'string' ? platform : platform.id;
-                                                    const platformUrl = typeof platform === 'string' ? '' : platform.url;
-
-                                                    if (platformUrl) {
-                                                        return (
-                                                            <a
-                                                                key={platformId}
-                                                                href={ensureProtocol(platformUrl)}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="flex items-center hover:scale-110 transition-transform"
-                                                                onClick={(e) => e.stopPropagation()}
-                                                            >
-                                                                {getPlatformIcon(platformId)}
-                                                            </a>
-                                                        );
-                                                    }
-                                                    return (
-                                                        <div key={platformId} className="flex items-center opacity-50">
-                                                            {getPlatformIcon(platformId)}
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                    </div>
+                                    <p className="text-sm text-slate-600 leading-relaxed font-normal mt-2">
+                                        {creator.bio}
+                                    </p>
                                 </div>
                             </>
                         )}
-                        </div>
-
                     </div>
                 </div>
 
                 <div className="w-full h-px bg-slate-100"></div>
 
                 <div className="p-4 sm:p-6 bg-slate-50/30 rounded-b-[2rem]">
-                    {isCustomizeMode ? (
-                        <textarea
-                           value={editedCreator.bio}
-                           onChange={(e) => updateField('bio', e.target.value)}
-                           className="block w-full text-slate-600 border border-dashed border-slate-300 rounded-xl p-3 focus:ring-1 focus:ring-black min-h-[60px] bg-white text-sm"
-                           placeholder="Your bio..."
-                        />
-                    ) : (
-                        <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
-                            {creator.bio}
-                        </p>
-                    )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {/* Left: Supported Platforms */}
+                        <div>
+                            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Supported Platforms</h4>
+                            {platforms.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {platforms.map(platform => {
+                                        const platformId = typeof platform === 'string' ? platform : platform.id;
+                                        const platformUrl = typeof platform === 'string' ? '' : platform.url;
+
+                                        return (
+                                            <a
+                                                key={platformId}
+                                                href={platformUrl ? ensureProtocol(platformUrl) : '#'}
+                                                target={platformUrl ? "_blank" : undefined}
+                                                rel="noopener noreferrer"
+                                                className={`flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm transition-all ${platformUrl ? 'hover:border-indigo-300 hover:shadow-md cursor-pointer' : 'opacity-70 cursor-default'}`}
+                                            >
+                                                {getPlatformIcon(platformId)}
+                                                <span className="text-xs font-bold text-slate-700 capitalize">{platformId}</span>
+                                            </a>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-slate-400 italic">No platforms connected.</p>
+                            )}
+                        </div>
+
+                        {/* Right: Getting Bluechecked */}
+                        <div>
+                            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Verification</h4>
+                            <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <CheckCircle2 size={20} className="fill-blue-600 text-white" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-slate-900">Bluechecked Verified</p>
+                                    <p className="text-[10px] text-slate-500">Identity & Expertise Confirmed</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
              </div>
           </div>
