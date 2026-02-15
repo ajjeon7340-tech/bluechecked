@@ -582,14 +582,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                     </div>
                                 ) : (
                                     <>
-                                        {/* Share button - absolute positioned */}
-                                        <button
-                                            onClick={handleShare}
-                                            className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 rounded-full border border-slate-100 bg-white shadow-sm text-slate-400 hover:text-indigo-500 hover:border-indigo-100 hover:bg-indigo-50 transition-all z-20"
-                                        >
-                                            <Share size={18} className="transition-transform active:scale-90" />
-                                        </button>
-
                                         <div className="w-full">
                                             <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-tight mb-1">
                                                 {creator.displayName}
@@ -597,10 +589,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                             <p className="text-sm text-slate-600 leading-relaxed font-normal mt-2 truncate">
                                                 {creator.bio}
                                             </p>
-                                            <div className="flex items-center gap-1.5 mt-2 text-xs font-medium text-slate-500">
-                                                <Clock size={14} className="text-emerald-500" />
-                                                <span>{getResponseTimeTooltip(creator.stats.responseTimeAvg)}</span>
-                                            </div>
                                         </div>
                                     </>
                                 )}
@@ -633,6 +621,23 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                 )}
                             </div>
                         </div>
+
+                        {!isCustomizeMode && (
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={handleShare}
+                                    className="flex-1 bg-white border border-slate-200 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 shadow-sm"
+                                >
+                                    <Share size={18} /> Share
+                                </button>
+                                <button
+                                    onClick={currentUser ? handleOpenModal : onLoginRequest}
+                                    className="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-900/20"
+                                >
+                                    <MessageSquare size={18} /> Ask me anything
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
              </div>
