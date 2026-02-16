@@ -334,7 +334,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
   const getSessionStatus = (msg: Message) => {
       if (msg.status === 'REPLIED') return { label: 'Creator collected', color: 'text-emerald-600', icon: CheckCircle2 };
-      if (msg.status === 'EXPIRED') return { label: 'Expired', color: 'text-slate-400', icon: Ban };
+      if (msg.status === 'EXPIRED') return { label: 'Expired', color: 'text-stone-400', icon: Ban };
       if (msg.status === 'CANCELLED') return { label: 'Cancelled', color: 'text-red-600', icon: Ban };
       
       // PENDING
@@ -347,7 +347,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           return { label: 'Read', color: 'text-indigo-600', icon: Check };
       }
       
-      return { label: 'Not yet read', color: 'text-slate-400', icon: Clock };
+      return { label: 'Not yet read', color: 'text-stone-400', icon: Clock };
   };
 
   // Derived state for UI logic
@@ -538,7 +538,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
     const diff = new Date(expiresAt).getTime() - Date.now();
     const hours = Math.floor(diff / (1000 * 60 * 60));
     if (diff < 0) return { text: 'Expired', color: 'text-red-600', bg: 'bg-red-50' };
-    return { text: `${hours}h left`, color: 'text-slate-500', bg: 'bg-slate-100' };
+    return { text: `${hours}h left`, color: 'text-stone-500', bg: 'bg-stone-100' };
   };
 
   const activeRequests = messages.filter(m => m.status === 'PENDING').length;
@@ -695,11 +695,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       }}
       className={`w-full flex items-center px-3 py-2 rounded-md mb-1 transition-colors text-sm font-medium ${
         currentView === view && !selectedCreatorId && !onClick
-          ? 'bg-slate-200 text-slate-900' 
-          : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+          ? 'bg-stone-200 text-stone-900' 
+          : 'text-stone-500 hover:text-stone-900 hover:bg-stone-100'
       }`}
     >
-      <Icon size={18} className={`mr-3 ${currentView === view && !selectedCreatorId && !onClick ? 'text-indigo-600' : 'text-slate-400'}`} />
+      <Icon size={18} className={`mr-3 ${currentView === view && !selectedCreatorId && !onClick ? 'text-indigo-600' : 'text-stone-400'}`} />
       <span>{label}</span>
       {isBeta && (
           <span className="ml-2 bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded border border-indigo-200">BETA</span>
@@ -708,16 +708,16 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   );
 
   const ComingSoonOverlay = () => (
-      <div className="absolute inset-0 bg-slate-50/70 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center text-slate-900">
+      <div className="absolute inset-0 bg-stone-50/70 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center text-stone-900">
         <div className="bg-white p-2.5 rounded-full shadow-lg mb-2 ring-1 ring-slate-100 animate-in zoom-in duration-300">
-            <Lock size={20} className="text-slate-400" />
+            <Lock size={20} className="text-stone-400" />
         </div>
-        <span className="font-bold text-xs uppercase tracking-wider text-slate-500 bg-white/80 px-3 py-1 rounded-full border border-slate-100">Coming Soon</span>
+        <span className="font-bold text-xs uppercase tracking-wider text-stone-500 bg-white/80 px-3 py-1 rounded-full border border-stone-100">Coming Soon</span>
       </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] flex font-sans text-slate-900 overflow-hidden">
+    <div className="min-h-screen bg-[#F7F9FC] flex font-sans text-stone-900 overflow-hidden">
         {/* Inject Animation Styles Globally for the Component */}
         <style>{`
             @keyframes sprinkle-fall {
@@ -736,13 +736,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         {/* Mobile Sidebar Overlay */}
         {isSidebarOpen && (
           <div 
-            className="fixed inset-0 bg-slate-900/50 z-20 md:hidden backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-stone-900/50 z-20 md:hidden backdrop-blur-sm transition-opacity"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
 
         {/* 1. SIDEBAR */}
-        <aside className={`fixed inset-y-0 left-0 w-64 bg-[#F3F4F6] border-r border-slate-200 transform transition-transform duration-300 z-30 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+        <aside className={`fixed inset-y-0 left-0 w-64 bg-[#F3F4F6] border-r border-stone-200 transform transition-transform duration-300 z-30 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
             <div className="p-4 h-full flex flex-col">
                 {/* Brand */}
                 <div 
@@ -750,12 +750,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                     className="flex items-center gap-2 px-3 py-4 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
                 >
                     <BlueCheckLogo size={28} className="text-blue-600" />
-                    <span className="font-bold text-slate-900 tracking-tight">BLUECHECKED</span>
+                    <span className="font-bold text-stone-900 tracking-tight">BLUECHECKED</span>
                 </div>
 
                 {/* Nav Links */}
                 <div className="space-y-1 flex-1">
-                    <div className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Fan Menu</div>
+                    <div className="px-3 mb-2 text-xs font-bold text-stone-400 uppercase tracking-wider">Fan Menu</div>
                     <SidebarItem icon={Home} label="Conversations" view="OVERVIEW" />
                     <SidebarItem icon={Search} label="Explore Creators" view="EXPLORE" />
                     <SidebarItem icon={ShoppingBag} label="Purchased" view="PURCHASED" isBeta={true} />
@@ -765,26 +765,26 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                     <SidebarItem icon={Receipt} label="Purchase History" view="HISTORY" />
                     <SidebarItem icon={HelpCircle} label="Support" view="SUPPORT" />
                     
-                    <div className="my-4 mx-3 border-t border-slate-200"></div>
+                    <div className="my-4 mx-3 border-t border-stone-200"></div>
                     <SidebarItem icon={User} label="Profile" view="SETTINGS" />
                 </div>
 
                 {/* Profile Snippet Bottom */}
-                <div className="mt-auto border-t border-slate-200 pt-4 px-3">
+                <div className="mt-auto border-t border-stone-200 pt-4 px-3">
                     <div className="flex items-center gap-3">
-                         <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
-                            {currentUser?.avatarUrl ? <img src={currentUser.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-full h-full p-1 text-slate-400" />}
+                         <div className="w-8 h-8 rounded-full bg-stone-200 overflow-hidden">
+                            {currentUser?.avatarUrl ? <img src={currentUser.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-full h-full p-1 text-stone-400" />}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-900 truncate">{currentUser?.name || 'Fan User'}</p>
-                            <p className="text-xs text-slate-500 truncate">{currentUser?.email}</p>
+                            <p className="text-sm font-medium text-stone-900 truncate">{currentUser?.name || 'Fan User'}</p>
+                            <p className="text-xs text-stone-500 truncate">{currentUser?.email}</p>
                         </div>
-                        <button onClick={onLogout} className="text-slate-400 hover:text-red-600 transition-colors">
+                        <button onClick={onLogout} className="text-stone-400 hover:text-red-600 transition-colors">
                             <LogOut size={16} />
                         </button>
                     </div>
                     <div className="mt-3 flex flex-col items-center gap-1">
-                        <div className="text-[10px] text-slate-400 font-mono opacity-50">v3.6.30</div>
+                        <div className="text-[10px] text-stone-400 font-mono opacity-50">v3.6.30</div>
                         <div className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${isBackendConfigured() ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                             {isBackendConfigured() ? '● LIVE DB' : '○ MOCK DB'}
                         </div>
@@ -802,12 +802,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                 </div>
             )}
             {/* Header */}
-            <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-20">
+            <header className="h-16 bg-white border-b border-stone-200 flex items-center justify-between px-6 shrink-0 z-20">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-slate-500">
+                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500">
                         <Menu size={20} />
                     </button>
-                    <h2 className="font-semibold text-slate-800">
+                    <h2 className="font-semibold text-stone-800">
                         {getPageTitle()}
                     </h2>
                 </div>
@@ -815,7 +815,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                      <div className="flex items-center gap-4">
                         <button 
                             onClick={() => setShowTopUpModal(true)}
-                            className="hidden sm:flex items-center gap-2 bg-slate-100 hover:bg-slate-200 transition-colors px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 cursor-pointer"
+                            className="hidden sm:flex items-center gap-2 bg-stone-100 hover:bg-stone-200 transition-colors px-3 py-1.5 rounded-full text-xs font-bold text-stone-600 cursor-pointer"
                         >
                             <Coins size={14} className="text-indigo-500" />
                             {currentUser?.credits || 0} Credits
@@ -823,7 +823,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         <div className="relative">
                             <button 
                                 onClick={handleToggleNotifications}
-                                className="relative text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-100"
+                                className="relative text-stone-400 hover:text-stone-600 transition-colors p-2 rounded-full hover:bg-stone-100"
                             >
                                 <Bell size={20} />
                                 {notifications.filter(n => n.time.getTime() > lastReadTime).length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
@@ -832,31 +832,31 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             {showNotifications && (
                                 <>
                                     <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)}></div>
-                                    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                        <div className="px-4 py-3 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
-                                            <h3 className="font-bold text-sm text-slate-900">Notifications</h3>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{notifications.length} Updates</span>
+                                    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                        <div className="px-4 py-3 border-b border-stone-50 bg-stone-50/50 flex justify-between items-center">
+                                            <h3 className="font-bold text-sm text-stone-900">Notifications</h3>
+                                            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{notifications.length} Updates</span>
                                         </div>
                                         <div className="max-h-[320px] overflow-y-auto">
                                             {notifications.length === 0 ? (
-                                                <div className="p-8 text-center text-slate-400 text-xs">No notifications yet.</div>
+                                                <div className="p-8 text-center text-stone-400 text-xs">No notifications yet.</div>
                                             ) : (
                                                 notifications.map(notif => (
                                                     <div 
                                                         key={notif.id} 
                                                         onClick={() => handleNotificationClick(notif)}
-                                                        className="px-4 py-3 hover:bg-slate-50 transition-colors flex gap-3 border-b border-slate-50 last:border-0 group relative pr-8 cursor-pointer"
+                                                        className="px-4 py-3 hover:bg-stone-50 transition-colors flex gap-3 border-b border-stone-50 last:border-0 group relative pr-8 cursor-pointer"
                                                     >
                                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
                                                             <notif.icon size={14} />
                                                         </div>
                                                         <div>
-                                                            <p className="text-xs text-slate-600 leading-snug mb-1 font-medium">{notif.text}</p>
-                                                            <p className="text-[10px] text-slate-400">{notif.time.toLocaleDateString()} • {notif.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                                                            <p className="text-xs text-stone-600 leading-snug mb-1 font-medium">{notif.text}</p>
+                                                            <p className="text-[10px] text-stone-400">{notif.time.toLocaleDateString()} • {notif.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
                                                         </div>
                                                         <button 
                                                             onClick={(e) => handleDeleteNotification(e, notif.id)}
-                                                            className="absolute top-3 right-3 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            className="absolute top-3 right-3 text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                                                             title="Dismiss"
                                                         >
                                                             <X size={14} />
@@ -908,8 +908,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     onClick={() => setProductFilter(type)}
                                     className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
                                         productFilter === type 
-                                        ? 'bg-slate-900 text-white shadow-md' 
-                                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                                        ? 'bg-stone-900 text-white shadow-md' 
+                                        : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-50'
                                     }`}
                                  >
                                      {type === 'ALL' ? 'All Content' : type === 'DOCUMENT' ? 'Documents' : type === 'IMAGE' ? 'Images' : 'Videos'}
@@ -918,14 +918,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </div>
 
                         {isLoading ? (
-                            <div className="text-center py-20 text-slate-400">Loading library...</div>
+                            <div className="text-center py-20 text-stone-400">Loading library...</div>
                         ) : filteredProducts.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filteredProducts.map((product, idx) => (
-                                    <div key={idx} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col h-full relative">
-                                <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden flex items-center justify-center p-8 group-hover:bg-indigo-50 transition-colors">
-                                     <div className="bg-white shadow-lg p-0 w-24 h-32 rounded-sm border border-slate-200 relative transform group-hover:-rotate-3 transition-transform duration-500 flex items-center justify-center">
-                                         <div className="absolute inset-x-2 top-2 bottom-2 border-2 border-dashed border-slate-100"></div>
+                                    <div key={idx} className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col h-full relative">
+                                <div className="aspect-[4/3] bg-stone-100 relative overflow-hidden flex items-center justify-center p-8 group-hover:bg-indigo-50 transition-colors">
+                                     <div className="bg-white shadow-lg p-0 w-24 h-32 rounded-sm border border-stone-200 relative transform group-hover:-rotate-3 transition-transform duration-500 flex items-center justify-center">
+                                         <div className="absolute inset-x-2 top-2 bottom-2 border-2 border-dashed border-stone-100"></div>
                                          {(() => {
                                              const type = getFileType(product.url);
                                              if (type === 'IMAGE') return <ImageIcon size={32} className="text-purple-500" />;
@@ -933,21 +933,21 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                              return <FileText size={32} className="text-red-500" />;
                                          })()}
                                      </div>
-                                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-slate-500 border border-slate-200">
+                                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-stone-500 border border-stone-200">
                                          {getFileType(product.url)}
                                      </div>
                                 </div>
                                 <div className="p-5 flex flex-col flex-1">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <div className="w-5 h-5 rounded-full bg-slate-200 overflow-hidden">
+                                        <div className="w-5 h-5 rounded-full bg-stone-200 overflow-hidden">
                                             <img src={product.creatorAvatar || 'https://via.placeholder.com/100'} alt="Creator" className="w-full h-full object-cover"/>
                                         </div>
-                                        <span className="text-[10px] font-bold text-slate-500">{product.creatorName}</span>
+                                        <span className="text-[10px] font-bold text-stone-500">{product.creatorName}</span>
                                     </div>
-                                    <h4 className="font-bold text-slate-900 mb-1 leading-tight">{product.title}</h4>
-                                    <p className="text-xs text-slate-500 mb-4 line-clamp-2 flex-1">{product.description || 'Digital Download'}</p>
-                                    <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
-                                        <span className="text-[10px] text-slate-400">{new Date(product.purchaseDate).toLocaleDateString()}</span>
+                                    <h4 className="font-bold text-stone-900 mb-1 leading-tight">{product.title}</h4>
+                                    <p className="text-xs text-stone-500 mb-4 line-clamp-2 flex-1">{product.description || 'Digital Download'}</p>
+                                    <div className="mt-auto pt-4 border-t border-stone-50 flex justify-between items-center">
+                                        <span className="text-[10px] text-stone-400">{new Date(product.purchaseDate).toLocaleDateString()}</span>
                                         <button 
                                             className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
                                             onClick={async (e) => {
@@ -978,9 +978,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-20 text-slate-400 bg-white rounded-3xl border border-slate-100 shadow-sm">
+                            <div className="text-center py-20 text-stone-400 bg-white rounded-3xl border border-stone-100 shadow-sm">
                                 <ShoppingBag size={48} className="mx-auto mb-4 opacity-20" />
-                                <p className="text-lg font-bold text-slate-500">
+                                <p className="text-lg font-bold text-stone-500">
                                     {purchasedProducts.length > 0 ? 'No matching content found' : 'No purchases yet'}
                                 </p>
                                 <p className="text-sm">
@@ -999,27 +999,27 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         {/* Header Section */}
                         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                             <div>
-                                <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                                <h2 className="text-2xl font-black text-stone-900 tracking-tight flex items-center gap-2">
                                     Featured Experts
-                                    <button onClick={() => loadCreators()} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors" title="Refresh List">
+                                    <button onClick={() => loadCreators()} className="p-1.5 text-stone-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors" title="Refresh List">
                                         <RefreshCw size={16} />
                                     </button>
                                 </h2>
-                                <p className="text-slate-500 text-sm mt-1">Verified experts ready to reply.</p>
+                                <p className="text-stone-500 text-sm mt-1">Verified experts ready to reply.</p>
                             </div>
                             
                             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                                 <div className="relative group flex-1 sm:flex-initial">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
                                     <input 
                                         type="text" 
                                         placeholder="Search creators, tags..." 
                                         value={exploreQuery}
                                         onChange={(e) => setExploreQuery(e.target.value)}
-                                        className="w-full sm:w-64 pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
+                                        className="w-full sm:w-64 pl-10 pr-4 py-2.5 bg-white border border-stone-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
                                     />
                                 </div>
-                                <select className="bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                                <select className="bg-white border border-stone-200 text-stone-700 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
                                     <option>Sort by: Relevance</option>
                                     <option>Sort by: Price (Low to High)</option>
                                     <option>Sort by: Response Time</option>
@@ -1042,11 +1042,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         <div 
                                             key={creator.id} 
                                             onClick={() => !isUnderReview && onBrowseCreators(creator.id)}
-                                            className={`group bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center text-center h-full relative overflow-hidden ${isUnderReview ? 'opacity-75' : ''}`}
+                                            className={`group bg-white rounded-[2rem] p-6 border border-stone-100 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center text-center h-full relative overflow-hidden ${isUnderReview ? 'opacity-75' : ''}`}
                                         >
                                             {isUnderReview && (
                                                 <div className="absolute inset-0 z-50 flex items-center justify-center">
-                                                    <div className="bg-slate-900/90 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-bold shadow-xl transform -rotate-3 border border-white/20 flex items-center gap-2">
+                                                    <div className="bg-stone-900/90 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-bold shadow-xl transform -rotate-3 border border-white/20 flex items-center gap-2">
                                                         <Clock size={12} className="text-yellow-400 animate-pulse" />
                                                         Application Under Review
                                                     </div>
@@ -1057,10 +1057,10 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                                             {/* 1. Avatar (Centered & Larger) */}
                                             <div className="relative mb-4 z-10">
-                                                <div className="w-20 h-20 rounded-full p-1 bg-white shadow-sm border border-slate-100 mx-auto flex items-center justify-center overflow-hidden">
+                                                <div className="w-20 h-20 rounded-full p-1 bg-white shadow-sm border border-stone-100 mx-auto flex items-center justify-center overflow-hidden">
                                                     {isUnderReview ? (
-                                                        <div className="w-full h-full bg-slate-50 flex items-center justify-center">
-                                                            <User size={32} className="text-slate-300" />
+                                                        <div className="w-full h-full bg-stone-50 flex items-center justify-center">
+                                                            <User size={32} className="text-stone-300" />
                                                         </div>
                                                     ) : (
                                                         <img src={creator.avatarUrl} className="w-full h-full rounded-full object-cover" alt={creator.displayName} />
@@ -1070,22 +1070,22 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                                             {/* 2. Name & Info */}
                                             <div className="relative z-10 w-full mb-5">
-                                                <h3 className={`font-black text-slate-900 text-lg leading-tight group-hover:text-indigo-600 transition-colors mb-1 truncate px-2 ${isUnderReview ? 'blur-sm opacity-40 select-none' : ''}`}>
+                                                <h3 className={`font-black text-stone-900 text-lg leading-tight group-hover:text-indigo-600 transition-colors mb-1 truncate px-2 ${isUnderReview ? 'blur-sm opacity-40 select-none' : ''}`}>
                                                     {isUnderReview ? 'Creator Name' : creator.displayName}
                                                 </h3>
                                                 <div className="flex items-center justify-center gap-1.5 mb-3 mt-2">
                                                     {platforms.slice(0, 3).map((p: any, i: number) => {
                                                         const platformId = typeof p === 'string' ? p : p?.id || '';
                                                         return (
-                                                            <div key={i} className="w-7 h-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center hover:scale-110 transition-transform shadow-sm">
+                                                            <div key={i} className="w-7 h-7 rounded-full bg-stone-50 border border-stone-100 flex items-center justify-center hover:scale-110 transition-transform shadow-sm">
                                                                 {getPlatformIcon(platformId, 'colored')}
                                                             </div>
                                                         );
                                                     })}
                                                 </div>
-                                                <div className="flex items-center justify-center gap-3 text-xs text-slate-500 font-medium">
+                                                <div className="flex items-center justify-center gap-3 text-xs text-stone-500 font-medium">
                                                     <span className="flex items-center gap-1"><Star size={10} className="fill-yellow-400 text-yellow-400"/> {creator.stats.averageRating}</span>
-                                                    <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                                    <span className="w-1 h-1 rounded-full bg-stone-300"></span>
                                                     <span>{likesFormatted} Likes</span>
                                                 </div>
                                             </div>
@@ -1093,20 +1093,20 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             {/* 3. Stats Grid - Compact */}
                                             <div className="grid grid-cols-2 gap-2 w-full mb-6 relative z-10">
                                                 <div 
-                                                    className="relative group/tooltip bg-slate-50 rounded-xl p-2.5 border border-slate-100 flex flex-col items-center justify-center cursor-help transition-colors hover:bg-slate-100"
+                                                    className="relative group/tooltip bg-stone-50 rounded-xl p-2.5 border border-stone-100 flex flex-col items-center justify-center cursor-help transition-colors hover:bg-stone-100"
                                                 >
-                                                    <span className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Reply</span>
-                                                    <span className="font-black text-slate-700 text-xs text-center leading-tight">{creator.stats.responseTimeAvg}</span>
+                                                    <span className="text-[10px] font-bold text-stone-400 uppercase mb-0.5">Reply</span>
+                                                    <span className="font-black text-stone-700 text-xs text-center leading-tight">{creator.stats.responseTimeAvg}</span>
                                                     
                                                     {/* Custom Tooltip */}
-                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[140px] bg-slate-800 text-white text-[10px] font-medium py-1.5 px-2.5 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50 text-center shadow-xl">
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[140px] bg-stone-800 text-white text-[10px] font-medium py-1.5 px-2.5 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50 text-center shadow-xl">
                                                         {getResponseTimeTooltip(creator.stats.responseTimeAvg)}
                                                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
                                                     </div>
                                                 </div>
-                                                <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-100 flex flex-col items-center justify-center">
-                                                    <span className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Window</span>
-                                                    <span className="font-black text-slate-700 text-sm">{creator.responseWindowHours}h</span>
+                                                <div className="bg-stone-50 rounded-xl p-2.5 border border-stone-100 flex flex-col items-center justify-center">
+                                                    <span className="text-[10px] font-bold text-stone-400 uppercase mb-0.5">Window</span>
+                                                    <span className="font-black text-stone-700 text-sm">{creator.responseWindowHours}h</span>
                                                 </div>
                                             </div>
 
@@ -1123,9 +1123,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 })}
                             </div>
                         ) : (
-                            <div className="text-center py-20 text-slate-400 bg-white rounded-3xl border border-slate-100 shadow-sm">
+                            <div className="text-center py-20 text-stone-400 bg-white rounded-3xl border border-stone-100 shadow-sm">
                                 <Search size={48} className="mx-auto mb-4 opacity-20" />
-                                <p className="text-lg font-bold text-slate-500">No creators found</p>
+                                <p className="text-lg font-bold text-stone-500">No creators found</p>
                                 <p className="text-sm">Try searching for "fitness", "react", or specific names.</p>
                             </div>
                         )}
@@ -1139,14 +1139,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             const totalPages = Math.ceil(messages.length / ITEMS_PER_PAGE);
                             const displayedMessages = messages.slice((historyPage - 1) * ITEMS_PER_PAGE, historyPage * ITEMS_PER_PAGE);
                             return (
-                        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                                 <h3 className="text-sm font-bold text-slate-900">Transaction History</h3>
+                        <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
+                             <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
+                                 <h3 className="text-sm font-bold text-stone-900">Transaction History</h3>
                                  <Button variant="ghost" size="sm" className="text-xs"><ExternalLink size={14} className="mr-1"/> Export CSV</Button>
                              </div>
                              <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full text-left text-sm whitespace-nowrap">
-                                    <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 text-xs uppercase tracking-wider">
+                                    <thead className="bg-stone-50 text-stone-500 font-bold border-b border-stone-100 text-xs uppercase tracking-wider">
                                         <tr>
                                             <th className="px-6 py-3">Date</th>
                                             <th className="px-6 py-3">Description</th>
@@ -1160,18 +1160,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             const isProduct = msg.content.startsWith('Purchased Product:');
 
                                             return (
-                                                <tr key={msg.id} className="hover:bg-slate-50 transition-colors group">
-                                                    <td className="px-6 py-4 text-slate-500 font-mono text-xs">{new Date(msg.createdAt).toLocaleDateString()}</td>
+                                                <tr key={msg.id} className="hover:bg-stone-50 transition-colors group">
+                                                    <td className="px-6 py-4 text-stone-500 font-mono text-xs">{new Date(msg.createdAt).toLocaleDateString()}</td>
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                                                            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200">
                                                                 {isProduct ? <FileText size={14} /> : <User size={14} />}
                                                             </div>
                                                             <div>
-                                                                <div className="font-bold text-slate-900 text-sm">
+                                                                <div className="font-bold text-stone-900 text-sm">
                                                                     {isProduct ? 'Digital Content Purchase' : 'Priority DM Request'}
                                                                 </div>
-                                                                <div className="text-xs text-slate-400 truncate max-w-[200px]">{isProduct ? msg.content.replace('Purchased Product: ', '') : msg.content}</div>
+                                                                <div className="text-xs text-stone-400 truncate max-w-[200px]">{isProduct ? msg.content.replace('Purchased Product: ', '') : msg.content}</div>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -1187,13 +1187,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             </span>
                                                         )}
                                                         {isRefunded && (
-                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-stone-100 text-stone-500 border border-stone-200">
                                                                 <Ban size={12} /> Refunded
                                                             </span>
                                                         )}
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
-                                                        <span className={`font-mono font-bold flex items-center justify-end gap-1 ${isRefunded ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
+                                                        <span className={`font-mono font-bold flex items-center justify-end gap-1 ${isRefunded ? 'text-stone-400 line-through' : 'text-stone-900'}`}>
                                                             <Coins size={14} /> {msg.amount}
                                                         </span>
                                                     </td>
@@ -1201,7 +1201,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             )
                                         })}
                                         {displayedMessages.length === 0 && (
-                                            <tr><td colSpan={4} className="p-12 text-center text-slate-400">No transactions found.</td></tr>
+                                            <tr><td colSpan={4} className="p-12 text-center text-stone-400">No transactions found.</td></tr>
                                         )}
                                     </tbody>
                                 </table>
@@ -1217,47 +1217,47 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         <div key={msg.id} className="p-4 flex flex-col gap-3">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                                                    <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200">
                                                         {isProduct ? <FileText size={18} /> : <User size={18} />}
                                                     </div>
                                                     <div>
-                                                        <div className="font-bold text-slate-900 text-sm">
+                                                        <div className="font-bold text-stone-900 text-sm">
                                                             {isProduct ? 'Digital Content' : 'Priority Request'}
                                                         </div>
-                                                        <div className="text-xs text-slate-400">{new Date(msg.createdAt).toLocaleDateString()}</div>
+                                                        <div className="text-xs text-stone-400">{new Date(msg.createdAt).toLocaleDateString()}</div>
                                                     </div>
                                                 </div>
-                                                <div className={`font-mono font-bold ${isRefunded ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
+                                                <div className={`font-mono font-bold ${isRefunded ? 'text-stone-400 line-through' : 'text-stone-900'}`}>
                                                     {msg.amount}
                                                 </div>
                                             </div>
                                             <div className="flex items-center justify-between text-xs">
-                                                <div className="text-slate-500 truncate max-w-[200px]">{isProduct ? msg.content.replace('Purchased Product: ', '') : msg.content}</div>
+                                                <div className="text-stone-500 truncate max-w-[200px]">{isProduct ? msg.content.replace('Purchased Product: ', '') : msg.content}</div>
                                                 {msg.status === 'PENDING' && <span className="font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Pending</span>}
                                                 {msg.status === 'REPLIED' && <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Completed</span>}
-                                                {isRefunded && <span className="font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">Refunded</span>}
+                                                {isRefunded && <span className="font-bold text-stone-500 bg-stone-100 px-2 py-0.5 rounded">Refunded</span>}
                                             </div>
                                         </div>
                                     );
                                 })}
-                                {displayedMessages.length === 0 && <div className="p-8 text-center text-slate-400 text-sm">No transactions found.</div>}
+                                {displayedMessages.length === 0 && <div className="p-8 text-center text-stone-400 text-sm">No transactions found.</div>}
                              </div>
                              
                              {/* Pagination Controls */}
                              {totalPages > 1 && (
-                                <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-center gap-4">
+                                <div className="px-6 py-4 border-t border-stone-100 flex items-center justify-center gap-4">
                                     <button 
                                         onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
                                         disabled={historyPage === 1}
-                                        className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 transition-colors"
+                                        className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
                                     >
                                         <ChevronLeft size={16} />
                                     </button>
-                                    <span className="text-xs font-bold text-slate-600">Page {historyPage} of {totalPages}</span>
+                                    <span className="text-xs font-bold text-stone-600">Page {historyPage} of {totalPages}</span>
                                     <button 
                                         onClick={() => setHistoryPage(p => Math.min(totalPages, p + 1))}
                                         disabled={historyPage === totalPages}
-                                        className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 transition-colors"
+                                        className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
                                     >
                                         <ChevronRight size={16} />
                                     </button>
@@ -1272,7 +1272,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                 {/* --- VIEW: SUPPORT --- */}
                 {currentView === 'SUPPORT' && (
                     <div className="p-6 max-w-2xl mx-auto animate-in fade-in flex items-center justify-center min-h-[500px]">
-                         <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 text-center space-y-6 max-w-md w-full relative overflow-hidden">
+                         <div className="bg-white p-8 rounded-3xl border border-stone-200 shadow-xl shadow-stone-200/50 text-center space-y-6 max-w-md w-full relative overflow-hidden">
                              {/* Decorative Background */}
                              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
                              
@@ -1281,8 +1281,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                              </div>
                              
                              <div>
-                                <h3 className="text-2xl font-black text-slate-900 mb-2">How can we help?</h3>
-                                <p className="text-slate-500 text-sm leading-relaxed">
+                                <h3 className="text-2xl font-black text-stone-900 mb-2">How can we help?</h3>
+                                <p className="text-stone-500 text-sm leading-relaxed">
                                     Our support team is available Monday through Friday, 9am - 5pm EST. We usually respond within 24 hours.
                                 </p>
                              </div>
@@ -1291,13 +1291,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                  <Button fullWidth className="h-12 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-900/10">
                                     <MessageSquare size={18}/> Contact Support
                                  </Button>
-                                 <Button fullWidth variant="secondary" className="h-12 rounded-xl flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 border border-slate-200">
+                                 <Button fullWidth variant="secondary" className="h-12 rounded-xl flex items-center justify-center gap-2 bg-stone-50 hover:bg-stone-100 border border-stone-200">
                                     <FileText size={18}/> View FAQ & Guides
                                  </Button>
                              </div>
 
-                             <div className="pt-6 border-t border-slate-100">
-                                 <p className="text-xs text-slate-400">
+                             <div className="pt-6 border-t border-stone-100">
+                                 <p className="text-xs text-stone-400">
                                      Direct Email: <a href="#" className="text-indigo-600 font-bold hover:underline">support@bluechecked.com</a>
                                  </p>
                              </div>
@@ -1310,70 +1310,70 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                     <div className="max-w-2xl mx-auto p-6 space-y-6 animate-in fade-in slide-in-from-bottom-2">
                         {showSaveSuccess && (
                             <div className="fixed bottom-8 right-8 z-[60] max-w-sm animate-in slide-in-from-bottom-4">
-                                <div className="bg-slate-900 text-white rounded-lg px-4 py-3 shadow-lg flex items-center gap-3">
+                                <div className="bg-stone-900 text-white rounded-lg px-4 py-3 shadow-lg flex items-center gap-3">
                                     <CheckCircle2 size={20} className="text-green-400" />
                                     <span className="font-bold text-sm">Profile updated successfully!</span>
                                 </div>
                             </div>
                         )}
-                        <div className="bg-white p-6 rounded-xl border border-slate-200">
-                            <h3 className="text-lg font-bold text-slate-900 mb-6 border-b border-slate-100 pb-2">Your Profile</h3>
+                        <div className="bg-white p-6 rounded-xl border border-stone-200">
+                            <h3 className="text-lg font-bold text-stone-900 mb-6 border-b border-stone-100 pb-2">Your Profile</h3>
                             <div className="space-y-6">
                                 <div className="flex items-center gap-6">
-                                    <div className="w-20 h-20 rounded-full bg-slate-100 flex-shrink-0 overflow-hidden border border-slate-200">
-                                        {profileForm.avatarUrl ? <img src={profileForm.avatarUrl} className="w-full h-full object-cover" /> : <User size={32} className="m-auto text-slate-300"/>}
+                                    <div className="w-20 h-20 rounded-full bg-stone-100 flex-shrink-0 overflow-hidden border border-stone-200">
+                                        {profileForm.avatarUrl ? <img src={profileForm.avatarUrl} className="w-full h-full object-cover" /> : <User size={32} className="m-auto text-stone-300"/>}
                                     </div>
                                     <div className="flex-1">
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Profile Photo</label>
+                                        <label className="block text-sm font-medium text-stone-700 mb-1">Profile Photo</label>
                                         <div className="flex gap-2">
                                             {profileForm.avatarUrl ? (
-                                                <div className="flex items-center gap-2 w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-500 text-sm">
+                                                <div className="flex items-center gap-2 w-full px-3 py-2 border border-stone-300 rounded-lg bg-stone-50 text-stone-500 text-sm">
                                                     <span className="truncate flex-1">
                                                         {avatarFileName || (profileForm.avatarUrl.startsWith('data:') ? "Uploaded Image" : "Current Profile Photo")}
                                                     </span>
                                                     <button onClick={() => { setProfileForm(p => ({...p, avatarUrl: ''})); setAvatarFileName(''); }} className="text-red-500 hover:text-red-700"><X size={14}/></button>
                                                 </div>
                                             ) : (
-                                                <div className="flex items-center gap-2 w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-400 text-sm italic">
+                                                <div className="flex items-center gap-2 w-full px-3 py-2 border border-stone-300 rounded-lg bg-stone-50 text-stone-400 text-sm italic">
                                                     No image selected
                                                 </div>
                                             )}
                                             <button 
                                                 onClick={() => fileInputRef.current?.click()}
-                                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
+                                                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
                                             >
                                                 <Camera size={16} /> Upload
                                             </button>
                                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarFileChange} />
                                         </div>
-                                        <p className="text-[10px] text-slate-400 mt-1">Upload from desktop.</p>
+                                        <p className="text-[10px] text-stone-400 mt-1">Upload from desktop.</p>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Display Name</label>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1">Display Name</label>
                                     <input 
                                         type="text" 
                                         value={profileForm.name} 
                                         onChange={e => setProfileForm(p => ({...p, name: e.target.value}))}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none"
+                                        className="w-full px-3 py-2 border border-stone-300 rounded-lg outline-none"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Bio</label>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1">Bio</label>
                                     <textarea 
                                         value={profileForm.bio} 
                                         onChange={e => setProfileForm(p => ({...p, bio: e.target.value}))}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none resize-none h-24"
+                                        className="w-full px-3 py-2 border border-stone-300 rounded-lg outline-none resize-none h-24"
                                         placeholder="Tell us about yourself..."
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Age (Optional)</label>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1">Age (Optional)</label>
                                     <input 
                                         type="number" 
                                         value={profileForm.age} 
                                         onChange={e => setProfileForm(p => ({...p, age: e.target.value}))}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none"
+                                        className="w-full px-3 py-2 border border-stone-300 rounded-lg outline-none"
                                     />
                                 </div>
                                 <div className="pt-4 flex justify-end">
@@ -1388,31 +1388,31 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                 {currentView === 'OVERVIEW' && !selectedCreatorId && (
                    <div className="p-6 max-w-5xl mx-auto space-y-8 animate-in fade-in">
                       {/* Conversation List */}
-                      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                         <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-                             <h3 className="text-sm font-bold text-slate-900">Your Conversations</h3>
+                      <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
+                         <div className="px-6 py-4 border-b border-stone-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                             <h3 className="text-sm font-bold text-stone-900">Your Conversations</h3>
                              {/* Search Input - More Prominent */}
                              <div className="relative w-full sm:w-auto group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
                                 <input 
                                     type="text" 
                                     placeholder="Search messages..." 
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full sm:w-72 pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all shadow-sm"
+                                    className="w-full sm:w-72 pl-10 pr-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all shadow-sm"
                                 />
                              </div>
                          </div>
 
                          {isLoading ? (
-                            <div className="text-center py-12 text-sm text-slate-400">Loading requests...</div>
+                            <div className="text-center py-12 text-sm text-stone-400">Loading requests...</div>
                          ) : filteredGroups.length === 0 ? (
                             <div className="text-center py-16">
-                                <MessageSquare size={32} className="mx-auto text-slate-300 mb-3" />
-                                <h3 className="text-sm font-bold text-slate-900 mb-1">
+                                <MessageSquare size={32} className="mx-auto text-stone-300 mb-3" />
+                                <h3 className="text-sm font-bold text-stone-900 mb-1">
                                     {searchQuery ? 'No conversations found' : 'No messages yet'}
                                 </h3>
-                                <p className="text-xs text-slate-500 mb-6">
+                                <p className="text-xs text-stone-500 mb-6">
                                     {searchQuery ? 'Try a different search term.' : 'Find an expert to help you solve your problem.'}
                                 </p>
                                 {!searchQuery && (
@@ -1427,11 +1427,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full text-left border-collapse min-w-[600px]">
                                     <thead>
-                                        <tr className="bg-slate-50/50 border-b border-slate-100">
-                                            <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Expert</th>
-                                            <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Latest Status</th>
-                                            <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Sessions</th>
-                                            <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Last Active</th>
+                                        <tr className="bg-stone-50/50 border-b border-stone-100">
+                                            <th className="px-6 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-wider">Expert</th>
+                                            <th className="px-6 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-wider">Latest Status</th>
+                                            <th className="px-6 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-wider text-right">Sessions</th>
+                                            <th className="px-6 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-wider text-right">Last Active</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1439,10 +1439,10 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             const latestMsg = group.latestMessage;
                                             const timeLeft = getTimeLeft(latestMsg.expiresAt);
                                             return (
-                                                <tr key={group.creatorId} onClick={() => handleOpenChat(group.creatorId)} className="group cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
+                                                <tr key={group.creatorId} onClick={() => handleOpenChat(group.creatorId)} className="group cursor-pointer hover:bg-stone-50 transition-colors border-b border-stone-50 last:border-0">
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200 overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
+                                                            <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200 overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
                                                                 {group.creatorAvatarUrl ? (
                                                                     <img src={group.creatorAvatarUrl} className="w-full h-full object-cover" alt={group.creatorName} />
                                                                 ) : (
@@ -1450,8 +1450,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                                 )}
                                                             </div>
                                                             <div className="flex flex-col">
-                                                                <span className="text-sm font-bold text-slate-900">{group.creatorName}</span>
-                                                                <span className="text-[10px] text-slate-500">View Conversation &rarr;</span>
+                                                                <span className="text-sm font-bold text-stone-900">{group.creatorName}</span>
+                                                                <span className="text-[10px] text-stone-500">View Conversation &rarr;</span>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -1465,17 +1465,17 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                                 <CheckCircle2 size={10} /> Replied
                                                             </span>
                                                         ) : (
-                                                            <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-slate-100 text-slate-500 border border-slate-200 w-fit">Refunded</span>
+                                                            <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-stone-100 text-stone-500 border border-stone-200 w-fit">Refunded</span>
                                                         )}
-                                                        <p className="text-[10px] text-slate-400 mt-1 truncate max-w-[150px]">
+                                                        <p className="text-[10px] text-stone-400 mt-1 truncate max-w-[150px]">
                                                             {latestMsg.conversation[latestMsg.conversation.length - 1]?.content || latestMsg.content}
                                                         </p>
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
-                                                        <span className="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-md">{group.messageCount}</span>
+                                                        <span className="text-xs font-mono font-bold text-stone-700 bg-stone-100 px-2 py-1 rounded-md">{group.messageCount}</span>
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
-                                                        <span className="text-xs text-slate-500">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
+                                                        <span className="text-xs text-stone-500">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
                                                     </td>
                                                 </tr>
                                             )
@@ -1489,9 +1489,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     const latestMsg = group.latestMessage;
                                     const timeLeft = getTimeLeft(latestMsg.expiresAt);
                                     return (
-                                        <div key={group.creatorId} onClick={() => handleOpenChat(group.creatorId)} className="p-4 active:bg-slate-50 cursor-pointer">
+                                        <div key={group.creatorId} onClick={() => handleOpenChat(group.creatorId)} className="p-4 active:bg-stone-50 cursor-pointer">
                                             <div className="flex items-center gap-3 mb-3">
-                                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200 overflow-hidden shadow-sm">
+                                                <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200 overflow-hidden shadow-sm">
                                                     {group.creatorAvatarUrl ? (
                                                         <img src={group.creatorAvatarUrl} className="w-full h-full object-cover" alt={group.creatorName} />
                                                     ) : (
@@ -1500,8 +1500,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 </div>
                                                 <div className="flex-1">
                                                     <div className="flex justify-between items-start">
-                                                        <span className="text-sm font-bold text-slate-900">{group.creatorName}</span>
-                                                        <span className="text-[10px] text-slate-400 font-mono">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
+                                                        <span className="text-sm font-bold text-stone-900">{group.creatorName}</span>
+                                                        <span className="text-[10px] text-stone-400 font-mono">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
                                                     </div>
                                                     <div className="mt-1">
                                                         {latestMsg.status === 'PENDING' ? (
@@ -1513,16 +1513,16 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                                 <CheckCircle2 size={10} /> Replied
                                                             </span>
                                                         ) : (
-                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 w-fit">Refunded</span>
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-100 text-stone-500 border border-stone-200 w-fit">Refunded</span>
                                                         )}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <p className="text-xs text-slate-600 line-clamp-2 mb-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100 italic">
+                                            <p className="text-xs text-stone-600 line-clamp-2 mb-3 bg-stone-50 p-2.5 rounded-lg border border-stone-100 italic">
                                                 "{latestMsg.conversation[latestMsg.conversation.length - 1]?.content || latestMsg.content}"
                                             </p>
                                             <div className="flex justify-between items-center mt-2">
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{group.messageCount} Sessions</span>
+                                                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{group.messageCount} Sessions</span>
                                                 <div className="text-xs font-bold text-blue-600 flex items-center gap-1">View <ChevronRight size={14} /></div>
                                             </div>
                                         </div>
@@ -1562,14 +1562,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         )}
 
                         {/* Internal Chat Header */}
-                        <div className="bg-white px-4 py-3 border-b border-slate-200 flex items-center justify-between shadow-sm flex-shrink-0 z-20 relative">
+                        <div className="bg-white px-4 py-3 border-b border-stone-200 flex items-center justify-between shadow-sm flex-shrink-0 z-20 relative">
                             <div className="flex items-center gap-3">
-                                <button onClick={() => setSelectedCreatorId(null)} className="p-2 -ml-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-full transition-colors">
+                                <button onClick={() => setSelectedCreatorId(null)} className="p-2 -ml-2 text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-full transition-colors">
                                     <ChevronLeft size={20} />
                                 </button>
                                 <div>
-                                    <h2 className="font-bold text-slate-900 text-lg leading-tight">{conversationGroups.find(g => g.creatorId === selectedCreatorId)?.creatorName || 'Creator'}</h2>
-                                    <p className="text-[10px] text-slate-500 font-medium">Verified Expert</p>
+                                    <h2 className="font-bold text-stone-900 text-lg leading-tight">{conversationGroups.find(g => g.creatorId === selectedCreatorId)?.creatorName || 'Creator'}</h2>
+                                    <p className="text-[10px] text-stone-500 font-medium">Verified Expert</p>
                                 </div>
                             </div>
                         </div>
@@ -1601,10 +1601,10 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 const [firstChat, ...restChats] = sortedConversation;
 
                                 return (
-                                    <div key={msg.id} className={`px-4 py-3 ${msgIndex > 0 ? 'border-t border-slate-100' : ''} relative`}>
+                                    <div key={msg.id} className={`px-4 py-3 ${msgIndex > 0 ? 'border-t border-stone-100' : ''} relative`}>
                                         {/* Main Thread Line */}
                                         {(restChats.length > 0 || isPending) && (
-                                            <div className="absolute left-[2.125rem] top-12 bottom-6 w-0.5 bg-slate-200 -z-10"></div>
+                                            <div className="absolute left-[2.125rem] top-12 bottom-6 w-0.5 bg-stone-200 -z-10"></div>
                                         )}
 
                                         {/* 1. First Message (The Request) */}
@@ -1616,8 +1616,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     {currentUser?.avatarUrl ? (
                                                         <img src={currentUser.avatarUrl} alt="You" className="w-full h-full object-cover" />
                                                     ) : (
-                                                        <div className="w-full h-full bg-slate-200 flex items-center justify-center">
-                                                            <User size={16} className="text-slate-500" />
+                                                        <div className="w-full h-full bg-stone-200 flex items-center justify-center">
+                                                            <User size={16} className="text-stone-500" />
                                                         </div>
                                                     )}
                                                 </div>
@@ -1640,7 +1640,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                                                         {/* Attachment */}
                                                         {msg.attachmentUrl && (
-                                                            <div className="mt-3 rounded-lg overflow-hidden border border-slate-200">
+                                                            <div className="mt-3 rounded-lg overflow-hidden border border-stone-200">
                                                                 <img src={msg.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
                                                             </div>
                                                         )}
@@ -1651,27 +1651,27 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         <div className="relative">
                                                             <button 
                                                                 onClick={() => setActiveReactionPicker(activeReactionPicker === firstChat.id ? null : firstChat.id)}
-                                                                className="p-2 text-slate-400 hover:text-slate-600 transition-colors relative group"
+                                                                className="p-2 text-stone-400 hover:text-stone-600 transition-colors relative group"
                                                             >
                                                                 {messageReactions[firstChat.id] ? (
                                                                     <span className="text-lg animate-in zoom-in">{messageReactions[firstChat.id]}</span>
                                                                 ) : (
-                                                                    <div className="w-6 h-6 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition-colors relative">
-                                                                        <Smile size={14} className="text-slate-400" />
-                                                                        <div className="absolute -top-0.5 -right-0.5 bg-white rounded-full border border-slate-100 p-[1px]">
-                                                                            <Plus size={6} className="text-slate-400" />
+                                                                    <div className="w-6 h-6 rounded-full bg-stone-50 border border-stone-200 flex items-center justify-center hover:bg-stone-100 transition-colors relative">
+                                                                        <Smile size={14} className="text-stone-400" />
+                                                                        <div className="absolute -top-0.5 -right-0.5 bg-white rounded-full border border-stone-100 p-[1px]">
+                                                                            <Plus size={6} className="text-stone-400" />
                                                                         </div>
                                                                     </div>
                                                                 )}
                                                             </button>
                                                             {activeReactionPicker === firstChat.id && (
-                                                                <div className="absolute bottom-full left-0 mb-1 bg-white border border-slate-200 shadow-lg rounded-full p-1 flex gap-1 z-10 animate-in zoom-in duration-200">
-                                                                    <button onClick={() => handleReactionClick(firstChat.id, '👍')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">👍</button>
-                                                                    <button onClick={() => handleReactionClick(firstChat.id, '❤️')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">❤️</button>
+                                                                <div className="absolute bottom-full left-0 mb-1 bg-white border border-stone-200 shadow-lg rounded-full p-1 flex gap-1 z-10 animate-in zoom-in duration-200">
+                                                                    <button onClick={() => handleReactionClick(firstChat.id, '👍')} className="p-1.5 hover:bg-stone-100 rounded-full transition-colors text-lg leading-none">👍</button>
+                                                                    <button onClick={() => handleReactionClick(firstChat.id, '❤️')} className="p-1.5 hover:bg-stone-100 rounded-full transition-colors text-lg leading-none">❤️</button>
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        <div className="flex items-center gap-1.5 text-slate-500 ml-auto text-[13px]">
+                                                        <div className="flex items-center gap-1.5 text-stone-500 ml-auto text-[13px]">
                                                             <Coins size={14} className="text-amber-500" />
                                                             <span>{msg.amount}</span>
                                                             {isPending && (
@@ -1696,7 +1696,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             <div key={chat.id} className={`flex mt-4 relative z-10 ${isCreator ? 'ml-8' : ''}`}>
                                                 {/* Connector for Creator Reply */}
                                                 {isCreator && (
-                                                    <div className="absolute -left-[0.875rem] top-0 h-[1.125rem] w-[0.875rem] border-l-2 border-b-2 border-slate-200 rounded-bl-xl -z-10"></div>
+                                                    <div className="absolute -left-[0.875rem] top-0 h-[1.125rem] w-[0.875rem] border-l-2 border-b-2 border-stone-200 rounded-bl-xl -z-10"></div>
                                                 )}
 
                                                 {/* Left: Avatar + Thread Line */}
@@ -1706,13 +1706,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             msg.creatorAvatarUrl ? (
                                                                 <img src={msg.creatorAvatarUrl} alt={msg.creatorName} className="w-full h-full object-cover" />
                                                             ) : (
-                                                                <div className="w-full h-full bg-slate-200 flex items-center justify-center"><User size={16} className="text-slate-500" /></div>
+                                                                <div className="w-full h-full bg-stone-200 flex items-center justify-center"><User size={16} className="text-stone-500" /></div>
                                                             )
                                                         ) : (
                                                             currentUser?.avatarUrl ? (
                                                                 <img src={currentUser.avatarUrl} alt="You" className="w-full h-full object-cover" />
                                                             ) : (
-                                                                <div className="w-full h-full bg-slate-200 flex items-center justify-center"><User size={16} className="text-slate-500" /></div>
+                                                                <div className="w-full h-full bg-stone-200 flex items-center justify-center"><User size={16} className="text-stone-500" /></div>
                                                             )
                                                         )}
                                                     </div>
@@ -1744,23 +1744,23 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         <div className="relative">
                                                             <button 
                                                                 onClick={() => setActiveReactionPicker(activeReactionPicker === chat.id ? null : chat.id)}
-                                                                className="p-2 text-slate-400 hover:text-slate-600 transition-colors relative group"
+                                                                className="p-2 text-stone-400 hover:text-stone-600 transition-colors relative group"
                                                             >
                                                                 {messageReactions[chat.id] ? (
                                                                     <span className="text-lg animate-in zoom-in">{messageReactions[chat.id]}</span>
                                                                 ) : (
-                                                                    <div className="w-6 h-6 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition-colors relative">
-                                                                        <Smile size={14} className="text-slate-400" />
-                                                                        <div className="absolute -top-0.5 -right-0.5 bg-white rounded-full border border-slate-100 p-[1px]">
-                                                                            <Plus size={6} className="text-slate-400" />
+                                                                    <div className="w-6 h-6 rounded-full bg-stone-50 border border-stone-200 flex items-center justify-center hover:bg-stone-100 transition-colors relative">
+                                                                        <Smile size={14} className="text-stone-400" />
+                                                                        <div className="absolute -top-0.5 -right-0.5 bg-white rounded-full border border-stone-100 p-[1px]">
+                                                                            <Plus size={6} className="text-stone-400" />
                                                                         </div>
                                                                     </div>
                                                                 )}
                                                             </button>
                                                             {activeReactionPicker === chat.id && (
-                                                                <div className="absolute bottom-full left-0 mb-1 bg-white border border-slate-200 shadow-lg rounded-full p-1 flex gap-1 z-10 animate-in zoom-in duration-200">
-                                                                    <button onClick={() => handleReactionClick(chat.id, '👍')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">👍</button>
-                                                                    <button onClick={() => handleReactionClick(chat.id, '❤️')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">❤️</button>
+                                                                <div className="absolute bottom-full left-0 mb-1 bg-white border border-stone-200 shadow-lg rounded-full p-1 flex gap-1 z-10 animate-in zoom-in duration-200">
+                                                                    <button onClick={() => handleReactionClick(chat.id, '👍')} className="p-1.5 hover:bg-stone-100 rounded-full transition-colors text-lg leading-none">👍</button>
+                                                                    <button onClick={() => handleReactionClick(chat.id, '❤️')} className="p-1.5 hover:bg-stone-100 rounded-full transition-colors text-lg leading-none">❤️</button>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -1775,18 +1775,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         {isPending && restChats.length > 0 && restChats[restChats.length - 1].role === 'FAN' && (
                                             <div className="flex relative z-10">
                                                 <div className="flex flex-col items-center mr-3">
-                                                    <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-dashed border-slate-300">
+                                                    <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-dashed border-stone-300">
                                                         {msg.creatorAvatarUrl ? (
                                                             <img src={msg.creatorAvatarUrl} alt={msg.creatorName} className="w-full h-full object-cover opacity-30" />
                                                         ) : (
-                                                            <div className="w-full h-full bg-slate-50 flex items-center justify-center">
-                                                                <User size={16} className="text-slate-300" />
+                                                            <div className="w-full h-full bg-stone-50 flex items-center justify-center">
+                                                                <User size={16} className="text-stone-300" />
                                                             </div>
                                                         )}
                                                     </div>
                                                 </div>
                                                 <div className="flex-1 flex items-center">
-                                                    <span className="text-[15px] text-slate-400">Waiting for {msg.creatorName || 'creator'}'s reply...</span>
+                                                    <span className="text-[15px] text-stone-400">Waiting for {msg.creatorName || 'creator'}'s reply...</span>
                                                 </div>
                                             </div>
                                         )}
@@ -1797,9 +1797,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </div>
 
                         {/* Bottom Actions */}
-                        <div className="bg-white border-t border-slate-200 shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.05)] z-20 flex-shrink-0">
+                        <div className="bg-white border-t border-stone-200 shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.05)] z-20 flex-shrink-0">
                             {latestMessage && latestMessage.status === 'PENDING' && (
-                                <div className="p-4 flex items-center justify-between bg-slate-50">
+                                <div className="p-4 flex items-center justify-between bg-stone-50">
                                     <div className="flex items-center gap-3">
                                         {(() => {
                                             const lastChat = latestMessage.conversation[latestMessage.conversation.length - 1];
@@ -1810,36 +1810,36 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 const hours = Math.max(0, Math.floor(diff / (1000 * 60 * 60)));
                                                 return (
                                                     <>
-                                                        <div className="bg-white p-2 rounded-full border border-slate-200 shadow-sm">
+                                                        <div className="bg-white p-2 rounded-full border border-stone-200 shadow-sm">
                                                             <MessageSquare size={20} className="text-blue-500" />
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-bold text-slate-700">Creator answering</p>
-                                                            <p className="text-xs text-slate-400">Creator has {hours} hours left to complete the answer</p>
+                                                            <p className="text-sm font-bold text-stone-700">Creator answering</p>
+                                                            <p className="text-xs text-stone-400">Creator has {hours} hours left to complete the answer</p>
                                                         </div>
                                                     </>
                                                 );
                                             } else if (latestMessage.isRead) {
                                                 return (
                                                     <>
-                                                        <div className="bg-white p-2 rounded-full border border-slate-200 shadow-sm">
+                                                        <div className="bg-white p-2 rounded-full border border-stone-200 shadow-sm">
                                                             <Check size={20} className="text-indigo-500" />
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-bold text-slate-700">Read</p>
-                                                            <p className="text-xs text-slate-400">Request expires in {getTimeLeft(latestMessage.expiresAt).text}</p>
+                                                            <p className="text-sm font-bold text-stone-700">Read</p>
+                                                            <p className="text-xs text-stone-400">Request expires in {getTimeLeft(latestMessage.expiresAt).text}</p>
                                                         </div>
                                                     </>
                                                 );
                                             } else {
                                                 return (
                                                     <>
-                                                        <div className="bg-white p-2 rounded-full border border-slate-200 shadow-sm">
-                                                            <Clock size={20} className="text-slate-400" />
+                                                        <div className="bg-white p-2 rounded-full border border-stone-200 shadow-sm">
+                                                            <Clock size={20} className="text-stone-400" />
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-bold text-slate-700">Not yet read</p>
-                                                            <p className="text-xs text-slate-400">Request expires in {getTimeLeft(latestMessage.expiresAt).text}</p>
+                                                            <p className="text-sm font-bold text-stone-700">Not yet read</p>
+                                                            <p className="text-xs text-stone-400">Request expires in {getTimeLeft(latestMessage.expiresAt).text}</p>
                                                         </div>
                                                     </>
                                                 );
@@ -1849,14 +1849,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     
                                     {confirmCancelId === latestMessage.id ? (
                                         <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
-                                            <span className="text-xs font-bold text-slate-500 mr-2 flex items-center gap-1">Refund <Coins size={10}/>{latestMessage.amount}?</span>
+                                            <span className="text-xs font-bold text-stone-500 mr-2 flex items-center gap-1">Refund <Coins size={10}/>{latestMessage.amount}?</span>
                                             <Button size="sm" variant="ghost" onClick={() => setConfirmCancelId(null)}>No</Button>
                                             <Button size="sm" variant="danger" onClick={processCancellation} isLoading={isCancelling}>Yes, Cancel</Button>
                                         </div>
                                     ) : (
                                         <button 
                                             onClick={() => handleCancelClick(latestMessage.id)}
-                                            className="text-slate-400 hover:text-red-600 text-xs font-bold hover:bg-red-50 px-3 py-1.5 rounded-full transition-colors"
+                                            className="text-stone-400 hover:text-red-600 text-xs font-bold hover:bg-red-50 px-3 py-1.5 rounded-full transition-colors"
                                         >
                                             Cancel Request
                                         </button>
@@ -1865,11 +1865,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             )}
 
                             {latestMessage && latestMessage.status === 'REPLIED' && (
-                                <div className="p-4 bg-slate-50/50">
+                                <div className="p-4 bg-stone-50/50">
                                      {/* Rating Section */}
                                      {!hasRated && !showRatingSuccess && (
-                                         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-4 text-center">
-                                             <h4 className="font-bold text-slate-900 text-sm mb-2">How was the answer?</h4>
+                                         <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-sm mb-4 text-center">
+                                             <h4 className="font-bold text-stone-900 text-sm mb-2">How was the answer?</h4>
                                              <div className="flex justify-center gap-2 mb-2">
                                                  {[1,2,3,4,5].map(star => (
                                                      <button
@@ -1882,7 +1882,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                      >
                                                          <Star 
                                                             size={24} 
-                                                            className={`${(hoveredStar || rating) >= star ? 'fill-yellow-400 text-yellow-400' : 'text-slate-300'} transition-colors`}
+                                                            className={`${(hoveredStar || rating) >= star ? 'fill-yellow-400 text-yellow-400' : 'text-stone-300'} transition-colors`}
                                                          />
                                                      </button>
                                                  ))}
@@ -1894,7 +1894,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                          value={reviewText}
                                                          onChange={(e) => setReviewText(e.target.value)}
                                                          placeholder="Write a review (optional)..."
-                                                         className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none h-20 mb-3"
+                                                         className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none h-20 mb-3"
                                                      />
                                                      <Button 
                                                          fullWidth 
@@ -1921,27 +1921,27 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                              <button 
                                                 onClick={() => setCustomAppreciationMode(true)}
                                                 disabled={!!hasThanked}
-                                                className={`flex items-center justify-center gap-2 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 font-bold py-2 text-sm rounded-xl transition-all shadow-sm ${hasThanked ? 'opacity-60 cursor-not-allowed bg-slate-50' : ''}`}
+                                                className={`flex items-center justify-center gap-2 bg-white border border-stone-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 text-stone-600 font-bold py-2 text-sm rounded-xl transition-all shadow-sm ${hasThanked ? 'opacity-60 cursor-not-allowed bg-stone-50' : ''}`}
                                              >
                                                  <Heart size={16} className={hasThanked ? "fill-pink-500 text-pink-500" : ""} /> {hasThanked ? 'Thanks Sent' : 'Send Thanks'}
                                              </button>
                                              <button 
                                                 onClick={() => setShowFollowUpInput(true)}
-                                                className="flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-800 font-bold py-2 text-sm rounded-xl transition-all shadow-lg shadow-slate-900/10"
+                                                className="flex items-center justify-center gap-2 bg-stone-900 text-white hover:bg-stone-800 font-bold py-2 text-sm rounded-xl transition-all shadow-lg shadow-stone-900/10"
                                              >
                                                  <MessageSquare size={16} /> New Request
                                              </button>
                                          </div>
                                      ) : (
-                                         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-lg relative animate-in slide-in-from-bottom-2">
+                                         <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-lg relative animate-in slide-in-from-bottom-2">
                                              <button 
                                                 onClick={() => { setShowFollowUpInput(false); setCustomAppreciationMode(false); }}
-                                                className="absolute top-2 right-2 p-1 text-slate-300 hover:text-slate-500 rounded-full hover:bg-slate-50"
+                                                className="absolute top-2 right-2 p-1 text-stone-300 hover:text-stone-500 rounded-full hover:bg-stone-50"
                                              >
                                                  <X size={16} />
                                              </button>
                                              
-                                             <h4 className="font-bold text-slate-900 text-sm mb-3">
+                                             <h4 className="font-bold text-stone-900 text-sm mb-3">
                                                  {showFollowUpInput ? 'Send Follow-up Request' : 'Send Appreciation'}
                                              </h4>
                                              
@@ -1949,11 +1949,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 value={showFollowUpInput ? followUpText : customAppreciationText}
                                                 onChange={e => showFollowUpInput ? setFollowUpText(e.target.value) : setCustomAppreciationText(e.target.value)}
                                                 placeholder={showFollowUpInput ? "Ask another question..." : "Write a nice note..."}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none h-24 mb-3"
+                                                className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none h-24 mb-3"
                                              />
 
                                              {showFollowUpInput && (
-                                                 <div className="flex justify-between items-center mb-3 text-xs text-slate-500 px-1">
+                                                 <div className="flex justify-between items-center mb-3 text-xs text-stone-500 px-1">
                                                      <span className="flex items-center gap-1">Price: <b><Coins size={10} className="inline mb-0.5"/> {latestMessage.amount}</b></span>
                                                  </div>
                                              )}
@@ -1981,11 +1981,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             const totalPages = Math.ceil(notifications.length / ITEMS_PER_PAGE);
                             const displayedNotifications = notifications.slice((notificationPage - 1) * ITEMS_PER_PAGE, notificationPage * ITEMS_PER_PAGE);
                             return (
-                        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                                <h3 className="text-sm font-bold text-slate-900">All Notifications</h3>
+                        <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
+                            <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-stone-900">All Notifications</h3>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xs text-slate-500">{notifications.length} items</span>
+                                    <span className="text-xs text-stone-500">{notifications.length} items</span>
                                     {notifications.length > 0 && (
                                         <button 
                                             onClick={handleClearAllNotifications}
@@ -1998,18 +1998,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             </div>
                             <div className="divide-y divide-slate-100">
                                 {displayedNotifications.length === 0 ? (
-                                    <div className="p-12 text-center text-slate-400 text-sm">No notifications yet.</div>
+                                    <div className="p-12 text-center text-stone-400 text-sm">No notifications yet.</div>
                                 ) : (
                                     displayedNotifications.map(notif => (
-                                        <div key={notif.id} className="px-6 py-4 hover:bg-slate-50 transition-colors flex gap-4 group relative">
+                                        <div key={notif.id} className="px-6 py-4 hover:bg-stone-50 transition-colors flex gap-4 group relative">
                                             <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
                                                 <notif.icon size={18} />
                                             </div>
                                             <div className="flex-1">
-                                                <p className="text-sm text-slate-900 font-medium mb-1">{notif.text}</p>
-                                                <p className="text-xs text-slate-500">{notif.time.toLocaleString()}</p>
+                                                <p className="text-sm text-stone-900 font-medium mb-1">{notif.text}</p>
+                                                <p className="text-xs text-stone-500">{notif.time.toLocaleString()}</p>
                                             </div>
-                                            <button onClick={(e) => handleDeleteNotification(e, notif.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2">
+                                            <button onClick={(e) => handleDeleteNotification(e, notif.id)} className="text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2">
                                                 <X size={16} />
                                             </button>
                                         </div>
@@ -2019,19 +2019,19 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             
                             {/* Pagination Controls */}
                             {totalPages > 1 && (
-                                <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-center gap-4">
+                                <div className="px-6 py-4 border-t border-stone-100 flex items-center justify-center gap-4">
                                     <button 
                                         onClick={() => setNotificationPage(p => Math.max(1, p - 1))}
                                         disabled={notificationPage === 1}
-                                        className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 transition-colors"
+                                        className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
                                     >
                                         <ChevronLeft size={16} />
                                     </button>
-                                    <span className="text-xs font-bold text-slate-600">Page {notificationPage} of {totalPages}</span>
+                                    <span className="text-xs font-bold text-stone-600">Page {notificationPage} of {totalPages}</span>
                                     <button 
                                         onClick={() => setNotificationPage(p => Math.min(totalPages, p + 1))}
                                         disabled={notificationPage === totalPages}
-                                        className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 transition-colors"
+                                        className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
                                     >
                                         <ChevronRight size={16} />
                                     </button>
@@ -2047,18 +2047,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
         {/* Top Up Modal */}
         {showTopUpModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-md animate-in fade-in duration-300">
                 <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl relative animate-in zoom-in-95 duration-300">
-                    <button onClick={() => setShowTopUpModal(false)} className="absolute top-4 right-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 z-10 transition-colors"><X size={18}/></button>
+                    <button onClick={() => setShowTopUpModal(false)} className="absolute top-4 right-4 p-2 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-500 z-10 transition-colors"><X size={18}/></button>
                     
                     <div className="p-8">
                         <div className="text-center mb-6">
-                            <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Available Balance</div>
-                            <div className="text-4xl font-black text-slate-900 mb-4 flex justify-center items-baseline gap-1">
+                            <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-1">Available Balance</div>
+                            <div className="text-4xl font-black text-stone-900 mb-4 flex justify-center items-baseline gap-1">
                                 {currentUser?.credits?.toLocaleString() || 0}
-                                <span className="text-sm font-bold text-slate-400 uppercase">Credits</span>
+                                <span className="text-sm font-bold text-stone-400 uppercase">Credits</span>
                             </div>
-                            <h3 className="font-bold text-lg text-slate-800">Add Credits</h3>
+                            <h3 className="font-bold text-lg text-stone-800">Add Credits</h3>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 mb-6">
@@ -2066,17 +2066,17 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 <button 
                                 key={amt}
                                 onClick={() => setTopUpAmount(amt)}
-                                className={`p-3 rounded-xl border text-center transition-all ${topUpAmount === amt ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-white border-slate-200 hover:border-slate-300 text-slate-900'}`}
+                                className={`p-3 rounded-xl border text-center transition-all ${topUpAmount === amt ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-white border-stone-200 hover:border-stone-300 text-stone-900'}`}
                                 >
                                     <div className="font-black text-lg">{amt}</div>
-                                    <div className={`text-[10px] font-bold uppercase ${topUpAmount === amt ? 'text-indigo-200' : 'text-slate-400'}`}>Credits</div>
+                                    <div className={`text-[10px] font-bold uppercase ${topUpAmount === amt ? 'text-indigo-200' : 'text-stone-400'}`}>Credits</div>
                                 </button>
                             ))}
                         </div>
 
-                        <div className="bg-slate-50 p-4 rounded-xl flex justify-between items-center mb-6 border border-slate-100">
-                            <span className="text-sm font-medium text-slate-600">Total Cost</span>
-                            <span className="font-black text-slate-900 text-xl">${(topUpAmount / 100).toFixed(2)}</span>
+                        <div className="bg-stone-50 p-4 rounded-xl flex justify-between items-center mb-6 border border-stone-100">
+                            <span className="text-sm font-medium text-stone-600">Total Cost</span>
+                            <span className="font-black text-stone-900 text-xl">${(topUpAmount / 100).toFixed(2)}</span>
                         </div>
 
                         <Button 
@@ -2084,11 +2084,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             size="lg" 
                             onClick={handleTopUp}
                             isLoading={isProcessingTopUp}
-                            className="bg-slate-900 text-white rounded-xl h-12 font-bold shadow-lg shadow-slate-900/20"
+                            className="bg-stone-900 text-white rounded-xl h-12 font-bold shadow-lg shadow-stone-900/20"
                         >
                             Pay & Add Credits
                         </Button>
-                        <p className="text-center text-[10px] text-slate-400 mt-4 flex items-center justify-center gap-1">
+                        <p className="text-center text-[10px] text-stone-400 mt-4 flex items-center justify-center gap-1">
                             <Lock size={10} /> Secure encrypted payment
                         </p>
                     </div>
@@ -2098,7 +2098,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
         {toastMessage && (
             <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-4 fade-in duration-500">
-                <div className="relative overflow-hidden bg-slate-900 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-4 border border-white/10 ring-1 ring-white/20">
+                <div className="relative overflow-hidden bg-stone-900 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-4 border border-white/10 ring-1 ring-white/20">
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 opacity-20"></div>
                     <div className="relative z-10 flex items-center gap-3">
                         <div className="bg-gradient-to-tr from-blue-400 to-indigo-500 p-1.5 rounded-full shadow-lg shadow-indigo-500/20">

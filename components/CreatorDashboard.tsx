@@ -852,7 +852,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     const hours = Math.floor(diff / (1000 * 60 * 60));
     if (diff < 0) return { text: 'Expired', color: 'text-red-600', bg: 'bg-red-50' };
     if (hours < 4) return { text: `${hours}h left`, color: 'text-amber-600', bg: 'bg-amber-50' };
-    return { text: `${hours}h left`, color: 'text-slate-500', bg: 'bg-slate-100' };
+    return { text: `${hours}h left`, color: 'text-stone-500', bg: 'bg-stone-100' };
   };
 
   const filteredGroups = useMemo(() => conversationGroups.filter(group => {
@@ -874,12 +874,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       onClick={() => { setCurrentView(view); setSelectedSenderEmail(null); setIsSidebarOpen(false); }}
       className={`w-full flex items-center justify-between px-3 py-2 rounded-md mb-1 transition-colors text-sm font-medium ${
         currentView === view 
-          ? 'bg-slate-200 text-slate-900' 
-          : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+          ? 'bg-stone-200 text-stone-900' 
+          : 'text-stone-500 hover:text-stone-900 hover:bg-stone-100'
       }`}
     >
       <div className="flex items-center gap-3">
-        <Icon size={18} className={currentView === view ? 'text-indigo-600' : 'text-slate-400'} />
+        <Icon size={18} className={currentView === view ? 'text-indigo-600' : 'text-stone-400'} />
         <span>{label}</span>
       </div>
       {badge ? (
@@ -894,17 +894,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const analyticsData = creator.isPremium ? proData : DUMMY_PRO_DATA;
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] flex font-sans text-slate-900 overflow-hidden">
+    <div className="min-h-screen bg-[#F7F9FC] flex font-sans text-stone-900 overflow-hidden">
       {/* Mobile Sidebar Overlay - Fixes menu close bug */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/50 z-20 md:hidden backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-stone-900/50 z-20 md:hidden backdrop-blur-sm transition-opacity"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* 1. LEFT SIDEBAR */}
-      <aside className={`fixed inset-y-0 left-0 w-64 bg-[#F3F4F6] border-r border-slate-200 transform transition-transform duration-300 z-30 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 flex flex-col`}>
+      <aside className={`fixed inset-y-0 left-0 w-64 bg-[#F3F4F6] border-r border-stone-200 transform transition-transform duration-300 z-30 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 flex flex-col`}>
         <div className="p-4 flex flex-col h-full">
             {/* Brand */}
             <div 
@@ -912,7 +912,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 className="flex items-center gap-2 px-3 py-4 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
             >
                 <BlueCheckLogo size={28} className="text-blue-600" />
-                <span className="font-bold text-slate-900 tracking-tight">BLUECHECKED</span>
+                <span className="font-bold text-stone-900 tracking-tight">BLUECHECKED</span>
                 {creator.isPremium && (
                    <span className="bg-yellow-100 text-yellow-700 text-[9px] font-bold px-1.5 py-0.5 rounded border border-yellow-200 ml-1">PRO</span>
                 )}
@@ -920,7 +920,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
             {/* Nav Links */}
             <div className="space-y-1 flex-1">
-                <div className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Main</div>
+                <div className="px-3 mb-2 text-xs font-bold text-stone-400 uppercase tracking-wider">Main</div>
                 <SidebarItem icon={Home} label="Overview" view="OVERVIEW" />
                 <SidebarItem icon={Users} label="Inbox" view="INBOX" badge={stats.pendingCount > 0 ? stats.pendingCount : undefined} />
                 <SidebarItem icon={Wallet} label="Finance" view="FINANCE" />
@@ -930,7 +930,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <SidebarItem icon={AlertCircle} label="Support" view="SUPPORT" />
                 <SidebarItem icon={PieIcon} label="Statistics" view="STATISTICS" />
                 
-                <div className="px-3 mt-8 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Settings</div>
+                <div className="px-3 mt-8 mb-2 text-xs font-bold text-stone-400 uppercase tracking-wider">Settings</div>
                 <SidebarItem icon={User} label="Profile" view="SETTINGS" />
             </div>
 
@@ -952,9 +952,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             )}
 
             {/* Profile Snippet Bottom */}
-            <div className="mt-auto border-t border-slate-200 pt-4 px-3">
+            <div className="mt-auto border-t border-stone-200 pt-4 px-3">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden flex-shrink-0 border border-slate-200">
+                    <div className="w-8 h-8 rounded-full bg-stone-200 overflow-hidden flex-shrink-0 border border-stone-200">
                         <img 
                             src={creator.avatarUrl || DEFAULT_AVATAR} 
                             className="w-full h-full object-cover" 
@@ -965,10 +965,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">{creator.displayName}</p>
-                        <p className="text-xs text-slate-500 truncate">{currentUser?.email || creator.handle}</p>
+                        <p className="text-sm font-medium text-stone-900 truncate">{creator.displayName}</p>
+                        <p className="text-xs text-stone-500 truncate">{currentUser?.email || creator.handle}</p>
                     </div>
-                    <button onClick={onLogout} className="text-slate-400 hover:text-red-600 transition-colors">
+                    <button onClick={onLogout} className="text-stone-400 hover:text-red-600 transition-colors">
                         <LogOut size={16} />
                     </button>
                 </div>
@@ -980,29 +980,29 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       <main className="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden relative">
         
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
+        <header className="h-16 bg-white border-b border-stone-200 flex items-center justify-between px-6 shrink-0">
             {/* ... (Header Content Unchanged) ... */}
             <div className="flex items-center gap-4">
-                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-slate-500">
+                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500">
                     <Menu size={20} />
                 </button>
-                <h2 className="font-semibold text-slate-800">
+                <h2 className="font-semibold text-stone-800">
                     {currentView.charAt(0) + currentView.slice(1).toLowerCase()}
                 </h2>
             </div>
             <div className="flex items-center gap-4">
                 <div className="relative hidden sm:block">
-                    <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
+                    <Search className="absolute left-3 top-2.5 text-stone-400" size={16} />
                     <input 
                         type="text" 
                         placeholder="Search..." 
-                        className="pl-9 pr-4 py-2 bg-slate-100 border-none rounded-lg text-sm text-slate-600 focus:ring-2 focus:ring-slate-200 outline-none w-64 transition-all"
+                        className="pl-9 pr-4 py-2 bg-stone-100 border-none rounded-lg text-sm text-stone-600 focus:ring-2 focus:ring-slate-200 outline-none w-64 transition-all"
                     />
                 </div>
                 <div className="relative">
                     <button 
                         onClick={handleToggleNotifications}
-                        className="relative text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-100"
+                        className="relative text-stone-400 hover:text-stone-600 transition-colors p-2 rounded-full hover:bg-stone-100"
                     >
                         <Bell size={20} />
                         {notifications.filter(n => n.time.getTime() > lastReadTime).length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
@@ -1011,31 +1011,31 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     {showNotifications && (
                         <>
                             <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)}></div>
-                            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                <div className="px-4 py-3 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
-                                    <h3 className="font-bold text-sm text-slate-900">Notifications</h3>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{notifications.length} Updates</span>
+                            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                <div className="px-4 py-3 border-b border-stone-50 bg-stone-50/50 flex justify-between items-center">
+                                    <h3 className="font-bold text-sm text-stone-900">Notifications</h3>
+                                    <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{notifications.length} Updates</span>
                                 </div>
                                 <div className="max-h-[320px] overflow-y-auto">
                                     {notifications.length === 0 ? (
-                                        <div className="p-8 text-center text-slate-400 text-xs">No notifications yet.</div>
+                                        <div className="p-8 text-center text-stone-400 text-xs">No notifications yet.</div>
                                     ) : (
                                         notifications.map(notif => (
                                             <div 
                                                 key={notif.id} 
                                                 onClick={() => handleNotificationClick(notif)}
-                                                className="px-4 py-3 hover:bg-slate-50 transition-colors flex gap-3 border-b border-slate-50 last:border-0 group relative pr-8 cursor-pointer"
+                                                className="px-4 py-3 hover:bg-stone-50 transition-colors flex gap-3 border-b border-stone-50 last:border-0 group relative pr-8 cursor-pointer"
                                             >
                                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
                                                     <notif.icon size={14} />
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-slate-600 leading-snug mb-1 font-medium">{notif.text}</p>
-                                                    <p className="text-[10px] text-slate-400">{notif.time.toLocaleDateString()} • {notif.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                                                    <p className="text-xs text-stone-600 leading-snug mb-1 font-medium">{notif.text}</p>
+                                                    <p className="text-[10px] text-stone-400">{notif.time.toLocaleDateString()} • {notif.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
                                                 </div>
                                                 <button 
                                                     onClick={(e) => handleDeleteNotification(e, notif.id)}
-                                                    className="absolute top-3 right-3 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    className="absolute top-3 right-3 text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                                                     title="Dismiss"
                                                 >
                                                     <X size={14} />
@@ -1049,8 +1049,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     )}
                 </div>
 
-                <div className="h-6 w-px bg-slate-200"></div>
-                <button onClick={onViewProfile} className="text-sm font-medium text-slate-600 hover:text-indigo-600 flex items-center gap-1">
+                <div className="h-6 w-px bg-stone-200"></div>
+                <button onClick={onViewProfile} className="text-sm font-medium text-stone-600 hover:text-indigo-600 flex items-center gap-1">
                     Public Page <ExternalLink size={14} />
                 </button>
             </div>
@@ -1065,61 +1065,61 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     {/* ... Content ... */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {/* Stats Cards */}
-                        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden group">
+                        <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden group">
                             <div className="absolute right-0 top-0 w-24 h-24 bg-indigo-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
                             <div className="relative z-10">
-                                <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+                                <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
                                     <Coins size={16} className="text-indigo-500"/> Total Credits Earned
                                 </div>
-                                <div className="text-3xl font-black text-slate-900 mb-1 tracking-tight">{stats.totalEarnings.toLocaleString()}</div>
+                                <div className="text-3xl font-black text-stone-900 mb-1 tracking-tight">{stats.totalEarnings.toLocaleString()}</div>
                                 <div className="text-xs text-green-600 font-bold bg-green-50 inline-block px-1.5 py-0.5 rounded">+12% this week</div>
                             </div>
                         </div>
                         {/* ... Other Stat Cards ... */}
-                        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-                             <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+                             <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
                                 <Clock size={16} className="text-amber-500"/> Pending Requests
                             </div>
-                            <div className="text-3xl font-black text-slate-900 mb-1 tracking-tight">{stats.pendingCount}</div>
-                            <div className="text-xs text-slate-400 font-medium">Action required</div>
+                            <div className="text-3xl font-black text-stone-900 mb-1 tracking-tight">{stats.pendingCount}</div>
+                            <div className="text-xs text-stone-400 font-medium">Action required</div>
                         </div>
-                         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-                             <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+                         <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+                             <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
                                 <BarChart3 size={16} className="text-blue-500"/> Response Rate
                             </div>
-                            <div className="text-3xl font-black text-slate-900 mb-1 tracking-tight">{stats.responseRate}%</div>
+                            <div className="text-3xl font-black text-stone-900 mb-1 tracking-tight">{stats.responseRate}%</div>
                             {/* @ts-ignore */}
-                            <div className="text-xs text-slate-400 font-medium">Avg time: {stats.avgResponseTime}</div>
+                            <div className="text-xs text-stone-400 font-medium">Avg time: {stats.avgResponseTime}</div>
                         </div>
-                        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-                             <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+                             <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
                                 <MessageSquare size={16} className="text-purple-500"/> Total Requests
                             </div>
-                            <div className="text-3xl font-black text-slate-900 mb-1 tracking-tight">
+                            <div className="text-3xl font-black text-stone-900 mb-1 tracking-tight">
                                 {incomingMessages.length.toLocaleString()}
                             </div>
-                            <div className="text-xs text-slate-400 font-medium">Lifetime received</div>
+                            <div className="text-xs text-stone-400 font-medium">Lifetime received</div>
                         </div>
                     </div>
                     {/* ... Charts ... */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden h-96 flex flex-col">
-                            <h3 className="font-bold text-slate-900 mb-6 flex items-center justify-between flex-shrink-0">
+                        <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden h-96 flex flex-col">
+                            <h3 className="font-bold text-stone-900 mb-6 flex items-center justify-between flex-shrink-0">
                                 <div className="flex items-center gap-2">
                                     <span>Credit Trend</span>
                                     {trendTimeFrame === 'YEARLY' && (
-                                        <div className="flex items-center gap-1 ml-2 bg-slate-50 rounded-lg p-0.5 border border-slate-100">
-                                            <button onClick={() => handleTrendDateNavigate('PREV')} className="p-0.5 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-600 transition-colors">
+                                        <div className="flex items-center gap-1 ml-2 bg-stone-50 rounded-lg p-0.5 border border-stone-100">
+                                            <button onClick={() => handleTrendDateNavigate('PREV')} className="p-0.5 hover:bg-stone-200 rounded text-stone-400 hover:text-stone-600 transition-colors">
                                                 <ChevronLeft size={14} />
                                             </button>
-                                            <span className="text-[10px] font-bold text-slate-600 px-1 min-w-[32px] text-center">{trendDate.getFullYear()}</span>
-                                            <button onClick={() => handleTrendDateNavigate('NEXT')} className="p-0.5 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-600 transition-colors">
+                                            <span className="text-[10px] font-bold text-stone-600 px-1 min-w-[32px] text-center">{trendDate.getFullYear()}</span>
+                                            <button onClick={() => handleTrendDateNavigate('NEXT')} className="p-0.5 hover:bg-stone-200 rounded text-stone-400 hover:text-stone-600 transition-colors">
                                                 <ChevronRight size={14} />
                                             </button>
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex bg-slate-100 p-0.5 rounded-lg">
+                                <div className="flex bg-stone-100 p-0.5 rounded-lg">
                                     {[
                                         { label: 'Daily', value: 'DAILY' },
                                         { label: 'Weekly', value: 'WEEKLY' },
@@ -1128,7 +1128,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <button
                                             key={opt.value}
                                             onClick={() => { setTrendTimeFrame(opt.value as StatTimeFrame); setTrendDate(new Date()); }}
-                                            className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${trendTimeFrame === opt.value ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                            className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${trendTimeFrame === opt.value ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
                                         >
                                             {opt.label}
                                         </button>
@@ -1159,38 +1159,38 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mb-3 text-indigo-600">
                                             <Lock size={20} />
                                         </div>
-                                        <h4 className="font-bold text-slate-900 mb-1">Unlock detailed trends</h4>
-                                        <p className="text-xs text-slate-500 mb-4">See your earnings growth and forecast with a Premium account.</p>
+                                        <h4 className="font-bold text-stone-900 mb-1">Unlock detailed trends</h4>
+                                        <p className="text-xs text-stone-500 mb-4">See your earnings growth and forecast with a Premium account.</p>
                                         <Button size="sm" onClick={() => setShowPremiumModal(true)} className="w-full">Upgrade to View</Button>
                                     </div>
                                 </div>
                             )}
                         </div>
                          <div className="space-y-4">
-                             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col h-96">
+                             <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col h-96">
                                 {(() => {
                                     const totalOverviewPages = Math.ceil(reviews.length / OVERVIEW_REVIEWS_PER_PAGE);
                                     const displayedOverviewReviews = reviews.slice((overviewReviewsPage - 1) * OVERVIEW_REVIEWS_PER_PAGE, overviewReviewsPage * OVERVIEW_REVIEWS_PER_PAGE);
                                     
                                     return (
                                         <>
-                                <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-50 flex-shrink-0">
-                                    <div className="text-slate-400 text-xs font-bold uppercase tracking-wider">Recent Reviews</div>
+                                <div className="flex justify-between items-center mb-4 pb-2 border-b border-stone-50 flex-shrink-0">
+                                    <div className="text-stone-400 text-xs font-bold uppercase tracking-wider">Recent Reviews</div>
                                     <div className="flex items-center gap-2">
                                         {totalOverviewPages > 1 && (
-                                            <div className="flex items-center bg-slate-50 rounded-lg p-0.5 border border-slate-100">
+                                            <div className="flex items-center bg-stone-50 rounded-lg p-0.5 border border-stone-100">
                                                 <button 
                                                     onClick={() => setOverviewReviewsPage(p => Math.max(1, p - 1))}
                                                     disabled={overviewReviewsPage === 1}
-                                                    className="p-1 hover:bg-white rounded-md text-slate-400 hover:text-slate-600 disabled:opacity-30 transition-all"
+                                                    className="p-1 hover:bg-white rounded-md text-stone-400 hover:text-stone-600 disabled:opacity-30 transition-all"
                                                 >
                                                     <ChevronLeft size={12} />
                                                 </button>
-                                                <span className="text-[9px] font-bold text-slate-500 px-1.5 min-w-[20px] text-center">{overviewReviewsPage}/{totalOverviewPages}</span>
+                                                <span className="text-[9px] font-bold text-stone-500 px-1.5 min-w-[20px] text-center">{overviewReviewsPage}/{totalOverviewPages}</span>
                                                 <button 
                                                     onClick={() => setOverviewReviewsPage(p => Math.min(totalOverviewPages, p + 1))}
                                                     disabled={overviewReviewsPage === totalOverviewPages}
-                                                    className="p-1 hover:bg-white rounded-md text-slate-400 hover:text-slate-600 disabled:opacity-30 transition-all"
+                                                    className="p-1 hover:bg-white rounded-md text-stone-400 hover:text-stone-600 disabled:opacity-30 transition-all"
                                                 >
                                                     <ChevronRight size={12} />
                                                 </button>
@@ -1208,23 +1208,23 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="flex-1 overflow-y-auto pr-1 space-y-4">
                                     {displayedOverviewReviews.length === 0 ? (
                                         <div className="text-center py-6">
-                                            <Star size={24} className="mx-auto text-slate-200 mb-2" />
-                                            <p className="text-xs text-slate-400">No reviews yet.</p>
+                                            <Star size={24} className="mx-auto text-stone-200 mb-2" />
+                                            <p className="text-xs text-stone-400">No reviews yet.</p>
                                         </div>
                                     ) : (
                                         displayedOverviewReviews.map(review => (
                                             <div key={review.id} className="group">
                                                 <div className="flex justify-between items-start mb-1">
-                                                    <span className="font-bold text-slate-900 text-xs">{review.senderName}</span>
-                                                    <span className="text-[10px] text-slate-400">{new Date(review.createdAt).toLocaleDateString()}</span>
+                                                    <span className="font-bold text-stone-900 text-xs">{review.senderName}</span>
+                                                    <span className="text-[10px] text-stone-400">{new Date(review.createdAt).toLocaleDateString()}</span>
                                                 </div>
                                                 <div className="flex gap-0.5 mb-2">
                                                         {[1,2,3,4,5].map(i => (
-                                                            <Star key={i} size={10} className={`${(review.rating || 0) >= i ? "fill-yellow-400 text-yellow-400" : "text-slate-200"}`}/>
+                                                            <Star key={i} size={10} className={`${(review.rating || 0) >= i ? "fill-yellow-400 text-yellow-400" : "text-stone-200"}`}/>
                                                         ))}
                                                 </div>
-                                                <div className="bg-slate-50 p-2 rounded-lg">
-                                                    <p className="text-[10px] text-slate-500 line-clamp-2 italic">
+                                                <div className="bg-stone-50 p-2 rounded-lg">
+                                                    <p className="text-[10px] text-stone-500 line-clamp-2 italic">
                                                         "{review.reviewContent || "No written review"}"
                                                     </p>
                                                 </div>
@@ -1247,10 +1247,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                      {/* Header Controls */}
                      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
                          <div>
-                             <h2 className="text-2xl font-bold text-slate-900">
+                             <h2 className="text-2xl font-bold text-stone-900">
                                  {currentView === 'FINANCE' ? 'Finance & Credits' : 'Activity Statistics'}
                              </h2>
-                             <p className="text-slate-500 text-sm">
+                             <p className="text-stone-500 text-sm">
                                  {currentView === 'FINANCE' 
                                     ? 'Manage your earnings, withdrawals, and transaction history.' 
                                     : 'Track your profile performance and engagement metrics.'}
@@ -1259,17 +1259,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                          
                          <div className="flex flex-wrap gap-4 items-center">
                              {currentView === 'STATISTICS' && (
-                                <div className="flex gap-4 items-center bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+                                <div className="flex gap-4 items-center bg-white p-1 rounded-xl border border-stone-200 shadow-sm">
                                     {/* Timeframe Toggle - ONLY FOR STATISTICS */}
-                                    <div className="flex bg-slate-100 p-1 rounded-lg">
+                                    <div className="flex bg-stone-100 p-1 rounded-lg">
                                         {(['DAILY', 'WEEKLY', 'MONTHLY'] as const).map((tf) => (
                                             <button
                                                 key={tf}
                                                 onClick={() => { setStatsTimeFrame(tf); setStatsDate(new Date()); }}
                                                 className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all uppercase tracking-wide ${
                                                     statsTimeFrame === tf 
-                                                    ? 'bg-white text-slate-900 shadow-sm' 
-                                                    : 'text-slate-500 hover:text-slate-900'
+                                                    ? 'bg-white text-stone-900 shadow-sm' 
+                                                    : 'text-stone-500 hover:text-stone-900'
                                                 }`}
                                             >
                                                 {tf}
@@ -1279,14 +1279,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                     {/* Date Picker / Navigation */}
                                     <div className="flex items-center gap-2 pr-2">
-                                        <button onClick={() => handleDateNavigate('PREV')} className="p-1 hover:bg-slate-100 rounded text-slate-500">
+                                        <button onClick={() => handleDateNavigate('PREV')} className="p-1 hover:bg-stone-100 rounded text-stone-500">
                                             <ChevronLeft size={16} />
                                         </button>
                                         <div className="flex items-center gap-2 px-2 min-w-[120px] justify-center">
                                             <Calendar size={14} className="text-indigo-500" />
-                                            <span className="text-xs font-bold text-slate-900">{getStatsDateLabel()}</span>
+                                            <span className="text-xs font-bold text-stone-900">{getStatsDateLabel()}</span>
                                         </div>
-                                        <button onClick={() => handleDateNavigate('NEXT')} className="p-1 hover:bg-slate-100 rounded text-slate-500">
+                                        <button onClick={() => handleDateNavigate('NEXT')} className="p-1 hover:bg-stone-100 rounded text-stone-500">
                                             <ChevronRight size={16} />
                                         </button>
                                     </div>
@@ -1299,38 +1299,38 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                      {currentView === 'STATISTICS' && (
                          <>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in zoom-in-95 duration-300">
-                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group">
+                                <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group">
                                     <div className="absolute right-0 top-0 w-24 h-24 bg-purple-50 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
                                     <div className="relative z-10">
                                         <div className="flex items-center gap-2 mb-2">
                                             <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg"><Eye size={16}/></div>
-                                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Views</span>
+                                            <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">Total Views</span>
                                         </div>
-                                        <div className="text-3xl font-black text-slate-900">
+                                        <div className="text-3xl font-black text-stone-900">
                                             {detailedStats.reduce((acc, curr) => acc + curr.views, 0).toLocaleString()}
                                         </div>
                                     </div>
                                 </div>
-                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group">
+                                <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group">
                                     <div className="absolute right-0 top-0 w-24 h-24 bg-pink-50 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
                                     <div className="relative z-10">
                                         <div className="flex items-center gap-2 mb-2">
                                             <div className="p-1.5 bg-pink-100 text-pink-600 rounded-lg"><Heart size={16} className="fill-current"/></div>
-                                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Likes</span>
+                                            <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">Total Likes</span>
                                         </div>
-                                        <div className="text-3xl font-black text-slate-900">
+                                        <div className="text-3xl font-black text-stone-900">
                                             {detailedStats.reduce((acc, curr) => acc + curr.likes, 0).toLocaleString()}
                                         </div>
                                     </div>
                                 </div>
-                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group">
+                                <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group">
                                     <div className="absolute right-0 top-0 w-24 h-24 bg-yellow-50 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
                                     <div className="relative z-10">
                                         <div className="flex items-center gap-2 mb-2">
                                             <div className="p-1.5 bg-yellow-100 text-yellow-600 rounded-lg"><Star size={16} className="fill-current"/></div>
-                                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Avg Rating</span>
+                                            <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">Avg Rating</span>
                                         </div>
-                                        <div className="text-3xl font-black text-slate-900">
+                                        <div className="text-3xl font-black text-stone-900">
                                             {(() => {
                                                 const valid = detailedStats.filter(s => s.rating > 0);
                                                 const avg = valid.length > 0 ? valid.reduce((acc, curr) => acc + curr.rating, 0) / valid.length : 0;
@@ -1339,14 +1339,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </div>
                                     </div>
                                 </div>
-                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group">
+                                <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group">
                                     <div className="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
                                     <div className="relative z-10">
                                         <div className="flex items-center gap-2 mb-2">
                                             <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><Clock size={16}/></div>
-                                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Avg Response</span>
+                                            <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">Avg Response</span>
                                         </div>
-                                        <div className="text-3xl font-black text-slate-900">
+                                        <div className="text-3xl font-black text-stone-900">
                                             {(() => {
                                                 const valid = detailedStats.filter(s => s.responseTime > 0);
                                                 const avg = valid.length > 0 ? valid.reduce((acc, curr) => acc + curr.responseTime, 0) / valid.length : 0;
@@ -1367,15 +1367,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
                             </div>
 
-                            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                <h3 className="text-sm font-bold text-slate-900 mb-6 flex items-center gap-2">
+                            <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                <h3 className="text-sm font-bold text-stone-900 mb-6 flex items-center gap-2">
                                     <BarChart3 size={18} className="text-indigo-600" />
-                                    Activity Breakdown - <span className="font-normal text-slate-500 ml-1">{getStatsDateLabel()}</span>
+                                    Activity Breakdown - <span className="font-normal text-stone-500 ml-1">{getStatsDateLabel()}</span>
                                 </h3>
                                 
                                 <div className="h-80 w-full">
                                     {isLoadingStats ? (
-                                        <div className="h-full w-full flex items-center justify-center text-slate-400">Loading statistics...</div>
+                                        <div className="h-full w-full flex items-center justify-center text-stone-400">Loading statistics...</div>
                                     ) : (
                                         <ResponsiveContainer width="100%" height="100%">
                                             <ComposedChart data={detailedStats} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -1413,19 +1413,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in zoom-in-95 duration-300">
                                 
                                 {/* 1. Total Revenue Card */}
-                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-40 relative overflow-hidden group">
+                                <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between h-40 relative overflow-hidden group">
                                     <div className="absolute right-0 top-0 w-32 h-32 bg-emerald-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
                                     <div className="relative z-10 flex flex-col h-full justify-between">
                                         <div className="flex items-center gap-2">
                                             <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl"><TrendingUp size={18}/></div>
-                                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Lifetime Revenue</span>
+                                            <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">Lifetime Revenue</span>
                                         </div>
                                         <div>
-                                            <div className="text-3xl font-black text-slate-900 tracking-tight flex items-baseline gap-1">
+                                            <div className="text-3xl font-black text-stone-900 tracking-tight flex items-baseline gap-1">
                                                 {stats.totalEarnings.toLocaleString()}
-                                                <span className="text-sm font-bold text-slate-400">credits</span>
+                                                <span className="text-sm font-bold text-stone-400">credits</span>
                                             </div>
-                                            <p className="text-xs text-slate-400 mt-1 font-medium">Approx. ${(stats.totalEarnings / 100).toFixed(2)} USD</p>
+                                            <p className="text-xs text-stone-400 mt-1 font-medium">Approx. ${(stats.totalEarnings / 100).toFixed(2)} USD</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1450,20 +1450,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
 
                                 {/* 3. Withdraw Action Card */}
-                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center h-40 relative overflow-hidden">
+                                <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-center h-40 relative overflow-hidden">
                                     <div className="text-center">
-                                        <p className="text-sm font-bold text-slate-600 mb-4">Convert & Withdraw</p>
+                                        <p className="text-sm font-bold text-stone-600 mb-4">Convert & Withdraw</p>
                                         <Button 
                                             onClick={handleWithdraw} 
                                             isLoading={isWithdrawing}
                                             disabled={stats.totalEarnings === 0}
                                             fullWidth
-                                            className="bg-slate-900 text-white hover:bg-slate-800 h-12 shadow-md flex items-center justify-center gap-2"
+                                            className="bg-stone-900 text-white hover:bg-stone-800 h-12 shadow-md flex items-center justify-center gap-2"
                                         >
                                             <CreditCard size={16} /> 
                                             Withdraw ${(stats.totalEarnings / 100).toFixed(2)}
                                         </Button>
-                                        <p className="text-[10px] text-slate-400 mt-3 text-center">
+                                        <p className="text-[10px] text-stone-400 mt-3 text-center">
                                             Transfers typically take 1-3 business days.
                                         </p>
                                     </div>
@@ -1471,14 +1471,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             </div>
 
                             {/* Payout Method (Stripe) */}
-                            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-bottom-2">
+                            <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-bottom-2">
                                 <div className="flex items-center gap-4">
-                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${isStripeConnected ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-500'}`}>
+                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${isStripeConnected ? 'bg-green-100 text-green-600' : 'bg-stone-100 text-stone-500'}`}>
                                         {isStripeConnected ? <Check size={24} /> : <CreditCard size={24} />}
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-slate-900">Payout Method</h3>
-                                        <p className="text-sm text-slate-500">
+                                        <h3 className="font-bold text-stone-900">Payout Method</h3>
+                                        <p className="text-sm text-stone-500">
                                             {isStripeConnected 
                                                 ? "Connected to Stripe (•••• 4242). Automatic payouts enabled." 
                                                 : "Link your bank account via Stripe to receive payouts."}
@@ -1505,14 +1505,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 const totalPages = Math.ceil(financeMessages.length / ITEMS_PER_PAGE);
                                 const displayedFinance = financeMessages.slice((financePage - 1) * ITEMS_PER_PAGE, financePage * ITEMS_PER_PAGE);
                                 return (
-                            <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-3">
-                                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                                     <h3 className="text-sm font-bold text-slate-900">Credit History</h3>
+                            <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-3">
+                                <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
+                                     <h3 className="text-sm font-bold text-stone-900">Credit History</h3>
                                      <Button variant="ghost" size="sm" className="text-xs"><ExternalLink size={14} className="mr-1"/> Export CSV</Button>
                                 </div>
                                 <div className="hidden md:block overflow-x-auto">
                                    <table className="w-full text-left text-sm whitespace-nowrap">
-                                       <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 text-xs uppercase tracking-wider">
+                                       <thead className="bg-stone-50 text-stone-500 font-bold border-b border-stone-100 text-xs uppercase tracking-wider">
                                            <tr>
                                                <th className="px-6 py-3">Date</th>
                                                <th className="px-6 py-3">Source</th>
@@ -1527,9 +1527,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                const isTip = msg.conversation.some(c => c.role === 'FAN' && c.content.startsWith('Fan Appreciation:'));
                                                
                                                return (
-                                               <tr key={msg.id} className="hover:bg-slate-50 transition-colors">
-                                                   <td className="px-6 py-4 text-slate-500 font-mono text-xs">{new Date(msg.createdAt).toLocaleDateString()}</td>
-                                                   <td className="px-6 py-4 font-medium text-slate-900">{msg.senderName}</td>
+                                               <tr key={msg.id} className="hover:bg-stone-50 transition-colors">
+                                                   <td className="px-6 py-4 text-stone-500 font-mono text-xs">{new Date(msg.createdAt).toLocaleDateString()}</td>
+                                                   <td className="px-6 py-4 font-medium text-stone-900">{msg.senderName}</td>
                                                    <td className="px-6 py-4">
                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${isProduct ? 'bg-purple-50 text-purple-700 border-purple-100' : isTip ? 'bg-pink-50 text-pink-700 border-pink-100' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
                                                            {isProduct ? <ShoppingBag size={12}/> : isTip ? <Heart size={12}/> : <MessageSquare size={12}/>}
@@ -1548,7 +1548,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                );
                                            })}
                                            {displayedFinance.length === 0 && (
-                                               <tr><td colSpan={5} className="p-12 text-center text-slate-400">No transaction history available.</td></tr>
+                                               <tr><td colSpan={5} className="p-12 text-center text-stone-400">No transaction history available.</td></tr>
                                            )}
                                        </tbody>
                                    </table>
@@ -1567,8 +1567,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         {isProduct ? <ShoppingBag size={18}/> : isTip ? <Heart size={18}/> : <MessageSquare size={18}/>}
                                                     </div>
                                                     <div>
-                                                        <div className="font-bold text-slate-900 text-sm">{msg.senderName}</div>
-                                                        <div className="text-xs text-slate-500 flex items-center gap-1">
+                                                        <div className="font-bold text-stone-900 text-sm">{msg.senderName}</div>
+                                                        <div className="text-xs text-stone-500 flex items-center gap-1">
                                                             <span>{new Date(msg.createdAt).toLocaleDateString()}</span>
                                                             <span>•</span>
                                                             <span>{isProduct ? 'Product' : isTip ? 'Tip' : 'Message'}</span>
@@ -1577,31 +1577,31 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 </div>
                                                 <div className="text-right">
                                                     <div className="font-mono font-bold text-emerald-600">+{msg.amount}</div>
-                                                    <div className="text-[10px] text-slate-400">Credits</div>
+                                                    <div className="text-[10px] text-stone-400">Credits</div>
                                                 </div>
                                             </div>
                                         );
                                     })}
                                     {displayedFinance.length === 0 && (
-                                        <div className="p-8 text-center text-slate-400 text-sm">No transaction history available.</div>
+                                        <div className="p-8 text-center text-stone-400 text-sm">No transaction history available.</div>
                                     )}
                                 </div>
 
                                 {/* Pagination Controls */}
                                 {totalPages > 1 && (
-                                    <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-center gap-4">
+                                    <div className="px-6 py-4 border-t border-stone-100 flex items-center justify-center gap-4">
                                         <button 
                                             onClick={() => setFinancePage(p => Math.max(1, p - 1))}
                                             disabled={financePage === 1}
-                                            className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 transition-colors"
+                                            className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
                                         >
                                             <ChevronLeft size={16} />
                                         </button>
-                                        <span className="text-xs font-bold text-slate-600">Page {financePage} of {totalPages}</span>
+                                        <span className="text-xs font-bold text-stone-600">Page {financePage} of {totalPages}</span>
                                         <button 
                                             onClick={() => setFinancePage(p => Math.min(totalPages, p + 1))}
                                             disabled={financePage === totalPages}
-                                            className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 transition-colors"
+                                            className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
                                         >
                                             <ChevronRight size={16} />
                                         </button>
@@ -1621,17 +1621,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     {/* Header - Always visible */}
                     <div className="flex justify-between items-center mb-8">
                         <div>
-                            <h2 className="text-2xl font-bold text-slate-900">Analytics Overview</h2>
-                            <p className="text-slate-500 text-sm">Performance metrics for the last 30 days.</p>
+                            <h2 className="text-2xl font-bold text-stone-900">Analytics Overview</h2>
+                            <p className="text-stone-500 text-sm">Performance metrics for the last 30 days.</p>
                         </div>
                         <div className="flex gap-2">
-                            <button className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 shadow-sm hover:bg-slate-50">Export Report</button>
+                            <button className="px-3 py-1.5 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm hover:bg-stone-50">Export Report</button>
                         </div>
                     </div>
 
                     {/* Loading State for Premium Users */}
                     {creator.isPremium && isLoadingAnalytics && (
-                         <div className="h-96 flex items-center justify-center text-slate-400">Loading analytics...</div>
+                         <div className="h-96 flex items-center justify-center text-stone-400">Loading analytics...</div>
                     )}
 
                     {/* Content (Visible if premium loaded OR if not premium (dummy)) */}
@@ -1645,15 +1645,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <Lock size={32} className="text-white" />
                                         </div>
                                         <div>
-                                            <h2 className="text-2xl font-black text-slate-900 mb-2">Unlock Pro Analytics</h2>
-                                            <p className="text-slate-500 text-sm leading-relaxed">
+                                            <h2 className="text-2xl font-black text-stone-900 mb-2">Unlock Pro Analytics</h2>
+                                            <p className="text-stone-500 text-sm leading-relaxed">
                                                 See exactly where your traffic comes from and identify your highest converting products.
                                             </p>
                                         </div>
-                                        <Button size="lg" onClick={() => setShowPremiumModal(true)} className="w-full bg-slate-900 hover:bg-slate-800 shadow-xl">
+                                        <Button size="lg" onClick={() => setShowPremiumModal(true)} className="w-full bg-stone-900 hover:bg-stone-800 shadow-xl">
                                             Upgrade to Pro
                                         </Button>
-                                        <p className="text-xs text-slate-400">30-day money-back guarantee.</p>
+                                        <p className="text-xs text-stone-400">30-day money-back guarantee.</p>
                                     </div>
                                 </div>
                             )}
@@ -1663,22 +1663,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 
                                 {/* 1. Key Metrics Cards */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                                        <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+                                    <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+                                        <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
                                             <Eye size={16} className="text-indigo-500"/> Profile Views
                                         </div>
-                                        <div className="text-3xl font-black text-slate-900">
+                                        <div className="text-3xl font-black text-stone-900">
                                             {analyticsData.funnel.find(f => f.name === 'Profile Views')?.count.toLocaleString() || 0}
                                         </div>
                                     </div>
-                                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                                        <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+                                    <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+                                        <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
                                             <MousePointerClick size={16} className="text-blue-500"/> Interactions
                                         </div>
-                                        <div className="text-3xl font-black text-slate-900">
+                                        <div className="text-3xl font-black text-stone-900">
                                             {analyticsData.funnel.find(f => f.name === 'Interactions')?.count.toLocaleString() || 0}
                                         </div>
-                                        <div className="text-xs text-slate-400 mt-1">
+                                        <div className="text-xs text-stone-400 mt-1">
                                             {(() => {
                                                 const views = analyticsData.funnel.find(f => f.name === 'Profile Views')?.count || 0;
                                                 const interactions = analyticsData.funnel.find(f => f.name === 'Interactions')?.count || 0;
@@ -1686,14 +1686,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             })()}% Engagement
                                         </div>
                                     </div>
-                                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                                        <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+                                    <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+                                        <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
                                             <CheckCircle2 size={16} className="text-emerald-500"/> Conversions
                                         </div>
-                                        <div className="text-3xl font-black text-slate-900">
+                                        <div className="text-3xl font-black text-stone-900">
                                             {analyticsData.funnel.find(f => f.name === 'Conversions')?.count.toLocaleString() || 0}
                                         </div>
-                                        <div className="text-xs text-slate-400 mt-1">
+                                        <div className="text-xs text-stone-400 mt-1">
                                             {(() => {
                                                 const views = analyticsData.funnel.find(f => f.name === 'Profile Views')?.count || 0;
                                                 const conversions = analyticsData.funnel.find(f => f.name === 'Conversions')?.count || 0;
@@ -1705,8 +1705,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     {/* Traffic Sources Pie Chart */}
-                                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                                        <h3 className="text-sm font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                    <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+                                        <h3 className="text-sm font-bold text-stone-900 mb-6 flex items-center gap-2">
                                             <PieIcon size={16} className="text-indigo-500" /> Traffic Sources
                                         </h3>
                                         <div className="h-64 flex items-center justify-center">
@@ -1733,8 +1733,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     </div>
 
                                     {/* Conversion Funnel - Simplified Visual */}
-                                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
-                                        <h3 className="text-sm font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                    <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col">
+                                        <h3 className="text-sm font-bold text-stone-900 mb-6 flex items-center gap-2">
                                             <TrendingUp size={16} className="text-emerald-500" /> Conversion Funnel
                                         </h3>
                                         <div className="flex-1 flex flex-col justify-center space-y-8">
@@ -1744,10 +1744,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 return (
                                                     <div key={step.name} className="relative">
                                                         <div className="flex justify-between text-sm font-medium mb-2">
-                                                            <span className="text-slate-700">{step.name}</span>
-                                                            <span className="text-slate-900 font-bold">{step.count.toLocaleString()}</span>
+                                                            <span className="text-stone-700">{step.name}</span>
+                                                            <span className="text-stone-900 font-bold">{step.count.toLocaleString()}</span>
                                                         </div>
-                                                        <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                                                        <div className="w-full bg-stone-100 rounded-full h-3 overflow-hidden">
                                                             <div 
                                                                 className="h-full rounded-full transition-all duration-1000" 
                                                                 style={{ width: `${percent}%`, backgroundColor: step.fill }}
@@ -1761,14 +1761,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
 
                                 {/* Top Performing Assets */}
-                                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                                    <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
+                                <div className="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden">
+                                    <div className="px-6 py-4 border-b border-stone-100 flex items-center gap-2">
                                         <Star size={16} className="text-yellow-500" />
-                                        <h3 className="text-sm font-bold text-slate-900">Top Performing Content</h3>
+                                        <h3 className="text-sm font-bold text-stone-900">Top Performing Content</h3>
                                     </div>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left text-sm">
-                                            <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 text-xs uppercase tracking-wider">
+                                            <thead className="bg-stone-50 text-stone-500 font-bold border-b border-stone-100 text-xs uppercase tracking-wider">
                                                 <tr>
                                                     <th className="px-6 py-3">Asset</th>
                                                     <th className="px-6 py-3">Type</th>
@@ -1779,14 +1779,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             </thead>
                                             <tbody className="divide-y divide-slate-100">
                                                 {analyticsData.topAssets.map((asset) => (
-                                                    <tr key={asset.id} className="hover:bg-slate-50 transition-colors">
-                                                        <td className="px-6 py-4 font-bold text-slate-700">{asset.title}</td>
+                                                    <tr key={asset.id} className="hover:bg-stone-50 transition-colors">
+                                                        <td className="px-6 py-4 font-bold text-stone-700">{asset.title}</td>
                                                         <td className="px-6 py-4">
-                                                            <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide ${asset.type === 'PRODUCT' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}`}>
+                                                            <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide ${asset.type === 'PRODUCT' ? 'bg-purple-100 text-purple-700' : 'bg-stone-100 text-stone-600'}`}>
                                                                 {asset.type}
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 py-4 text-right text-slate-600 font-mono">{asset.clicks.toLocaleString()}</td>
+                                                        <td className="px-6 py-4 text-right text-stone-600 font-mono">{asset.clicks.toLocaleString()}</td>
                                                         <td className="px-6 py-4 text-right font-bold text-indigo-600">{asset.ctr}</td>
                                                         <td className="px-6 py-4 text-right font-mono font-bold text-emerald-600">
                                                             {asset.revenue > 0 ? `${asset.revenue}` : '-'}
@@ -1807,15 +1807,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <div className="h-[calc(100vh-64px)] flex bg-white animate-in fade-in">
                     {/* ... (Inbox List & Detail Logic Unchanged) ... */}
                     {/* List Column */}
-                    <div className={`w-full md:w-80 lg:w-96 border-r border-slate-200 flex flex-col ${selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
-                        <div className="p-4 border-b border-slate-200 flex flex-col gap-3">
-                            <span className="font-bold text-slate-900">Messages</span>
-                            <div className="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-lg">
+                    <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200 flex flex-col ${selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
+                        <div className="p-4 border-b border-stone-200 flex flex-col gap-3">
+                            <span className="font-bold text-stone-900">Messages</span>
+                            <div className="flex flex-wrap gap-1 bg-stone-100 p-1 rounded-lg">
                                 {(['ALL', 'PENDING', 'REPLIED', 'REJECTED'] as const).map(f => (
                                     <button
                                         key={f}
                                         onClick={() => setInboxFilter(f)}
-                                        className={`flex-1 px-2 py-1.5 text-[10px] font-bold rounded transition-all whitespace-nowrap ${inboxFilter === f ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        className={`flex-1 px-2 py-1.5 text-[10px] font-bold rounded transition-all whitespace-nowrap ${inboxFilter === f ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
                                     >
                                         {f}
                                     </button>
@@ -1824,9 +1824,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         </div>
                         <div className="flex-1 overflow-y-auto">
                             {isLoading ? (
-                                <div className="p-8 text-center text-sm text-slate-400">Loading...</div>
+                                <div className="p-8 text-center text-sm text-stone-400">Loading...</div>
                             ) : filteredGroups.length === 0 ? (
-                                <div className="p-8 text-center text-sm text-slate-400">No messages found.</div>
+                                <div className="p-8 text-center text-sm text-stone-400">No messages found.</div>
                             ) : (
                                 filteredGroups.map(group => {
                                     const isActive = selectedSenderEmail === group.senderEmail;
@@ -1840,25 +1840,25 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <div 
                                             key={group.senderEmail}
                                             onClick={() => handleOpenChat(group.senderEmail)}
-                                            className={`p-4 border-b border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors ${isActive ? 'bg-blue-50/50 border-l-4 border-l-blue-500' : 'border-l-4 border-l-transparent'}`}
+                                            className={`p-4 border-b border-stone-100 cursor-pointer hover:bg-stone-50 transition-colors ${isActive ? 'bg-blue-50/50 border-l-4 border-l-blue-500' : 'border-l-4 border-l-transparent'}`}
                                         >
                                             <div className="flex justify-between items-start mb-1">
-                                                <span className={`text-sm font-semibold ${isUnread ? 'text-slate-900' : 'text-slate-600'}`}>
+                                                <span className={`text-sm font-semibold ${isUnread ? 'text-stone-900' : 'text-stone-600'}`}>
                                                     {group.senderName}
                                                     {isUnread && <span className="inline-block w-2 h-2 bg-blue-500 rounded-full ml-2"></span>}
                                                 </span>
-                                                <span className="text-xs text-slate-400">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
+                                                <span className="text-xs text-stone-400">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
                                             </div>
-                                            <p className="text-xs text-slate-500 line-clamp-2 mb-2">{latestMsg.content}</p>
+                                            <p className="text-xs text-stone-500 line-clamp-2 mb-2">{latestMsg.content}</p>
                                             <div className="flex items-center justify-between">
                                                 {latestMsg.status === 'PENDING' ? (
                                                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${timeLeft.bg} ${timeLeft.color}`}>{timeLeft.text}</span>
                                                 ) : latestMsg.status === 'REPLIED' ? (
                                                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">REPLIED</span>
                                                 ) : (
-                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">{latestMsg.status === 'EXPIRED' ? 'EXPIRED' : 'REJECTED'}</span>
+                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">{latestMsg.status === 'EXPIRED' ? 'EXPIRED' : 'REJECTED'}</span>
                                                 )}
-                                                <span className="text-xs font-mono font-medium text-slate-700 flex items-center gap-1"><Coins size={10}/> {group.messageCount}</span>
+                                                <span className="text-xs font-mono font-medium text-stone-700 flex items-center gap-1"><Coins size={10}/> {group.messageCount}</span>
                                             </div>
                                         </div>
                                     )
@@ -1868,9 +1868,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     </div>
                     
                     {/* Detail Column */}
-                    <div className={`flex-1 flex flex-col bg-slate-50 ${!selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
+                    <div className={`flex-1 flex flex-col bg-stone-50 ${!selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
                         {!activeMessage ? (
-                            <div className="flex-1 flex flex-col items-center justify-center text-slate-400 bg-slate-50/50">
+                            <div className="flex-1 flex flex-col items-center justify-center text-stone-400 bg-stone-50/50">
                                 {/* Celebration Overlay (Reused from FanDashboard logic but triggered on Collect) */}
                                 {showReadCelebration && (
                                     <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
@@ -1893,8 +1893,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         ))}
                                     </div>
                                 )}
-                                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                                    <Users size={32} className="text-slate-300" />
+                                <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mb-4">
+                                    <Users size={32} className="text-stone-300" />
                                 </div>
                                 <p className="text-sm font-medium">Select a message to view details</p>
                             </div>
@@ -1925,7 +1925,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 {/* Collection Animation Overlay */}
                                 {showCollectAnimation && (
                                     <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-4 fade-in duration-500">
-                                        <div className="relative overflow-hidden bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-4 border border-white/10 ring-1 ring-white/20">
+                                        <div className="relative overflow-hidden bg-stone-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-4 border border-white/10 ring-1 ring-white/20">
                                             <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20"></div>
                                             <div className="relative z-10 flex items-center gap-3">
                                                 <div className="bg-gradient-to-tr from-emerald-400 to-teal-500 p-1.5 rounded-full shadow-lg shadow-emerald-500/20">
@@ -1945,28 +1945,28 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 )}
 
                                 {/* Header & Chat Content */}
-                                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10 shadow-sm">
+                                <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between bg-white sticky top-0 z-10 shadow-sm">
                                     <div className="flex items-center gap-4">
-                                        <button onClick={() => setSelectedSenderEmail(null)} className="md:hidden p-2 -ml-2 hover:bg-slate-50 rounded-full text-slate-400 hover:text-slate-700">
+                                        <button onClick={() => setSelectedSenderEmail(null)} className="md:hidden p-2 -ml-2 hover:bg-stone-50 rounded-full text-stone-400 hover:text-stone-700">
                                             <ChevronLeft size={20} />
                                         </button>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <h3 className="font-bold text-slate-900">{activeMessage.senderName}</h3>
+                                                <h3 className="font-bold text-stone-900">{activeMessage.senderName}</h3>
                                                 {activeMessage.status === 'PENDING' && (
                                                     <button 
                                                         onClick={(e) => handleReject(e)}
                                                         disabled={isRejecting}
-                                                        className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                                        className="p-1 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
                                                         title="Reject & Refund"
                                                     >
                                                         <Ban size={14} />
                                                     </button>
                                                 )}
                                             </div>
-                                            <div className="text-xs text-slate-500 flex items-center gap-2">
+                                            <div className="text-xs text-stone-500 flex items-center gap-2">
                                                 <span className="font-mono font-medium flex items-center gap-1"><Coins size={10}/> {activeMessage.amount}</span>
-                                                <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                                <span className="w-1 h-1 bg-stone-300 rounded-full"></span>
                                                 <span>{new Date(activeMessage.createdAt).toLocaleDateString()}</span>
                                             </div>
                                         </div>
@@ -1984,7 +1984,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             </div>
                                         )}
                                         {(activeMessage.status === 'EXPIRED' || activeMessage.status === 'CANCELLED') && (
-                                            <div className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
+                                            <div className="text-xs font-bold text-stone-500 bg-stone-100 px-3 py-1.5 rounded-full border border-stone-200">
                                                 Refunded
                                             </div>
                                         )}
@@ -2001,10 +2001,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         const [firstChat, ...restChats] = sortedConversation;
 
                                         return (
-                                            <div key={msg.id} className={`px-4 py-3 ${msgIndex > 0 ? 'border-t border-slate-100' : ''} relative`}>
+                                            <div key={msg.id} className={`px-4 py-3 ${msgIndex > 0 ? 'border-t border-stone-100' : ''} relative`}>
                                                 {/* Main Thread Line */}
                                                 {(restChats.length > 0 || isPending) && (
-                                                    <div className="absolute left-[2.125rem] top-12 bottom-6 w-0.5 bg-slate-200 -z-10"></div>
+                                                    <div className="absolute left-[2.125rem] top-12 bottom-6 w-0.5 bg-stone-200 -z-10"></div>
                                                 )}
 
                                                 {/* 1. First Message (The Request) */}
@@ -2016,8 +2016,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             {msg.senderAvatarUrl ? (
                                                                 <img src={msg.senderAvatarUrl} alt={msg.senderName} className="w-full h-full object-cover" />
                                                             ) : (
-                                                                <div className="w-full h-full bg-slate-200 flex items-center justify-center">
-                                                                    <User size={16} className="text-slate-500" />
+                                                                <div className="w-full h-full bg-stone-200 flex items-center justify-center">
+                                                                    <User size={16} className="text-stone-500" />
                                                                 </div>
                                                             )}
                                                         </div>
@@ -2040,7 +2040,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                                 {/* Attachment */}
                                                 {msg.attachmentUrl && (
-                                                    <div className="mt-3 rounded-lg overflow-hidden border border-slate-200">
+                                                    <div className="mt-3 rounded-lg overflow-hidden border border-stone-200">
                                                         <img src={msg.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
                                                     </div>
                                                 )}
@@ -2051,27 +2051,27 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 <div className="relative">
                                                     <button 
                                                         onClick={() => setActiveReactionPicker(activeReactionPicker === firstChat.id ? null : firstChat.id)}
-                                                        className="p-2 text-slate-400 hover:text-slate-600 transition-colors relative group"
+                                                        className="p-2 text-stone-400 hover:text-stone-600 transition-colors relative group"
                                                     >
                                                         {messageReactions[firstChat.id] ? (
                                                             <span className="text-lg animate-in zoom-in">{messageReactions[firstChat.id]}</span>
                                                         ) : (
-                                                            <div className="w-6 h-6 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition-colors relative">
-                                                                <Smile size={14} className="text-slate-400" />
-                                                                <div className="absolute -top-0.5 -right-0.5 bg-white rounded-full border border-slate-100 p-[1px]">
-                                                                    <Plus size={6} className="text-slate-400" />
+                                                            <div className="w-6 h-6 rounded-full bg-stone-50 border border-stone-200 flex items-center justify-center hover:bg-stone-100 transition-colors relative">
+                                                                <Smile size={14} className="text-stone-400" />
+                                                                <div className="absolute -top-0.5 -right-0.5 bg-white rounded-full border border-stone-100 p-[1px]">
+                                                                    <Plus size={6} className="text-stone-400" />
                                                                 </div>
                                                             </div>
                                                         )}
                                                     </button>
                                                     {activeReactionPicker === firstChat.id && (
-                                                        <div className="absolute bottom-full left-0 mb-1 bg-white border border-slate-200 shadow-lg rounded-full p-1 flex gap-1 z-10 animate-in zoom-in duration-200">
-                                                            <button onClick={() => handleReactionClick(firstChat.id, '👍')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">👍</button>
-                                                            <button onClick={() => handleReactionClick(firstChat.id, '❤️')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">❤️</button>
+                                                        <div className="absolute bottom-full left-0 mb-1 bg-white border border-stone-200 shadow-lg rounded-full p-1 flex gap-1 z-10 animate-in zoom-in duration-200">
+                                                            <button onClick={() => handleReactionClick(firstChat.id, '👍')} className="p-1.5 hover:bg-stone-100 rounded-full transition-colors text-lg leading-none">👍</button>
+                                                            <button onClick={() => handleReactionClick(firstChat.id, '❤️')} className="p-1.5 hover:bg-stone-100 rounded-full transition-colors text-lg leading-none">❤️</button>
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center gap-1.5 text-slate-500 ml-auto text-[13px]">
+                                                <div className="flex items-center gap-1.5 text-stone-500 ml-auto text-[13px]">
                                                     <Coins size={14} className="text-amber-500" />
                                                     <span>{msg.amount}</span>
                                                     {isPending && (
@@ -2096,7 +2096,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     <div key={chat.id} className={`flex mt-4 relative z-10 ${isCreator ? 'ml-8' : ''}`}>
                                                         {/* Connector for Creator Reply */}
                                                         {isCreator && (
-                                                            <div className="absolute -left-[0.875rem] top-0 h-[1.125rem] w-[0.875rem] border-l-2 border-b-2 border-slate-200 rounded-bl-xl -z-10"></div>
+                                                            <div className="absolute -left-[0.875rem] top-0 h-[1.125rem] w-[0.875rem] border-l-2 border-b-2 border-stone-200 rounded-bl-xl -z-10"></div>
                                                         )}
 
                                                         {/* Left: Avatar + Thread Line */}
@@ -2106,13 +2106,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     creator.avatarUrl ? (
                                                                         <img src={creator.avatarUrl} alt={creator.displayName} className="w-full h-full object-cover" />
                                                                     ) : (
-                                                                        <div className="w-full h-full bg-slate-200 flex items-center justify-center"><User size={16} className="text-slate-500" /></div>
+                                                                        <div className="w-full h-full bg-stone-200 flex items-center justify-center"><User size={16} className="text-stone-500" /></div>
                                                                     )
                                                                 ) : (
                                                                     msg.senderAvatarUrl ? (
                                                                         <img src={msg.senderAvatarUrl} alt={msg.senderName} className="w-full h-full object-cover" />
                                                                     ) : (
-                                                                        <div className="w-full h-full bg-slate-200 flex items-center justify-center"><User size={16} className="text-slate-500" /></div>
+                                                                        <div className="w-full h-full bg-stone-200 flex items-center justify-center"><User size={16} className="text-stone-500" /></div>
                                                                     )
                                                                 )}
                                                             </div>
@@ -2144,23 +2144,23 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 <div className="relative">
                                                                     <button 
                                                                         onClick={() => setActiveReactionPicker(activeReactionPicker === chat.id ? null : chat.id)}
-                                                                        className="p-2 text-slate-400 hover:text-slate-600 transition-colors relative group"
+                                                                        className="p-2 text-stone-400 hover:text-stone-600 transition-colors relative group"
                                                                     >
                                                                         {messageReactions[chat.id] ? (
                                                                             <span className="text-lg animate-in zoom-in">{messageReactions[chat.id]}</span>
                                                                         ) : (
-                                                                            <div className="w-6 h-6 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition-colors relative">
-                                                                                <Smile size={14} className="text-slate-400" />
-                                                                                <div className="absolute -top-0.5 -right-0.5 bg-white rounded-full border border-slate-100 p-[1px]">
-                                                                                    <Plus size={6} className="text-slate-400" />
+                                                                            <div className="w-6 h-6 rounded-full bg-stone-50 border border-stone-200 flex items-center justify-center hover:bg-stone-100 transition-colors relative">
+                                                                                <Smile size={14} className="text-stone-400" />
+                                                                                <div className="absolute -top-0.5 -right-0.5 bg-white rounded-full border border-stone-100 p-[1px]">
+                                                                                    <Plus size={6} className="text-stone-400" />
                                                                                 </div>
                                                                             </div>
                                                                         )}
                                                                     </button>
                                                                     {activeReactionPicker === chat.id && (
-                                                                        <div className="absolute bottom-full left-0 mb-1 bg-white border border-slate-200 shadow-lg rounded-full p-1 flex gap-1 z-10 animate-in zoom-in duration-200">
-                                                                            <button onClick={() => handleReactionClick(chat.id, '👍')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">👍</button>
-                                                                            <button onClick={() => handleReactionClick(chat.id, '❤️')} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-lg leading-none">❤️</button>
+                                                                        <div className="absolute bottom-full left-0 mb-1 bg-white border border-stone-200 shadow-lg rounded-full p-1 flex gap-1 z-10 animate-in zoom-in duration-200">
+                                                                            <button onClick={() => handleReactionClick(chat.id, '👍')} className="p-1.5 hover:bg-stone-100 rounded-full transition-colors text-lg leading-none">👍</button>
+                                                                            <button onClick={() => handleReactionClick(chat.id, '❤️')} className="p-1.5 hover:bg-stone-100 rounded-full transition-colors text-lg leading-none">❤️</button>
                                                                         </div>
                                                                     )}
                                                                 </div>
@@ -2175,18 +2175,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 {isPending && restChats.length > 0 && restChats[restChats.length - 1].role === 'FAN' && (
                                                     <div className="flex relative z-10">
                                                         <div className="flex flex-col items-center mr-3">
-                                                            <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-dashed border-slate-300">
+                                                            <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-dashed border-stone-300">
                                                                 {creator.avatarUrl ? (
                                                                     <img src={creator.avatarUrl} alt={creator.displayName} className="w-full h-full object-cover opacity-30" />
                                                                 ) : (
-                                                                    <div className="w-full h-full bg-slate-50 flex items-center justify-center">
-                                                                        <User size={16} className="text-slate-300" />
+                                                                    <div className="w-full h-full bg-stone-50 flex items-center justify-center">
+                                                                        <User size={16} className="text-stone-300" />
                                                                     </div>
                                                                 )}
                                                             </div>
                                                         </div>
                                                         <div className="flex-1 flex items-center">
-                                                            <span className="text-[15px] text-slate-400">Reply to thread...</span>
+                                                            <span className="text-[15px] text-stone-400">Reply to thread...</span>
                                                         </div>
                                                     </div>
                                                 )}
@@ -2203,7 +2203,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     )}
                                     {activeMessage.status === 'CANCELLED' && (
                                         <div className="flex justify-center py-4 mt-4">
-                                            <div className="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg text-sm border border-slate-200 flex items-center gap-2">
+                                            <div className="bg-stone-100 text-stone-600 px-4 py-2 rounded-lg text-sm border border-stone-200 flex items-center gap-2">
                                                 <Ban size={16} /> Request rejected & refunded.
                                             </div>
                                         </div>
@@ -2213,9 +2213,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                 {/* Reply Input Area */}
                                 {activeMessage.status === 'PENDING' && (
-                                    <div className="p-4 bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+                                    <div className="p-4 bg-white border-t border-stone-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
                                         <div className="flex justify-between items-center mb-3">
-                                            <div className="flex items-center gap-2 text-xs text-slate-500">
+                                            <div className="flex items-center gap-2 text-xs text-stone-500">
                                                 <span className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded border border-green-100 font-medium">
                                                     <Coins size={12} /> Payment held in escrow
                                                 </span>
@@ -2243,7 +2243,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 }}
                                                 onChange={(e) => setReplyText(e.target.value)}
                                                 placeholder="Write your reply..."
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 pb-12 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none min-h-[100px] text-slate-900"
+                                                className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 pb-12 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none min-h-[100px] text-stone-900"
                                             />
                                             
                                             <div className="absolute bottom-3 right-3 flex items-center gap-3">
@@ -2259,7 +2259,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 <button 
                                                     onClick={() => handleSendReply(true)} 
                                                     disabled={(!replyText.trim() && !hasManualCreatorReply) || isSendingReply || isRejecting}
-                                                    className="h-10 px-5 rounded-full bg-slate-900 text-white hover:bg-slate-800 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-bold group"
+                                                    className="h-10 px-5 rounded-full bg-stone-900 text-white hover:bg-stone-800 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-bold group"
                                                     title="Complete & Collect"
                                                 >
                                                     <CheckCircle2 size={18} className="text-emerald-400" />
@@ -2313,14 +2313,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         </div>
                     )}
 
-                    <div className="bg-white p-6 rounded-xl border border-slate-200">
-                        <h3 className="text-lg font-bold text-slate-900 mb-6 border-b border-slate-100 pb-2">Profile Settings</h3>
+                    <div className="bg-white p-6 rounded-xl border border-stone-200">
+                        <h3 className="text-lg font-bold text-stone-900 mb-6 border-b border-stone-100 pb-2">Profile Settings</h3>
                         
                         <div className="space-y-6">
                             {/* ... Profile Settings Form (Unchanged) ... */}
                             {/* Avatar Edit */}
                             <div className="flex items-center gap-6">
-                                <div className="w-20 h-20 rounded-full bg-slate-100 flex-shrink-0 overflow-hidden border border-slate-200">
+                                <div className="w-20 h-20 rounded-full bg-stone-100 flex-shrink-0 overflow-hidden border border-stone-200">
                                     <img 
                                         src={editedCreator.avatarUrl || DEFAULT_AVATAR} 
                                         alt="Avatar Preview" 
@@ -2331,81 +2331,81 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     />
                                 </div>
                                 <div className="flex-1">
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Profile Photo</label>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1">Profile Photo</label>
                                     <div className="flex gap-2">
                                         {editedCreator.avatarUrl ? (
-                                            <div className="flex items-center gap-2 w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-500 text-sm">
+                                            <div className="flex items-center gap-2 w-full px-3 py-2 border border-stone-300 rounded-lg bg-stone-50 text-stone-500 text-sm">
                                                 <span className="truncate flex-1">
                                                     {avatarFileName || (editedCreator.avatarUrl.startsWith('data:') ? "Uploaded Image" : "Current Profile Photo")}
                                                 </span>
                                                 <button onClick={() => { setEditedCreator({...editedCreator, avatarUrl: ''}); setAvatarFileName(''); }} className="text-red-500 hover:text-red-700"><X size={14}/></button>
                                             </div>
                                         ) : (
-                                            <div className="flex items-center gap-2 w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-400 text-sm italic">
+                                            <div className="flex items-center gap-2 w-full px-3 py-2 border border-stone-300 rounded-lg bg-stone-50 text-stone-400 text-sm italic">
                                                 No image selected
                                             </div>
                                         )}
                                         <button 
                                             onClick={() => fileInputRef.current?.click()}
-                                            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
+                                            className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
                                         >
                                             <Camera size={16} /> Upload
                                         </button>
                                         <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarFileChange} />
                                     </div>
-                                    <p className="text-[10px] text-slate-400 mt-1">Upload from desktop.</p>
+                                    <p className="text-[10px] text-stone-400 mt-1">Upload from desktop.</p>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Display Name</label>
+                                <label className="block text-sm font-medium text-stone-700 mb-1">Display Name</label>
                                 <input 
                                     type="text" 
                                     value={editedCreator.displayName}
                                     onChange={e => setEditedCreator({...editedCreator, displayName: e.target.value})}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Bio</label>
+                                <label className="block text-sm font-medium text-stone-700 mb-1">Bio</label>
                                 <textarea 
                                     value={editedCreator.bio}
                                     onChange={e => setEditedCreator({...editedCreator, bio: e.target.value})}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none h-24 resize-none"
+                                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none h-24 resize-none"
                                 />
                             </div>
 
                              {/* New Welcome Message Field */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Auto-Reply Welcome Message</label>
+                                <label className="block text-sm font-medium text-stone-700 mb-1">Auto-Reply Welcome Message</label>
                                 <textarea 
                                     value={editedCreator.welcomeMessage || ''}
                                     onChange={e => setEditedCreator({...editedCreator, welcomeMessage: e.target.value})}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none h-24 resize-none"
+                                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none h-24 resize-none"
                                     placeholder="Hi! Thanks for your message. I'll get back to you soon..."
                                 />
-                                <p className="text-[10px] text-slate-400 mt-1">This is sent automatically when a fan pays.</p>
+                                <p className="text-[10px] text-stone-400 mt-1">This is sent automatically when a fan pays.</p>
                             </div>
                             
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Price (Credits)</label>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1">Price (Credits)</label>
                                     <div className="relative">
-                                        <span className="absolute left-3 top-2 text-slate-500"><Coins size={14}/></span>
+                                        <span className="absolute left-3 top-2 text-stone-500"><Coins size={14}/></span>
                                         <input 
                                             type="number" 
                                             value={editedCreator.pricePerMessage}
                                             onChange={e => setEditedCreator({...editedCreator, pricePerMessage: Number(e.target.value)})}
-                                            className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            className="w-full pl-8 pr-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                                         />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Response Time</label>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1">Response Time</label>
                                     <select 
                                         value={editedCreator.responseWindowHours}
                                         onChange={e => setEditedCreator({...editedCreator, responseWindowHours: Number(e.target.value)})}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        className="w-full px-3 py-2 border border-stone-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
                                     >
                                         <option value={24}>24 Hours</option>
                                         <option value={48}>48 Hours</option>
@@ -2416,7 +2416,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                             {/* REPLACED TAGS WITH PLATFORM SELECTOR */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Connected Platforms</label>
+                                <label className="block text-sm font-medium text-stone-700 mb-2">Connected Platforms</label>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                     {SUPPORTED_PLATFORMS.map(platform => {
                                         const platformData = editedCreator.platforms?.find(p => (typeof p === 'string' ? p : p.id) === platform.id);
@@ -2429,11 +2429,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 onClick={() => handleTogglePlatform(platform.id)}
                                                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all text-left ${
                                                     isSelected 
-                                                    ? 'bg-slate-900 text-white border-slate-900 shadow-md' 
-                                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                                    ? 'bg-stone-900 text-white border-stone-900 shadow-md' 
+                                                    : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
                                                 }`}
                                             >
-                                                <platform.icon className={`w-4 h-4 flex-shrink-0 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
+                                                <platform.icon className={`w-4 h-4 flex-shrink-0 ${isSelected ? 'text-white' : 'text-stone-400'}`} />
                                                 <div className="flex-1 min-w-0">
                                                     <span className="text-xs font-bold block">{platform.label}</span>
                                                     {isSelected && url && (
@@ -2445,12 +2445,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         )
                                     })}
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-2">These icons will appear on your public profile.</p>
+                                <p className="text-[10px] text-stone-400 mt-2">These icons will appear on your public profile.</p>
                             </div>
                             
                             {/* Featured Links Section - UPDATED with Digital Products */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Featured Links & Products</label>
+                                <label className="block text-sm font-medium text-stone-700 mb-2">Featured Links & Products</label>
                                 <div className="space-y-3 mb-3">
                                     {(editedCreator.links || []).map((link, index) => {
                                         const isProduct = link.type === 'DIGITAL_PRODUCT';
@@ -2463,21 +2463,21 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 onDragEnter={() => handleDragEnter(index)}
                                                 onDragEnd={handleDragEnd}
                                                 onDragOver={(e) => e.preventDefault()}
-                                                className={`flex items-start gap-3 p-3 rounded-lg border transition-all ${isProduct ? 'bg-purple-50 border-purple-100' : isSupport ? 'bg-pink-50 border-pink-100' : 'bg-slate-50 border-slate-200'} ${draggedLinkIndex === index ? 'opacity-50 border-dashed border-slate-400' : ''}`}
+                                                className={`flex items-start gap-3 p-3 rounded-lg border transition-all ${isProduct ? 'bg-purple-50 border-purple-100' : isSupport ? 'bg-pink-50 border-pink-100' : 'bg-stone-50 border-stone-200'} ${draggedLinkIndex === index ? 'opacity-50 border-dashed border-stone-400' : ''}`}
                                             >
-                                                <div className="mt-2 text-slate-400 cursor-grab active:cursor-grabbing">
+                                                <div className="mt-2 text-stone-400 cursor-grab active:cursor-grabbing">
                                                     <GripVertical size={16} />
                                                 </div>
                                                 <div className="flex-1 min-w-0 space-y-2">
                                                     <div className="flex items-center justify-between gap-2">
-                                                        <div className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit ${isProduct ? 'bg-purple-100 text-purple-600' : isSupport ? 'bg-pink-100 text-pink-600' : 'bg-slate-200 text-slate-500'}`}>
+                                                        <div className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit ${isProduct ? 'bg-purple-100 text-purple-600' : isSupport ? 'bg-pink-100 text-pink-600' : 'bg-stone-200 text-stone-500'}`}>
                                                             {isProduct ? 'Digital Download' : isSupport ? 'Support / Tip' : 'Link'}
                                                         </div>
-                                                        {(isProduct || (isSupport && link.price)) && <span className="text-xs font-bold text-slate-900">{link.price} Credits</span>}
+                                                        {(isProduct || (isSupport && link.price)) && <span className="text-xs font-bold text-stone-900">{link.price} Credits</span>}
                                                     </div>
                                                     
                                                     <input 
-                                                        className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                        className="w-full bg-white border border-stone-200 rounded px-2 py-1 text-sm font-bold text-stone-800 focus:ring-2 focus:ring-indigo-500 outline-none"
                                                         value={link.title}
                                                         onChange={(e) => handleUpdateLink(link.id, 'title', e.target.value)}
                                                         placeholder="Title"
@@ -2490,7 +2490,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         >
                                                             <div className="flex gap-2">
                                                                 <input 
-                                                                    className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-500 focus:ring-2 focus:ring-indigo-500 outline-none pr-8"
+                                                                    className="w-full bg-white border border-stone-200 rounded px-2 py-1 text-xs text-stone-500 focus:ring-2 focus:ring-indigo-500 outline-none pr-8"
                                                                     value={link.fileName || (link.url.startsWith('data:') ? 'Uploaded File' : link.url.split('/').pop()?.split('?')[0] || link.url)}
                                                                     onChange={(e) => handleUpdateLink(link.id, 'url', e.target.value)}
                                                                     placeholder="File URL"
@@ -2498,7 +2498,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 />
                                                                 <button 
                                                                     onClick={() => document.getElementById(`update-file-${link.id}`)?.click()}
-                                                                    className="px-2 py-1 bg-white border border-slate-200 rounded text-xs font-bold text-slate-600 hover:bg-slate-50 whitespace-nowrap"
+                                                                    className="px-2 py-1 bg-white border border-stone-200 rounded text-xs font-bold text-stone-600 hover:bg-stone-50 whitespace-nowrap"
                                                                 >
                                                                     Replace
                                                                 </button>
@@ -2516,7 +2516,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         </div>
                                                      ) : isSupport ? (
                                                         <input 
-                                                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-500 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                            className="w-full bg-white border border-stone-200 rounded px-2 py-1 text-xs text-stone-500 focus:ring-2 focus:ring-indigo-500 outline-none"
                                                             value={link.url}
                                                             onChange={(e) => handleUpdateLink(link.id, 'url', e.target.value)}
                                                             placeholder="#"
@@ -2524,7 +2524,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         />
                                                     ) : (
                                                         <input 
-                                                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-500 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                            className="w-full bg-white border border-stone-200 rounded px-2 py-1 text-xs text-stone-500 focus:ring-2 focus:ring-indigo-500 outline-none"
                                                             value={link.url}
                                                             onChange={(e) => handleUpdateLink(link.id, 'url', e.target.value)}
                                                             placeholder="https://..."
@@ -2538,38 +2538,38 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             onChange={(e) => handleUpdateLink(link.id, 'isPromoted', e.target.checked)}
                                                             className="rounded text-indigo-600 focus:ring-indigo-500"
                                                         />
-                                                        <label htmlFor={`promo-${link.id}`} className="text-xs text-slate-500 cursor-pointer flex items-center gap-1">
+                                                        <label htmlFor={`promo-${link.id}`} className="text-xs text-stone-500 cursor-pointer flex items-center gap-1">
                                                             {link.isPromoted ? <Sparkles size={10} className="text-indigo-500"/> : null}
                                                             Highlight
                                                         </label>
                                                     </div>
                                                 </div>
-                                                <button onClick={() => handleRemoveLink(link.id)} className="text-slate-400 hover:text-red-500 p-1 mt-1">
+                                                <button onClick={() => handleRemoveLink(link.id)} className="text-stone-400 hover:text-red-500 p-1 mt-1">
                                                     <Trash size={16} />
                                                 </button>
                                             </div>
                                         )
                                     })}
                                 </div>
-                                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                                <div className="p-4 bg-stone-50 border border-stone-200 rounded-xl space-y-3">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-xs font-bold text-slate-500 uppercase">Add New Item</span>
-                                        <div className="flex bg-white rounded-lg p-0.5 border border-slate-200">
+                                        <span className="text-xs font-bold text-stone-500 uppercase">Add New Item</span>
+                                        <div className="flex bg-white rounded-lg p-0.5 border border-stone-200">
                                             <button 
                                                 onClick={() => setNewLinkType('EXTERNAL')}
-                                                className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${newLinkType === 'EXTERNAL' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                                                className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${newLinkType === 'EXTERNAL' ? 'bg-stone-900 text-white shadow-sm' : 'text-stone-500 hover:text-stone-900'}`}
                                             >
                                                 Link
                                             </button>
                                              <button 
                                                  onClick={() => setNewLinkType('SUPPORT')}
-                                                 className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${newLinkType === 'SUPPORT' ? 'bg-pink-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                                                 className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${newLinkType === 'SUPPORT' ? 'bg-pink-600 text-white shadow-sm' : 'text-stone-500 hover:text-stone-900'}`}
                                              >
                                                  Support / Tip
                                              </button>
                                             <button 
                                                 onClick={() => setNewLinkType('DIGITAL_PRODUCT')}
-                                                className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${newLinkType === 'DIGITAL_PRODUCT' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                                                className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${newLinkType === 'DIGITAL_PRODUCT' ? 'bg-purple-600 text-white shadow-sm' : 'text-stone-500 hover:text-stone-900'}`}
                                             >
                                                 Digital Product
                                             </button>
@@ -2580,13 +2580,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <input 
                                             type="text" 
                                              placeholder={newLinkType === 'SUPPORT' ? "Title (e.g. Buy me a coffee)" : "Title (e.g. My Course / Portfolio)"}
-                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                                             value={newLinkTitle}
                                             onChange={e => setNewLinkTitle(e.target.value)}
                                         />
                                         {newLinkType === 'DIGITAL_PRODUCT' ? (
                                             <div 
-                                                className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center transition-all ${isUploadingProduct ? 'bg-slate-50 border-slate-300' : 'border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/30 cursor-pointer'}`}
+                                                className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center transition-all ${isUploadingProduct ? 'bg-stone-50 border-stone-300' : 'border-stone-300 hover:border-indigo-400 hover:bg-indigo-50/30 cursor-pointer'}`}
                                                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                                 onDrop={handleProductDrop}
                                                 onClick={() => !isUploadingProduct && !newLinkUrl && productFileInputRef.current?.click()}
@@ -2596,15 +2596,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 {isUploadingProduct ? (
                                                     <div className="flex flex-col items-center gap-2">
                                                         <div className="animate-spin h-6 w-6 border-2 border-indigo-600 border-t-transparent rounded-full"></div>
-                                                        <span className="text-xs font-medium text-slate-500">Uploading...</span>
+                                                        <span className="text-xs font-medium text-stone-500">Uploading...</span>
                                                     </div>
                                                 ) : newLinkUrl ? (
                                                     <div className="flex flex-col items-center gap-2 w-full">
                                                         <div className="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
                                                             <Check size={20} />
                                                         </div>
-                                                        <p className="text-sm font-medium text-slate-900">File Ready</p>
-                                                         <p className="text-xs text-slate-400 break-all max-w-full truncate px-4">{newFileName || newLinkUrl}</p>
+                                                        <p className="text-sm font-medium text-stone-900">File Ready</p>
+                                                         <p className="text-xs text-stone-400 break-all max-w-full truncate px-4">{newFileName || newLinkUrl}</p>
                                                         <button 
                                                              onClick={(e) => { e.stopPropagation(); setNewLinkUrl(''); setNewFileName(''); }}
                                                             className="text-xs text-red-500 hover:text-red-700 font-bold mt-2 bg-red-50 px-3 py-1.5 rounded-full"
@@ -2617,8 +2617,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-2">
                                                             <Download size={20} className="rotate-180" />
                                                         </div>
-                                                        <p className="text-sm font-medium text-slate-700">Upload from local disk</p>
-                                                        <p className="text-xs text-slate-400 mt-1">PDF, Video, or Image (Max 50MB)</p>
+                                                        <p className="text-sm font-medium text-stone-700">Upload from local disk</p>
+                                                        <p className="text-xs text-stone-400 mt-1">PDF, Video, or Image (Max 50MB)</p>
                                                     </>
                                                 )}
                                             </div>
@@ -2626,18 +2626,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <input 
                                                 type="text" 
                                                 placeholder="URL (https://...)"
-                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                                                 value={newLinkUrl}
                                                 onChange={e => setNewLinkUrl(e.target.value)}
                                             />
                                         )}
                                         {(newLinkType === 'DIGITAL_PRODUCT' || newLinkType === 'SUPPORT') && (
                                             <div className="relative">
-                                                <span className="absolute left-3 top-2 text-slate-500 text-sm"><Coins size={14}/></span>
+                                                <span className="absolute left-3 top-2 text-stone-500 text-sm"><Coins size={14}/></span>
                                                 <input 
                                                     type="number" 
                                                     placeholder={newLinkType === 'SUPPORT' ? "Default Tip (Credits)" : "Price (Credits)"}
-                                                    className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                    className="w-full pl-8 pr-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                                                     value={newLinkPrice}
                                                     onChange={e => setNewLinkPrice(e.target.value)}
                                                 />
@@ -2665,11 +2665,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         const totalPages = Math.ceil(notifications.length / ITEMS_PER_PAGE);
                         const displayedNotifications = notifications.slice((notificationPage - 1) * ITEMS_PER_PAGE, notificationPage * ITEMS_PER_PAGE);
                         return (
-                    <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
+                    <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
+                        <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-stone-900">Notifications</h3>
                             <div className="flex items-center gap-3">
-                                <span className="text-xs text-slate-500">{notifications.length} items</span>
+                                <span className="text-xs text-stone-500">{notifications.length} items</span>
                                 {notifications.length > 0 && (
                                     <button 
                                         onClick={handleClearAllNotifications}
@@ -2682,22 +2682,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         </div>
                         <div className="divide-y divide-slate-100">
                             {displayedNotifications.length === 0 ? (
-                                <div className="p-12 text-center text-slate-400 text-sm">No notifications yet.</div>
+                                <div className="p-12 text-center text-stone-400 text-sm">No notifications yet.</div>
                             ) : (
                                 displayedNotifications.map(notif => (
                                     <div 
                                         key={notif.id} 
                                         onClick={() => handleNotificationClick(notif)}
-                                        className="px-6 py-4 hover:bg-slate-50 transition-colors flex gap-4 group relative cursor-pointer"
+                                        className="px-6 py-4 hover:bg-stone-50 transition-colors flex gap-4 group relative cursor-pointer"
                                     >
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
                                             <notif.icon size={18} />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-sm text-slate-900 font-medium mb-1">{notif.text}</p>
-                                            <p className="text-xs text-slate-500">{notif.time.toLocaleString()}</p>
+                                            <p className="text-sm text-stone-900 font-medium mb-1">{notif.text}</p>
+                                            <p className="text-xs text-stone-500">{notif.time.toLocaleString()}</p>
                                         </div>
-                                        <button onClick={(e) => handleDeleteNotification(e, notif.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2">
+                                        <button onClick={(e) => handleDeleteNotification(e, notif.id)} className="text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2">
                                             <X size={16} />
                                         </button>
                                     </div>
@@ -2707,19 +2707,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                         {/* Pagination Controls */}
                         {totalPages > 1 && (
-                            <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-center gap-4">
+                            <div className="px-6 py-4 border-t border-stone-100 flex items-center justify-center gap-4">
                                 <button 
                                     onClick={() => setNotificationPage(p => Math.max(1, p - 1))}
                                     disabled={notificationPage === 1}
-                                    className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 transition-colors"
+                                    className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
                                 >
                                     <ChevronLeft size={16} />
                                 </button>
-                                <span className="text-xs font-bold text-slate-600">Page {notificationPage} of {totalPages}</span>
+                                <span className="text-xs font-bold text-stone-600">Page {notificationPage} of {totalPages}</span>
                                 <button 
                                     onClick={() => setNotificationPage(p => Math.min(totalPages, p + 1))}
                                     disabled={notificationPage === totalPages}
-                                    className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 transition-colors"
+                                    className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
                                 >
                                     <ChevronRight size={16} />
                                 </button>
@@ -2738,32 +2738,32 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         const totalPages = Math.ceil(reviews.length / ITEMS_PER_PAGE);
                         const displayedReviews = reviews.slice((reviewsPage - 1) * ITEMS_PER_PAGE, reviewsPage * ITEMS_PER_PAGE);
                         return (
-                    <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-slate-900">All Reviews</h3>
-                            <span className="text-xs text-slate-500">{reviews.length} reviews</span>
+                    <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
+                        <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-stone-900">All Reviews</h3>
+                            <span className="text-xs text-stone-500">{reviews.length} reviews</span>
                         </div>
                         <div className="divide-y divide-slate-100">
                             {displayedReviews.length === 0 ? (
-                                <div className="p-12 text-center text-slate-400 text-sm">No reviews yet.</div>
+                                <div className="p-12 text-center text-stone-400 text-sm">No reviews yet.</div>
                             ) : (
                                 displayedReviews.map(review => (
-                                    <div key={review.id} className="p-6 hover:bg-slate-50 transition-colors">
+                                    <div key={review.id} className="p-6 hover:bg-stone-50 transition-colors">
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-bold text-slate-900 text-sm">{review.senderName}</span>
+                                                <span className="font-bold text-stone-900 text-sm">{review.senderName}</span>
                                                 <div className="flex gap-0.5">
                                                     {[1,2,3,4,5].map(i => (
-                                                        <Star key={i} size={14} className={`${(review.rating || 0) >= i ? "fill-yellow-400 text-yellow-400" : "text-slate-200"}`}/>
+                                                        <Star key={i} size={14} className={`${(review.rating || 0) >= i ? "fill-yellow-400 text-yellow-400" : "text-stone-200"}`}/>
                                                     ))}
                                                 </div>
                                             </div>
-                                            <span className="text-xs text-slate-400">{new Date(review.createdAt).toLocaleDateString()}</span>
+                                            <span className="text-xs text-stone-400">{new Date(review.createdAt).toLocaleDateString()}</span>
                                         </div>
                                         {/* @ts-ignore */}
-                                        <p className="text-sm text-slate-600 italic mb-2">"{review.reviewContent || "No written review"}"</p>
-                                        <div className="text-xs text-slate-400">
-                                            Session Amount: <span className="font-medium text-slate-600">{review.amount} Credits</span>
+                                        <p className="text-sm text-stone-600 italic mb-2">"{review.reviewContent || "No written review"}"</p>
+                                        <div className="text-xs text-stone-400">
+                                            Session Amount: <span className="font-medium text-stone-600">{review.amount} Credits</span>
                                         </div>
                                     </div>
                                 ))
@@ -2771,19 +2771,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         </div>
                         {/* Pagination Controls */}
                         {totalPages > 1 && (
-                            <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-center gap-4">
+                            <div className="px-6 py-4 border-t border-stone-100 flex items-center justify-center gap-4">
                                 <button 
                                     onClick={() => setReviewsPage(p => Math.max(1, p - 1))}
                                     disabled={reviewsPage === 1}
-                                    className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 transition-colors"
+                                    className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
                                 >
                                     <ChevronLeft size={16} />
                                 </button>
-                                <span className="text-xs font-bold text-slate-600">Page {reviewsPage} of {totalPages}</span>
+                                <span className="text-xs font-bold text-stone-600">Page {reviewsPage} of {totalPages}</span>
                                 <button 
                                     onClick={() => setReviewsPage(p => Math.min(totalPages, p + 1))}
                                     disabled={reviewsPage === totalPages}
-                                    className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 transition-colors"
+                                    className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
                                 >
                                     <ChevronRight size={16} />
                                 </button>
@@ -2798,7 +2798,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             {/* --- VIEW: SUPPORT --- */}
             {currentView === 'SUPPORT' && (
                 <div className="p-6 max-w-2xl mx-auto animate-in fade-in flex items-center justify-center min-h-[500px]">
-                     <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 text-center space-y-6 max-w-md w-full relative overflow-hidden">
+                     <div className="bg-white p-8 rounded-3xl border border-stone-200 shadow-xl shadow-stone-200/50 text-center space-y-6 max-w-md w-full relative overflow-hidden">
                          {/* Decorative Background */}
                          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
                          
@@ -2807,8 +2807,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                          </div>
                          
                          <div>
-                            <h3 className="text-2xl font-black text-slate-900 mb-2">Creator Support</h3>
-                            <p className="text-slate-500 text-sm leading-relaxed">
+                            <h3 className="text-2xl font-black text-stone-900 mb-2">Creator Support</h3>
+                            <p className="text-stone-500 text-sm leading-relaxed">
                                 Need help with your account or payments? Our team is here for you.
                             </p>
                          </div>
@@ -2817,7 +2817,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                              <Button fullWidth className="h-12 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-900/10">
                                 <MessageSquare size={18}/> Contact Support
                              </Button>
-                             <Button fullWidth variant="secondary" className="h-12 rounded-xl flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 border border-slate-200">
+                             <Button fullWidth variant="secondary" className="h-12 rounded-xl flex items-center justify-center gap-2 bg-stone-50 hover:bg-stone-100 border border-stone-200">
                                 <FileText size={18}/> Creator Guide
                              </Button>
                          </div>
@@ -2829,12 +2829,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
       {/* Premium Upgrade Modal */}
       {showPremiumModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/80 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="bg-white w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl relative">
-                <button onClick={() => setShowPremiumModal(false)} className="absolute top-4 right-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 z-10 transition-colors"><X size={20}/></button>
+                <button onClick={() => setShowPremiumModal(false)} className="absolute top-4 right-4 p-2 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-500 z-10 transition-colors"><X size={20}/></button>
                 
                 {/* Header Graphic */}
-                <div className="h-40 bg-slate-900 relative overflow-hidden flex items-center justify-center">
+                <div className="h-40 bg-stone-900 relative overflow-hidden flex items-center justify-center">
                      <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/30 rounded-full blur-[80px]"></div>
                      <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/30 rounded-full blur-[80px]"></div>
                      <div className="relative z-10 text-center">
@@ -2847,8 +2847,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                 <div className="p-8">
                     <div className="flex items-baseline justify-center gap-1 mb-8">
-                        <span className="text-5xl font-black text-slate-900">2000</span>
-                        <span className="text-slate-500 font-medium">credits / mo</span>
+                        <span className="text-5xl font-black text-stone-900">2000</span>
+                        <span className="text-stone-500 font-medium">credits / mo</span>
                     </div>
 
                     <div className="space-y-4 mb-8">
@@ -2863,7 +2863,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
                                     <Check size={12} strokeWidth={3} />
                                 </div>
-                                <span className="text-slate-700 font-medium">{feature}</span>
+                                <span className="text-stone-700 font-medium">{feature}</span>
                             </div>
                         ))}
                     </div>
@@ -2873,11 +2873,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         size="lg" 
                         onClick={handleUpgradeToPremium}
                         isLoading={isUpgrading}
-                        className="bg-slate-900 hover:bg-slate-800 text-white h-14 text-lg font-bold shadow-xl shadow-slate-900/20"
+                        className="bg-stone-900 hover:bg-stone-800 text-white h-14 text-lg font-bold shadow-xl shadow-stone-900/20"
                     >
                         Upgrade Now
                     </Button>
-                    <p className="text-center text-xs text-slate-400 mt-4">Cancel anytime. Secure checkout.</p>
+                    <p className="text-center text-xs text-stone-400 mt-4">Cancel anytime. Secure checkout.</p>
                 </div>
             </div>
         </div>

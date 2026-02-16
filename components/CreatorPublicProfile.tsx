@@ -375,7 +375,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           case 'x': return <XLogo className="w-4 h-4 text-black" />;
           case 'tiktok': return <TikTokLogo className="w-4 h-4 text-black" />;
           case 'twitch': return <Twitch size={18} className="text-[#9146FF]" />;
-          default: return <Sparkles size={18} className="text-slate-400" />;
+          default: return <Sparkles size={18} className="text-stone-400" />;
       }
   };
 
@@ -384,77 +384,62 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const platforms = isCustomizeMode ? (editedCreator.platforms || []) : (creator.platforms || []);
 
   return (
-    <div className="min-h-screen font-sans text-slate-900 pb-20 selection:bg-indigo-500 selection:text-white relative bg-[#F8FAFC]">
+    <div className="min-h-screen font-sans text-stone-900 pb-20 selection:bg-amber-100 selection:text-amber-900 relative bg-[#FAFAF9]">
       <style>{`
           @keyframes float {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(-8px); }
           }
-          @keyframes float-delayed {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-6px); }
+          @keyframes pulse-soft {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
           }
-          @keyframes pulse-ring {
-            0% { transform: scale(0.85); opacity: 0; }
-            50% { opacity: 0.25; }
-            100% { transform: scale(1.3); opacity: 0; }
-          }
-          @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-          }
-          .animate-float { animation: float 8s ease-in-out infinite; }
-          .animate-float-delayed { animation: float-delayed 7s ease-in-out infinite; }
-          .animate-pulse-ring { animation: pulse-ring 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-          .animate-shimmer { animation: shimmer 2s infinite; }
+          .animate-float { animation: float 6s ease-in-out infinite; }
+          .animate-pulse-soft { animation: pulse-soft 3s ease-in-out infinite; }
       `}</style>
-      
-      {/* Aesthetic Background Elements - Simplified for mobile performance */}
+
+      {/* Warm Background Gradient - Weverse Style */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 hidden sm:block">
-          <div className="absolute -top-[10%] -right-[10%] w-[800px] h-[800px] bg-indigo-200/10 rounded-full blur-[120px] mix-blend-multiply"></div>
-          <div className="absolute top-[20%] -left-[10%] w-[600px] h-[600px] bg-purple-100/20 rounded-full blur-[100px] mix-blend-multiply"></div>
-          <div className="absolute bottom-[0%] right-[20%] w-[500px] h-[500px] bg-blue-100/20 rounded-full blur-[100px] mix-blend-multiply"></div>
+          <div className="absolute -top-[10%] -right-[10%] w-[600px] h-[600px] bg-amber-100/30 rounded-full blur-[100px]"></div>
+          <div className="absolute bottom-[0%] -left-[10%] w-[500px] h-[500px] bg-orange-50/40 rounded-full blur-[80px]"></div>
       </div>
 
-      {/* Navigation / Header */}
-      <div 
-        className="fixed top-0 left-0 w-full z-40 px-4 py-4 transition-all"
-      >
-        <div className="max-w-2xl mx-auto bg-white/95 sm:bg-white/70 sm:backdrop-blur-xl border border-white/50 shadow-[0_2px_20px_-10px_rgba(0,0,0,0.05)] rounded-full py-3 px-5 flex justify-between items-center">
-            <div 
-            onClick={onCreateOwn} 
-            className="flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity pl-1"
+      {/* Navigation / Header - Weverse Style */}
+      <div className="fixed top-0 left-0 w-full z-40 px-4 py-4 transition-all">
+        <div className="max-w-2xl mx-auto bg-white/95 sm:bg-white/80 sm:backdrop-blur-xl border border-stone-100 shadow-sm rounded-full py-3 px-5 flex justify-between items-center">
+            <div
+              onClick={onCreateOwn}
+              className="flex items-center gap-2.5 cursor-pointer hover:opacity-70 transition-opacity pl-1"
             >
-            <BlueCheckLogo size={24} className="text-blue-600" />
-            <span className="font-bold tracking-tight text-sm text-slate-900">Bluechecked</span>
+              <BlueCheckLogo size={24} className="text-stone-800" />
+              <span className="font-semibold tracking-tight text-sm text-stone-800">bluechecked</span>
             </div>
-            
+
             <div className="flex items-center gap-2">
-                
                 {currentUser ? (
-                <button 
-                    onClick={onNavigateToDashboard} 
-                    className="flex items-center gap-2 text-slate-700 bg-slate-100/80 hover:bg-slate-200/80 px-4 py-2 rounded-full transition-colors text-xs font-semibold"
-                >
-                    {currentUser.role === 'FAN' && <span className="font-mono text-indigo-600 mr-1"><Coins size={12} className="inline mr-1"/>{currentUser.credits}</span>}
-                    Dashboard
-                </button>
+                  <button
+                      onClick={onNavigateToDashboard}
+                      className="flex items-center gap-2 text-stone-700 bg-stone-100 hover:bg-stone-200 px-4 py-2 rounded-full transition-colors text-xs font-medium"
+                  >
+                      {currentUser.role === 'FAN' && <span className="text-amber-600 mr-1"><Coins size={12} className="inline mr-1"/>{currentUser.credits}</span>}
+                      Dashboard
+                  </button>
                 ) : (
-                <button 
-                    onClick={onLoginRequest} 
-                    className="text-slate-600 hover:text-black px-4 py-2 font-semibold text-xs transition-colors"
-                >
-                    Fan Log In
-                </button>
+                  <button
+                      onClick={onLoginRequest}
+                      className="text-stone-500 hover:text-stone-900 px-4 py-2 font-medium text-xs transition-colors"
+                  >
+                      Sign In
+                  </button>
                 )}
 
                 {!currentUser && (
-                    <button 
-                    onClick={() => setIsCustomizeMode(!isCustomizeMode)}
-                    className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 border ${isCustomizeMode ? 'bg-black border-black text-white' : 'bg-transparent border-slate-200 text-slate-400 hover:border-slate-400'}`}
+                    <button
+                      onClick={() => setIsCustomizeMode(!isCustomizeMode)}
+                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 border ${isCustomizeMode ? 'bg-stone-900 border-stone-900 text-white' : 'bg-transparent border-stone-200 text-stone-400 hover:border-stone-400'}`}
                     >
-                    {isCustomizeMode ? <CheckCircle2 size={10} /> : null}
-                    {isCustomizeMode ? 'Editing' : 'Edit'}
+                      {isCustomizeMode ? <CheckCircle2 size={10} /> : null}
+                      {isCustomizeMode ? 'Editing' : 'Edit'}
                     </button>
                 )}
             </div>
@@ -471,34 +456,34 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
       {isCustomizeMode && (
           <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4">
-             <Button size="lg" onClick={handleSaveProfile} isLoading={isSavingProfile} className="shadow-2xl shadow-indigo-900/20 bg-slate-900 text-white hover:bg-slate-800 rounded-2xl px-6">
+             <Button size="lg" onClick={handleSaveProfile} isLoading={isSavingProfile} className="shadow-2xl shadow-indigo-900/20 bg-stone-900 text-white hover:bg-stone-800 rounded-2xl px-6">
                <Save size={18} className="mr-2" /> Save Changes
              </Button>
           </div>
         )}
 
       {/* Main Layout - Single Column / Vertical Stack */}
-      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-20 sm:pt-24 flex flex-col gap-4 items-center">
-        
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-20 sm:pt-24 flex flex-col gap-5 items-center">
+
           {/* 1. PROFILE INFO & STATS */}
           <div className="w-full">
-             <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-slate-200 shadow-sm relative transition-all hover:shadow-md">
+             <div className="bg-white rounded-3xl border border-stone-100 shadow-sm relative transition-all hover:shadow-md">
                 <div className="p-6 sm:p-8 relative z-10">
                     <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
                         {/* LEFT: Avatar + Stats */}
                         <div className="flex flex-col items-center gap-3 flex-shrink-0">
-                        <div className="relative w-24 h-24 rounded-full p-1 overflow-hidden border border-slate-100 shadow-sm bg-white group">
+                        <div className="relative w-24 h-24 rounded-full p-1 overflow-hidden border border-stone-100 shadow-sm bg-white group">
                            {!imgError && (editedCreator.avatarUrl || DEFAULT_AVATAR) ? (
                                <img 
                                     src={editedCreator.avatarUrl || DEFAULT_AVATAR} 
                                     alt={editedCreator.displayName} 
-                                    className={`w-full h-full rounded-full object-cover bg-slate-100 ${isCustomizeMode ? 'cursor-pointer hover:opacity-80' : ''}`}
+                                    className={`w-full h-full rounded-full object-cover bg-stone-100 ${isCustomizeMode ? 'cursor-pointer hover:opacity-80' : ''}`}
                                     onClick={isCustomizeMode ? handleAvatarEdit : undefined}
                                     onError={() => setImgError(true)}
                                 />
                            ) : (
                                <div 
-                                    className={`w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-300 ${isCustomizeMode ? 'cursor-pointer hover:bg-slate-200' : ''}`}
+                                    className={`w-full h-full rounded-full bg-stone-100 flex items-center justify-center text-stone-300 ${isCustomizeMode ? 'cursor-pointer hover:bg-stone-200' : ''}`}
                                     onClick={isCustomizeMode ? handleAvatarEdit : undefined}
                                >
                                    <User size={40} />
@@ -519,22 +504,22 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                             <div className="flex items-center gap-2 -mt-6 relative z-20">
                                 <button
                                     onClick={handleLike}
-                                    className={`flex items-center justify-center gap-1 bg-white px-2.5 py-1 rounded-full border border-slate-100 text-[10px] font-bold shadow-sm transition-colors ${hasLiked ? 'text-pink-600 border-pink-100' : 'text-slate-500 hover:text-pink-600 hover:bg-pink-50'}`}
+                                    className={`flex items-center justify-center gap-1 bg-white px-2.5 py-1 rounded-full border border-stone-100 text-[10px] font-bold shadow-sm transition-colors ${hasLiked ? 'text-pink-600 border-pink-100' : 'text-stone-500 hover:text-pink-600 hover:bg-pink-50'}`}
                                 >
                                     <Heart size={12} className={hasLiked ? "fill-current" : ""} />
                                     <span>{likes}</span>
                                 </button>
 
-                                <div className="relative group/tooltip flex items-center justify-center gap-1 bg-white px-2.5 py-1 rounded-full border border-slate-100 text-[10px] font-bold text-slate-500 shadow-sm cursor-help">
+                                <div className="relative group/tooltip flex items-center justify-center gap-1 bg-white px-2.5 py-1 rounded-full border border-stone-100 text-[10px] font-bold text-stone-500 shadow-sm cursor-help">
                                     <Star size={12} className="text-yellow-400 fill-yellow-400" />
-                                    <span className="text-slate-700">{creator.stats.averageRating}</span>
+                                    <span className="text-stone-700">{creator.stats.averageRating}</span>
                                     
                                     {/* Response Time Tooltip */}
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[160px] bg-slate-900 text-white text-[10px] font-medium py-2 px-3 rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-all duration-200 pointer-events-none z-50 text-center shadow-xl normal-case tracking-normal whitespace-normal transform translate-y-2 group-hover/tooltip:translate-y-0">
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[160px] bg-stone-900 text-white text-[10px] font-medium py-2 px-3 rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-all duration-200 pointer-events-none z-50 text-center shadow-xl normal-case tracking-normal whitespace-normal transform translate-y-2 group-hover/tooltip:translate-y-0">
                                         <div className="font-bold text-emerald-400 mb-0.5 flex items-center justify-center gap-1">
                                             <Clock size={10} /> {creator.stats.responseTimeAvg} Response
                                         </div>
-                                        <div className="text-slate-300 leading-snug">
+                                        <div className="text-stone-300 leading-snug">
                                             {getResponseTimeTooltip(creator.stats.responseTimeAvg)}
                                         </div>
                                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
@@ -555,30 +540,30 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                             type="text" 
                                             value={editedCreator.displayName} 
                                             onChange={(e) => updateField('displayName', e.target.value)}
-                                            className="block w-full text-2xl sm:text-3xl font-bold text-slate-900 border-b border-dashed border-slate-300 focus:border-black focus:outline-none bg-transparent placeholder-slate-300 text-left"
+                                            className="block w-full text-2xl sm:text-3xl font-bold text-stone-900 border-b border-dashed border-stone-300 focus:border-black focus:outline-none bg-transparent placeholder-slate-300 text-left"
                                             placeholder="Display Name"
                                         />
                                         <input 
                                             type="text" 
                                             value={editedCreator.handle} 
                                             onChange={(e) => updateField('handle', e.target.value)}
-                                            className="block w-full text-sm text-slate-500 font-medium border-b border-dashed border-slate-300 focus:border-black focus:outline-none bg-transparent placeholder-slate-300 text-left"
+                                            className="block w-full text-sm text-stone-500 font-medium border-b border-dashed border-stone-300 focus:border-black focus:outline-none bg-transparent placeholder-slate-300 text-left"
                                             placeholder="@handle"
                                         />
                                         <textarea
                                             value={editedCreator.bio}
                                             onChange={(e) => updateField('bio', e.target.value)}
-                                            className="block w-full text-slate-600 border border-dashed border-slate-300 rounded-xl p-3 focus:ring-1 focus:ring-black min-h-[80px] bg-white text-sm mt-2"
+                                            className="block w-full text-stone-600 border border-dashed border-stone-300 rounded-xl p-3 focus:ring-1 focus:ring-black min-h-[80px] bg-white text-sm mt-2"
                                             placeholder="Your bio..."
                                         />
                                     </div>
                                 ) : (
                                     <>
                                         <div className="w-full">
-                                            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-tight mb-1">
+                                            <h1 className="text-lg sm:text-xl font-black text-stone-900 tracking-tight leading-tight mb-1">
                                                 {creator.displayName}
                                             </h1>
-                                            <p className="text-sm text-slate-600 leading-relaxed font-normal mt-2 truncate">
+                                            <p className="text-sm text-stone-600 leading-relaxed font-normal mt-2 truncate">
                                                 {creator.bio}
                                             </p>
                                         </div>
@@ -600,16 +585,16 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                         href={platformUrl ? ensureProtocol(platformUrl) : '#'}
                                                         target={platformUrl ? "_blank" : undefined}
                                                         rel="noopener noreferrer"
-                                                        className={`flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 transition-all w-full sm:w-40 ${platformUrl ? 'hover:border-indigo-300 hover:bg-white hover:shadow-sm cursor-pointer' : 'opacity-70 cursor-default'}`}
+                                                        className={`flex items-center gap-2 bg-stone-50 px-3 py-2 rounded-xl border border-stone-100 transition-all w-full sm:w-40 ${platformUrl ? 'hover:border-indigo-300 hover:bg-white hover:shadow-sm cursor-pointer' : 'opacity-70 cursor-default'}`}
                                                     >
                                                         {getPlatformIcon(platformId)}
-                                                        <span className="text-xs font-bold text-slate-700 capitalize">{platformId}</span>
+                                                        <span className="text-xs font-bold text-stone-700 capitalize">{platformId}</span>
                                                     </a>
                                                 );
                                             })}
                                         </div>
                                     ) : (
-                                        <p className="text-xs text-slate-400 italic">No platforms connected.</p>
+                                        <p className="text-xs text-stone-400 italic">No platforms connected.</p>
                                     )}
                                 </div>
                             </div>
@@ -620,13 +605,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         <div className="flex gap-3 mt-8 max-w-md mx-auto">
                             <button
                                 onClick={handleShare}
-                                className="flex-1 bg-white border border-slate-200 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 shadow-sm"
+                                className="flex-1 bg-white border border-stone-200 text-stone-700 font-bold py-2.5 rounded-xl hover:bg-stone-50 transition-colors flex items-center justify-center gap-2 shadow-sm text-sm"
                             >
                                 <Share size={18} /> Share
                             </button>
                             <button
                                 onClick={currentUser ? handleOpenModal : onLoginRequest}
-                                className="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-900/20"
+                                className="flex-1 bg-stone-900 text-white font-bold py-2.5 rounded-xl hover:bg-stone-800 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-stone-900/20 text-sm"
                             >
                                 <MessageSquare size={18} /> Ask me anything
                             </button>
@@ -636,83 +621,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
              </div>
           </div>
 
-          {/* 2. SERVICES (Send Message) - COMPACT DESIGN */}
-          <div className="w-full space-y-3">
-               <div className="flex justify-between items-end">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <Sparkles size={14} /> Services
-                    </h3>
-                </div>
-
-               <div
-                    onClick={!isCustomizeMode ? (currentUser ? handleOpenModal : onLoginRequest) : undefined}
-                    className={`w-full text-left relative group transition-all duration-300 ${!isCustomizeMode ? 'hover:scale-[1.02] cursor-pointer' : ''}`}
-               >
-                    {/* Gradient Glow */}
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-[1.2rem] opacity-20 group-hover:opacity-50 blur transition duration-500"></div>
-                    
-                    <div className="relative bg-white p-1 rounded-[1rem] border border-slate-100 shadow-sm">
-                        <div className="bg-gradient-to-br from-slate-50 to-white p-4 rounded-[0.8rem] flex items-center gap-4">
-                            {/* Icon */}
-                            <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/30 group-hover:rotate-3 transition-transform duration-300">
-                                <MessageSquare size={24} className="fill-white/20" />
-                            </div>
-
-                            {/* Text */}
-                            <div className="flex-1 min-w-0">
-                                <h4 className="font-black text-slate-900 text-lg leading-tight group-hover:text-blue-600 transition-colors">
-                                    Ask me anything
-                                </h4>
-                                <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-2">
-                                    <span className="flex items-center gap-1 bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide">
-                                        <Clock size={10} /> {creator.responseWindowHours}h
-                                    </span>
-                                    <span>or money back</span>
-                                </p>
-                            </div>
-
-                            {/* Action */}
-                            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                                {isCustomizeMode && (
-                                    <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-slate-200 mb-1 shadow-sm" onClick={(e) => e.stopPropagation()}>
-                                        <Coins size={12} className="text-slate-400"/>
-                                        <input
-                                            type="number"
-                                            value={editedCreator.pricePerMessage}
-                                            onChange={(e) => updateField('pricePerMessage', Number(e.target.value))}
-                                            className="w-12 font-bold text-slate-900 text-right bg-transparent outline-none text-sm"
-                                        />
-                                    </div>
-                                )}
-
-                                <div className="bg-slate-900 text-white px-4 py-2.5 rounded-xl text-sm font-bold group-hover:bg-blue-600 transition-colors shadow-lg shadow-slate-900/10 flex items-center gap-1.5">
-                                    <Coins size={14} className="text-yellow-300" />
-                                    <span>{creator.pricePerMessage}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-               </div>
-                
-                {isCustomizeMode && (
-                    <div className="mt-2 bg-white/60 backdrop-blur-sm p-4 rounded-2xl border border-dashed border-slate-300 text-sm">
-                        <p className="font-bold text-slate-700 mb-3 uppercase text-xs tracking-wider flex items-center gap-2">
-                            <Sparkles size={12} className="text-indigo-500" /> Intake Instructions
-                        </p>
-                         <textarea 
-                           value={editedCreator.intakeInstructions || ''} 
-                           onChange={(e) => updateField('intakeInstructions', e.target.value)}
-                           className="block w-full text-slate-600 border border-slate-200 rounded-xl p-3 focus:ring-1 focus:ring-black min-h-[80px] bg-white text-sm"
-                           placeholder="Instructions for fans (e.g. Please be specific...)"
-                        />
-                    </div>
-                )}
-          </div>
-
           {/* 4. AFFILIATE LINKS & DIGITAL PRODUCTS */}
           <div className="w-full space-y-4">
                 <div className="flex justify-between items-end mb-2">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
                         <Tag size={14} /> Featured Links & Products
                     </h3>
                 </div>
@@ -725,10 +637,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                             return (
                                 <div key={link.id} className="relative group">
                                     {isCustomizeMode ? (
-                                         <div className={`relative rounded-2xl p-4 pr-12 border border-dashed flex items-center transition-all ${isProduct ? 'bg-purple-50 border-purple-200' : isSupport ? 'bg-pink-50 border-pink-200' : 'bg-white border-slate-300'}`}>
+                                         <div className={`relative rounded-2xl p-4 pr-12 border border-dashed flex items-center transition-all ${isProduct ? 'bg-purple-50 border-purple-200' : isSupport ? 'bg-pink-50 border-pink-200' : 'bg-white border-stone-300'}`}>
                                             <button 
                                                 onClick={() => handleUpdateLink(link.id, 'isPromoted', !link.isPromoted)}
-                                                className={`w-10 h-10 rounded-xl flex items-center justify-center mr-4 transition-colors hover:bg-slate-100 ${link.isPromoted ? 'bg-indigo-50 text-indigo-600' : 'bg-white text-slate-400'}`}
+                                                className={`w-10 h-10 rounded-xl flex items-center justify-center mr-4 transition-colors hover:bg-stone-100 ${link.isPromoted ? 'bg-indigo-50 text-indigo-600' : 'bg-white text-stone-400'}`}
                                                 title="Toggle Highlight"
                                             >
                                                 {link.isPromoted ? <Sparkles size={20} /> : <ExternalLink size={20} />}
@@ -737,14 +649,14 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                  <div className="flex items-center gap-2 mb-1">
                                                      {isProduct ? <span className="text-[10px] font-bold bg-purple-200 text-purple-700 px-1.5 rounded uppercase">Product</span> : isSupport ? <span className="text-[10px] font-bold bg-pink-200 text-pink-700 px-1.5 rounded uppercase">Support</span> : null}
                                                      <input 
-                                                        className="block w-full font-bold text-slate-800 text-lg leading-tight bg-transparent outline-none border-b border-transparent focus:border-slate-300 placeholder-slate-300"
+                                                        className="block w-full font-bold text-stone-800 text-lg leading-tight bg-transparent outline-none border-b border-transparent focus:border-stone-300 placeholder-slate-300"
                                                         value={link.title}
                                                         onChange={(e) => handleUpdateLink(link.id, 'title', e.target.value)}
                                                         placeholder="Link Title"
                                                     />
                                                  </div>
                                                 <input 
-                                                    className="block w-full text-xs text-slate-400 mt-1 bg-transparent outline-none border-b border-transparent focus:border-slate-300 placeholder-slate-300"
+                                                    className="block w-full text-xs text-stone-400 mt-1 bg-transparent outline-none border-b border-transparent focus:border-stone-300 placeholder-slate-300"
                                                     value={link.url}
                                                     onChange={(e) => handleUpdateLink(link.id, 'url', e.target.value)}
                                                     placeholder="URL"
@@ -764,8 +676,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                     <Heart size={24} className="hidden sm:block fill-pink-500" />
                                                 </div>
                                                 <div className="flex-1 relative z-10 min-w-0 text-left">
-                                                    <h4 className="font-bold text-slate-900 text-sm sm:text-base group-hover:text-pink-600 transition-colors truncate">{link.title}</h4>
-                                                    <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 font-medium truncate">Send a tip</p>
+                                                    <h4 className="font-bold text-stone-900 text-sm sm:text-base group-hover:text-pink-600 transition-colors truncate">{link.title}</h4>
+                                                    <p className="text-[10px] sm:text-xs text-stone-500 mt-0.5 font-medium truncate">Send a tip</p>
                                                 </div>
                                                 <div className="bg-blue-600 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
                                                     <Heart size={12} /> Tip
@@ -782,10 +694,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                     <FileText size={24} className="hidden sm:block" />
                                                 </div>
                                                 <div className="flex-1 relative z-10 min-w-0 text-left">
-                                                    <h4 className="font-bold text-slate-900 text-sm sm:text-base group-hover:text-purple-700 transition-colors truncate">{link.title}</h4>
-                                                    <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 font-medium truncate">Digital Download</p>
+                                                    <h4 className="font-bold text-stone-900 text-sm sm:text-base group-hover:text-purple-700 transition-colors truncate">{link.title}</h4>
+                                                    <p className="text-[10px] sm:text-xs text-stone-500 mt-0.5 font-medium truncate">Digital Download</p>
                                                 </div>
-                                                <div className="bg-slate-900 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20 flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
+                                                <div className="bg-stone-900 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-bold hover:bg-stone-800 transition-colors shadow-lg shadow-stone-900/20 flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
                                                     <Coins size={12} /> {link.price}
                                                 </div>
                                             </button>
@@ -795,11 +707,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 onClick={() => logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'LINK', id: link.id, title: link.title, url: link.url })}
-                                                className={`block w-full text-left p-3 sm:p-4 rounded-2xl border shadow-sm flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-100 hover:border-amber-300' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+                                                className={`block w-full text-left p-3 sm:p-4 rounded-2xl border shadow-sm flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-100 hover:border-amber-300' : 'bg-white border-stone-200 hover:border-stone-300'}`}
                                             >
                                                 {link.isPromoted && <div className="hidden sm:block absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-full blur-2xl -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>}
                                                 
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform ${link.isPromoted ? 'bg-white text-amber-500' : 'bg-slate-50 text-slate-500 group-hover:bg-slate-100'}`}>
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform ${link.isPromoted ? 'bg-white text-amber-500' : 'bg-stone-50 text-stone-500 group-hover:bg-stone-100'}`}>
                                                     {link.isPromoted ? (
                                                         <>
                                                             <Sparkles size={20} className="sm:hidden" />
@@ -814,11 +726,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 </div>
                                                 
                                                 <div className="flex-1 relative z-10 min-w-0 text-left">
-                                                    <h4 className={`font-bold text-sm sm:text-base transition-colors truncate ${link.isPromoted ? 'text-slate-900 group-hover:text-amber-700' : 'text-slate-900 group-hover:text-slate-700'}`}>{link.title}</h4>
-                                                    <p className="text-[10px] text-slate-400 mt-0.5 font-medium truncate">{link.isPromoted ? 'Recommended' : 'External Link'}</p>
+                                                    <h4 className={`font-bold text-sm sm:text-base transition-colors truncate ${link.isPromoted ? 'text-stone-900 group-hover:text-amber-700' : 'text-stone-900 group-hover:text-stone-700'}`}>{link.title}</h4>
+                                                    <p className="text-[10px] text-stone-400 mt-0.5 font-medium truncate">{link.isPromoted ? 'Recommended' : 'External Link'}</p>
                                                 </div>
                                                 
-                                                <div className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap ${link.isPromoted ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-lg shadow-amber-500/20' : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'}`}>
+                                                <div className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap ${link.isPromoted ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-lg shadow-amber-500/20' : 'bg-stone-100 text-stone-600 group-hover:bg-stone-200'}`}>
                                                     {link.isPromoted ? 'Visit' : 'Open'} <ExternalLink size={12} />
                                                 </div>
                                             </a>
@@ -838,7 +750,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         })}
                     </div>
                 ) : (
-                    <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-3xl text-slate-400">
+                    <div className="p-8 text-center border-2 border-dashed border-stone-200 rounded-3xl text-stone-400">
                         {isCustomizeMode ? "Add a link above" : "No links added yet."}
                     </div>
                 )}
@@ -847,11 +759,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
       {/* Message & Payment Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 sm:bg-slate-900/60 sm:backdrop-blur-md animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/80 sm:bg-stone-900/60 sm:backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-white rounded-[2rem] w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col ring-1 ring-white/50">
             {/* Modal Header */}
-            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white sm:bg-white/80 sm:backdrop-blur-xl sticky top-0 z-10">
-              <h3 className="font-bold text-slate-900 text-lg">
+            <div className="px-6 py-5 border-b border-stone-100 flex justify-between items-center bg-white sm:bg-white/80 sm:backdrop-blur-xl sticky top-0 z-10">
+              <h3 className="font-bold text-stone-900 text-lg">
                 {step === 'compose' && 'New Request'}
                 {step === 'payment' && 'Confirm Payment'}
                 {step === 'topup' && 'Top Up Wallet'}
@@ -863,7 +775,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                 {step === 'support_payment' && 'Confirm Tip'}
                 {step === 'support_success' && 'Thank You!'}
               </h3>
-              <button onClick={closeModal} className="p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors hover:rotate-90 duration-200">
+              <button onClick={closeModal} className="p-2 bg-stone-100 rounded-full text-stone-500 hover:bg-stone-200 transition-colors hover:rotate-90 duration-200">
                 <X size={18} />
               </button>
             </div>
@@ -874,18 +786,18 @@ export const CreatorPublicProfile: React.FC<Props> = ({
               {/* --- MESSAGE FLOW --- */}
               {step === 'compose' && (
                 <div className="space-y-6">
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                     <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 shadow-sm border border-slate-100">
+                  <div className="flex items-center gap-3 p-3 bg-stone-50 rounded-2xl border border-stone-100">
+                     <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-stone-500 shadow-sm border border-stone-100">
                         <User size={20} />
                      </div>
                      <div className="flex-1">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Sending as</p>
-                        <p className="text-sm font-bold text-slate-900">{name}</p>
+                        <p className="text-[10px] text-stone-400 uppercase font-bold tracking-wider">Sending as</p>
+                        <p className="text-sm font-bold text-stone-900">{name}</p>
                      </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-slate-900 mb-2">Your Message</label>
+                    <label className="block text-sm font-bold text-stone-900 mb-2">Your Message</label>
                     <div className="mb-3 p-4 bg-indigo-50/50 text-indigo-900 rounded-2xl text-sm border border-indigo-100/50">
                         <p className="font-bold mb-1.5 flex items-center gap-2"><Sparkles size={14}/> Important:</p>
                         <p className="opacity-80 text-xs sm:text-sm leading-relaxed">
@@ -893,7 +805,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         </p>
                     </div>
                     <textarea 
-                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none h-40 resize-none text-slate-900 placeholder:text-slate-300 transition-all text-base"
+                      className="w-full px-4 py-3 bg-white border border-stone-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none h-40 resize-none text-stone-900 placeholder:text-stone-300 transition-all text-base"
                       placeholder="Type your message..."
                       value={generalMessage}
                       onChange={e => setGeneralMessage(e.target.value)}
@@ -911,7 +823,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                              />
                              <button 
                                 onClick={triggerFileSelect}
-                                className="text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                                className="text-stone-500 hover:text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
                              >
                                 <Paperclip size={16} />
                                 Attach Photo
@@ -925,7 +837,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                              )}
                          </div>
 
-                         <span className={`text-xs font-medium ${generalMessage.length > 500 ? 'text-red-500' : 'text-slate-300'}`}>
+                         <span className={`text-xs font-medium ${generalMessage.length > 500 ? 'text-red-500' : 'text-stone-300'}`}>
                            {generalMessage.length}/500
                          </span>
                     </div>
@@ -935,7 +847,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                     fullWidth 
                     disabled={!isFormValid()} 
                     onClick={() => setStep('payment')}
-                    className="bg-slate-900 hover:bg-slate-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-slate-900/20 text-lg"
+                    className="bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-stone-900/20 text-lg"
                   >
                     Continue to Payment
                   </Button>
@@ -945,20 +857,20 @@ export const CreatorPublicProfile: React.FC<Props> = ({
               {step === 'payment' && (
                 <div className="space-y-6">
                   {/* Payment UI remains same */}
-                  <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
+                  <div className="bg-stone-50 p-6 rounded-[2rem] border border-stone-100">
                      <div className="flex justify-between text-sm mb-3">
-                       <span className="text-slate-500 font-medium">Request Price</span>
-                       <span className="font-bold text-slate-900">{creator.pricePerMessage} Credits</span>
+                       <span className="text-stone-500 font-medium">Request Price</span>
+                       <span className="font-bold text-stone-900">{creator.pricePerMessage} Credits</span>
                      </div>
-                     <div className="flex justify-between items-end border-t border-slate-200 pt-3">
-                       <span className="font-bold text-slate-900 text-lg">Total</span>
-                       <span className="font-black text-slate-900 text-3xl tracking-tight flex items-center gap-2">
+                     <div className="flex justify-between items-end border-t border-stone-200 pt-3">
+                       <span className="font-bold text-stone-900 text-lg">Total</span>
+                       <span className="font-black text-stone-900 text-3xl tracking-tight flex items-center gap-2">
                            <Coins size={24}/> {creator.pricePerMessage}
                        </span>
                      </div>
-                     <div className="mt-4 pt-4 border-t border-dashed border-slate-300">
+                     <div className="mt-4 pt-4 border-t border-dashed border-stone-300">
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-500">Your Wallet Balance:</span>
+                            <span className="text-stone-500">Your Wallet Balance:</span>
                             <span className={`font-bold ${checkBalance(creator.pricePerMessage) ? 'text-green-600' : 'text-red-500'}`}>
                                 {currentUser?.credits || 0} Credits
                             </span>
@@ -970,7 +882,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                     <Button variant="ghost" onClick={() => setStep('compose')} className="flex-1 rounded-2xl font-semibold">Back</Button>
                     
                     {checkBalance(creator.pricePerMessage) ? (
-                        <Button fullWidth onClick={handleSend} isLoading={isSubmitting} className="flex-[2] bg-slate-900 hover:bg-slate-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-slate-900/20 text-lg">
+                        <Button fullWidth onClick={handleSend} isLoading={isSubmitting} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-stone-900/20 text-lg">
                             Pay & Send
                         </Button>
                     ) : (
@@ -988,8 +900,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                           <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-600">
                               <Wallet size={32} />
                           </div>
-                          <h4 className="font-bold text-slate-900 text-lg">Top Up Wallet</h4>
-                          <p className="text-slate-500 text-sm">You need more credits to complete this request.</p>
+                          <h4 className="font-bold text-stone-900 text-lg">Top Up Wallet</h4>
+                          <p className="text-stone-500 text-sm">You need more credits to complete this request.</p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
@@ -997,20 +909,20 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                               <button 
                                 key={amt}
                                 onClick={() => setTopUpAmount(amt)}
-                                className={`p-4 rounded-xl border text-center transition-all ${topUpAmount === amt ? 'bg-indigo-50 border-indigo-500 ring-1 ring-indigo-500 text-indigo-700' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+                                className={`p-4 rounded-xl border text-center transition-all ${topUpAmount === amt ? 'bg-indigo-50 border-indigo-500 ring-1 ring-indigo-500 text-indigo-700' : 'bg-white border-stone-200 hover:border-stone-300'}`}
                               >
                                   <div className="font-black text-xl mb-1">{amt}</div>
-                                  <div className="text-xs text-slate-400 uppercase font-bold">Credits</div>
+                                  <div className="text-xs text-stone-400 uppercase font-bold">Credits</div>
                               </button>
                           ))}
                       </div>
 
-                      <div className="bg-slate-50 p-4 rounded-xl flex justify-between items-center">
-                          <span className="text-sm font-medium text-slate-600">Cost</span>
-                          <span className="font-bold text-slate-900 text-lg">${(topUpAmount / 100).toFixed(2)}</span>
+                      <div className="bg-stone-50 p-4 rounded-xl flex justify-between items-center">
+                          <span className="text-sm font-medium text-stone-600">Cost</span>
+                          <span className="font-bold text-stone-900 text-lg">${(topUpAmount / 100).toFixed(2)}</span>
                       </div>
 
-                      <Button fullWidth onClick={handleTopUp} isLoading={isSubmitting} className="bg-slate-900 text-white rounded-2xl h-14 font-bold">
+                      <Button fullWidth onClick={handleTopUp} isLoading={isSubmitting} className="bg-stone-900 text-white rounded-2xl h-14 font-bold">
                           Purchase Credits
                       </Button>
                   </div>
@@ -1052,9 +964,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
                               <FileText size={32} className="text-purple-600" />
                           </div>
-                          <h4 className="font-bold text-slate-900 text-lg mb-1">{selectedProductLink.title}</h4>
-                          <p className="text-xs text-slate-500 mb-6">Digital Download • Instant Access</p>
-                          <div className="text-4xl font-black text-slate-900 mb-2 flex items-center gap-2">
+                          <h4 className="font-bold text-stone-900 text-lg mb-1">{selectedProductLink.title}</h4>
+                          <p className="text-xs text-stone-500 mb-6">Digital Download • Instant Access</p>
+                          <div className="text-4xl font-black text-stone-900 mb-2 flex items-center gap-2">
                               <Coins size={32} /> {selectedProductLink.price}
                           </div>
                       </div>
@@ -1062,7 +974,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       <Button 
                         fullWidth 
                         onClick={() => setStep('product_payment')}
-                        className="bg-slate-900 hover:bg-slate-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-slate-900/20 text-lg"
+                        className="bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-stone-900/20 text-lg"
                       >
                         Proceed to Checkout
                       </Button>
@@ -1071,26 +983,26 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
               {step === 'product_payment' && selectedProductLink && (
                   <div className="space-y-6">
-                      <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-                         <div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-200">
+                      <div className="bg-stone-50 p-6 rounded-[2rem] border border-stone-100">
+                         <div className="flex justify-between items-center mb-4 pb-4 border-b border-stone-200">
                              <div className="flex items-center gap-3">
-                                 <div className="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                                 <div className="w-10 h-10 rounded-lg bg-white border border-stone-200 flex items-center justify-center text-stone-400">
                                      <FileText size={20} />
                                  </div>
                                  <div className="text-left">
-                                     <p className="text-xs font-bold text-slate-500 uppercase">Item</p>
-                                     <p className="font-bold text-slate-900 text-sm truncate max-w-[150px]">{selectedProductLink.title}</p>
+                                     <p className="text-xs font-bold text-stone-500 uppercase">Item</p>
+                                     <p className="font-bold text-stone-900 text-sm truncate max-w-[150px]">{selectedProductLink.title}</p>
                                  </div>
                              </div>
-                             <span className="font-bold text-slate-900">{selectedProductLink.price} Credits</span>
+                             <span className="font-bold text-stone-900">{selectedProductLink.price} Credits</span>
                          </div>
                          <div className="flex justify-between items-end">
-                           <span className="font-bold text-slate-900 text-lg">Total</span>
-                           <span className="font-black text-slate-900 text-3xl tracking-tight flex items-center gap-2"><Coins/> {selectedProductLink.price}</span>
+                           <span className="font-bold text-stone-900 text-lg">Total</span>
+                           <span className="font-black text-stone-900 text-3xl tracking-tight flex items-center gap-2"><Coins/> {selectedProductLink.price}</span>
                          </div>
-                         <div className="mt-4 pt-4 border-t border-dashed border-slate-300">
+                         <div className="mt-4 pt-4 border-t border-dashed border-stone-300">
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-500">Your Wallet Balance:</span>
+                                <span className="text-stone-500">Your Wallet Balance:</span>
                                 <span className={`font-bold ${checkBalance(selectedProductLink.price || 0) ? 'text-green-600' : 'text-red-500'}`}>
                                     {currentUser?.credits || 0} Credits
                                 </span>
@@ -1101,7 +1013,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       <div className="flex gap-3 pt-2">
                         <Button variant="ghost" onClick={() => setStep('product_confirm')} className="flex-1 rounded-2xl font-semibold">Back</Button>
                         {checkBalance(selectedProductLink.price || 0) ? (
-                            <Button fullWidth onClick={handleProductPurchase} isLoading={isSubmitting} className="flex-[2] bg-slate-900 hover:bg-slate-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-slate-900/20 text-lg">
+                            <Button fullWidth onClick={handleProductPurchase} isLoading={isSubmitting} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-stone-900/20 text-lg">
                                 Pay & Download
                             </Button>
                         ) : (
@@ -1118,8 +1030,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-6 animate-in zoom-in">
                             <Check size={40} strokeWidth={3} />
                         </div>
-                        <h3 className="text-2xl font-black text-slate-900 mb-2">Payment Successful!</h3>
-                        <p className="text-slate-500 text-sm mb-8">You can now access your content.</p>
+                        <h3 className="text-2xl font-black text-stone-900 mb-2">Payment Successful!</h3>
+                        <p className="text-stone-500 text-sm mb-8">You can now access your content.</p>
 
                         <a 
                             // href={selectedProductLink.url} // Removed direct href
@@ -1145,12 +1057,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                     alert(error.message || "Failed to download file. Please try again.");
                                 }
                             }}
-                            className="w-full bg-slate-900 text-white hover:bg-slate-800 rounded-2xl h-14 font-bold text-lg flex items-center justify-center gap-2 shadow-xl shadow-slate-900/20"
+                            className="w-full bg-stone-900 text-white hover:bg-stone-800 rounded-2xl h-14 font-bold text-lg flex items-center justify-center gap-2 shadow-xl shadow-stone-900/20"
                         >
                             <Download size={20} /> Download File
                         </a>
                         
-                        <button onClick={closeModal} className="mt-4 text-sm font-medium text-slate-400 hover:text-slate-600">
+                        <button onClick={closeModal} className="mt-4 text-sm font-medium text-stone-400 hover:text-stone-600">
                             Close
                         </button>
                   </div>
@@ -1163,8 +1075,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                           <div className="w-16 h-16 bg-pink-50 rounded-full flex items-center justify-center mx-auto mb-4 text-pink-500">
                               <Heart size={32} className="fill-pink-500" />
                           </div>
-                          <h4 className="font-bold text-slate-900 text-lg">Support {creator.displayName}</h4>
-                          <p className="text-slate-500 text-sm">Select an amount to tip.</p>
+                          <h4 className="font-bold text-stone-900 text-lg">Support {creator.displayName}</h4>
+                          <p className="text-stone-500 text-sm">Select an amount to tip.</p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
@@ -1172,7 +1084,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                               <button 
                                 key={amt}
                                 onClick={() => setSupportAmount(amt)}
-                                className={`p-4 rounded-xl border text-center transition-all ${supportAmount === amt ? 'bg-pink-50 border-pink-500 ring-1 ring-pink-500 text-pink-700' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+                                className={`p-4 rounded-xl border text-center transition-all ${supportAmount === amt ? 'bg-pink-50 border-pink-500 ring-1 ring-pink-500 text-pink-700' : 'bg-white border-stone-200 hover:border-stone-300'}`}
                               >
                                   <div className="font-black text-xl mb-1 flex items-center justify-center gap-1"><Coins size={16}/> {amt}</div>
                               </button>
@@ -1180,9 +1092,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       </div>
 
                       <div>
-                          <label className="block text-sm font-bold text-slate-900 mb-2">Message (Optional)</label>
+                          <label className="block text-sm font-bold text-stone-900 mb-2">Message (Optional)</label>
                           <textarea 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none h-24 resize-none text-sm"
+                              className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none h-24 resize-none text-sm"
                               placeholder="Say something nice..."
                               value={supportMessage}
                               onChange={e => setSupportMessage(e.target.value)}
@@ -1192,7 +1104,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       <Button 
                         fullWidth 
                         onClick={() => setStep('support_payment')}
-                        className="bg-slate-900 hover:bg-slate-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-slate-900/20 text-lg"
+                        className="bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-stone-900/20 text-lg"
                       >
                         Continue
                       </Button>
@@ -1203,12 +1115,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                   <div className="space-y-6">
                       <div className="bg-pink-50 p-6 rounded-[2rem] border border-pink-100">
                          <div className="flex justify-between items-end">
-                           <span className="font-bold text-slate-900 text-lg">Total Tip</span>
-                           <span className="font-black text-slate-900 text-3xl tracking-tight flex items-center gap-2"><Coins/> {supportAmount}</span>
+                           <span className="font-bold text-stone-900 text-lg">Total Tip</span>
+                           <span className="font-black text-stone-900 text-3xl tracking-tight flex items-center gap-2"><Coins/> {supportAmount}</span>
                          </div>
                          <div className="mt-4 pt-4 border-t border-dashed border-pink-200">
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-500">Your Wallet Balance:</span>
+                                <span className="text-stone-500">Your Wallet Balance:</span>
                                 <span className={`font-bold ${checkBalance(supportAmount) ? 'text-green-600' : 'text-red-500'}`}>
                                     {currentUser?.credits || 0} Credits
                                 </span>
@@ -1219,7 +1131,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       <div className="flex gap-3 pt-2">
                         <Button variant="ghost" onClick={() => setStep('support_confirm')} className="flex-1 rounded-2xl font-semibold">Back</Button>
                         {checkBalance(supportAmount) ? (
-                            <Button fullWidth onClick={handleSupportPayment} isLoading={isSubmitting} className="flex-[2] bg-slate-900 hover:bg-slate-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-slate-900/20 text-lg">
+                            <Button fullWidth onClick={handleSupportPayment} isLoading={isSubmitting} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-stone-900/20 text-lg">
                                 Pay & Send Tip
                             </Button>
                         ) : (
@@ -1236,10 +1148,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         <div className="w-20 h-20 bg-pink-100 rounded-full flex items-center justify-center text-pink-600 mb-6 animate-in zoom-in">
                             <Heart size={40} className="fill-pink-600" />
                         </div>
-                        <h3 className="text-2xl font-black text-slate-900 mb-2">Thank You!</h3>
-                        <p className="text-slate-500 text-sm mb-8">Your support means the world to {creator.displayName}.</p>
+                        <h3 className="text-2xl font-black text-stone-900 mb-2">Thank You!</h3>
+                        <p className="text-stone-500 text-sm mb-8">Your support means the world to {creator.displayName}.</p>
                         
-                        <button onClick={closeModal} className="w-full bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-2xl h-12 font-bold text-sm">
+                        <button onClick={closeModal} className="w-full bg-stone-100 text-stone-600 hover:bg-stone-200 rounded-2xl h-12 font-bold text-sm">
                             Close
                         </button>
                   </div>
@@ -1252,7 +1164,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
       {showSuccessToast && (
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-4 fade-in duration-500">
-            <div className="relative overflow-hidden bg-slate-900 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-4 border border-white/10 ring-1 ring-white/20">
+            <div className="relative overflow-hidden bg-stone-900 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-4 border border-white/10 ring-1 ring-white/20">
                 <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-20"></div>
                 <div className="relative z-10 flex items-center gap-3">
                     <div className="bg-gradient-to-tr from-yellow-400 to-orange-500 p-1.5 rounded-full shadow-lg shadow-orange-500/20">
