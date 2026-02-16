@@ -1061,44 +1061,62 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             
             {/* ... (Overview View) ... */}
             {currentView === 'OVERVIEW' && (
-                <div className="space-y-6 max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-2">
-                    {/* ... Content ... */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {/* Stats Cards */}
-                        <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden group">
-                            <div className="absolute right-0 top-0 w-24 h-24 bg-indigo-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
-                            <div className="relative z-10">
-                                <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
-                                    <Coins size={16} className="text-indigo-500"/> Total Credits Earned
+                <div className="space-y-8 max-w-5xl mx-auto">
+                    {/* Welcome Header - Editorial Style */}
+                    <div className="pt-2">
+                        <p className="text-sm font-medium text-stone-400 mb-1">Welcome back,</p>
+                        <h1 className="text-2xl sm:text-3xl font-semibold text-stone-900 tracking-tight">{creator.displayName}</h1>
+                    </div>
+
+                    {/* Stats Grid - Weverse Warm Cards */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        {/* Total Earned */}
+                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-5 rounded-2xl border border-amber-100/50 group hover:shadow-md transition-all">
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-8 h-8 rounded-xl bg-white/80 flex items-center justify-center shadow-sm">
+                                    <Coins size={16} className="text-amber-600"/>
                                 </div>
-                                <div className="text-3xl font-black text-stone-900 mb-1 tracking-tight">{stats.totalEarnings.toLocaleString()}</div>
-                                <div className="text-xs text-green-600 font-bold bg-green-50 inline-block px-1.5 py-0.5 rounded">+12% this week</div>
+                                <span className="text-xs font-medium text-stone-500">Credits Earned</span>
                             </div>
+                            <div className="text-2xl sm:text-3xl font-semibold text-stone-900 tracking-tight">{stats.totalEarnings.toLocaleString()}</div>
+                            <div className="mt-2 text-xs text-emerald-600 font-medium">+12% this week</div>
                         </div>
-                        {/* ... Other Stat Cards ... */}
-                        <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-                             <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
-                                <Clock size={16} className="text-amber-500"/> Pending Requests
+
+                        {/* Pending */}
+                        <div className="bg-white p-5 rounded-2xl border border-stone-100 group hover:shadow-md hover:border-stone-200 transition-all">
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-8 h-8 rounded-xl bg-stone-50 flex items-center justify-center">
+                                    <Clock size={16} className="text-stone-600"/>
+                                </div>
+                                <span className="text-xs font-medium text-stone-500">Pending</span>
                             </div>
-                            <div className="text-3xl font-black text-stone-900 mb-1 tracking-tight">{stats.pendingCount}</div>
-                            <div className="text-xs text-stone-400 font-medium">Action required</div>
+                            <div className="text-2xl sm:text-3xl font-semibold text-stone-900 tracking-tight">{stats.pendingCount}</div>
+                            <div className="mt-2 text-xs text-stone-400">Awaiting reply</div>
                         </div>
-                         <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-                             <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
-                                <BarChart3 size={16} className="text-blue-500"/> Response Rate
+
+                        {/* Response Rate */}
+                        <div className="bg-white p-5 rounded-2xl border border-stone-100 group hover:shadow-md hover:border-stone-200 transition-all">
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
+                                    <CheckCircle2 size={16} className="text-emerald-600"/>
+                                </div>
+                                <span className="text-xs font-medium text-stone-500">Response Rate</span>
                             </div>
-                            <div className="text-3xl font-black text-stone-900 mb-1 tracking-tight">{stats.responseRate}%</div>
+                            <div className="text-2xl sm:text-3xl font-semibold text-stone-900 tracking-tight">{stats.responseRate}%</div>
                             {/* @ts-ignore */}
-                            <div className="text-xs text-stone-400 font-medium">Avg time: {stats.avgResponseTime}</div>
+                            <div className="mt-2 text-xs text-stone-400">Avg: {stats.avgResponseTime}</div>
                         </div>
-                        <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-                             <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
-                                <MessageSquare size={16} className="text-purple-500"/> Total Requests
+
+                        {/* Total Requests */}
+                        <div className="bg-white p-5 rounded-2xl border border-stone-100 group hover:shadow-md hover:border-stone-200 transition-all">
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-8 h-8 rounded-xl bg-violet-50 flex items-center justify-center">
+                                    <MessageSquare size={16} className="text-violet-600"/>
+                                </div>
+                                <span className="text-xs font-medium text-stone-500">Total Requests</span>
                             </div>
-                            <div className="text-3xl font-black text-stone-900 mb-1 tracking-tight">
-                                {incomingMessages.length.toLocaleString()}
-                            </div>
-                            <div className="text-xs text-stone-400 font-medium">Lifetime received</div>
+                            <div className="text-2xl sm:text-3xl font-semibold text-stone-900 tracking-tight">{incomingMessages.length.toLocaleString()}</div>
+                            <div className="mt-2 text-xs text-stone-400">Lifetime</div>
                         </div>
                     </div>
                     {/* ... Charts ... */}
