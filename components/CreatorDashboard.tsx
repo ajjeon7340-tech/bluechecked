@@ -2039,16 +2039,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                         return (
                                             <div key={msg.id} className={`px-4 py-3 ${msgIndex > 0 ? 'border-t border-stone-100' : ''} relative`}>
-                                                {/* Main Thread Line */}
-                                                {(restChats.length > 0 || isPending) && (
-                                                    <div className="absolute left-[2.125rem] top-12 bottom-0 w-0.5 bg-stone-200 -z-10"></div>
-                                                )}
-
                                                 {/* 1. First Message (The Request) */}
                                                 {firstChat && (
                                                 <div className="flex relative z-10">
                                                     {/* Left: Avatar + Thread Line */}
-                                                    <div className="flex flex-col items-center mr-3">
+                                                    <div className="flex flex-col items-center mr-3 relative">
+                                                        {/* Thread Line to Next */}
+                                                        {(restChats.length > 0 || isPending) && (
+                                                            <div className="absolute left-[17px] top-11 -bottom-1 w-0.5 bg-stone-200"></div>
+                                                        )}
                                                         <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
                                                             {msg.senderAvatarUrl ? (
                                                                 <img src={msg.senderAvatarUrl} alt={msg.senderName} className="w-full h-full object-cover" />
@@ -2058,21 +2057,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        {(restChats.length > 0 || isPending) && (
-                                                            <div className="flex-1 w-0.5 bg-stone-200 mt-1 min-h-[8px]"></div>
-                                                        )}
                                                     </div>
 
                                                     {/* Right: Content */}
-                                                    <div className="flex-1 min-w-0">
-                                        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-stone-200/60">
-                                            {/* Header Row */}
-                                            <div className="flex items-center justify-between mb-3">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-semibold text-sm text-stone-900">{msg.senderName}</span>
-                                                    <span className="text-xs font-medium text-stone-400">• {getRelativeTime(firstChat.timestamp)}</span>
-                                                </div>
+                                                    <div className="flex-1 min-w-0 pb-2">
+                                                        <div className="flex items-center justify-between mb-2 ml-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-semibold text-sm text-stone-900">{msg.senderName}</span>
+                                                                <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                                                                    <User size={10} className="fill-current" />
+                                                                    <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
+                                                                </div>
+                                                                <span className="text-xs font-medium text-stone-400">• {getRelativeTime(firstChat.timestamp)}</span>
                                                             </div>
+                                                        </div>
+
+                                                        <div className="bg-white p-5 sm:p-6 rounded-2xl rounded-tl-lg border border-stone-200/60">
 
                                             {/* Content */}
                                             <div>
@@ -2131,23 +2131,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 {restChats.map((chat, idx) => {
                                                     const isCreator = chat.role === 'CREATOR';
                                                     const isLast = idx === restChats.length - 1;
-                                                    const isNextCreator = idx < restChats.length - 1 && restChats[idx + 1].role === 'CREATOR';
-                                                    const isContinuousCreator = isCreator && idx > 0 && restChats[idx - 1].role === 'CREATOR';
+                                                    const showLine = !isLast || isPending;
 
                                                     return (
-                                                    <div key={chat.id} className={`flex mt-4 relative z-10 ${isCreator ? 'ml-8' : ''}`}>
-                                                        {/* Connector for Creator Reply */}
-                                                        {isCreator && !isContinuousCreator && (
-                                                            <div className="absolute left-0.5 top-0 h-[1.125rem] w-8 border-l-2 border-b-2 border-stone-200 rounded-bl-xl -z-10"></div>
-                                                        )}
-
+                                                    <div key={chat.id} className="flex mt-4 relative z-10">
                                                         {/* Left: Avatar + Thread Line */}
                                                         <div className="flex flex-col items-center mr-3 relative">
-                                                            {/* Vertical Thread Line for Continuous Creator Messages */}
-                                                            {isCreator && isNextCreator && (
-                                                                <div className="absolute left-1/2 -translate-x-1/2 top-9 -bottom-4 w-0.5 bg-stone-200 -z-10"></div>
+                                                            {showLine && (
+                                                                <div className="absolute left-[17px] top-11 -bottom-1 w-0.5 bg-stone-200"></div>
                                                             )}
-                                                            
                                                             <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
                                                                 {isCreator ? (
                                                                     creator.avatarUrl ? (
@@ -2172,10 +2164,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                         <span className="font-semibold text-sm text-stone-900">
                                                                             {isCreator ? (creator.displayName || 'You') : msg.senderName}
                                                                         </span>
-                                                                        {isCreator && (
+                                                                        {isCreator ? (
                                                                             <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
                                                                                 <CheckCircle2 size={10} className="fill-current" />
                                                                                 <span className="text-[9px] font-semibold uppercase tracking-wide">Creator</span>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                                                                                <User size={10} className="fill-current" />
+                                                                                <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
                                                                             </div>
                                                                         )}
                                                                         <span className="text-xs font-medium text-stone-400">• {getRelativeTime(chat.timestamp)}</span>
@@ -2225,8 +2222,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 })}
 
                                                 {/* Waiting indicator */}
-                                                {isPending && restChats.length > 0 && restChats[restChats.length - 1].role === 'FAN' && (
-                                                    <div className="flex relative z-10">
+                                                {isPending && sortedConversation[sortedConversation.length - 1]?.role === 'FAN' && (
+                                                    <div className="flex mt-4 relative z-10">
                                                         <div className="flex flex-col items-center mr-3">
                                                             <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-dashed border-stone-300">
                                                                 {creator.avatarUrl ? (
