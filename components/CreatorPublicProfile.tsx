@@ -384,7 +384,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const platforms = isCustomizeMode ? (editedCreator.platforms || []) : (creator.platforms || []);
 
   return (
-    <div className="min-h-screen font-sans text-stone-900 pb-20 selection:bg-amber-100 selection:text-amber-900 relative bg-[#FAFAF9]">
+    <div className="min-h-screen font-sans text-stone-900 pb-20 selection:bg-stone-200 selection:text-stone-900 relative bg-[#FAF9F6]">
       <style>{`
           @keyframes float {
             0%, 100% { transform: translateY(0px); }
@@ -400,8 +400,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
       {/* Warm Background Gradient - Weverse Style */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 hidden sm:block">
-          <div className="absolute -top-[10%] -right-[10%] w-[600px] h-[600px] bg-amber-100/30 rounded-full blur-[100px]"></div>
-          <div className="absolute bottom-[0%] -left-[10%] w-[500px] h-[500px] bg-orange-50/40 rounded-full blur-[80px]"></div>
+          <div className="absolute -top-[10%] -right-[10%] w-[600px] h-[600px] bg-stone-200/20 rounded-full blur-[100px]"></div>
+          <div className="absolute bottom-[0%] -left-[10%] w-[500px] h-[500px] bg-stone-100/30 rounded-full blur-[80px]"></div>
       </div>
 
       {/* Navigation / Header - Weverse Style */}
@@ -421,7 +421,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       onClick={onNavigateToDashboard}
                       className="flex items-center gap-2 text-stone-700 bg-stone-100 hover:bg-stone-200 px-4 py-2 rounded-full transition-colors text-xs font-medium"
                   >
-                      {currentUser.role === 'FAN' && <span className="text-amber-600 mr-1"><Coins size={12} className="inline mr-1"/>{currentUser.credits}</span>}
+                      {currentUser.role === 'FAN' && <span className="text-stone-500 mr-1"><Coins size={12} className="inline mr-1"/>{currentUser.credits}</span>}
                       Dashboard
                   </button>
                 ) : (
@@ -456,7 +456,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
       {isCustomizeMode && (
           <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4">
-             <Button size="lg" onClick={handleSaveProfile} isLoading={isSavingProfile} className="shadow-2xl shadow-indigo-900/20 bg-stone-900 text-white hover:bg-stone-800 rounded-2xl px-6">
+             <Button size="lg" onClick={handleSaveProfile} isLoading={isSavingProfile} className="shadow-xl bg-stone-900 text-white hover:bg-stone-800 rounded-2xl px-6">
                <Save size={18} className="mr-2" /> Save Changes
              </Button>
           </div>
@@ -467,7 +467,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
           {/* 1. PROFILE INFO & STATS */}
           <div className="w-full">
-             <div className="bg-white rounded-3xl border border-stone-100 shadow-sm relative transition-all hover:shadow-md">
+             <div className="bg-white rounded-2xl border border-stone-200/60 relative transition-all">
                 <div className="p-6 sm:p-8 relative z-10">
                     <div className="flex flex-row gap-4 sm:gap-8 items-start">
                         {/* LEFT: Avatar + Stats */}
@@ -601,7 +601,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                             </button>
                                             <button
                                                 onClick={currentUser ? handleOpenModal : onLoginRequest}
-                                                className="flex-1 bg-stone-900 text-white font-bold h-10 rounded-xl hover:bg-stone-800 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-stone-900/20 text-sm whitespace-nowrap px-4 min-w-0"
+                                                className="flex-1 bg-stone-900 text-white font-semibold h-10 rounded-xl hover:bg-stone-800 transition-colors flex items-center justify-center gap-2 text-sm whitespace-nowrap px-4 min-w-0"
                                             >
                                                 <MessageSquare size={16} className="flex-shrink-0" /> <span className="truncate">Ask me anything</span>
                                             </button>
@@ -632,17 +632,17 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                             return (
                                 <div key={link.id} className="relative group">
                                     {isCustomizeMode ? (
-                                         <div className={`relative rounded-2xl p-4 pr-12 border border-dashed flex items-center transition-all ${isProduct ? 'bg-purple-50 border-purple-200' : isSupport ? 'bg-pink-50 border-pink-200' : 'bg-white border-stone-300'}`}>
+                                         <div className={`relative rounded-2xl p-4 pr-12 border border-dashed flex items-center transition-all ${isProduct ? 'bg-stone-50 border-stone-300' : isSupport ? 'bg-stone-50 border-stone-300' : 'bg-white border-stone-300'}`}>
                                             <button 
                                                 onClick={() => handleUpdateLink(link.id, 'isPromoted', !link.isPromoted)}
-                                                className={`w-10 h-10 rounded-xl flex items-center justify-center mr-4 transition-colors hover:bg-stone-100 ${link.isPromoted ? 'bg-indigo-50 text-indigo-600' : 'bg-white text-stone-400'}`}
+                                                className={`w-10 h-10 rounded-xl flex items-center justify-center mr-4 transition-colors hover:bg-stone-100 ${link.isPromoted ? 'bg-stone-100 text-stone-600' : 'bg-white text-stone-400'}`}
                                                 title="Toggle Highlight"
                                             >
                                                 {link.isPromoted ? <Sparkles size={20} /> : <ExternalLink size={20} />}
                                             </button>
                                             <div className="flex-1 min-w-0">
                                                  <div className="flex items-center gap-2 mb-1">
-                                                     {isProduct ? <span className="text-[10px] font-bold bg-purple-200 text-purple-700 px-1.5 rounded uppercase">Product</span> : isSupport ? <span className="text-[10px] font-bold bg-pink-200 text-pink-700 px-1.5 rounded uppercase">Support</span> : null}
+                                                     {isProduct ? <span className="text-[10px] font-semibold bg-stone-200 text-stone-600 px-1.5 rounded uppercase">Product</span> : isSupport ? <span className="text-[10px] font-semibold bg-stone-200 text-stone-600 px-1.5 rounded uppercase">Support</span> : null}
                                                      <input 
                                                         className="block w-full font-bold text-stone-800 text-lg leading-tight bg-transparent outline-none border-b border-transparent focus:border-stone-300 placeholder-stone-300"
                                                         value={link.title}
@@ -663,34 +663,32 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         isSupport ? (
                                             <button
                                                 onClick={() => handleSupportClick(link.price)}
-                                                className="w-full text-left bg-gradient-to-r from-pink-50 to-rose-50 p-3 sm:p-4 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-3 sm:gap-4 group cursor-pointer hover:border-pink-300 transition-all hover:shadow-md relative overflow-hidden"
+                                                className="w-full text-left bg-white p-3 sm:p-4 rounded-2xl border border-stone-200/60 flex items-center gap-3 sm:gap-4 group cursor-pointer hover:border-stone-300 transition-all hover:shadow-sm relative overflow-hidden"
                                             >
-                                                <div className="hidden sm:block absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-full blur-2xl -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : 'bg-white text-pink-500'} flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform`}>
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : 'bg-stone-50 text-stone-500'} flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform`}>
                                                     {hasThumbnail ? (
                                                         <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
                                                     ) : (
                                                         <>
-                                                            <Heart size={20} className="sm:hidden fill-pink-500" />
-                                                            <Heart size={24} className="hidden sm:block fill-pink-500" />
+                                                            <Heart size={20} className="sm:hidden" />
+                                                            <Heart size={24} className="hidden sm:block" />
                                                         </>
                                                     )}
                                                 </div>
                                                 <div className="flex-1 relative z-10 min-w-0 text-left">
-                                                    <h4 className="font-bold text-stone-900 text-sm sm:text-base group-hover:text-pink-600 transition-colors truncate">{link.title}</h4>
-                                                    <p className="text-[10px] sm:text-xs text-stone-500 mt-0.5 font-medium truncate">Send a tip</p>
+                                                    <h4 className="font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
+                                                    <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">Send a tip</p>
                                                 </div>
-                                                <div className="bg-blue-600 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
+                                                <div className="bg-stone-900 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold hover:bg-stone-800 transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
                                                     <Heart size={12} /> Tip
                                                 </div>
                                             </button>
                                         ) : isProduct ? (
                                             <button
                                                 onClick={() => handleProductClick(link)}
-                                                className="w-full text-left bg-gradient-to-r from-purple-50 to-indigo-50 p-3 sm:p-4 rounded-2xl border border-purple-100 shadow-sm flex items-center gap-3 sm:gap-4 group cursor-pointer hover:border-purple-300 transition-all hover:shadow-md relative overflow-hidden"
+                                                className="w-full text-left bg-white p-3 sm:p-4 rounded-2xl border border-stone-200/60 flex items-center gap-3 sm:gap-4 group cursor-pointer hover:border-stone-300 transition-all hover:shadow-sm relative overflow-hidden"
                                             >
-                                                <div className="hidden sm:block absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-full blur-2xl -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : 'bg-white text-purple-600'} flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform`}>
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : 'bg-stone-50 text-stone-500'} flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform`}>
                                                     {hasThumbnail ? (
                                                         <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
                                                     ) : (
@@ -701,10 +699,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                     )}
                                                 </div>
                                                 <div className="flex-1 relative z-10 min-w-0 text-left">
-                                                    <h4 className="font-bold text-stone-900 text-sm sm:text-base group-hover:text-purple-700 transition-colors truncate">{link.title}</h4>
-                                                    <p className="text-[10px] sm:text-xs text-stone-500 mt-0.5 font-medium truncate">Digital Download</p>
+                                                    <h4 className="font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
+                                                    <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">Digital Download</p>
                                                 </div>
-                                                <div className="bg-stone-900 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-bold hover:bg-stone-800 transition-colors shadow-lg shadow-stone-900/20 flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
+                                                <div className="bg-stone-900 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold hover:bg-stone-800 transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
                                                     <Coins size={12} /> {link.price}
                                                 </div>
                                             </button>
@@ -714,11 +712,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 onClick={() => logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'LINK', id: link.id, title: link.title, url: link.url })}
-                                                className={`block w-full text-left p-3 sm:p-4 rounded-2xl border shadow-sm flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-100 hover:border-amber-300' : 'bg-white border-stone-200 hover:border-stone-300'}`}
+                                                className={`block w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-sm relative overflow-hidden ${link.isPromoted ? 'bg-white border-stone-200/60 hover:border-stone-300' : 'bg-white border-stone-200/60 hover:border-stone-300'}`}
                                             >
-                                                {link.isPromoted && <div className="hidden sm:block absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-full blur-2xl -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>}
-                                                
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : (link.isPromoted ? 'bg-white text-amber-500' : 'bg-stone-50 text-stone-500 group-hover:bg-stone-100')}`}>
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : (link.isPromoted ? 'bg-stone-50 text-stone-500' : 'bg-stone-50 text-stone-500')}`}>
                                                     {hasThumbnail ? (
                                                         <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
                                                     ) : link.isPromoted ? (
@@ -735,11 +731,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 </div>
                                                 
                                                 <div className="flex-1 relative z-10 min-w-0 text-left">
-                                                    <h4 className={`font-bold text-sm sm:text-base transition-colors truncate ${link.isPromoted ? 'text-stone-900 group-hover:text-amber-700' : 'text-stone-900 group-hover:text-stone-700'}`}>{link.title}</h4>
+                                                    <h4 className="font-bold text-sm sm:text-base text-stone-900 group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
                                                     <p className="text-[10px] text-stone-400 mt-0.5 font-medium truncate">{link.isPromoted ? 'Recommended' : 'External Link'}</p>
                                                 </div>
-                                                
-                                                <div className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap ${link.isPromoted ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-lg shadow-amber-500/20' : 'bg-stone-100 text-stone-600 group-hover:bg-stone-200'}`}>
+
+                                                <div className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap ${link.isPromoted ? 'bg-stone-900 text-white hover:bg-stone-800' : 'bg-stone-100 text-stone-600 group-hover:bg-stone-200'}`}>
                                                     {link.isPromoted ? 'Visit' : 'Open'} <ExternalLink size={12} />
                                                 </div>
                                             </a>
@@ -769,7 +765,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
       {/* Message & Payment Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/80 sm:bg-stone-900/60 sm:backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white rounded-[2rem] w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col ring-1 ring-white/50">
+          <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col ring-1 ring-white/50">
             {/* Modal Header */}
             <div className="px-6 py-5 border-b border-stone-100 flex justify-between items-center bg-white sm:bg-white/80 sm:backdrop-blur-xl sticky top-0 z-10">
               <h3 className="font-bold text-stone-900 text-lg">
@@ -807,14 +803,14 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                   <div>
                     <label className="block text-sm font-bold text-stone-900 mb-2">Your Message</label>
-                    <div className="mb-3 p-4 bg-indigo-50/50 text-indigo-900 rounded-2xl text-sm border border-indigo-100/50">
+                    <div className="mb-3 p-4 bg-stone-50 text-stone-700 rounded-2xl text-sm border border-stone-200/60">
                         <p className="font-bold mb-1.5 flex items-center gap-2"><Sparkles size={14}/> Important:</p>
                         <p className="opacity-80 text-xs sm:text-sm leading-relaxed">
                             {creator.intakeInstructions || "Please be as detailed as possible so I can give you the best answer."}
                         </p>
                     </div>
                     <textarea 
-                      className="w-full px-4 py-3 bg-white border border-stone-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none h-40 resize-none text-stone-900 placeholder:text-stone-300 transition-all text-base"
+                      className="w-full px-4 py-3 bg-white border border-stone-200/60 rounded-2xl focus:ring-1 focus:ring-stone-400 focus:border-stone-300 outline-none h-40 resize-none text-stone-900 placeholder:text-stone-300 transition-all text-base"
                       placeholder="Type your message..."
                       value={generalMessage}
                       onChange={e => setGeneralMessage(e.target.value)}
@@ -832,16 +828,16 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                              />
                              <button 
                                 onClick={triggerFileSelect}
-                                className="text-stone-500 hover:text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                                className="text-stone-500 hover:text-stone-700 hover:bg-stone-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
                              >
                                 <Paperclip size={16} />
                                 Attach Photo
                              </button>
 
                              {attachment && (
-                                <div className="flex items-center gap-1 bg-indigo-50 pl-2 pr-1 py-1 rounded-lg text-xs font-medium text-indigo-700 border border-indigo-100">
+                                <div className="flex items-center gap-1 bg-stone-100 pl-2 pr-1 py-1 rounded-lg text-xs font-medium text-stone-600 border border-stone-200/60">
                                     <span>Image attached</span>
-                                    <button onClick={() => setAttachment(null)} className="hover:bg-indigo-100 p-0.5 rounded ml-1 transition-colors"><X size={12}/></button>
+                                    <button onClick={() => setAttachment(null)} className="hover:bg-stone-200 p-0.5 rounded ml-1 transition-colors"><X size={12}/></button>
                                 </div>
                              )}
                          </div>
@@ -856,7 +852,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                     fullWidth 
                     disabled={!isFormValid()} 
                     onClick={() => setStep('payment')}
-                    className="bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-stone-900/20 text-lg"
+                    className="bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg"
                   >
                     Continue to Payment
                   </Button>
@@ -866,7 +862,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
               {step === 'payment' && (
                 <div className="space-y-6">
                   {/* Payment UI remains same */}
-                  <div className="bg-stone-50 p-6 rounded-[2rem] border border-stone-100">
+                  <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100">
                      <div className="flex justify-between text-sm mb-3">
                        <span className="text-stone-500 font-medium">Request Price</span>
                        <span className="font-bold text-stone-900">{creator.pricePerMessage} Credits</span>
@@ -891,11 +887,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                     <Button variant="ghost" onClick={() => setStep('compose')} className="flex-1 rounded-2xl font-semibold">Back</Button>
                     
                     {checkBalance(creator.pricePerMessage) ? (
-                        <Button fullWidth onClick={handleSend} isLoading={isSubmitting} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-stone-900/20 text-lg">
+                        <Button fullWidth onClick={handleSend} isLoading={isSubmitting} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg">
                             Pay & Send
                         </Button>
                     ) : (
-                        <Button fullWidth onClick={() => setStep('topup')} className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl h-14 font-bold shadow-lg shadow-indigo-600/20 text-lg">
+                        <Button fullWidth onClick={() => setStep('topup')} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg">
                             Top Up Credits
                         </Button>
                     )}
@@ -906,7 +902,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
               {step === 'topup' && (
                   <div className="space-y-6">
                       <div className="text-center">
-                          <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-600">
+                          <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4 text-stone-500">
                               <Wallet size={32} />
                           </div>
                           <h4 className="font-bold text-stone-900 text-lg">Top Up Wallet</h4>
@@ -918,7 +914,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                               <button 
                                 key={amt}
                                 onClick={() => setTopUpAmount(amt)}
-                                className={`p-4 rounded-xl border text-center transition-all ${topUpAmount === amt ? 'bg-indigo-50 border-indigo-500 ring-1 ring-indigo-500 text-indigo-700' : 'bg-white border-stone-200 hover:border-stone-300'}`}
+                                className={`p-4 rounded-xl border text-center transition-all ${topUpAmount === amt ? 'bg-stone-50 border-stone-900 ring-1 ring-stone-900 text-stone-900' : 'bg-white border-stone-200 hover:border-stone-300'}`}
                               >
                                   <div className="font-black text-xl mb-1">{amt}</div>
                                   <div className="text-xs text-stone-400 uppercase font-bold">Credits</div>
@@ -940,7 +936,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
               {step === 'success' && (
                 <div className="py-8 relative overflow-hidden flex flex-col items-center justify-center">
                     {/* Consistent Magical Card Style */}
-                    <div className="relative overflow-hidden bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 rounded-3xl p-8 text-center animate-in zoom-in duration-500 shadow-2xl shadow-indigo-500/30 ring-1 ring-white/20 w-full max-w-sm">
+                    <div className="relative overflow-hidden bg-stone-900 rounded-2xl p-8 text-center animate-in zoom-in duration-500 shadow-xl ring-1 ring-white/10 w-full max-w-sm">
                         {/* Animated Background Particles */}
                         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40">
                             <div className="absolute top-[10%] left-[20%] text-white animate-float text-xs">✦</div>
@@ -958,7 +954,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                 <span className="font-bold text-white">{creator.displayName}</span> has been notified.<br/> We'll email you when the magic happens. <Sparkles size={14} className="text-yellow-300 animate-pulse inline" />
                             </p>
                             
-                            <Button fullWidth onClick={closeModal} className="bg-white text-indigo-600 hover:bg-white/90 rounded-xl h-12 font-bold text-sm shadow-xl border-none">
+                            <Button fullWidth onClick={closeModal} className="bg-white text-stone-900 hover:bg-stone-50 rounded-xl h-12 font-bold text-sm border-none">
                                 Back to Profile
                             </Button>
                         </div>
@@ -969,9 +965,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
               {/* --- PRODUCT FLOW --- */}
               {step === 'product_confirm' && selectedProductLink && (
                   <div className="space-y-6">
-                      <div className="bg-purple-50 p-6 rounded-[2rem] border border-purple-100 flex flex-col items-center text-center">
-                          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
-                              <FileText size={32} className="text-purple-600" />
+                      <div className="bg-stone-50 p-6 rounded-2xl border border-stone-200/60 flex flex-col items-center text-center">
+                          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center border border-stone-200/60 mb-4">
+                              <FileText size={32} className="text-stone-500" />
                           </div>
                           <h4 className="font-bold text-stone-900 text-lg mb-1">{selectedProductLink.title}</h4>
                           <p className="text-xs text-stone-500 mb-6">Digital Download • Instant Access</p>
@@ -983,7 +979,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       <Button 
                         fullWidth 
                         onClick={() => setStep('product_payment')}
-                        className="bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-stone-900/20 text-lg"
+                        className="bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg"
                       >
                         Proceed to Checkout
                       </Button>
@@ -992,7 +988,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
               {step === 'product_payment' && selectedProductLink && (
                   <div className="space-y-6">
-                      <div className="bg-stone-50 p-6 rounded-[2rem] border border-stone-100">
+                      <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100">
                          <div className="flex justify-between items-center mb-4 pb-4 border-b border-stone-200">
                              <div className="flex items-center gap-3">
                                  <div className="w-10 h-10 rounded-lg bg-white border border-stone-200 flex items-center justify-center text-stone-400">
@@ -1022,11 +1018,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       <div className="flex gap-3 pt-2">
                         <Button variant="ghost" onClick={() => setStep('product_confirm')} className="flex-1 rounded-2xl font-semibold">Back</Button>
                         {checkBalance(selectedProductLink.price || 0) ? (
-                            <Button fullWidth onClick={handleProductPurchase} isLoading={isSubmitting} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-stone-900/20 text-lg">
+                            <Button fullWidth onClick={handleProductPurchase} isLoading={isSubmitting} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg">
                                 Pay & Download
                             </Button>
                         ) : (
-                            <Button fullWidth onClick={() => setStep('topup')} className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl h-14 font-bold shadow-lg shadow-indigo-600/20 text-lg">
+                            <Button fullWidth onClick={() => setStep('topup')} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg">
                                 Top Up Credits
                             </Button>
                         )}
@@ -1113,7 +1109,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       <Button 
                         fullWidth 
                         onClick={() => setStep('support_payment')}
-                        className="bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-stone-900/20 text-lg"
+                        className="bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg"
                       >
                         Continue
                       </Button>
@@ -1122,7 +1118,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
               {step === 'support_payment' && (
                   <div className="space-y-6">
-                      <div className="bg-pink-50 p-6 rounded-[2rem] border border-pink-100">
+                      <div className="bg-pink-50 p-6 rounded-2xl border border-pink-100">
                          <div className="flex justify-between items-end">
                            <span className="font-bold text-stone-900 text-lg">Total Tip</span>
                            <span className="font-black text-stone-900 text-3xl tracking-tight flex items-center gap-2"><Coins/> {supportAmount}</span>
@@ -1140,11 +1136,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       <div className="flex gap-3 pt-2">
                         <Button variant="ghost" onClick={() => setStep('support_confirm')} className="flex-1 rounded-2xl font-semibold">Back</Button>
                         {checkBalance(supportAmount) ? (
-                            <Button fullWidth onClick={handleSupportPayment} isLoading={isSubmitting} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold shadow-lg shadow-stone-900/20 text-lg">
+                            <Button fullWidth onClick={handleSupportPayment} isLoading={isSubmitting} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg">
                                 Pay & Send Tip
                             </Button>
                         ) : (
-                            <Button fullWidth onClick={() => setStep('topup')} className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl h-14 font-bold shadow-lg shadow-indigo-600/20 text-lg">
+                            <Button fullWidth onClick={() => setStep('topup')} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg">
                                 Top Up Credits
                             </Button>
                         )}
@@ -1174,9 +1170,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
       {showSuccessToast && (
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-4 fade-in duration-500">
             <div className="relative overflow-hidden bg-stone-900 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-4 border border-white/10 ring-1 ring-white/20">
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-20"></div>
                 <div className="relative z-10 flex items-center gap-3">
-                    <div className="bg-gradient-to-tr from-yellow-400 to-orange-500 p-1.5 rounded-full shadow-lg shadow-orange-500/20">
+                    <div className="bg-white/20 p-1.5 rounded-full">
                         <Sparkles size={16} className="text-white fill-white" />
                     </div>
                     <div>
