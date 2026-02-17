@@ -2228,7 +2228,23 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                                             <div className={`${isCreator ? 'bg-stone-50' : 'bg-white'} p-5 sm:p-6 rounded-2xl rounded-tl-lg border border-stone-200/60`}>
                                                                 {/* Content */}
-                                                                <p className="text-sm text-stone-700 leading-relaxed">{chat.content}</p>
+                                                                {editingChatId === chat.id ? (
+                                                                    <div className="space-y-2">
+                                                                        <textarea
+                                                                            value={editContent}
+                                                                            onChange={(e) => setEditContent(e.target.value)}
+                                                                            className="w-full text-sm text-stone-700 leading-relaxed bg-white border border-stone-200 rounded-lg p-3 resize-none focus:outline-none focus:ring-1 focus:ring-stone-400"
+                                                                            rows={3}
+                                                                            autoFocus
+                                                                        />
+                                                                        <div className="flex items-center gap-2 justify-end">
+                                                                            <button onClick={() => { setEditingChatId(null); setEditContent(''); }} className="text-xs text-stone-400 hover:text-stone-600 px-3 py-1.5 rounded-lg transition-colors">Cancel</button>
+                                                                            <button onClick={() => handleEditChat(chat.id, msg.id)} className="text-xs text-white bg-stone-900 hover:bg-stone-800 px-3 py-1.5 rounded-lg transition-colors">Save</button>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <p className="text-sm text-stone-700 leading-relaxed">{chat.content}</p>
+                                                                )}
 
                                                                 {chat.attachmentUrl && (
                                                                     <div className="mt-3 rounded-lg overflow-hidden border border-stone-200">
@@ -2272,6 +2288,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                         </div>
                                                                     )}
                                                                 </div>
+                                                                {isCreator && editingChatId !== chat.id && (
+                                                                    <button
+                                                                        onClick={() => { setEditingChatId(chat.id); setEditContent(chat.content); }}
+                                                                        className="ml-auto p-2 text-stone-300 hover:text-stone-500 transition-colors"
+                                                                        title="Edit message"
+                                                                    >
+                                                                        <Pencil size={13} />
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                             </div>
                                                         </div>

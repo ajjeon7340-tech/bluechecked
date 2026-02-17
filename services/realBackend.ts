@@ -1006,6 +1006,21 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
     }
 };
 
+export const editChatMessage = async (chatLineId: string, newContent: string): Promise<void> => {
+    if (!isConfigured) return;
+
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) throw new Error("Not logged in");
+
+    const { error } = await supabase
+        .from('chat_lines')
+        .update({ content: newContent })
+        .eq('id', chatLineId)
+        .eq('sender_id', session.session.user.id);
+
+    if (error) throw error;
+};
+
 export const cancelMessage = async (messageId: string): Promise<void> => {
     if (!isConfigured) return MockBackend.cancelMessage(messageId);
 

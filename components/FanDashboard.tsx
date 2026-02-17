@@ -1647,7 +1647,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         {/* Attachment */}
                                                         {msg.attachmentUrl && (
                                                             <div className="mt-3 rounded-lg overflow-hidden border border-stone-200">
-                                                                <img src={msg.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
+                                                                {msg.attachmentUrl.toLowerCase().endsWith('.pdf') ? (
+                                                                    <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
+                                                                        <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <p className="text-sm font-medium text-stone-700 truncate">{msg.attachmentUrl.split('/').pop() || 'Document.pdf'}</p>
+                                                                            <p className="text-xs text-stone-400">PDF Document</p>
+                                                                        </div>
+                                                                        <Download size={16} className="text-stone-400 flex-shrink-0" />
+                                                                    </a>
+                                                                ) : (
+                                                                    <img src={msg.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
+                                                                )}
                                                             </div>
                                                         )}
                                                     </div>
@@ -1751,7 +1762,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                                                         {chat.attachmentUrl && (
                                                             <div className="mt-3 rounded-lg overflow-hidden border border-stone-200">
-                                                                <img src={chat.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
+                                                                {chat.attachmentUrl.toLowerCase().endsWith('.pdf') ? (
+                                                                    <a href={chat.attachmentUrl} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
+                                                                        <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <p className="text-sm font-medium text-stone-700 truncate">{chat.attachmentUrl.split('/').pop() || 'Document.pdf'}</p>
+                                                                            <p className="text-xs text-stone-400">PDF Document</p>
+                                                                        </div>
+                                                                        <Download size={16} className="text-stone-400 flex-shrink-0" />
+                                                                    </a>
+                                                                ) : (
+                                                                    <img src={chat.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
+                                                                )}
                                                             </div>
                                                         )}
 
