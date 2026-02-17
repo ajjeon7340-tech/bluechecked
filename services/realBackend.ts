@@ -72,14 +72,28 @@ const mapDbMessageToAppMessage = (m: any, currentUserId: string): Message => {
     // 1. Parse chat_lines if available
     let lines: ChatMessage[] = [];
     if (m.chat_lines && m.chat_lines.length > 0) {
-        lines = m.chat_lines.map((line: any) => ({
-            id: line.id,
-            role: line.role, // 'FAN' or 'CREATOR' stored in DB
-            content: line.content,
-            timestamp: line.created_at,
-            attachmentUrl: line.attachment_url,
-            isEdited: line.updated_at && line.updated_at !== line.created_at
-        }));
+        lines = m.chat_lines.map((line: any) => {
+            let content = line.content;
+            let attachmentUrl = line.attachment_url;
+
+            // Workaround for missing attachment_url column in chat_lines
+            if (!attachmentUrl && content && content.includes('[Attachment](')) {
+                const match = content.match(/\[Attachment\]\((.*?)\)/);
+                if (match) {
+                    attachmentUrl = match[1];
+                    content = content.replace(match[0], '').trim();
+                }
+            }
+
+            return {
+                id: line.id,
+                role: line.role, // 'FAN' or 'CREATOR' stored in DB
+                content: content,
+                timestamp: line.created_at,
+                attachmentUrl: attachmentUrl,
+                isEdited: line.updated_at && line.updated_at !== line.created_at
+            };
+        });
     }
 
     // 2. Check if the initial message (stored in parent row) is already in chat_lines
@@ -930,7 +944,22 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
         }
 
         const { error: chatError } = await supabase.from('chat_lines').insert(payload);
-        if (chatError) throw chatError;
+        
+        if (chatError) {
+            // Fallback for missing column (PGRST204)
+            if ((chatError.code === 'PGRST204' || chatError.code === '42703') && attachmentUrl) {
+                 const fallbackContent = `${replyText.trim()}\n\nAttachment`;
+                 const { error: retryError } = await supabase.from('chat_lines').insert({
+                    message_id: messageId,
+                    sender_id: session.session.user.id,
+                    role: 'CREATOR',
+                    content: fallbackContent
+                 });
+                 if (retryError) throw retryError;
+            } else {
+                throw chatError;
+            }
+        }
 
         // Touch the message to trigger realtime updates for listeners (Fan Dashboard)
         // Also set is_read to false so the recipient (Fan) sees it as unread
@@ -1027,7 +1056,28 @@ export const editChatMessage = async (chatLineId: string, newContent: string, at
         .eq('id', chatLineId)
         .eq('sender_id', session.session.user.id);
 
-    if (error) throw error;
+    if (error) {
+        // Fallback for missing column (PGRST204)
+        if (error.code === 'PGRST204' || error.code === '42703') {
+             let fallbackContent = newContent;
+             if (attachmentUrl) {
+                 fallbackContent = `${newContent.trim()}\n\nAttachment`;
+             }
+             
+             const { error: retryError } = await supabase
+                .from('chat_lines')
+                .update({
+                    content: fallbackContent,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', chatLineId)
+                .eq('sender_id', session.session.user.id);
+             
+             if (retryError) throw retryError;
+        } else {
+            throw error;
+        }
+    }
 };
 
 export const cancelMessage = async (messageId: string): Promise<void> => {
