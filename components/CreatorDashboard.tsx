@@ -205,6 +205,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [activeReactionPicker, setActiveReactionPicker] = useState<string | null>(null);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [editAttachment, setEditAttachment] = useState<string | null | undefined>(undefined);
+  const [isUploadingEditAttachment, setIsUploadingEditAttachment] = useState(false);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleReactionClick = (msgId: string, emoji: string) => {
       setMessageReactions(prev => {
@@ -220,22 +223,38 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   };
 
   const handleEditChat = async (chatId: string, messageId: string) => {
-      if (!editContent.trim()) return;
+      if (!editContent.trim() && !editAttachment) return;
       try {
-          await editChatMessage(chatId, editContent.trim());
+          await editChatMessage(chatId, editContent.trim(), editAttachment);
           setMessages(prev => prev.map(m => {
               if (m.id !== messageId) return m;
               return {
                   ...m,
                   conversation: m.conversation.map(c =>
-                      c.id === chatId ? { ...c, content: editContent.trim() } : c
+                      c.id === chatId ? { ...c, content: editContent.trim(), attachmentUrl: editAttachment ?? undefined, isEdited: true } : c
                   )
               };
           }));
           setEditingChatId(null);
           setEditContent('');
+          setEditAttachment(undefined);
       } catch (err) {
           console.error('Failed to edit message:', err);
+      }
+  };
+
+  const handleEditFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setIsUploadingEditAttachment(true);
+      try {
+          const url = await uploadProductFile(file, creator.id);
+          setEditAttachment(url);
+      } catch (error) {
+          console.error("Upload failed", error);
+      } finally {
+          setIsUploadingEditAttachment(false);
+          if (editFileInputRef.current) editFileInputRef.current.value = '';
       }
   };
 
@@ -1448,41 +1467,67 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
                             </div>
 
-                            <div className="bg-white p-6 rounded-2xl border border-stone-200/60 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                <h3 className="text-sm font-bold text-stone-900 mb-6 flex items-center gap-2">
-                                    <BarChart3 size={16} className="text-stone-400" />
-                                    Activity Breakdown - <span className="font-normal text-stone-500 ml-1">{getStatsDateLabel()}</span>
-                                </h3>
-                                
-                                <div className="h-80 w-full">
-                                    {isLoadingStats ? (
-                                        <div className="h-full w-full flex items-center justify-center text-stone-400">Loading statistics...</div>
-                                    ) : (
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <ComposedChart data={detailedStats} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                                <defs>
-                                                    <linearGradient id="colorViewsStats" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#78716c" stopOpacity={0.08}/>
-                                                        <stop offset="95%" stopColor="#78716c" stopOpacity={0}/>
-                                                    </linearGradient>
-                                                </defs>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
-                                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#a8a29e', fontSize: 12}} dy={10} />
-                                                <YAxis yAxisId="views" axisLine={false} tickLine={false} tick={{fill: '#a8a29e', fontSize: 12}} />
-                                                <YAxis yAxisId="likes" orientation="right" axisLine={false} tickLine={false} tick={{fill: '#a8a29e', fontSize: 12}} />
-                                                <YAxis yAxisId="rating" orientation="right" domain={[0, 5]} hide />
-                                                <Tooltip
-                                                    contentStyle={{borderRadius: '12px', border: '1px solid #e7e5e4', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)', backgroundColor: '#fff'}}
-                                                    cursor={{fill: 'rgba(120, 113, 108, 0.06)'}}
-                                                />
-                                                <Legend wrapperStyle={{paddingTop: '20px'}} iconType="circle" />
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                {/* Profile Views Chart */}
+                                <div className="bg-white p-6 rounded-2xl border border-stone-200/60">
+                                    <h3 className="text-sm font-bold text-stone-900 mb-1 flex items-center gap-2">
+                                        <Eye size={14} className="text-stone-400" />
+                                        Profile Views
+                                    </h3>
+                                    <p className="text-xs text-stone-400 mb-5">{getStatsDateLabel()}</p>
 
-                                                <Bar yAxisId="views" dataKey="views" name="Profile Views" fill="#a8a29e" radius={[4, 4, 0, 0]} barSize={32} />
-                                                <Line yAxisId="likes" type="monotone" dataKey="likes" name="Likes" stroke="#78716c" strokeWidth={2.5} dot={{r: 3.5, fill: '#78716c', strokeWidth: 2, stroke: '#fff'}} />
-                                                <Line yAxisId="rating" type="monotone" dataKey="rating" name="Rating" stroke="#d6d3d1" strokeWidth={2.5} strokeDasharray="5 5" dot={{r: 3.5, fill: '#d6d3d1', strokeWidth: 2, stroke: '#fff'}} />
-                                            </ComposedChart>
-                                        </ResponsiveContainer>
-                                    )}
+                                    <div className="h-52 w-full">
+                                        {isLoadingStats ? (
+                                            <div className="h-full w-full flex items-center justify-center text-stone-400 text-sm">Loading...</div>
+                                        ) : (
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <AreaChart data={detailedStats} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                                                    <defs>
+                                                        <linearGradient id="colorViewsStats" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor="#78716c" stopOpacity={0.1}/>
+                                                            <stop offset="95%" stopColor="#78716c" stopOpacity={0}/>
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
+                                                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#a8a29e', fontSize: 11}} dy={8} />
+                                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#a8a29e', fontSize: 11}} />
+                                                    <Tooltip
+                                                        contentStyle={{borderRadius: '10px', border: '1px solid #e7e5e4', boxShadow: '0 4px 12px rgba(0,0,0,0.06)', backgroundColor: '#fff', fontSize: '12px'}}
+                                                        cursor={{fill: 'rgba(120, 113, 108, 0.06)'}}
+                                                    />
+                                                    <Area type="monotone" dataKey="views" stroke="#78716c" strokeWidth={2} fill="url(#colorViewsStats)" dot={{r: 3, fill: '#78716c', strokeWidth: 2, stroke: '#fff'}} />
+                                                </AreaChart>
+                                            </ResponsiveContainer>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Likes Chart */}
+                                <div className="bg-white p-6 rounded-2xl border border-stone-200/60">
+                                    <h3 className="text-sm font-bold text-stone-900 mb-1 flex items-center gap-2">
+                                        <Heart size={14} className="text-stone-400 fill-current" />
+                                        Likes
+                                    </h3>
+                                    <p className="text-xs text-stone-400 mb-5">{getStatsDateLabel()}</p>
+
+                                    <div className="h-52 w-full">
+                                        {isLoadingStats ? (
+                                            <div className="h-full w-full flex items-center justify-center text-stone-400 text-sm">Loading...</div>
+                                        ) : (
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={detailedStats} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
+                                                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#a8a29e', fontSize: 11}} dy={8} />
+                                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#a8a29e', fontSize: 11}} allowDecimals={false} />
+                                                    <Tooltip
+                                                        contentStyle={{borderRadius: '10px', border: '1px solid #e7e5e4', boxShadow: '0 4px 12px rgba(0,0,0,0.06)', backgroundColor: '#fff', fontSize: '12px'}}
+                                                        cursor={{fill: 'rgba(120, 113, 108, 0.06)'}}
+                                                    />
+                                                    <Bar dataKey="likes" fill="#a8a29e" radius={[4, 4, 0, 0]} barSize={24} />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                          </>
@@ -2124,7 +2169,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                                 {/* Attachment */}
                                                 {msg.attachmentUrl && (
-                                                    <div className="mt-3 rounded-lg overflow-hidden border border-stone-200">
+                                                    <div className="mt-3 rounded-lg overflow-hidden border border-stone-200 w-fit">
                                                         {msg.attachmentUrl.toLowerCase().endsWith('.pdf') ? (
                                                             <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
                                                                 <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
@@ -2135,7 +2180,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 <Download size={16} className="text-stone-400 flex-shrink-0" />
                                                             </a>
                                                         ) : (
-                                                            <img src={msg.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
+                                                            <img src={msg.attachmentUrl} className="max-w-[280px] max-h-[240px] rounded-lg object-contain" alt="attachment" />
                                                         )}
                                                     </div>
                                                 )}
@@ -2237,7 +2282,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             <div className={`${isCreator ? 'bg-stone-50' : 'bg-white'} p-5 sm:p-6 rounded-2xl rounded-tl-lg border border-stone-200/60`}>
                                                                 {/* Content */}
                                                                 {editingChatId === chat.id ? (
-                                                                    <div className="space-y-2">
+                                                                    <div className="space-y-3">
                                                                         <textarea
                                                                             value={editContent}
                                                                             onChange={(e) => setEditContent(e.target.value)}
@@ -2245,17 +2290,46 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                             rows={3}
                                                                             autoFocus
                                                                         />
-                                                                        <div className="flex items-center gap-2 justify-end">
-                                                                            <button onClick={() => { setEditingChatId(null); setEditContent(''); }} className="text-xs text-stone-400 hover:text-stone-600 px-3 py-1.5 rounded-lg transition-colors">Cancel</button>
-                                                                            <button onClick={() => handleEditChat(chat.id, msg.id)} className="text-xs text-white bg-stone-900 hover:bg-stone-800 px-3 py-1.5 rounded-lg transition-colors">Save</button>
+                                                                        {/* Edit attachment preview */}
+                                                                        {editAttachment && (
+                                                                            <div className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg border border-stone-200">
+                                                                                {editAttachment.toLowerCase().endsWith('.pdf') ? (
+                                                                                    <FileText size={16} className="text-stone-400 flex-shrink-0" />
+                                                                                ) : (
+                                                                                    <img src={editAttachment} className="w-10 h-10 rounded object-cover flex-shrink-0" alt="" />
+                                                                                )}
+                                                                                <span className="text-xs text-stone-500 truncate flex-1">{editAttachment.split('/').pop()}</span>
+                                                                                <button onClick={() => setEditAttachment(null)} className="p-1 text-stone-400 hover:text-stone-600 transition-colors"><X size={14} /></button>
+                                                                            </div>
+                                                                        )}
+                                                                        <div className="flex items-center gap-2 justify-between">
+                                                                            <div className="flex items-center gap-1">
+                                                                                <button
+                                                                                    onClick={() => editFileInputRef.current?.click()}
+                                                                                    disabled={isUploadingEditAttachment}
+                                                                                    className="p-2 text-stone-400 hover:text-stone-600 transition-colors rounded-lg hover:bg-stone-100"
+                                                                                    title={editAttachment ? 'Replace file' : 'Attach file'}
+                                                                                >
+                                                                                    {isUploadingEditAttachment ? <div className="w-4 h-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" /> : <Paperclip size={14} />}
+                                                                                </button>
+                                                                                <input type="file" ref={editFileInputRef} className="hidden" onChange={handleEditFileChange} />
+                                                                            </div>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <button onClick={() => { setEditingChatId(null); setEditContent(''); setEditAttachment(undefined); }} className="text-xs text-stone-400 hover:text-stone-600 px-3 py-1.5 rounded-lg transition-colors">Cancel</button>
+                                                                                <button onClick={() => handleEditChat(chat.id, msg.id)} disabled={isUploadingEditAttachment} className="text-xs text-white bg-stone-900 hover:bg-stone-800 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50">Save</button>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                 ) : (
-                                                                    <p className="text-sm text-stone-700 leading-relaxed">{chat.content}</p>
+                                                                    <>
+                                                                        <p className="text-sm text-stone-700 leading-relaxed">{chat.content}</p>
+                                                                        {chat.isEdited && <span className="text-[10px] text-stone-400 mt-1 block">edited</span>}
+                                                                    </>
                                                                 )}
 
-                                                                {chat.attachmentUrl && (
-                                                                    <div className="mt-3 rounded-lg overflow-hidden border border-stone-200">
+                                                                {/* Attachment (shown when NOT editing) */}
+                                                                {editingChatId !== chat.id && chat.attachmentUrl && (
+                                                                    <div className="mt-3 rounded-lg overflow-hidden border border-stone-200 w-fit">
                                                                         {chat.attachmentUrl.toLowerCase().endsWith('.pdf') ? (
                                                                             <a href={chat.attachmentUrl} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
                                                                                 <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
@@ -2266,7 +2340,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                                 <Download size={16} className="text-stone-400 flex-shrink-0" />
                                                                             </a>
                                                                         ) : (
-                                                                            <img src={chat.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
+                                                                            <img src={chat.attachmentUrl} className="max-w-[280px] max-h-[240px] rounded-lg object-contain" alt="attachment" />
                                                                         )}
                                                                     </div>
                                                                 )}
@@ -2298,7 +2372,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 </div>
                                                                 {isCreator && editingChatId !== chat.id && (
                                                                     <button
-                                                                        onClick={() => { setEditingChatId(chat.id); setEditContent(chat.content); }}
+                                                                        onClick={() => { setEditingChatId(chat.id); setEditContent(chat.content); setEditAttachment(chat.attachmentUrl || null); }}
                                                                         className="ml-auto p-2 text-stone-300 hover:text-stone-500 transition-colors"
                                                                         title="Edit message"
                                                                     >

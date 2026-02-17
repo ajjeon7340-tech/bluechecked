@@ -603,7 +603,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 onClick={currentUser ? handleOpenModal : onLoginRequest}
                                                 className="flex-1 bg-stone-900 text-white font-semibold h-10 rounded-xl hover:bg-stone-800 transition-colors flex items-center justify-center gap-2 text-sm whitespace-nowrap px-4 min-w-0"
                                             >
-                                                <MessageSquare size={16} className="flex-shrink-0" /> <span className="truncate">Ask me anything</span>
+                                                <MessageSquare size={16} className="flex-shrink-0" />
+                                                <span className="truncate">Ask me anything</span>
+                                                <span className="text-stone-400 text-[10px] font-medium flex-shrink-0">· {creator.responseWindowHours}h reply</span>
                                             </button>
                                         </div>
                                     )}

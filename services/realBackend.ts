@@ -77,7 +77,8 @@ const mapDbMessageToAppMessage = (m: any, currentUserId: string): Message => {
             role: line.role, // 'FAN' or 'CREATOR' stored in DB
             content: line.content,
             timestamp: line.created_at,
-            attachmentUrl: line.attachment_url
+            attachmentUrl: line.attachment_url,
+            isEdited: line.updated_at && line.updated_at !== line.created_at
         }));
     }
 
@@ -1006,15 +1007,23 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
     }
 };
 
-export const editChatMessage = async (chatLineId: string, newContent: string): Promise<void> => {
+export const editChatMessage = async (chatLineId: string, newContent: string, attachmentUrl?: string | null): Promise<void> => {
     if (!isConfigured) return;
 
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error("Not logged in");
 
+    const updatePayload: any = {
+        content: newContent,
+        updated_at: new Date().toISOString()
+    };
+    if (attachmentUrl !== undefined) {
+        updatePayload.attachment_url = attachmentUrl;
+    }
+
     const { error } = await supabase
         .from('chat_lines')
-        .update({ content: newContent })
+        .update(updatePayload)
         .eq('id', chatLineId)
         .eq('sender_id', session.session.user.id);
 
