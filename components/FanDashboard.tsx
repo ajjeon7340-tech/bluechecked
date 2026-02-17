@@ -340,11 +340,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       // PENDING
       const lastChat = msg.conversation[msg.conversation.length - 1];
       if (lastChat?.role === 'CREATOR') {
-          return { label: 'Creator answered', color: 'text-blue-600', icon: MessageSquare };
+          return { label: 'Creator answered', color: 'text-stone-700', icon: MessageSquare };
       }
       
       if (msg.isRead) {
-          return { label: 'Read', color: 'text-indigo-600', icon: Check };
+          return { label: 'Read', color: 'text-stone-600', icon: Check };
       }
       
       return { label: 'Not yet read', color: 'text-stone-400', icon: Clock };
@@ -552,7 +552,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           icon: Sparkles,
           text: 'Welcome to Bluechecked! Find a creator to start.',
           time: new Date(),
-          color: 'bg-indigo-100 text-indigo-600'
+          color: 'bg-stone-100 text-stone-600'
       });
 
       messages.forEach(msg => {
@@ -564,7 +564,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
               icon: Send,
               text: `You sent a request to ${msg.creatorName || 'Creator'}`,
               time: new Date(msg.createdAt),
-              color: 'bg-blue-100 text-blue-600',
+              color: 'bg-stone-100 text-stone-700',
               creatorId: msg.creatorId
           });
 
@@ -699,17 +699,17 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           : 'text-stone-500 hover:text-stone-900 hover:bg-stone-100'
       }`}
     >
-      <Icon size={18} className={`mr-3 ${currentView === view && !selectedCreatorId && !onClick ? 'text-indigo-600' : 'text-stone-400'}`} />
+      <Icon size={18} className={`mr-3 ${currentView === view && !selectedCreatorId && !onClick ? 'text-stone-900' : 'text-stone-400'}`} />
       <span>{label}</span>
       {isBeta && (
-          <span className="ml-2 bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded border border-indigo-200">BETA</span>
+          <span className="ml-2 bg-stone-100 text-stone-500 text-[10px] font-semibold px-1.5 py-0.5 rounded border border-stone-200">BETA</span>
       )}
     </button>
   );
 
   const ComingSoonOverlay = () => (
       <div className="absolute inset-0 bg-stone-50/70 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center text-stone-900">
-        <div className="bg-white p-2.5 rounded-full shadow-lg mb-2 ring-1 ring-slate-100 animate-in zoom-in duration-300">
+        <div className="bg-white p-2.5 rounded-full shadow-lg mb-2 ring-1 ring-stone-100 animate-in zoom-in duration-300">
             <Lock size={20} className="text-stone-400" />
         </div>
         <span className="font-bold text-xs uppercase tracking-wider text-stone-500 bg-white/80 px-3 py-1 rounded-full border border-stone-100">Coming Soon</span>
@@ -717,7 +717,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   );
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] flex font-sans text-stone-900 overflow-hidden">
+    <div className="min-h-screen bg-[#FAF9F6] flex font-sans text-stone-900 overflow-hidden">
         {/* Inject Animation Styles Globally for the Component */}
         <style>{`
             @keyframes sprinkle-fall {
@@ -742,14 +742,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         )}
 
         {/* 1. SIDEBAR */}
-        <aside className={`fixed inset-y-0 left-0 w-64 bg-[#F3F4F6] border-r border-stone-200 transform transition-transform duration-300 z-30 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+        <aside className={`fixed inset-y-0 left-0 w-64 bg-[#F5F3EE] border-r border-stone-200 transform transition-transform duration-300 z-30 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
             <div className="p-4 h-full flex flex-col">
                 {/* Brand */}
                 <div 
                     onClick={() => { setCurrentView('OVERVIEW'); setSelectedCreatorId(null); }}
                     className="flex items-center gap-2 px-3 py-4 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
                 >
-                    <BlueCheckLogo size={28} className="text-blue-600" />
+                    <BlueCheckLogo size={28} className="text-stone-900" />
                     <span className="font-bold text-stone-900 tracking-tight">BLUECHECKED</span>
                 </div>
 
@@ -797,7 +797,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         <main className="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden relative">
             {/* Demo Banner */}
             {!isBackendConfigured() && (
-                <div className="bg-indigo-600 text-white text-[10px] font-bold px-4 py-1 text-center z-50 shadow-sm">
+                <div className="bg-stone-800 text-white text-[10px] font-semibold px-4 py-1 text-center z-50">
                     DEMO MODE: Supabase not configured. Showing mock data.
                 </div>
             )}
@@ -817,7 +817,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             onClick={() => setShowTopUpModal(true)}
                             className="hidden sm:flex items-center gap-2 bg-stone-100 hover:bg-stone-200 transition-colors px-3 py-1.5 rounded-full text-xs font-bold text-stone-600 cursor-pointer"
                         >
-                            <Coins size={14} className="text-indigo-500" />
+                            <Coins size={14} className="text-stone-500" />
                             {currentUser?.credits || 0} Credits
                         </button>
                         <div className="relative">
@@ -874,21 +874,21 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
             </header>
 
             {/* Content Area */}
-            <div className="flex-1 overflow-auto relative bg-[#F7F9FC]">
+            <div className="flex-1 overflow-auto relative bg-[#FAF9F6]">
                 
                 {/* --- VIEW: PURCHASED (BETA) --- */}
                 {currentView === 'PURCHASED' && (
                     <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in">
-                        <div className="bg-indigo-900 text-white p-8 rounded-3xl shadow-xl relative overflow-hidden mb-8">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                        <div className="bg-stone-900 text-white p-8 rounded-2xl relative overflow-hidden mb-8">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                             <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div>
                                     <div className="flex items-center gap-2 mb-3">
-                                        <span className="bg-indigo-500/50 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-white/20 shadow-sm">Beta Access</span>
-                                        <Sparkles size={14} className="text-indigo-300" />
+                                        <span className="bg-white/10 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border border-white/10">Beta Access</span>
+                                        <Sparkles size={14} className="text-stone-400" />
                                     </div>
                                     <h3 className="font-bold text-2xl md:text-3xl mb-2">My Library</h3>
-                                    <p className="text-indigo-200 text-sm max-w-lg leading-relaxed">
+                                    <p className="text-stone-400 text-sm max-w-lg leading-relaxed">
                                         Your collection of premium digital assets, guides, and exclusive content from creators you support.
                                     </p>
                                 </div>
@@ -923,7 +923,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filteredProducts.map((product, idx) => (
                                     <div key={idx} className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col h-full relative">
-                                <div className="aspect-[4/3] bg-stone-100 relative overflow-hidden flex items-center justify-center p-8 group-hover:bg-indigo-50 transition-colors">
+                                <div className="aspect-[4/3] bg-stone-100 relative overflow-hidden flex items-center justify-center p-8 group-hover:bg-stone-50 transition-colors">
                                      <div className="bg-white shadow-lg p-0 w-24 h-32 rounded-sm border border-stone-200 relative transform group-hover:-rotate-3 transition-transform duration-500 flex items-center justify-center">
                                          <div className="absolute inset-x-2 top-2 bottom-2 border-2 border-dashed border-stone-100"></div>
                                          {(() => {
@@ -949,7 +949,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     <div className="mt-auto pt-4 border-t border-stone-50 flex justify-between items-center">
                                         <span className="text-[10px] text-stone-400">{new Date(product.purchaseDate).toLocaleDateString()}</span>
                                         <button 
-                                            className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
+                                            className="text-xs font-semibold text-stone-700 hover:underline flex items-center gap-1"
                                             onClick={async (e) => {
                                                 e.preventDefault();
                                                 try {
@@ -1001,7 +1001,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             <div>
                                 <h2 className="text-2xl font-black text-stone-900 tracking-tight flex items-center gap-2">
                                     Featured Experts
-                                    <button onClick={() => loadCreators()} className="p-1.5 text-stone-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors" title="Refresh List">
+                                    <button onClick={() => loadCreators()} className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-50 rounded-full transition-colors" title="Refresh List">
                                         <RefreshCw size={16} />
                                     </button>
                                 </h2>
@@ -1010,16 +1010,16 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             
                             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                                 <div className="relative group flex-1 sm:flex-initial">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-stone-600 transition-colors" size={16} />
                                     <input 
                                         type="text" 
                                         placeholder="Search creators, tags..." 
                                         value={exploreQuery}
                                         onChange={(e) => setExploreQuery(e.target.value)}
-                                        className="w-full sm:w-64 pl-10 pr-4 py-2.5 bg-white border border-stone-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
+                                        className="w-full sm:w-64 pl-10 pr-4 py-2.5 bg-white border border-stone-200 rounded-xl text-sm font-medium focus:ring-1 focus:ring-stone-400 outline-none transition-all shadow-sm"
                                     />
                                 </div>
-                                <select className="bg-white border border-stone-200 text-stone-700 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                                <select className="bg-white border border-stone-200 text-stone-700 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:ring-1 focus:ring-stone-400 shadow-sm">
                                     <option>Sort by: Relevance</option>
                                     <option>Sort by: Price (Low to High)</option>
                                     <option>Sort by: Response Time</option>
@@ -1042,7 +1042,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         <div 
                                             key={creator.id} 
                                             onClick={() => !isUnderReview && onBrowseCreators(creator.id)}
-                                            className={`group bg-white rounded-[2rem] p-6 border border-stone-100 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center text-center h-full relative overflow-hidden ${isUnderReview ? 'opacity-75' : ''}`}
+                                            className={`group bg-white rounded-[2rem] p-6 border border-stone-100 shadow-sm hover:shadow-xl hover:shadow-stone-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center text-center h-full relative overflow-hidden ${isUnderReview ? 'opacity-75' : ''}`}
                                         >
                                             {isUnderReview && (
                                                 <div className="absolute inset-0 z-50 flex items-center justify-center">
@@ -1053,7 +1053,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 </div>
                                             )}
                                             {/* Gradient Header */}
-                                            <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-slate-50 to-transparent opacity-60"></div>
+                                            <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-stone-50 to-transparent opacity-60"></div>
 
                                             {/* 1. Avatar (Centered & Larger) */}
                                             <div className="relative mb-4 z-10">
@@ -1070,7 +1070,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                                             {/* 2. Name & Info */}
                                             <div className="relative z-10 w-full mb-5">
-                                                <h3 className={`font-black text-stone-900 text-lg leading-tight group-hover:text-indigo-600 transition-colors mb-1 truncate px-2 ${isUnderReview ? 'blur-sm opacity-40 select-none' : ''}`}>
+                                                <h3 className={`font-black text-stone-900 text-lg leading-tight group-hover:text-stone-900 transition-colors mb-1 truncate px-2 ${isUnderReview ? 'blur-sm opacity-40 select-none' : ''}`}>
                                                     {isUnderReview ? 'Creator Name' : creator.displayName}
                                                 </h3>
                                                 <div className="flex items-center justify-center gap-1.5 mb-3 mt-2">
@@ -1101,7 +1101,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     {/* Custom Tooltip */}
                                                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[140px] bg-stone-800 text-white text-[10px] font-medium py-1.5 px-2.5 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50 text-center shadow-xl">
                                                         {getResponseTimeTooltip(creator.stats.responseTimeAvg)}
-                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-stone-800"></div>
                                                     </div>
                                                 </div>
                                                 <div className="bg-stone-50 rounded-xl p-2.5 border border-stone-100 flex flex-col items-center justify-center">
@@ -1112,7 +1112,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                                             {/* 4. Action */}
                                             <div className="mt-auto w-full relative z-10">
-                                                <button className="w-full bg-blue-600 text-white rounded-xl py-3 text-sm font-bold shadow-lg shadow-blue-600/20 group-hover:bg-blue-700 group-hover:shadow-blue-600/30 transition-all flex items-center justify-center gap-2">
+                                                <button className="w-full bg-stone-900 text-white rounded-xl py-3 text-sm font-bold shadow-lg shadow-stone-900/20 group-hover:bg-stone-800 group-hover:shadow-stone-900/30 transition-all flex items-center justify-center gap-2">
                                                     <Sparkles size={14} className="text-yellow-300" />
                                                     <span>Request</span>
                                                     <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-mono">{creator.pricePerMessage}</span>
@@ -1154,7 +1154,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             <th className="px-6 py-3 text-right">Amount (Credits)</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100">
+                                    <tbody className="divide-y divide-stone-100">
                                         {displayedMessages.map(msg => {
                                             const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
                                             const isProduct = msg.content.startsWith('Purchased Product:');
@@ -1208,7 +1208,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                              </div>
 
                              {/* Mobile List View */}
-                             <div className="md:hidden divide-y divide-slate-100">
+                             <div className="md:hidden divide-y divide-stone-100">
                                 {displayedMessages.map(msg => {
                                     const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
                                     const isProduct = msg.content.startsWith('Purchased Product:');
@@ -1274,9 +1274,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                     <div className="p-6 max-w-2xl mx-auto animate-in fade-in flex items-center justify-center min-h-[500px]">
                          <div className="bg-white p-8 rounded-3xl border border-stone-200 shadow-xl shadow-stone-200/50 text-center space-y-6 max-w-md w-full relative overflow-hidden">
                              {/* Decorative Background */}
-                             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
-                             
-                             <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto mb-4 shadow-inner ring-4 ring-blue-50/50">
+                             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-stone-500 via-stone-700 to-stone-900"></div>
+
+                             <div className="w-20 h-20 bg-stone-50 text-stone-700 rounded-[2rem] flex items-center justify-center mx-auto mb-4 shadow-inner ring-4 ring-stone-50/50">
                                  <AlertCircle size={40} />
                              </div>
                              
@@ -1288,7 +1288,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                              </div>
 
                              <div className="space-y-3 pt-2">
-                                 <Button fullWidth className="h-12 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-900/10">
+                                 <Button fullWidth className="h-12 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-stone-900/10">
                                     <MessageSquare size={18}/> Contact Support
                                  </Button>
                                  <Button fullWidth variant="secondary" className="h-12 rounded-xl flex items-center justify-center gap-2 bg-stone-50 hover:bg-stone-100 border border-stone-200">
@@ -1298,7 +1298,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                              <div className="pt-6 border-t border-stone-100">
                                  <p className="text-xs text-stone-400">
-                                     Direct Email: <a href="#" className="text-indigo-600 font-bold hover:underline">support@bluechecked.com</a>
+                                     Direct Email: <a href="#" className="text-stone-900 font-semibold hover:underline">support@bluechecked.com</a>
                                  </p>
                              </div>
                          </div>
@@ -1393,13 +1393,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                              <h3 className="text-sm font-bold text-stone-900">Your Conversations</h3>
                              {/* Search Input - More Prominent */}
                              <div className="relative w-full sm:w-auto group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-stone-600 transition-colors" size={16} />
                                 <input 
                                     type="text" 
                                     placeholder="Search messages..." 
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full sm:w-72 pl-10 pr-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all shadow-sm"
+                                    className="w-full sm:w-72 pl-10 pr-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:ring-1 focus:ring-stone-400 focus:bg-white outline-none transition-all shadow-sm"
                                 />
                              </div>
                          </div>
@@ -1416,7 +1416,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     {searchQuery ? 'Try a different search term.' : 'Find an expert to help you solve your problem.'}
                                 </p>
                                 {!searchQuery && (
-                                    <Button onClick={() => setCurrentView('EXPLORE')} className="rounded-full shadow-lg shadow-indigo-200">
+                                    <Button onClick={() => setCurrentView('EXPLORE')} className="rounded-full shadow-lg shadow-stone-200">
                                         Explore Creators
                                     </Button>
                                 )}
@@ -1484,7 +1484,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 </table>
                             </div>
                             {/* Mobile Cards */}
-                            <div className="md:hidden divide-y divide-slate-100">
+                            <div className="md:hidden divide-y divide-stone-100">
                                 {filteredGroups.map(group => {
                                     const latestMsg = group.latestMessage;
                                     const timeLeft = getTimeLeft(latestMsg.expiresAt);
@@ -1523,7 +1523,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             </p>
                                             <div className="flex justify-between items-center mt-2">
                                                 <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{group.messageCount} Sessions</span>
-                                                <div className="text-xs font-bold text-blue-600 flex items-center gap-1">View <ChevronRight size={14} /></div>
+                                                <div className="text-xs font-bold text-stone-700 flex items-center gap-1">View <ChevronRight size={14} /></div>
                                             </div>
                                         </div>
                                     )
@@ -1537,7 +1537,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                 {/* --- VIEW: CHAT (Sub-view of Overview) --- */}
                 {selectedCreatorId && (
-                     <div className="h-full flex flex-col bg-[#F0F2F5] animate-in slide-in-from-right-4 relative">
+                     <div className="h-full flex flex-col bg-[#F0EEEA] animate-in slide-in-from-right-4 relative">
                         {/* Celebration Overlay */}
                         {showReadCelebration && (
                             <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
@@ -1580,8 +1580,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 const lastChat = latestMessage.conversation[latestMessage.conversation.length - 1];
                                 if (!lastChat || lastChat.role === 'FAN') {
                                     return (
-                                        <div className="bg-indigo-600 text-white px-4 py-2 text-center text-xs font-bold shadow-md animate-in slide-in-from-top-2 z-10 flex items-center justify-center gap-2">
-                                            <Sparkles size={14} className="text-yellow-300 animate-pulse" />
+                                        <div className="bg-stone-800 text-white px-4 py-2 text-center text-xs font-semibold animate-in slide-in-from-top-2 z-10 flex items-center justify-center gap-2">
+                                            <Sparkles size={14} className="text-stone-300 animate-pulse" />
                                             <span>{currentCreator?.displayName || 'Creator'} has read your message!</span>
                                         </div>
                                     );
@@ -1604,7 +1604,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     <div key={msg.id} className={`px-4 py-3 ${msgIndex > 0 ? 'border-t border-stone-100' : ''} relative`}>
                                         {/* Main Thread Line */}
                                         {(restChats.length > 0 || isPending) && (
-                                            <div className="absolute left-[2.125rem] top-12 bottom-6 w-0.5 bg-stone-200 -z-10"></div>
+                                            <div className="absolute left-[2.125rem] top-12 bottom-0 w-0.5 bg-stone-200 -z-10"></div>
                                         )}
 
                                         {/* 1. First Message (The Request) */}
@@ -1625,18 +1625,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                                             {/* Right: Content */}
                                             <div className="flex-1 min-w-0">
-                                                <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 transition-transform duration-300">
+                                                <div className="bg-white p-5 sm:p-6 rounded-2xl border border-stone-200/60">
                                                     {/* Header Row */}
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="font-semibold text-lg tracking-tight text-[#1A1A1A]">{currentUser?.name || 'You'}</span>
-                                                            <span className="text-xs font-medium text-[#94A3B8]">• {getRelativeTime(firstChat.timestamp)}</span>
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-semibold text-sm text-stone-900">{currentUser?.name || 'You'}</span>
+                                                            <span className="text-xs font-medium text-stone-400">• {getRelativeTime(firstChat.timestamp)}</span>
                                                         </div>
                                                     </div>
 
                                                     {/* Content */}
-                                                    <div className="mt-2">
-                                                        <p className="text-base text-[#2D2D2D] leading-loose">{firstChat.content}</p>
+                                                    <div>
+                                                        <p className="text-sm text-stone-700 leading-relaxed">{firstChat.content}</p>
 
                                                         {/* Attachment */}
                                                         {msg.attachmentUrl && (
@@ -1671,8 +1671,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        <div className="flex items-center gap-1.5 text-stone-500 ml-auto text-[13px]">
-                                                            <Coins size={14} className="text-amber-500" />
+                                                        <div className="flex items-center gap-1.5 text-stone-400 ml-auto text-xs">
+                                                            <Coins size={12} className="text-stone-400" />
                                                             <span>{msg.amount}</span>
                                                             {isPending && (
                                                                 <>
@@ -1691,16 +1691,23 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         {restChats.map((chat, idx) => {
                                             const isCreator = chat.role === 'CREATOR';
                                             const isLast = idx === restChats.length - 1;
+                                            const isNextCreator = idx < restChats.length - 1 && restChats[idx + 1].role === 'CREATOR';
+                                            const isContinuousCreator = isCreator && idx > 0 && restChats[idx - 1].role === 'CREATOR';
 
                                             return (
                                             <div key={chat.id} className={`flex mt-4 relative z-10 ${isCreator ? 'ml-8' : ''}`}>
                                                 {/* Connector for Creator Reply */}
-                                                {isCreator && (
-                                                    <div className="absolute -left-[0.875rem] top-0 h-[1.125rem] w-[0.875rem] border-l-2 border-b-2 border-stone-200 rounded-bl-xl -z-10"></div>
+                                                {isCreator && !isContinuousCreator && (
+                                                    <div className="absolute -left-3.5 top-0 h-[1.125rem] w-8 border-l-2 border-b-2 border-stone-200 rounded-bl-xl -z-10"></div>
                                                 )}
 
                                                 {/* Left: Avatar + Thread Line */}
-                                                <div className="flex flex-col items-center mr-3">
+                                                <div className="flex flex-col items-center mr-3 relative">
+                                                    {/* Vertical Thread Line for Continuous Creator Messages */}
+                                                    {isCreator && isNextCreator && (
+                                                        <div className="absolute left-1/2 -translate-x-1/2 top-9 -bottom-4 w-0.5 bg-stone-200 -z-10"></div>
+                                                    )}
+                                                    
                                                     <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
                                                         {isCreator ? (
                                                             msg.creatorAvatarUrl ? (
@@ -1722,22 +1729,28 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 <div className="flex-1 min-w-0 pb-2">
                                                     {/* Header Row - Moved Outside Card */}
                                                     <div className="flex items-center justify-between mb-2 ml-1">
-                                                        <div className="flex items-center gap-3">
-                                                                <span className="font-semibold text-lg tracking-tight text-[#1A1A1A]">
+                                                        <div className="flex items-center gap-2">
+                                                                <span className="font-semibold text-sm text-stone-900">
                                                                     {isCreator ? (msg.creatorName || 'Creator') : (currentUser?.name || 'You')}
                                                                 </span>
                                                                 {isCreator && (
-                                                                    <div className="flex items-center gap-1.5 bg-blue-50/50 text-blue-600 px-2.5 py-1 rounded-full">
-                                                                        <CheckCircle2 size={12} className="fill-current" />
-                                                                        <span className="text-[10px] font-bold uppercase tracking-wide">Certified</span>
+                                                                    <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                                                                        <CheckCircle2 size={10} className="fill-current" />
+                                                                        <span className="text-[9px] font-semibold uppercase tracking-wide">Creator</span>
                                                                     </div>
                                                                 )}
-                                                            <span className="text-xs font-medium text-[#94A3B8]">• {getRelativeTime(chat.timestamp)}</span>
+                                                            <span className="text-xs font-medium text-stone-400">• {getRelativeTime(chat.timestamp)}</span>
                                                         </div>
                                                     </div>
-                                                    <div className={`${isCreator ? 'bg-[#FAFAFA]' : 'bg-white'} p-5 sm:p-6 rounded-[2rem] rounded-tl-none shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 transition-transform duration-300`}>
+                                                    <div className={`${isCreator ? 'bg-stone-50' : 'bg-white'} p-5 sm:p-6 rounded-2xl rounded-tl-lg border border-stone-200/60`}>
                                                         {/* Content */}
-                                                        <p className="text-base text-[#2D2D2D] leading-loose">{chat.content}</p>
+                                                        <p className="text-sm text-stone-700 leading-relaxed">{chat.content}</p>
+
+                                                        {chat.attachmentUrl && (
+                                                            <div className="mt-3 rounded-lg overflow-hidden border border-stone-200">
+                                                                <img src={chat.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
+                                                            </div>
+                                                        )}
 
                                                         {/* Action Row */}
                                                         <div className="flex items-center gap-0 mt-4 -ml-2">
@@ -1811,7 +1824,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 return (
                                                     <>
                                                         <div className="bg-white p-2 rounded-full border border-stone-200 shadow-sm">
-                                                            <MessageSquare size={20} className="text-blue-500" />
+                                                            <MessageSquare size={20} className="text-stone-700" />
                                                         </div>
                                                         <div>
                                                             <p className="text-sm font-bold text-stone-700">Creator answering</p>
@@ -1823,7 +1836,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 return (
                                                     <>
                                                         <div className="bg-white p-2 rounded-full border border-stone-200 shadow-sm">
-                                                            <Check size={20} className="text-indigo-500" />
+                                                            <Check size={20} className="text-stone-500" />
                                                         </div>
                                                         <div>
                                                             <p className="text-sm font-bold text-stone-700">Read</p>
@@ -1894,7 +1907,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                          value={reviewText}
                                                          onChange={(e) => setReviewText(e.target.value)}
                                                          placeholder="Write a review (optional)..."
-                                                         className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none h-20 mb-3"
+                                                         className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm focus:ring-1 focus:ring-stone-400 outline-none resize-none h-20 mb-3"
                                                      />
                                                      <Button 
                                                          fullWidth 
@@ -1921,7 +1934,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                              <button 
                                                 onClick={() => setCustomAppreciationMode(true)}
                                                 disabled={!!hasThanked}
-                                                className={`flex items-center justify-center gap-2 bg-white border border-stone-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 text-stone-600 font-bold py-2 text-sm rounded-xl transition-all shadow-sm ${hasThanked ? 'opacity-60 cursor-not-allowed bg-stone-50' : ''}`}
+                                                className={`flex items-center justify-center gap-2 bg-white border border-stone-200 hover:border-stone-300 hover:bg-stone-50 text-stone-600 font-semibold py-2 text-sm rounded-xl transition-all ${hasThanked ? 'opacity-60 cursor-not-allowed bg-stone-50' : ''}`}
                                              >
                                                  <Heart size={16} className={hasThanked ? "fill-pink-500 text-pink-500" : ""} /> {hasThanked ? 'Thanks Sent' : 'Send Thanks'}
                                              </button>
@@ -1949,7 +1962,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 value={showFollowUpInput ? followUpText : customAppreciationText}
                                                 onChange={e => showFollowUpInput ? setFollowUpText(e.target.value) : setCustomAppreciationText(e.target.value)}
                                                 placeholder={showFollowUpInput ? "Ask another question..." : "Write a nice note..."}
-                                                className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none h-24 mb-3"
+                                                className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm focus:ring-1 focus:ring-stone-400 outline-none resize-none h-24 mb-3"
                                              />
 
                                              {showFollowUpInput && (
@@ -1996,7 +2009,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     )}
                                 </div>
                             </div>
-                            <div className="divide-y divide-slate-100">
+                            <div className="divide-y divide-stone-100">
                                 {displayedNotifications.length === 0 ? (
                                     <div className="p-12 text-center text-stone-400 text-sm">No notifications yet.</div>
                                 ) : (
@@ -2066,10 +2079,10 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 <button 
                                 key={amt}
                                 onClick={() => setTopUpAmount(amt)}
-                                className={`p-3 rounded-xl border text-center transition-all ${topUpAmount === amt ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-white border-stone-200 hover:border-stone-300 text-stone-900'}`}
+                                className={`p-3 rounded-xl border text-center transition-all ${topUpAmount === amt ? 'bg-stone-900 border-stone-900 text-white' : 'bg-white border-stone-200 hover:border-stone-300 text-stone-900'}`}
                                 >
-                                    <div className="font-black text-lg">{amt}</div>
-                                    <div className={`text-[10px] font-bold uppercase ${topUpAmount === amt ? 'text-indigo-200' : 'text-stone-400'}`}>Credits</div>
+                                    <div className="font-bold text-lg">{amt}</div>
+                                    <div className={`text-[10px] font-semibold uppercase ${topUpAmount === amt ? 'text-stone-400' : 'text-stone-400'}`}>Credits</div>
                                 </button>
                             ))}
                         </div>
@@ -2099,9 +2112,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         {toastMessage && (
             <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-4 fade-in duration-500">
                 <div className="relative overflow-hidden bg-stone-900 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-4 border border-white/10 ring-1 ring-white/20">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 opacity-20"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-stone-500 via-stone-700 to-stone-900 opacity-20"></div>
                     <div className="relative z-10 flex items-center gap-3">
-                        <div className="bg-gradient-to-tr from-blue-400 to-indigo-500 p-1.5 rounded-full shadow-lg shadow-indigo-500/20">
+                        <div className="bg-gradient-to-tr from-stone-600 to-stone-800 p-1.5 rounded-full shadow-lg shadow-stone-800/20">
                             <Send size={16} className="text-white fill-white" />
                         </div>
                         <div>

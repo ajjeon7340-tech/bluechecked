@@ -117,6 +117,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [replyText, setReplyText] = useState('');
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [isSendingReply, setIsSendingReply] = useState(false);
+  const [replyAttachment, setReplyAttachment] = useState<string | null>(null);
+  const [isUploadingReplyAttachment, setIsUploadingReplyAttachment] = useState(false);
+  const replyFileInputRef = useRef<HTMLInputElement>(null);
   const [isRejecting, setIsRejecting] = useState(false);
   const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null);
   const [showCollectAnimation, setShowCollectAnimation] = useState(false);
@@ -135,6 +138,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [avatarFileName, setAvatarFileName] = useState('');
   const [newLinkType, setNewLinkType] = useState<'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT'>('EXTERNAL');
   const [newLinkPrice, setNewLinkPrice] = useState('');
+  const [newLinkThumbnail, setNewLinkThumbnail] = useState('');
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
 
   // Mobile Sidebar Toggle
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -246,7 +251,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                   icon: MessageSquare,
                   text: `New request from ${msg.senderName}`,
                   time: new Date(msg.createdAt),
-                  color: 'bg-blue-100 text-blue-600',
+                  color: 'bg-stone-100 text-stone-600',
                   senderEmail: msg.senderEmail
               });
           }
@@ -540,6 +545,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
         await Promise.all(unread.map(m => markMessageAsRead(m.id)));
     }
     setReplyText(''); // Reset reply input for fresh chat
+    setReplyAttachment(null);
     setConfirmRejectId(null);
     if (currentView !== 'INBOX') {
         setCurrentView('INBOX');
@@ -577,27 +583,45 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setIsGeneratingAI(false);
   };
 
+  const handleReplyFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      setIsUploadingReplyAttachment(true);
+      try {
+          const url = await uploadProductFile(file, creator.id);
+          setReplyAttachment(url);
+      } catch (error) {
+          console.error("Upload failed", error);
+          alert("Failed to upload attachment.");
+      } finally {
+          setIsUploadingReplyAttachment(false);
+      }
+  };
+
   const handleSendReply = async (isComplete: boolean) => {
     if (!activeMessage) return;
     
     const hasText = replyText.trim().length > 0;
+    const hasAttachment = !!replyAttachment;
     // CRITICAL FIX: Exclude auto-replies when checking for creator participation
     const hasManualReply = activeMessage.conversation.some(m => m.role === 'CREATOR' && !m.id.endsWith('-auto'));
 
     // Validation: 
-    // 1. If sending a partial reply (not complete), must have text.
-    if (!isComplete && !hasText) return; 
+    // 1. If sending a partial reply (not complete), must have text or attachment.
+    if (!isComplete && !hasText && !hasAttachment) return; 
     
-    // 2. If completing, must have EITHER text OR a previous MANUAL reply history.
-    if (isComplete && !hasText && !hasManualReply) return;
+    // 2. If completing, must have EITHER (text OR attachment) OR a previous MANUAL reply history.
+    if (isComplete && !hasText && !hasAttachment && !hasManualReply) return;
 
     setIsSendingReply(true);
     await new Promise(r => setTimeout(r, 800)); // Simulate delay
     
     // The backend now handles empty replyText by skipping message creation but updating status
-    await replyToMessage(activeMessage.id, replyText, isComplete);
+    await replyToMessage(activeMessage.id, replyText, isComplete, replyAttachment);
     await loadData(true); 
     setReplyText('');
+    setReplyAttachment(null);
     setIsSendingReply(false);
 
     if (isComplete) {
@@ -727,6 +751,27 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
      }));
   };
 
+  const handleLinkThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>, linkId?: string) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (!linkId) setIsUploadingThumbnail(true);
+      
+      try {
+          const url = await uploadProductFile(file, creator.id);
+          if (linkId) {
+              handleUpdateLink(linkId, 'thumbnailUrl', url);
+          } else {
+              setNewLinkThumbnail(url);
+          }
+      } catch (error) {
+          console.error("Upload failed", error);
+          alert("Failed to upload thumbnail.");
+      } finally {
+          if (!linkId) setIsUploadingThumbnail(false);
+      }
+  };
+
   const handleAddLink = () => {
     if (!newLinkTitle.trim()) return;
     if (newLinkType !== 'SUPPORT' && !newLinkUrl.trim()) return;
@@ -744,7 +789,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       fileName: newFileName,
       isPromoted: false,
       type: newLinkType,
-      price: (newLinkType === 'DIGITAL_PRODUCT' || newLinkType === 'SUPPORT') && newLinkPrice ? Number(newLinkPrice) : undefined
+      price: (newLinkType === 'DIGITAL_PRODUCT' || newLinkType === 'SUPPORT') && newLinkPrice ? Number(newLinkPrice) : undefined,
+      thumbnailUrl: newLinkThumbnail
     };
     
     setEditedCreator(prev => ({ ...prev, links: [...(prev.links || []), newLink] }));
@@ -752,6 +798,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setNewLinkUrl('');
     setNewFileName('');
     setNewLinkPrice('');
+    setNewLinkThumbnail('');
     setNewLinkType('EXTERNAL');
   };
 
@@ -851,7 +898,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     const diff = new Date(expiresAt).getTime() - Date.now();
     const hours = Math.floor(diff / (1000 * 60 * 60));
     if (diff < 0) return { text: 'Expired', color: 'text-red-600', bg: 'bg-red-50' };
-    if (hours < 4) return { text: `${hours}h left`, color: 'text-amber-600', bg: 'bg-amber-50' };
+    if (hours < 4) return { text: `${hours}h left`, color: 'text-stone-500', bg: 'bg-amber-50' };
     return { text: `${hours}h left`, color: 'text-stone-500', bg: 'bg-stone-100' };
   };
 
@@ -879,11 +926,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       }`}
     >
       <div className="flex items-center gap-3">
-        <Icon size={18} className={currentView === view ? 'text-indigo-600' : 'text-stone-400'} />
+        <Icon size={18} className={currentView === view ? 'text-stone-900' : 'text-stone-400'} />
         <span>{label}</span>
       </div>
       {badge ? (
-        <span className="bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+        <span className="bg-stone-900 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
             {badge}
         </span>
       ) : null}
@@ -894,7 +941,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const analyticsData = creator.isPremium ? proData : DUMMY_PRO_DATA;
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] flex font-sans text-stone-900 overflow-hidden">
+    <div className="min-h-screen bg-[#FAF9F6] flex font-sans text-stone-900 overflow-hidden">
       {/* Mobile Sidebar Overlay - Fixes menu close bug */}
       {isSidebarOpen && (
         <div 
@@ -904,14 +951,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       )}
 
       {/* 1. LEFT SIDEBAR */}
-      <aside className={`fixed inset-y-0 left-0 w-64 bg-[#F3F4F6] border-r border-stone-200 transform transition-transform duration-300 z-30 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 flex flex-col`}>
+      <aside className={`fixed inset-y-0 left-0 w-64 bg-[#F5F3EE] border-r border-stone-200 transform transition-transform duration-300 z-30 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 flex flex-col`}>
         <div className="p-4 flex flex-col h-full">
             {/* Brand */}
             <div 
                 onClick={() => { setCurrentView('OVERVIEW'); setSelectedSenderEmail(null); }}
                 className="flex items-center gap-2 px-3 py-4 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
             >
-                <BlueCheckLogo size={28} className="text-blue-600" />
+                <BlueCheckLogo size={28} className="text-stone-900" />
                 <span className="font-bold text-stone-900 tracking-tight">BLUECHECKED</span>
                 {creator.isPremium && (
                    <span className="bg-yellow-100 text-yellow-700 text-[9px] font-bold px-1.5 py-0.5 rounded border border-yellow-200 ml-1">PRO</span>
@@ -938,13 +985,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <div className="px-3 mb-4">
                     <button 
                         onClick={() => { setIsSidebarOpen(false); setShowPremiumModal(true); }}
-                        className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl p-3 shadow-lg shadow-indigo-500/20 hover:scale-[1.02] transition-transform text-left group relative overflow-hidden"
+                        className="w-full bg-stone-900 text-white rounded-xl p-3 hover:bg-stone-800 transition-all text-left group relative overflow-hidden"
                     >
                         <div className="relative z-10">
                             <div className="flex items-center gap-2 font-bold text-sm mb-1">
                                 <Sparkles size={14} className="text-yellow-300 fill-yellow-300" /> Upgrade to Pro
                             </div>
-                            <p className="text-sm text-indigo-100">Unlock detailed analytics & 0% fees.</p>
+                            <p className="text-sm text-stone-400">Unlock detailed analytics & 0% fees.</p>
                         </div>
                         <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                     </button>
@@ -996,7 +1043,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     <input 
                         type="text" 
                         placeholder="Search..." 
-                        className="pl-9 pr-4 py-2 bg-stone-100 border-none rounded-lg text-sm text-stone-600 focus:ring-2 focus:ring-slate-200 outline-none w-64 transition-all"
+                        className="pl-9 pr-4 py-2 bg-stone-100 border-none rounded-lg text-sm text-stone-600 focus:ring-2 focus:ring-stone-200 outline-none w-64 transition-all"
                     />
                 </div>
                 <div className="relative">
@@ -1050,7 +1097,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 </div>
 
                 <div className="h-6 w-px bg-stone-200"></div>
-                <button onClick={onViewProfile} className="text-sm font-medium text-stone-600 hover:text-indigo-600 flex items-center gap-1">
+                <button onClick={onViewProfile} className="text-sm font-medium text-stone-600 hover:text-stone-900 flex items-center gap-1">
                     Public Page <ExternalLink size={14} />
                 </button>
             </div>
@@ -1068,60 +1115,52 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         <h1 className="text-2xl sm:text-3xl font-semibold text-stone-900 tracking-tight">{creator.displayName}</h1>
                     </div>
 
-                    {/* Stats Grid - Weverse Warm Cards */}
+                    {/* Stats Grid */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                         {/* Total Earned */}
-                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-5 rounded-2xl border border-amber-100/50 group hover:shadow-md transition-all">
+                        <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
                             <div className="flex items-center gap-2 mb-3">
-                                <div className="w-8 h-8 rounded-xl bg-white/80 flex items-center justify-center shadow-sm">
-                                    <Coins size={16} className="text-amber-600"/>
-                                </div>
-                                <span className="text-xs font-medium text-stone-500">Credits Earned</span>
+                                <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Coins size={14}/></div>
+                                <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Credits Earned</span>
                             </div>
-                            <div className="text-2xl sm:text-3xl font-semibold text-stone-900 tracking-tight">{stats.totalEarnings.toLocaleString()}</div>
-                            <div className="mt-2 text-xs text-emerald-600 font-medium">+12% this week</div>
+                            <div className="text-2xl font-bold text-stone-900 tracking-tight">{stats.totalEarnings.toLocaleString()}</div>
+                            <div className="text-[11px] text-emerald-600 font-medium mt-1.5">+12% this week</div>
                         </div>
 
                         {/* Pending */}
-                        <div className="bg-white p-5 rounded-2xl border border-stone-100 group hover:shadow-md hover:border-stone-200 transition-all">
+                        <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
                             <div className="flex items-center gap-2 mb-3">
-                                <div className="w-8 h-8 rounded-xl bg-stone-50 flex items-center justify-center">
-                                    <Clock size={16} className="text-stone-600"/>
-                                </div>
-                                <span className="text-xs font-medium text-stone-500">Pending</span>
+                                <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Clock size={14}/></div>
+                                <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Pending</span>
                             </div>
-                            <div className="text-2xl sm:text-3xl font-semibold text-stone-900 tracking-tight">{stats.pendingCount}</div>
-                            <div className="mt-2 text-xs text-stone-400">Awaiting reply</div>
+                            <div className="text-2xl font-bold text-stone-900 tracking-tight">{stats.pendingCount}</div>
+                            <div className="text-[11px] text-stone-400 font-medium mt-1.5">Awaiting reply</div>
                         </div>
 
                         {/* Response Rate */}
-                        <div className="bg-white p-5 rounded-2xl border border-stone-100 group hover:shadow-md hover:border-stone-200 transition-all">
+                        <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
                             <div className="flex items-center gap-2 mb-3">
-                                <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
-                                    <CheckCircle2 size={16} className="text-emerald-600"/>
-                                </div>
-                                <span className="text-xs font-medium text-stone-500">Response Rate</span>
+                                <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><CheckCircle2 size={14}/></div>
+                                <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Response Rate</span>
                             </div>
-                            <div className="text-2xl sm:text-3xl font-semibold text-stone-900 tracking-tight">{stats.responseRate}%</div>
+                            <div className="text-2xl font-bold text-stone-900 tracking-tight">{stats.responseRate}%</div>
                             {/* @ts-ignore */}
-                            <div className="mt-2 text-xs text-stone-400">Avg: {stats.avgResponseTime}</div>
+                            <div className="text-[11px] text-stone-400 font-medium mt-1.5">Avg: {stats.avgResponseTime}</div>
                         </div>
 
                         {/* Total Requests */}
-                        <div className="bg-white p-5 rounded-2xl border border-stone-100 group hover:shadow-md hover:border-stone-200 transition-all">
+                        <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
                             <div className="flex items-center gap-2 mb-3">
-                                <div className="w-8 h-8 rounded-xl bg-violet-50 flex items-center justify-center">
-                                    <MessageSquare size={16} className="text-violet-600"/>
-                                </div>
-                                <span className="text-xs font-medium text-stone-500">Total Requests</span>
+                                <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><MessageSquare size={14}/></div>
+                                <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Total Requests</span>
                             </div>
-                            <div className="text-2xl sm:text-3xl font-semibold text-stone-900 tracking-tight">{incomingMessages.length.toLocaleString()}</div>
-                            <div className="mt-2 text-xs text-stone-400">Lifetime</div>
+                            <div className="text-2xl font-bold text-stone-900 tracking-tight">{incomingMessages.length.toLocaleString()}</div>
+                            <div className="text-[11px] text-stone-400 font-medium mt-1.5">Lifetime</div>
                         </div>
                     </div>
                     {/* ... Charts ... */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden h-96 flex flex-col">
+                        <div className="bg-white p-6 rounded-2xl border border-stone-200/60 shadow-sm relative overflow-hidden h-96 flex flex-col">
                             <h3 className="font-bold text-stone-900 mb-6 flex items-center justify-between flex-shrink-0">
                                 <div className="flex items-center gap-2">
                                     <span>Credit Trend</span>
@@ -1159,14 +1198,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     <AreaChart data={trendData}>
                                         <defs>
                                             <linearGradient id="colorEarnings" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
-                                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                                <stop offset="5%" stopColor="#78716c" stopOpacity={0.15}/>
+                                                <stop offset="95%" stopColor="#78716c" stopOpacity={0}/>
                                             </linearGradient>
                                         </defs>
-                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} domain={[0, (dataMax: number) => Math.max(dataMax, 10000)]} />
-                                        <Tooltip cursor={{fill: '#f1f5f9'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}} />
-                                        <Area type="monotone" dataKey="totalRevenue" stroke="#6366f1" fillOpacity={1} fill="url(#colorEarnings)" />
+                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#a8a29e', fontSize: 12}} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#a8a29e', fontSize: 12}} domain={[0, (dataMax: number) => Math.max(dataMax, 10000)]} />
+                                        <Tooltip cursor={{fill: 'rgba(120, 113, 108, 0.06)'}} contentStyle={{borderRadius: '12px', border: '1px solid #e7e5e4', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)', backgroundColor: '#fff'}} />
+                                        <Area type="monotone" dataKey="totalRevenue" stroke="#78716c" strokeWidth={2} fillOpacity={1} fill="url(#colorEarnings)" />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </div>
@@ -1174,7 +1213,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             {!creator.isPremium && (
                                 <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
                                     <div className="bg-white/80 backdrop-blur-md border border-white/50 p-6 rounded-2xl shadow-xl flex flex-col items-center max-w-xs text-center">
-                                        <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mb-3 text-indigo-600">
+                                        <div className="w-10 h-10 bg-stone-100 rounded-full flex items-center justify-center mb-3 text-stone-500">
                                             <Lock size={20} />
                                         </div>
                                         <h4 className="font-bold text-stone-900 mb-1">Unlock detailed trends</h4>
@@ -1216,7 +1255,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         )}
                                         <button 
                                             onClick={() => setCurrentView('REVIEWS')}
-                                            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-2 py-1 rounded transition-colors"
+                                            className="text-xs font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-50 px-2 py-1 rounded transition-colors"
                                         >
                                             View All
                                         </button>
@@ -1301,7 +1340,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <ChevronLeft size={16} />
                                         </button>
                                         <div className="flex items-center gap-2 px-2 min-w-[120px] justify-center">
-                                            <Calendar size={14} className="text-indigo-500" />
+                                            <Calendar size={14} className="text-stone-400" />
                                             <span className="text-xs font-bold text-stone-900">{getStatsDateLabel()}</span>
                                         </div>
                                         <button onClick={() => handleDateNavigate('NEXT')} className="p-1 hover:bg-stone-100 rounded text-stone-500">
@@ -1316,78 +1355,66 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                      {/* CONTENT FOR STATISTICS (ACTIVITY) */}
                      {currentView === 'STATISTICS' && (
                          <>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in zoom-in-95 duration-300">
-                                <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group">
-                                    <div className="absolute right-0 top-0 w-24 h-24 bg-purple-50 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
-                                    <div className="relative z-10">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg"><Eye size={16}/></div>
-                                            <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">Total Views</span>
-                                        </div>
-                                        <div className="text-3xl font-black text-stone-900">
-                                            {detailedStats.reduce((acc, curr) => acc + curr.views, 0).toLocaleString()}
-                                        </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in zoom-in-95 duration-300">
+                                <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Eye size={14}/></div>
+                                        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Total Views</span>
+                                    </div>
+                                    <div className="text-2xl font-bold text-stone-900 tracking-tight">
+                                        {detailedStats.reduce((acc, curr) => acc + curr.views, 0).toLocaleString()}
                                     </div>
                                 </div>
-                                <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group">
-                                    <div className="absolute right-0 top-0 w-24 h-24 bg-pink-50 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
-                                    <div className="relative z-10">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="p-1.5 bg-pink-100 text-pink-600 rounded-lg"><Heart size={16} className="fill-current"/></div>
-                                            <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">Total Likes</span>
-                                        </div>
-                                        <div className="text-3xl font-black text-stone-900">
-                                            {detailedStats.reduce((acc, curr) => acc + curr.likes, 0).toLocaleString()}
-                                        </div>
+                                <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Heart size={14} className="fill-current"/></div>
+                                        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Total Likes</span>
+                                    </div>
+                                    <div className="text-2xl font-bold text-stone-900 tracking-tight">
+                                        {detailedStats.reduce((acc, curr) => acc + curr.likes, 0).toLocaleString()}
                                     </div>
                                 </div>
-                                <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group">
-                                    <div className="absolute right-0 top-0 w-24 h-24 bg-yellow-50 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
-                                    <div className="relative z-10">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="p-1.5 bg-yellow-100 text-yellow-600 rounded-lg"><Star size={16} className="fill-current"/></div>
-                                            <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">Avg Rating</span>
-                                        </div>
-                                        <div className="text-3xl font-black text-stone-900">
-                                            {(() => {
-                                                const valid = detailedStats.filter(s => s.rating > 0);
-                                                const avg = valid.length > 0 ? valid.reduce((acc, curr) => acc + curr.rating, 0) / valid.length : 0;
-                                                return avg.toFixed(1);
-                                            })()}
-                                        </div>
+                                <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Star size={14} className="fill-current"/></div>
+                                        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Avg Rating</span>
+                                    </div>
+                                    <div className="text-2xl font-bold text-stone-900 tracking-tight">
+                                        {(() => {
+                                            const valid = detailedStats.filter(s => s.rating > 0);
+                                            const avg = valid.length > 0 ? valid.reduce((acc, curr) => acc + curr.rating, 0) / valid.length : 0;
+                                            return avg.toFixed(1);
+                                        })()}
                                     </div>
                                 </div>
-                                <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group">
-                                    <div className="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
-                                    <div className="relative z-10">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><Clock size={16}/></div>
-                                            <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">Avg Response</span>
-                                        </div>
-                                        <div className="text-3xl font-black text-stone-900">
-                                            {(() => {
-                                                const valid = detailedStats.filter(s => s.responseTime > 0);
-                                                const avg = valid.length > 0 ? valid.reduce((acc, curr) => acc + curr.responseTime, 0) / valid.length : 0;
-                                                
-                                                if (avg <= 0) return 'N/A';
+                                <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Clock size={14}/></div>
+                                        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Avg Response</span>
+                                    </div>
+                                    <div className="text-2xl font-bold text-stone-900 tracking-tight">
+                                        {(() => {
+                                            const valid = detailedStats.filter(s => s.responseTime > 0);
+                                            const avg = valid.length > 0 ? valid.reduce((acc, curr) => acc + curr.responseTime, 0) / valid.length : 0;
 
-                                                return (
-                                                    <div className="flex items-baseline gap-2">
-                                                        <span>{avg.toFixed(1)}h</span>
-                                                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wide border border-blue-100 transform -translate-y-1">
-                                                            {getResponseCategory(avg)}
-                                                        </span>
-                                                    </div>
-                                                );
-                                            })()}
-                                        </div>
+                                            if (avg <= 0) return 'N/A';
+
+                                            return (
+                                                <div className="flex items-baseline gap-2">
+                                                    <span>{avg.toFixed(1)}h</span>
+                                                    <span className="text-[10px] font-medium text-stone-500 bg-stone-50 px-2 py-0.5 rounded-full uppercase tracking-wide border border-stone-200">
+                                                        {getResponseCategory(avg)}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            <div className="bg-white p-6 rounded-2xl border border-stone-200/60 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
                                 <h3 className="text-sm font-bold text-stone-900 mb-6 flex items-center gap-2">
-                                    <BarChart3 size={18} className="text-indigo-600" />
+                                    <BarChart3 size={16} className="text-stone-400" />
                                     Activity Breakdown - <span className="font-normal text-stone-500 ml-1">{getStatsDateLabel()}</span>
                                 </h3>
                                 
@@ -1399,24 +1426,24 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <ComposedChart data={detailedStats} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                                 <defs>
                                                     <linearGradient id="colorViewsStats" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.1}/>
-                                                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                                                        <stop offset="5%" stopColor="#78716c" stopOpacity={0.08}/>
+                                                        <stop offset="95%" stopColor="#78716c" stopOpacity={0}/>
                                                     </linearGradient>
                                                 </defs>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                                                <YAxis yAxisId="views" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                                                <YAxis yAxisId="likes" orientation="right" axisLine={false} tickLine={false} tick={{fill: '#ec4899', fontSize: 12}} />
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
+                                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#a8a29e', fontSize: 12}} dy={10} />
+                                                <YAxis yAxisId="views" axisLine={false} tickLine={false} tick={{fill: '#a8a29e', fontSize: 12}} />
+                                                <YAxis yAxisId="likes" orientation="right" axisLine={false} tickLine={false} tick={{fill: '#a8a29e', fontSize: 12}} />
                                                 <YAxis yAxisId="rating" orientation="right" domain={[0, 5]} hide />
-                                                <Tooltip 
-                                                    contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}}
-                                                    cursor={{fill: '#f8fafc'}}
+                                                <Tooltip
+                                                    contentStyle={{borderRadius: '12px', border: '1px solid #e7e5e4', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)', backgroundColor: '#fff'}}
+                                                    cursor={{fill: 'rgba(120, 113, 108, 0.06)'}}
                                                 />
                                                 <Legend wrapperStyle={{paddingTop: '20px'}} iconType="circle" />
-                                                
-                                                <Bar yAxisId="views" dataKey="views" name="Profile Views" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={32} />
-                                                <Line yAxisId="likes" type="monotone" dataKey="likes" name="Likes" stroke="#ec4899" strokeWidth={3} dot={{r: 4, fill: '#ec4899', strokeWidth: 2, stroke: '#fff'}} />
-                                                <Line yAxisId="rating" type="monotone" dataKey="rating" name="Rating" stroke="#eab308" strokeWidth={3} strokeDasharray="5 5" dot={{r: 4, fill: '#eab308', strokeWidth: 2, stroke: '#fff'}} />
+
+                                                <Bar yAxisId="views" dataKey="views" name="Profile Views" fill="#a8a29e" radius={[4, 4, 0, 0]} barSize={32} />
+                                                <Line yAxisId="likes" type="monotone" dataKey="likes" name="Likes" stroke="#78716c" strokeWidth={2.5} dot={{r: 3.5, fill: '#78716c', strokeWidth: 2, stroke: '#fff'}} />
+                                                <Line yAxisId="rating" type="monotone" dataKey="rating" name="Rating" stroke="#d6d3d1" strokeWidth={2.5} strokeDasharray="5 5" dot={{r: 3.5, fill: '#d6d3d1', strokeWidth: 2, stroke: '#fff'}} />
                                             </ComposedChart>
                                         </ResponsiveContainer>
                                     )}
@@ -1428,57 +1455,47 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                      {/* CONTENT FOR FINANCE */}
                      {currentView === 'FINANCE' && (
                          <>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in zoom-in-95 duration-300">
-                                
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in zoom-in-95 duration-300">
+
                                 {/* 1. Total Revenue Card */}
-                                <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between h-40 relative overflow-hidden group">
-                                    <div className="absolute right-0 top-0 w-32 h-32 bg-emerald-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
-                                    <div className="relative z-10 flex flex-col h-full justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl"><TrendingUp size={18}/></div>
-                                            <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">Lifetime Revenue</span>
-                                        </div>
-                                        <div>
-                                            <div className="text-3xl font-black text-stone-900 tracking-tight flex items-baseline gap-1">
-                                                {stats.totalEarnings.toLocaleString()}
-                                                <span className="text-sm font-bold text-stone-400">credits</span>
-                                            </div>
-                                            <p className="text-xs text-stone-400 mt-1 font-medium">Approx. ${(stats.totalEarnings / 100).toFixed(2)} USD</p>
-                                        </div>
+                                <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><TrendingUp size={14}/></div>
+                                        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Lifetime Revenue</span>
                                     </div>
+                                    <div className="text-2xl font-bold text-stone-900 tracking-tight flex items-baseline gap-1">
+                                        {stats.totalEarnings.toLocaleString()}
+                                        <span className="text-sm font-medium text-stone-400">credits</span>
+                                    </div>
+                                    <p className="text-[11px] text-emerald-600 mt-1.5 font-medium">Approx. ${(stats.totalEarnings / 100).toFixed(2)} USD</p>
                                 </div>
 
                                 {/* 2. Current Credits Card */}
-                                <div className="bg-indigo-600 p-6 rounded-2xl border border-indigo-500 shadow-lg shadow-indigo-500/20 flex flex-col justify-between h-40 relative overflow-hidden text-white group">
-                                    <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-white/10 rounded-full blur-xl group-hover:scale-110 transition-transform"></div>
-                                    <div className="relative z-10 flex flex-col h-full justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className="p-2 bg-white/20 text-white rounded-xl backdrop-blur-sm"><Wallet size={18}/></div>
-                                            <span className="text-xs font-bold text-indigo-100 uppercase tracking-wider">Available Balance</span>
-                                        </div>
-                                        <div>
-                                            <div className="text-3xl font-black text-white tracking-tight flex items-baseline gap-1">
-                                                {stats.totalEarnings.toLocaleString()} 
-                                                {/* Note: Using totalEarnings as current balance for MVP simulation */}
-                                                <span className="text-sm font-bold text-indigo-200">credits</span>
-                                            </div>
-                                            <p className="text-xs text-indigo-200 mt-1 font-medium">Ready to payout</p>
-                                        </div>
+                                <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Wallet size={14}/></div>
+                                        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Available Balance</span>
                                     </div>
+                                    <div className="text-2xl font-bold text-stone-900 tracking-tight flex items-baseline gap-1">
+                                        {stats.totalEarnings.toLocaleString()}
+                                        {/* Note: Using totalEarnings as current balance for MVP simulation */}
+                                        <span className="text-sm font-medium text-stone-400">credits</span>
+                                    </div>
+                                    <p className="text-[11px] text-emerald-600 mt-1.5 font-medium">Ready to payout</p>
                                 </div>
 
                                 {/* 3. Withdraw Action Card */}
-                                <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-center h-40 relative overflow-hidden">
+                                <div className="bg-white p-5 rounded-2xl border border-stone-200/60 flex flex-col justify-center hover:shadow-sm transition-all">
                                     <div className="text-center">
-                                        <p className="text-sm font-bold text-stone-600 mb-4">Convert & Withdraw</p>
-                                        <Button 
-                                            onClick={handleWithdraw} 
+                                        <p className="text-sm font-semibold text-stone-600 mb-4">Convert & Withdraw</p>
+                                        <Button
+                                            onClick={handleWithdraw}
                                             isLoading={isWithdrawing}
                                             disabled={stats.totalEarnings === 0}
                                             fullWidth
                                             className="bg-stone-900 text-white hover:bg-stone-800 h-12 shadow-md flex items-center justify-center gap-2"
                                         >
-                                            <CreditCard size={16} /> 
+                                            <CreditCard size={16} />
                                             Withdraw ${(stats.totalEarnings / 100).toFixed(2)}
                                         </Button>
                                         <p className="text-[10px] text-stone-400 mt-3 text-center">
@@ -1489,7 +1506,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             </div>
 
                             {/* Payout Method (Stripe) */}
-                            <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-bottom-2">
+                            <div className="bg-white p-6 rounded-2xl border border-stone-200/60 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-bottom-2">
                                 <div className="flex items-center gap-4">
                                     <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${isStripeConnected ? 'bg-green-100 text-green-600' : 'bg-stone-100 text-stone-500'}`}>
                                         {isStripeConnected ? <Check size={24} /> : <CreditCard size={24} />}
@@ -1539,7 +1556,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                <th className="px-6 py-3 text-right">Amount (Credits)</th>
                                            </tr>
                                        </thead>
-                                       <tbody className="divide-y divide-slate-100">
+                                       <tbody className="divide-y divide-stone-100">
                                            {displayedFinance.map(msg => {
                                                const isProduct = msg.content.startsWith('Purchased Product:');
                                                const isTip = msg.conversation.some(c => c.role === 'FAN' && c.content.startsWith('Fan Appreciation:'));
@@ -1549,7 +1566,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                    <td className="px-6 py-4 text-stone-500 font-mono text-xs">{new Date(msg.createdAt).toLocaleDateString()}</td>
                                                    <td className="px-6 py-4 font-medium text-stone-900">{msg.senderName}</td>
                                                    <td className="px-6 py-4">
-                                                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${isProduct ? 'bg-purple-50 text-purple-700 border-purple-100' : isTip ? 'bg-pink-50 text-pink-700 border-pink-100' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
+                                                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${isProduct ? 'bg-purple-50 text-purple-700 border-purple-100' : isTip ? 'bg-pink-50 text-pink-700 border-pink-100' : 'bg-stone-50 text-stone-700 border-stone-200'}`}>
                                                            {isProduct ? <ShoppingBag size={12}/> : isTip ? <Heart size={12}/> : <MessageSquare size={12}/>}
                                                            {isProduct ? 'Product' : isTip ? 'Tip' : 'Message'}
                                                        </span>
@@ -1573,7 +1590,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
                                 
                                 {/* Mobile List View */}
-                                <div className="md:hidden divide-y divide-slate-100">
+                                <div className="md:hidden divide-y divide-stone-100">
                                     {displayedFinance.map(msg => {
                                         const isProduct = msg.content.startsWith('Purchased Product:');
                                         const isTip = msg.conversation.some(c => c.role === 'FAN' && c.content.startsWith('Fan Appreciation:'));
@@ -1581,7 +1598,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         return (
                                             <div key={msg.id} className="p-4 flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isProduct ? 'bg-purple-100 text-purple-600' : isTip ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'}`}>
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isProduct ? 'bg-purple-100 text-purple-600' : isTip ? 'bg-pink-100 text-pink-600' : 'bg-stone-100 text-stone-600'}`}>
                                                         {isProduct ? <ShoppingBag size={18}/> : isTip ? <Heart size={18}/> : <MessageSquare size={18}/>}
                                                     </div>
                                                     <div>
@@ -1659,7 +1676,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             {!creator.isPremium && (
                                 <div className="absolute inset-0 z-30 flex items-center justify-center backdrop-blur-[2px]">
                                     <div className="bg-white/90 p-8 rounded-3xl shadow-2xl border border-white/50 text-center max-w-md w-full mx-4 flex flex-col items-center gap-6 transform transition-all hover:scale-105 duration-300">
-                                        <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-xl shadow-indigo-200 mb-2">
+                                        <div className="w-20 h-20 bg-stone-900 rounded-full flex items-center justify-center mb-2">
                                             <Lock size={32} className="text-white" />
                                         </div>
                                         <div>
@@ -1681,22 +1698,24 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 
                                 {/* 1. Key Metrics Cards */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
-                                        <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
-                                            <Eye size={16} className="text-indigo-500"/> Profile Views
+                                    <div className="bg-white p-5 rounded-2xl border border-stone-200/60 hover:shadow-sm transition-all">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Eye size={14}/></div>
+                                            <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Profile Views</span>
                                         </div>
-                                        <div className="text-3xl font-black text-stone-900">
+                                        <div className="text-2xl font-bold text-stone-900 tracking-tight">
                                             {analyticsData.funnel.find(f => f.name === 'Profile Views')?.count.toLocaleString() || 0}
                                         </div>
                                     </div>
-                                    <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
-                                        <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
-                                            <MousePointerClick size={16} className="text-blue-500"/> Interactions
+                                    <div className="bg-white p-5 rounded-2xl border border-stone-200/60 hover:shadow-sm transition-all">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><MousePointerClick size={14}/></div>
+                                            <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Interactions</span>
                                         </div>
-                                        <div className="text-3xl font-black text-stone-900">
+                                        <div className="text-2xl font-bold text-stone-900 tracking-tight">
                                             {analyticsData.funnel.find(f => f.name === 'Interactions')?.count.toLocaleString() || 0}
                                         </div>
-                                        <div className="text-xs text-stone-400 mt-1">
+                                        <div className="text-[11px] text-emerald-600 font-medium mt-1.5">
                                             {(() => {
                                                 const views = analyticsData.funnel.find(f => f.name === 'Profile Views')?.count || 0;
                                                 const interactions = analyticsData.funnel.find(f => f.name === 'Interactions')?.count || 0;
@@ -1704,14 +1723,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             })()}% Engagement
                                         </div>
                                     </div>
-                                    <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
-                                        <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
-                                            <CheckCircle2 size={16} className="text-emerald-500"/> Conversions
+                                    <div className="bg-white p-5 rounded-2xl border border-stone-200/60 hover:shadow-sm transition-all">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><CheckCircle2 size={14}/></div>
+                                            <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Conversions</span>
                                         </div>
-                                        <div className="text-3xl font-black text-stone-900">
+                                        <div className="text-2xl font-bold text-stone-900 tracking-tight">
                                             {analyticsData.funnel.find(f => f.name === 'Conversions')?.count.toLocaleString() || 0}
                                         </div>
-                                        <div className="text-xs text-stone-400 mt-1">
+                                        <div className="text-[11px] text-emerald-600 font-medium mt-1.5">
                                             {(() => {
                                                 const views = analyticsData.funnel.find(f => f.name === 'Profile Views')?.count || 0;
                                                 const conversions = analyticsData.funnel.find(f => f.name === 'Conversions')?.count || 0;
@@ -1723,9 +1743,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     {/* Traffic Sources Pie Chart */}
-                                    <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+                                    <div className="bg-white p-6 rounded-2xl border border-stone-200/60 shadow-sm">
                                         <h3 className="text-sm font-bold text-stone-900 mb-6 flex items-center gap-2">
-                                            <PieIcon size={16} className="text-indigo-500" /> Traffic Sources
+                                            <PieIcon size={14} className="text-stone-400" /> Traffic Sources
                                         </h3>
                                         <div className="h-64 flex items-center justify-center">
                                             <ResponsiveContainer width="100%" height="100%">
@@ -1743,7 +1763,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             <Cell key={`cell-${index}`} fill={entry.color} />
                                                         ))}
                                                     </Pie>
-                                                    <Tooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
+                                                    <Tooltip contentStyle={{borderRadius: '12px', border: '1px solid #e7e5e4', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)', backgroundColor: '#fff'}} />
                                                     <Legend verticalAlign="bottom" height={36} iconType="circle"/>
                                                 </PieChart>
                                             </ResponsiveContainer>
@@ -1751,9 +1771,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     </div>
 
                                     {/* Conversion Funnel - Simplified Visual */}
-                                    <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col">
+                                    <div className="bg-white p-6 rounded-2xl border border-stone-200/60 shadow-sm flex flex-col">
                                         <h3 className="text-sm font-bold text-stone-900 mb-6 flex items-center gap-2">
-                                            <TrendingUp size={16} className="text-emerald-500" /> Conversion Funnel
+                                            <TrendingUp size={14} className="text-stone-400" /> Conversion Funnel
                                         </h3>
                                         <div className="flex-1 flex flex-col justify-center space-y-8">
                                             {analyticsData.funnel.map((step, index) => {
@@ -1779,7 +1799,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
 
                                 {/* Top Performing Assets */}
-                                <div className="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden">
+                                <div className="bg-white border border-stone-200/60 rounded-2xl shadow-sm overflow-hidden">
                                     <div className="px-6 py-4 border-b border-stone-100 flex items-center gap-2">
                                         <Star size={16} className="text-yellow-500" />
                                         <h3 className="text-sm font-bold text-stone-900">Top Performing Content</h3>
@@ -1795,7 +1815,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     <th className="px-6 py-3 text-right">Revenue</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-slate-100">
+                                            <tbody className="divide-y divide-stone-100">
                                                 {analyticsData.topAssets.map((asset) => (
                                                     <tr key={asset.id} className="hover:bg-stone-50 transition-colors">
                                                         <td className="px-6 py-4 font-bold text-stone-700">{asset.title}</td>
@@ -1805,7 +1825,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             </span>
                                                         </td>
                                                         <td className="px-6 py-4 text-right text-stone-600 font-mono">{asset.clicks.toLocaleString()}</td>
-                                                        <td className="px-6 py-4 text-right font-bold text-indigo-600">{asset.ctr}</td>
+                                                        <td className="px-6 py-4 text-right font-semibold text-stone-900">{asset.ctr}</td>
                                                         <td className="px-6 py-4 text-right font-mono font-bold text-emerald-600">
                                                             {asset.revenue > 0 ? `${asset.revenue}` : '-'}
                                                         </td>
@@ -1822,18 +1842,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             )}
 
             {currentView === 'INBOX' && (
-                <div className="h-[calc(100vh-64px)] flex bg-white animate-in fade-in">
-                    {/* ... (Inbox List & Detail Logic Unchanged) ... */}
+                <div className="h-[calc(100vh-64px)] flex bg-[#FAF9F6] animate-in fade-in">
                     {/* List Column */}
-                    <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200 flex flex-col ${selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
-                        <div className="p-4 border-b border-stone-200 flex flex-col gap-3">
-                            <span className="font-bold text-stone-900">Messages</span>
-                            <div className="flex flex-wrap gap-1 bg-stone-100 p-1 rounded-lg">
+                    <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col bg-white ${selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
+                        <div className="p-4 border-b border-stone-100 flex flex-col gap-3">
+                            <span className="font-semibold text-stone-900">Messages</span>
+                            <div className="flex flex-wrap gap-1 bg-stone-100/60 p-1 rounded-lg">
                                 {(['ALL', 'PENDING', 'REPLIED', 'REJECTED'] as const).map(f => (
                                     <button
                                         key={f}
                                         onClick={() => setInboxFilter(f)}
-                                        className={`flex-1 px-2 py-1.5 text-[10px] font-bold rounded transition-all whitespace-nowrap ${inboxFilter === f ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                                        className={`flex-1 px-2 py-1.5 text-[10px] font-semibold rounded transition-all whitespace-nowrap ${inboxFilter === f ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
                                     >
                                         {f}
                                     </button>
@@ -1858,12 +1877,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <div 
                                             key={group.senderEmail}
                                             onClick={() => handleOpenChat(group.senderEmail)}
-                                            className={`p-4 border-b border-stone-100 cursor-pointer hover:bg-stone-50 transition-colors ${isActive ? 'bg-blue-50/50 border-l-4 border-l-blue-500' : 'border-l-4 border-l-transparent'}`}
+                                            className={`p-4 border-b border-stone-100/80 cursor-pointer hover:bg-stone-50/50 transition-colors ${isActive ? 'bg-stone-50/70 border-l-2 border-l-stone-900' : 'border-l-2 border-l-transparent'}`}
                                         >
                                             <div className="flex justify-between items-start mb-1">
                                                 <span className={`text-sm font-semibold ${isUnread ? 'text-stone-900' : 'text-stone-600'}`}>
                                                     {group.senderName}
-                                                    {isUnread && <span className="inline-block w-2 h-2 bg-blue-500 rounded-full ml-2"></span>}
+                                                    {isUnread && <span className="inline-block w-2 h-2 bg-stone-900 rounded-full ml-2"></span>}
                                                 </span>
                                                 <span className="text-xs text-stone-400">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
                                             </div>
@@ -1886,9 +1905,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     </div>
                     
                     {/* Detail Column */}
-                    <div className={`flex-1 flex flex-col bg-stone-50 ${!selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
+                    <div className={`flex-1 flex flex-col bg-[#FAF9F6] ${!selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
                         {!activeMessage ? (
-                            <div className="flex-1 flex flex-col items-center justify-center text-stone-400 bg-stone-50/50">
+                            <div className="flex-1 flex flex-col items-center justify-center text-stone-400">
                                 {/* Celebration Overlay (Reused from FanDashboard logic but triggered on Collect) */}
                                 {showReadCelebration && (
                                     <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
@@ -1917,7 +1936,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <p className="text-sm font-medium">Select a message to view details</p>
                             </div>
                         ) : (
-                             <div className="h-full flex flex-col bg-white relative overflow-hidden">
+                             <div className="h-full flex flex-col bg-[#FAF9F6] relative overflow-hidden">
                                 {/* Celebration Overlay (Inside Chat View) */}
                                 {showReadCelebration && (
                                     <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
@@ -1963,7 +1982,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 )}
 
                                 {/* Header & Chat Content */}
-                                <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between bg-white sticky top-0 z-10 shadow-sm">
+                                <div className="px-6 py-4 border-b border-stone-200/60 flex items-center justify-between bg-white sticky top-0 z-10">
                                     <div className="flex items-center gap-4">
                                         <button onClick={() => setSelectedSenderEmail(null)} className="md:hidden p-2 -ml-2 hover:bg-stone-50 rounded-full text-stone-400 hover:text-stone-700">
                                             <ChevronLeft size={20} />
@@ -1992,7 +2011,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     
                                     <div className="flex items-center gap-2">
                                         {activeMessage.status === 'PENDING' && (
-                                            <div className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full flex items-center gap-1 border border-amber-100">
+                                            <div className="text-xs font-medium text-stone-500 bg-stone-100 px-3 py-1.5 rounded-full flex items-center gap-1 border border-stone-200/60">
                                                 <Clock size={12} /> {getTimeLeft(activeMessage.expiresAt).text}
                                             </div>
                                         )}
@@ -2009,7 +2028,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     </div>
                                 </div>
 
-                                <div className="flex-1 overflow-y-auto bg-white" ref={scrollRef}>
+                                <div className="flex-1 overflow-y-auto" ref={scrollRef}>
                                     {threadMessages.map((msg, msgIndex) => {
                                         const isPending = msg.status === 'PENDING';
                                         const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
@@ -2022,7 +2041,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <div key={msg.id} className={`px-4 py-3 ${msgIndex > 0 ? 'border-t border-stone-100' : ''} relative`}>
                                                 {/* Main Thread Line */}
                                                 {(restChats.length > 0 || isPending) && (
-                                                    <div className="absolute left-[2.125rem] top-12 bottom-6 w-0.5 bg-stone-200 -z-10"></div>
+                                                    <div className="absolute left-[2.125rem] top-12 bottom-0 w-0.5 bg-stone-200 -z-10"></div>
                                                 )}
 
                                                 {/* 1. First Message (The Request) */}
@@ -2039,22 +2058,25 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 </div>
                                                             )}
                                                         </div>
+                                                        {(restChats.length > 0 || isPending) && (
+                                                            <div className="flex-1 w-0.5 bg-stone-200 mt-1 min-h-[8px]"></div>
+                                                        )}
                                                     </div>
 
                                                     {/* Right: Content */}
                                                     <div className="flex-1 min-w-0">
-                                        <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 transition-transform duration-300">
+                                        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-stone-200/60">
                                             {/* Header Row */}
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-3">
-                                                    <span className="font-semibold text-lg tracking-tight text-[#1A1A1A]">{msg.senderName}</span>
-                                                    <span className="text-xs font-medium text-[#94A3B8]">• {getRelativeTime(firstChat.timestamp)}</span>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-semibold text-sm text-stone-900">{msg.senderName}</span>
+                                                    <span className="text-xs font-medium text-stone-400">• {getRelativeTime(firstChat.timestamp)}</span>
                                                 </div>
                                                             </div>
 
                                             {/* Content */}
-                                            <div className="mt-2">
-                                                <p className="text-base text-[#2D2D2D] leading-loose">{firstChat.content}</p>
+                                            <div>
+                                                <p className="text-sm text-stone-700 leading-relaxed">{firstChat.content}</p>
 
                                                 {/* Attachment */}
                                                 {msg.attachmentUrl && (
@@ -2089,13 +2111,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center gap-1.5 text-stone-500 ml-auto text-[13px]">
-                                                    <Coins size={14} className="text-amber-500" />
+                                                <div className="flex items-center gap-1.5 text-stone-400 ml-auto text-xs">
+                                                    <Coins size={12} className="text-stone-400" />
                                                     <span>{msg.amount}</span>
                                                     {isPending && (
                                                         <>
                                                             <span className="mx-1">·</span>
-                                                            <span className="text-amber-600">{getTimeLeft(msg.expiresAt).text}</span>
+                                                            <span className="text-stone-500">{getTimeLeft(msg.expiresAt).text}</span>
                                                         </>
                                                     )}
                                                 </div>
@@ -2109,16 +2131,23 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 {restChats.map((chat, idx) => {
                                                     const isCreator = chat.role === 'CREATOR';
                                                     const isLast = idx === restChats.length - 1;
+                                                    const isNextCreator = idx < restChats.length - 1 && restChats[idx + 1].role === 'CREATOR';
+                                                    const isContinuousCreator = isCreator && idx > 0 && restChats[idx - 1].role === 'CREATOR';
 
                                                     return (
                                                     <div key={chat.id} className={`flex mt-4 relative z-10 ${isCreator ? 'ml-8' : ''}`}>
                                                         {/* Connector for Creator Reply */}
-                                                        {isCreator && (
-                                                            <div className="absolute -left-[0.875rem] top-0 h-[1.125rem] w-[0.875rem] border-l-2 border-b-2 border-stone-200 rounded-bl-xl -z-10"></div>
+                                                        {isCreator && !isContinuousCreator && (
+                                                            <div className="absolute left-0.5 top-0 h-[1.125rem] w-8 border-l-2 border-b-2 border-stone-200 rounded-bl-xl -z-10"></div>
                                                         )}
 
                                                         {/* Left: Avatar + Thread Line */}
-                                                        <div className="flex flex-col items-center mr-3">
+                                                        <div className="flex flex-col items-center mr-3 relative">
+                                                            {/* Vertical Thread Line for Continuous Creator Messages */}
+                                                            {isCreator && isNextCreator && (
+                                                                <div className="absolute left-1/2 -translate-x-1/2 top-9 -bottom-4 w-0.5 bg-stone-200 -z-10"></div>
+                                                            )}
+                                                            
                                                             <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
                                                                 {isCreator ? (
                                                                     creator.avatarUrl ? (
@@ -2139,23 +2168,29 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         {/* Right: Content */}
                                                         <div className="flex-1 min-w-0 pb-2">
                                                             <div className="flex items-center justify-between mb-2 ml-1">
-                                                                <div className="flex items-center gap-3">
-                                                                        <span className="font-semibold text-lg tracking-tight text-[#1A1A1A]">
+                                                                <div className="flex items-center gap-2">
+                                                                        <span className="font-semibold text-sm text-stone-900">
                                                                             {isCreator ? (creator.displayName || 'You') : msg.senderName}
                                                                         </span>
                                                                         {isCreator && (
-                                                                            <div className="flex items-center gap-1.5 bg-blue-50/50 text-blue-600 px-2.5 py-1 rounded-full">
-                                                                                <CheckCircle2 size={12} className="fill-current" />
-                                                                                <span className="text-[10px] font-bold uppercase tracking-wide">Certified</span>
+                                                                            <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                                                                                <CheckCircle2 size={10} className="fill-current" />
+                                                                                <span className="text-[9px] font-semibold uppercase tracking-wide">Creator</span>
                                                                             </div>
                                                                         )}
-                                                                        <span className="text-xs font-medium text-[#94A3B8]">• {getRelativeTime(chat.timestamp)}</span>
+                                                                        <span className="text-xs font-medium text-stone-400">• {getRelativeTime(chat.timestamp)}</span>
                                                                     </div>
                                                                 </div>
-                                                            
-                                                            <div className={`${isCreator ? 'bg-[#FAFAFA]' : 'bg-white'} p-5 sm:p-6 rounded-[2rem] rounded-tl-none shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 transition-transform duration-300`}>
+
+                                                            <div className={`${isCreator ? 'bg-stone-50' : 'bg-white'} p-5 sm:p-6 rounded-2xl rounded-tl-lg border border-stone-200/60`}>
                                                                 {/* Content */}
-                                                                <p className="text-base text-[#2D2D2D] leading-loose">{chat.content}</p>
+                                                                <p className="text-sm text-stone-700 leading-relaxed">{chat.content}</p>
+
+                                                                {chat.attachmentUrl && (
+                                                                    <div className="mt-3 rounded-lg overflow-hidden border border-stone-200">
+                                                                        <img src={chat.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
+                                                                    </div>
+                                                                )}
 
                                                                 {/* Action Row */}
                                                                 <div className="flex items-center gap-0 mt-4 -ml-2">
@@ -2231,7 +2266,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                 {/* Reply Input Area */}
                                 {activeMessage.status === 'PENDING' && (
-                                    <div className="p-4 bg-white border-t border-stone-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+                                    <div className="p-4 bg-white border-t border-stone-200/60 z-20">
                                         <div className="flex justify-between items-center mb-3">
                                             <div className="flex items-center gap-2 text-xs text-stone-500">
                                                 <span className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded border border-green-100 font-medium">
@@ -2243,7 +2278,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 variant="ghost" 
                                                 onClick={handleGenerateAI} 
                                                 disabled={isGeneratingAI}
-                                                className="text-xs h-7 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                                className="text-xs h-7 text-stone-500 hover:text-stone-700 hover:bg-stone-50"
                                             >
                                                 <Sparkles size={12} className="mr-1.5" />
                                                 {isGeneratingAI ? 'Drafting...' : 'AI Draft'}
@@ -2251,6 +2286,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </div>
 
                                         <div className="relative">
+                                            {replyAttachment && (
+                                                <div className="mb-2 mx-3 flex items-center gap-2 bg-stone-50 p-2 rounded-lg border border-stone-200 w-fit animate-in zoom-in duration-200">
+                                                    <div className="w-8 h-8 bg-white rounded flex items-center justify-center text-stone-500 border border-stone-100">
+                                                        <Paperclip size={14} />
+                                                    </div>
+                                                    <span className="text-xs text-stone-600 max-w-[150px] truncate">Attachment Ready</span>
+                                                    <button onClick={() => setReplyAttachment(null)} className="text-stone-400 hover:text-red-500 p-1 hover:bg-stone-100 rounded transition-colors">
+                                                        <X size={12} />
+                                                    </button>
+                                                </div>
+                                            )}
                                             <textarea 
                                                 value={replyText}
                                                 onKeyDown={(e) => {
@@ -2261,14 +2307,24 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 }}
                                                 onChange={(e) => setReplyText(e.target.value)}
                                                 placeholder="Write your reply..."
-                                                className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 pb-12 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none min-h-[100px] text-stone-900"
+                                                className="w-full bg-stone-50/50 border border-stone-200/60 rounded-xl p-3 pb-12 text-sm focus:ring-1 focus:ring-stone-400 focus:border-stone-300 outline-none resize-none min-h-[100px] text-stone-900 placeholder:text-stone-400"
                                             />
                                             
                                             <div className="absolute bottom-3 right-3 flex items-center gap-3">
+                                                <button
+                                                    onClick={() => replyFileInputRef.current?.click()}
+                                                    disabled={isUploadingReplyAttachment}
+                                                    className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-colors"
+                                                    title="Attach file"
+                                                >
+                                                    {isUploadingReplyAttachment ? <div className="w-4 h-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" /> : <Paperclip size={16} />}
+                                                </button>
+                                                <input type="file" ref={replyFileInputRef} className="hidden" onChange={handleReplyFileChange} />
+
                                                 <button 
                                                     onClick={() => handleSendReply(false)} 
-                                                    disabled={!replyText.trim() || isSendingReply || isRejecting}
-                                                    className="h-10 px-4 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-bold text-xs"
+                                                    disabled={(!replyText.trim() && !replyAttachment) || isSendingReply || isRejecting}
+                                                    className="h-10 px-4 rounded-full bg-stone-600 text-white hover:bg-stone-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold text-xs"
                                                     title="Send reply (Keep Pending)"
                                                 >
                                                     <span>Send</span> <Send size={14} />
@@ -2276,8 +2332,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                                 <button 
                                                     onClick={() => handleSendReply(true)} 
-                                                    disabled={(!replyText.trim() && !hasManualCreatorReply) || isSendingReply || isRejecting}
-                                                    className="h-10 px-5 rounded-full bg-stone-900 text-white hover:bg-stone-800 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-bold group"
+                                                    disabled={((!replyText.trim() && !replyAttachment) && !hasManualCreatorReply) || isSendingReply || isRejecting}
+                                                    className="h-10 px-5 rounded-full bg-stone-900 text-white hover:bg-stone-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold group"
                                                     title="Complete & Collect"
                                                 >
                                                     <CheckCircle2 size={18} className="text-emerald-400" />
@@ -2300,7 +2356,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     {/* Magical Success Message */}
                     {showSaveSuccess && (
                         <div className="fixed bottom-8 right-8 z-[60] max-w-sm animate-in slide-in-from-bottom-4">
-                            <div className="relative overflow-hidden bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 rounded-2xl p-5 text-center shadow-2xl shadow-indigo-500/30 ring-1 ring-white/20">
+                            <div className="relative overflow-hidden bg-stone-900 rounded-2xl p-5 text-center shadow-xl ring-1 ring-white/10">
                                 {/* Background Particles */}
                                 <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40">
                                     <div className="absolute top-[10%] left-[20%] text-white animate-float text-xs">✦</div>
@@ -2322,12 +2378,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                     {/* Pro Banner in Settings */}
                     {!creator.isPremium && (
-                         <div className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-xl p-6 text-white shadow-lg flex justify-between items-center">
+                         <div className="bg-stone-900 rounded-xl p-6 text-white flex justify-between items-center">
                             <div>
                                 <h3 className="font-bold text-lg flex items-center gap-2"><Sparkles className="text-yellow-300 fill-yellow-300" size={18}/> Bluechecked Pro</h3>
-                                <p className="text-indigo-100 text-sm mt-1">Upgrade to unlock analytics and remove commissions.</p>
+                                <p className="text-stone-400 text-sm mt-1">Upgrade to unlock analytics and remove commissions.</p>
                             </div>
-                            <Button className="bg-white text-indigo-600 hover:bg-indigo-50" onClick={() => setShowPremiumModal(true)}>Upgrade for 2000 Credits/mo</Button>
+                            <Button className="bg-white text-stone-900 hover:bg-stone-50" onClick={() => setShowPremiumModal(true)}>Upgrade for 2000 Credits/mo</Button>
                         </div>
                     )}
 
@@ -2381,7 +2437,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     type="text" 
                                     value={editedCreator.displayName}
                                     onChange={e => setEditedCreator({...editedCreator, displayName: e.target.value})}
-                                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none"
                                 />
                             </div>
                             <div>
@@ -2389,7 +2445,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <textarea 
                                     value={editedCreator.bio}
                                     onChange={e => setEditedCreator({...editedCreator, bio: e.target.value})}
-                                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none h-24 resize-none"
+                                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none h-24 resize-none"
                                 />
                             </div>
 
@@ -2399,7 +2455,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <textarea 
                                     value={editedCreator.welcomeMessage || ''}
                                     onChange={e => setEditedCreator({...editedCreator, welcomeMessage: e.target.value})}
-                                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none h-24 resize-none"
+                                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none h-24 resize-none"
                                     placeholder="Hi! Thanks for your message. I'll get back to you soon..."
                                 />
                                 <p className="text-[10px] text-stone-400 mt-1">This is sent automatically when a fan pays.</p>
@@ -2414,7 +2470,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             type="number" 
                                             value={editedCreator.pricePerMessage}
                                             onChange={e => setEditedCreator({...editedCreator, pricePerMessage: Number(e.target.value)})}
-                                            className="w-full pl-8 pr-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            className="w-full pl-8 pr-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none"
                                         />
                                     </div>
                                 </div>
@@ -2423,7 +2479,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     <select 
                                         value={editedCreator.responseWindowHours}
                                         onChange={e => setEditedCreator({...editedCreator, responseWindowHours: Number(e.target.value)})}
-                                        className="w-full px-3 py-2 border border-stone-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        className="w-full px-3 py-2 border border-stone-300 rounded-lg bg-white focus:ring-1 focus:ring-stone-400 outline-none"
                                     >
                                         <option value={24}>24 Hours</option>
                                         <option value={48}>48 Hours</option>
@@ -2455,7 +2511,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 <div className="flex-1 min-w-0">
                                                     <span className="text-xs font-bold block">{platform.label}</span>
                                                     {isSelected && url && (
-                                                        <span className="text-[9px] text-blue-200 truncate block">{url.replace(/^https?:\/\/(www\.)?/, '')}</span>
+                                                        <span className="text-[9px] text-stone-300 truncate block">{url.replace(/^https?:\/\/(www\.)?/, '')}</span>
                                                     )}
                                                 </div>
                                                 {isSelected && <Check size={12} className="ml-auto text-green-400 flex-shrink-0" />}
@@ -2481,11 +2537,27 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 onDragEnter={() => handleDragEnter(index)}
                                                 onDragEnd={handleDragEnd}
                                                 onDragOver={(e) => e.preventDefault()}
-                                                className={`flex items-start gap-3 p-3 rounded-lg border transition-all ${isProduct ? 'bg-purple-50 border-purple-100' : isSupport ? 'bg-pink-50 border-pink-100' : 'bg-stone-50 border-stone-200'} ${draggedLinkIndex === index ? 'opacity-50 border-dashed border-stone-400' : ''}`}
+                                                className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${isProduct ? 'bg-purple-50 border-purple-100' : isSupport ? 'bg-pink-50 border-pink-100' : 'bg-stone-50 border-stone-200'} ${draggedLinkIndex === index ? 'opacity-50 border-dashed border-stone-400' : ''}`}
                                             >
-                                                <div className="mt-2 text-stone-400 cursor-grab active:cursor-grabbing">
+                                                <div className="text-stone-400 cursor-grab active:cursor-grabbing">
                                                     <GripVertical size={16} />
                                                 </div>
+                                                
+                                                {/* Thumbnail Upload for Existing Link */}
+                                                <div className="relative group/thumb flex-shrink-0">
+                                                    {link.thumbnailUrl ? (
+                                                        <img src={link.thumbnailUrl} className="w-10 h-10 rounded-lg object-cover border border-stone-200 bg-white" />
+                                                    ) : (
+                                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center border ${isProduct ? 'bg-purple-100 text-purple-600 border-purple-200' : isSupport ? 'bg-pink-100 text-pink-600 border-pink-200' : 'bg-stone-100 text-stone-500 border-stone-200'}`}>
+                                                            {isProduct ? <FileText size={20}/> : isSupport ? <Heart size={20}/> : <LinkIcon size={20}/>}
+                                                        </div>
+                                                    )}
+                                                    <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 cursor-pointer transition-opacity" onClick={() => document.getElementById(`thumb-${link.id}`)?.click()}>
+                                                        <Camera size={14} className="text-white"/>
+                                                    </div>
+                                                    <input type="file" id={`thumb-${link.id}`} className="hidden" accept="image/*" onChange={(e) => handleLinkThumbnailUpload(e, link.id)} />
+                                                </div>
+
                                                 <div className="flex-1 min-w-0 space-y-2">
                                                     <div className="flex items-center justify-between gap-2">
                                                         <div className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit ${isProduct ? 'bg-purple-100 text-purple-600' : isSupport ? 'bg-pink-100 text-pink-600' : 'bg-stone-200 text-stone-500'}`}>
@@ -2495,7 +2567,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     </div>
                                                     
                                                     <input 
-                                                        className="w-full bg-white border border-stone-200 rounded px-2 py-1 text-sm font-bold text-stone-800 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                        className="w-full bg-white border border-stone-200 rounded px-2 py-1 text-sm font-bold text-stone-800 focus:ring-1 focus:ring-stone-400 outline-none"
                                                         value={link.title}
                                                         onChange={(e) => handleUpdateLink(link.id, 'title', e.target.value)}
                                                         placeholder="Title"
@@ -2508,7 +2580,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         >
                                                             <div className="flex gap-2">
                                                                 <input 
-                                                                    className="w-full bg-white border border-stone-200 rounded px-2 py-1 text-xs text-stone-500 focus:ring-2 focus:ring-indigo-500 outline-none pr-8"
+                                                                    className="w-full bg-white border border-stone-200 rounded px-2 py-1 text-xs text-stone-500 focus:ring-1 focus:ring-stone-400 outline-none pr-8"
                                                                     value={link.fileName || (link.url.startsWith('data:') ? 'Uploaded File' : link.url.split('/').pop()?.split('?')[0] || link.url)}
                                                                     onChange={(e) => handleUpdateLink(link.id, 'url', e.target.value)}
                                                                     placeholder="File URL"
@@ -2528,13 +2600,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 onChange={(e) => handleExistingProductUpload(e, link.id)} 
                                                             />
                                                             {/* Drag Overlay */}
-                                                            <div className="absolute inset-0 bg-indigo-50/90 border-2 border-dashed border-indigo-300 rounded flex items-center justify-center opacity-0 group-hover/upload:opacity-100 pointer-events-none transition-opacity z-10">
-                                                                <span className="text-[10px] font-bold text-indigo-600">Drop new file to replace</span>
+                                                            <div className="absolute inset-0 bg-stone-50/90 border-2 border-dashed border-stone-300 rounded flex items-center justify-center opacity-0 group-hover/upload:opacity-100 pointer-events-none transition-opacity z-10">
+                                                                <span className="text-[10px] font-semibold text-stone-600">Drop new file to replace</span>
                                                             </div>
                                                         </div>
                                                      ) : isSupport ? (
                                                         <input 
-                                                            className="w-full bg-white border border-stone-200 rounded px-2 py-1 text-xs text-stone-500 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                            className="w-full bg-white border border-stone-200 rounded px-2 py-1 text-xs text-stone-500 focus:ring-1 focus:ring-stone-400 outline-none"
                                                             value={link.url}
                                                             onChange={(e) => handleUpdateLink(link.id, 'url', e.target.value)}
                                                             placeholder="#"
@@ -2542,7 +2614,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         />
                                                     ) : (
                                                         <input 
-                                                            className="w-full bg-white border border-stone-200 rounded px-2 py-1 text-xs text-stone-500 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                            className="w-full bg-white border border-stone-200 rounded px-2 py-1 text-xs text-stone-500 focus:ring-1 focus:ring-stone-400 outline-none"
                                                             value={link.url}
                                                             onChange={(e) => handleUpdateLink(link.id, 'url', e.target.value)}
                                                             placeholder="https://..."
@@ -2554,15 +2626,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             id={`promo-${link.id}`}
                                                             checked={link.isPromoted || false}
                                                             onChange={(e) => handleUpdateLink(link.id, 'isPromoted', e.target.checked)}
-                                                            className="rounded text-indigo-600 focus:ring-indigo-500"
+                                                            className="rounded text-stone-600 focus:ring-stone-400 accent-stone-600"
                                                         />
                                                         <label htmlFor={`promo-${link.id}`} className="text-xs text-stone-500 cursor-pointer flex items-center gap-1">
-                                                            {link.isPromoted ? <Sparkles size={10} className="text-indigo-500"/> : null}
+                                                            {link.isPromoted ? <Sparkles size={10} className="text-stone-500"/> : null}
                                                             Highlight
                                                         </label>
                                                     </div>
                                                 </div>
-                                                <button onClick={() => handleRemoveLink(link.id)} className="text-stone-400 hover:text-red-500 p-1 mt-1">
+                                                <button onClick={() => handleRemoveLink(link.id)} className="text-stone-400 hover:text-red-500 p-1">
                                                     <Trash size={16} />
                                                 </button>
                                             </div>
@@ -2587,7 +2659,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                              </button>
                                             <button 
                                                 onClick={() => setNewLinkType('DIGITAL_PRODUCT')}
-                                                className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${newLinkType === 'DIGITAL_PRODUCT' ? 'bg-purple-600 text-white shadow-sm' : 'text-stone-500 hover:text-stone-900'}`}
+                                                className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${newLinkType === 'DIGITAL_PRODUCT' ? 'bg-stone-900 text-white shadow-sm' : 'text-stone-500 hover:text-stone-900'}`}
                                             >
                                                 Digital Product
                                             </button>
@@ -2595,16 +2667,34 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     </div>
 
                                     <div className="flex flex-col gap-2">
-                                        <input 
-                                            type="text" 
-                                             placeholder={newLinkType === 'SUPPORT' ? "Title (e.g. Buy me a coffee)" : "Title (e.g. My Course / Portfolio)"}
-                                            className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                                            value={newLinkTitle}
-                                            onChange={e => setNewLinkTitle(e.target.value)}
-                                        />
+                                        <div className="flex gap-2">
+                                            {/* Thumbnail Upload for New Link */}
+                                            <div className="relative group/newthumb flex-shrink-0">
+                                                {newLinkThumbnail ? (
+                                                    <img src={newLinkThumbnail} className="w-10 h-10 rounded-lg object-cover border border-stone-200 bg-white" />
+                                                ) : (
+                                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center border border-dashed border-stone-300 bg-stone-50 text-stone-400 cursor-pointer hover:bg-stone-100 hover:border-stone-400 transition-colors`} onClick={() => document.getElementById('new-link-thumb')?.click()}>
+                                                        {isUploadingThumbnail ? <div className="w-4 h-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin"/> : <Camera size={16}/>}
+                                                    </div>
+                                                )}
+                                                {newLinkThumbnail && (
+                                                    <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center opacity-0 group-hover/newthumb:opacity-100 cursor-pointer transition-opacity" onClick={() => document.getElementById('new-link-thumb')?.click()}>
+                                                        <Camera size={14} className="text-white"/>
+                                                    </div>
+                                                )}
+                                                <input type="file" id="new-link-thumb" className="hidden" accept="image/*" onChange={(e) => handleLinkThumbnailUpload(e)} />
+                                            </div>
+                                            <input 
+                                                type="text" 
+                                                placeholder={newLinkType === 'SUPPORT' ? "Title (e.g. Buy me a coffee)" : "Title (e.g. My Course / Portfolio)"}
+                                                className="flex-1 px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-1 focus:ring-stone-400 outline-none"
+                                                value={newLinkTitle}
+                                                onChange={e => setNewLinkTitle(e.target.value)}
+                                            />
+                                        </div>
                                         {newLinkType === 'DIGITAL_PRODUCT' ? (
                                             <div 
-                                                className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center transition-all ${isUploadingProduct ? 'bg-stone-50 border-stone-300' : 'border-stone-300 hover:border-indigo-400 hover:bg-indigo-50/30 cursor-pointer'}`}
+                                                className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center transition-all ${isUploadingProduct ? 'bg-stone-50 border-stone-300' : 'border-stone-300 hover:border-stone-400 hover:bg-stone-50 cursor-pointer'}`}
                                                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                                 onDrop={handleProductDrop}
                                                 onClick={() => !isUploadingProduct && !newLinkUrl && productFileInputRef.current?.click()}
@@ -2613,7 +2703,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 
                                                 {isUploadingProduct ? (
                                                     <div className="flex flex-col items-center gap-2">
-                                                        <div className="animate-spin h-6 w-6 border-2 border-indigo-600 border-t-transparent rounded-full"></div>
+                                                        <div className="animate-spin h-6 w-6 border-2 border-stone-600 border-t-transparent rounded-full"></div>
                                                         <span className="text-xs font-medium text-stone-500">Uploading...</span>
                                                     </div>
                                                 ) : newLinkUrl ? (
@@ -2632,7 +2722,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     </div>
                                                 ) : (
                                                     <>
-                                                        <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-2">
+                                                        <div className="w-10 h-10 bg-stone-100 text-stone-500 rounded-full flex items-center justify-center mb-2">
                                                             <Download size={20} className="rotate-180" />
                                                         </div>
                                                         <p className="text-sm font-medium text-stone-700">Upload from local disk</p>
@@ -2644,7 +2734,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <input 
                                                 type="text" 
                                                 placeholder="URL (https://...)"
-                                                className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-1 focus:ring-stone-400 outline-none"
                                                 value={newLinkUrl}
                                                 onChange={e => setNewLinkUrl(e.target.value)}
                                             />
@@ -2655,7 +2745,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 <input 
                                                     type="number" 
                                                     placeholder={newLinkType === 'SUPPORT' ? "Default Tip (Credits)" : "Price (Credits)"}
-                                                    className="w-full pl-8 pr-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                    className="w-full pl-8 pr-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-1 focus:ring-stone-400 outline-none"
                                                     value={newLinkPrice}
                                                     onChange={e => setNewLinkPrice(e.target.value)}
                                                 />
@@ -2698,7 +2788,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 )}
                             </div>
                         </div>
-                        <div className="divide-y divide-slate-100">
+                        <div className="divide-y divide-stone-100">
                             {displayedNotifications.length === 0 ? (
                                 <div className="p-12 text-center text-stone-400 text-sm">No notifications yet.</div>
                             ) : (
@@ -2761,7 +2851,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             <h3 className="text-sm font-bold text-stone-900">All Reviews</h3>
                             <span className="text-xs text-stone-500">{reviews.length} reviews</span>
                         </div>
-                        <div className="divide-y divide-slate-100">
+                        <div className="divide-y divide-stone-100">
                             {displayedReviews.length === 0 ? (
                                 <div className="p-12 text-center text-stone-400 text-sm">No reviews yet.</div>
                             ) : (
@@ -2818,9 +2908,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <div className="p-6 max-w-2xl mx-auto animate-in fade-in flex items-center justify-center min-h-[500px]">
                      <div className="bg-white p-8 rounded-3xl border border-stone-200 shadow-xl shadow-stone-200/50 text-center space-y-6 max-w-md w-full relative overflow-hidden">
                          {/* Decorative Background */}
-                         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+                         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-stone-400 via-stone-600 to-stone-800"></div>
                          
-                         <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto mb-4 shadow-inner ring-4 ring-blue-50/50">
+                         <div className="w-20 h-20 bg-amber-50 text-stone-500 rounded-[2rem] flex items-center justify-center mx-auto mb-4 shadow-inner ring-4 ring-amber-50/50">
                              <AlertCircle size={40} />
                          </div>
                          
@@ -2832,7 +2922,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                          </div>
 
                          <div className="space-y-3 pt-2">
-                             <Button fullWidth className="h-12 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-900/10">
+                             <Button fullWidth className="h-12 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-stone-900/10">
                                 <MessageSquare size={18}/> Contact Support
                              </Button>
                              <Button fullWidth variant="secondary" className="h-12 rounded-xl flex items-center justify-center gap-2 bg-stone-50 hover:bg-stone-100 border border-stone-200">
@@ -2853,8 +2943,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 
                 {/* Header Graphic */}
                 <div className="h-40 bg-stone-900 relative overflow-hidden flex items-center justify-center">
-                     <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/30 rounded-full blur-[80px]"></div>
-                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/30 rounded-full blur-[80px]"></div>
+                     <div className="absolute top-0 right-0 w-64 h-64 bg-stone-400/20 rounded-full blur-[80px]"></div>
+                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-stone-500/20 rounded-full blur-[80px]"></div>
                      <div className="relative z-10 text-center">
                          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 px-3 py-1 rounded-full text-xs font-bold text-white mb-3 backdrop-blur-md">
                              <Sparkles size={12} className="text-yellow-400" /> RECOMMENDED

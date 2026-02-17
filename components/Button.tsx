@@ -7,23 +7,23 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
 }
 
-export const Button: React.FC<ButtonProps> = ({ 
-  children, 
-  variant = 'primary', 
-  size = 'md', 
-  fullWidth = false, 
+export const Button: React.FC<ButtonProps> = ({
+  children,
+  variant = 'primary',
+  size = 'md',
+  fullWidth = false,
   isLoading = false,
   className = '',
   disabled,
-  ...props 
+  ...props
 }) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
-  
+  const baseStyles = "inline-flex items-center justify-center rounded-xl font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
+
   const variants = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
-    secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200 focus:ring-slate-500",
-    outline: "border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500",
-    ghost: "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+    primary: "bg-stone-900 text-white hover:bg-stone-800 focus:ring-stone-500",
+    secondary: "bg-stone-100 text-stone-900 hover:bg-stone-200 focus:ring-stone-500",
+    outline: "border border-stone-200 bg-transparent text-stone-700 hover:bg-stone-50 focus:ring-stone-500",
+    ghost: "bg-transparent text-stone-600 hover:bg-stone-100 hover:text-stone-900",
     danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500"
   };
 
@@ -36,7 +36,7 @@ export const Button: React.FC<ButtonProps> = ({
   const widthClass = fullWidth ? "w-full" : "";
 
   return (
-    <button 
+    <button
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${widthClass} ${className}`}
       disabled={disabled || isLoading}
       {...props}

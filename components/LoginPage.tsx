@@ -236,14 +236,13 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
   if (step === 'RESET_PASSWORD') {
       return (
-          <div className="min-h-screen bg-white relative flex flex-col items-center justify-center p-4 font-sans">
-              <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-              <div className="relative z-10 w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
-                  <h2 className="text-2xl font-bold text-slate-900 mb-2 text-center">Set New Password</h2>
+          <div className="min-h-screen bg-[#FAFAF9] relative flex flex-col items-center justify-center p-4 font-sans">
+              <div className="relative z-10 w-full max-w-md bg-white p-8 rounded-3xl shadow-xl shadow-stone-200/50 border border-stone-100">
+                  <h2 className="text-2xl font-bold text-stone-900 mb-2 text-center">Set New Password</h2>
                   <form onSubmit={handleUpdatePassword} className="space-y-4 mt-6">
                       <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">New Password</label>
-                          <input type="password" required className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                          <label className="block text-sm font-medium text-stone-700 mb-1.5 ml-1">New Password</label>
+                          <input type="password" required className="w-full px-4 py-2.5 border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-500 outline-none transition-all" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                       </div>
                       <Button fullWidth size="lg" type="submit" isLoading={isLoading}>Update Password</Button>
                   </form>
@@ -254,71 +253,71 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
   if (step === 'SETUP_PROFILE') {
     return (
-       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-          <div className="max-w-xl w-full bg-white p-8 rounded-2xl shadow-xl border border-slate-100 animate-in slide-in-from-bottom-4 duration-500">
+       <div className="min-h-screen bg-[#FAFAF9] flex flex-col items-center justify-center p-4">
+          <div className="max-w-xl w-full bg-white p-8 rounded-3xl shadow-xl shadow-stone-200/50 border border-stone-100 animate-in slide-in-from-bottom-4 duration-500">
              <div className="text-center mb-6">
-                <div 
+                <div
                     onClick={handleAvatarClick}
-                    className="w-24 h-24 bg-slate-100 rounded-full mx-auto mb-3 flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-300 relative overflow-hidden group cursor-pointer hover:border-blue-500 hover:text-blue-500 transition-all"
+                    className="w-24 h-24 bg-stone-100 rounded-full mx-auto mb-3 flex items-center justify-center text-stone-400 border-2 border-dashed border-stone-300 relative overflow-hidden group cursor-pointer hover:border-stone-500 hover:text-stone-600 transition-all"
                 >
                     {avatarUrl ? <img src={avatarUrl} className="w-full h-full object-cover" /> : <Camera size={32} />}
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <span className="text-white text-xs font-bold">Upload</span>
                     </div>
                 </div>
-                <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    className="hidden" 
-                    accept="image/*" 
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
                     onChange={handleFileChange}
                 />
-                <h2 className="text-2xl font-bold text-slate-900">
+                <h2 className="text-2xl font-bold text-stone-900">
                     {role === 'CREATOR' ? 'Setup Creator Profile' : 'Complete Profile'}
                 </h2>
-                <p className="text-slate-500 text-sm">Let's make your profile stand out.</p>
+                <p className="text-stone-500 text-sm">Let's make your profile stand out.</p>
              </div>
 
              <div className="space-y-6">
-                
+
                 {/* Name Field */}
                 <div>
-                   <label className="block text-sm font-medium text-slate-700 mb-1">Display Name</label>
-                   <input 
+                   <label className="block text-sm font-medium text-stone-700 mb-1">Display Name</label>
+                   <input
                      type="text"
-                     value={displayName} 
-                     onChange={e => setDisplayName(e.target.value)} 
+                     value={displayName}
+                     onChange={e => setDisplayName(e.target.value)}
                      placeholder="Your Name"
-                     className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none" 
+                     className="w-full border border-stone-200 rounded-xl p-3 focus:ring-2 focus:ring-stone-500 outline-none transition-all"
                     />
                 </div>
 
                 {/* Common Fields */}
                 <div>
-                   <label className="block text-sm font-medium text-slate-700 mb-1">Bio / About</label>
-                   <textarea 
-                     value={bio} 
-                     onChange={e => setBio(e.target.value)} 
+                   <label className="block text-sm font-medium text-stone-700 mb-1">Bio / About</label>
+                   <textarea
+                     value={bio}
+                     onChange={e => setBio(e.target.value)}
                      placeholder={role === 'CREATOR' ? "I help startups with..." : "Tell us a bit about yourself..."}
-                     className="w-full border border-slate-300 rounded-lg p-3 h-24 focus:ring-2 focus:ring-blue-500 outline-none resize-none" 
+                     className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all"
                     />
                 </div>
 
                 {/* Creator Specific Fields */}
                 {role === 'CREATOR' && (
                     <>
-                        <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
-                            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
-                                <MessageSquare size={16} className="text-blue-500"/> Message Settings
+                        <div className="bg-stone-50 p-5 rounded-2xl border border-stone-100 space-y-4">
+                            <h3 className="text-sm font-bold text-stone-900 uppercase tracking-wide flex items-center gap-2">
+                                <MessageSquare size={16} className="text-stone-500"/> Message Settings
                             </h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Price ($)</label>
-                                    <input type="number" value={price} onChange={e => setPrice(Number(e.target.value))} className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+                                    <label className="block text-sm font-medium text-stone-700 mb-1">Price ($)</label>
+                                    <input type="number" value={price} onChange={e => setPrice(Number(e.target.value))} className="w-full border border-stone-200 rounded-xl p-2 focus:ring-2 focus:ring-stone-500 outline-none transition-all" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Reply Time</label>
-                                    <select value={responseHours} onChange={e => setResponseHours(Number(e.target.value))} className="w-full border border-slate-300 rounded-lg p-2 bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <label className="block text-sm font-medium text-stone-700 mb-1">Reply Time</label>
+                                    <select value={responseHours} onChange={e => setResponseHours(Number(e.target.value))} className="w-full border border-stone-200 rounded-xl p-2 bg-white focus:ring-2 focus:ring-stone-500 outline-none transition-all">
                                         <option value={24}>24 Hours</option>
                                         <option value={48}>48 Hours</option>
                                         <option value={72}>72 Hours</option>
@@ -328,23 +327,23 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Connected Platforms</label>
-                            <p className="text-xs text-slate-500 mb-3">Select the platforms where you have an audience.</p>
-                            
+                            <label className="block text-sm font-medium text-stone-700 mb-2">Connected Platforms</label>
+                            <p className="text-xs text-stone-500 mb-3">Select the platforms where you have an audience.</p>
+
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 {SUPPORTED_PLATFORMS.map(platform => {
                                     const isSelected = platforms.includes(platform.id);
                                     return (
-                                        <button 
+                                        <button
                                             key={platform.id}
                                             onClick={() => handleTogglePlatform(platform.id)}
                                             className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all ${
-                                                isSelected 
-                                                ? 'bg-slate-900 text-white border-slate-900 shadow-md' 
-                                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                                isSelected
+                                                ? 'bg-stone-900 text-white border-stone-900 shadow-md'
+                                                : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
                                             }`}
                                         >
-                                            <platform.icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
+                                            <platform.icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-stone-400'}`} />
                                             <span className="text-xs font-bold">{platform.label}</span>
                                             {isSelected && <Check size={12} className="ml-auto text-green-400" />}
                                         </button>
@@ -354,13 +353,13 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                         </div>
                     </>
                 )}
-                
+
                 <div className="space-y-3 pt-4">
                     <Button fullWidth onClick={handleCompleteSetup} isLoading={isLoading} size="lg">Save Profile & Continue</Button>
-                    <button onClick={handleSkipForNow} className="w-full text-center text-slate-400 text-sm hover:text-slate-600 font-medium transition-colors">
+                    <button onClick={handleSkipForNow} className="w-full text-center text-stone-400 text-sm hover:text-stone-600 font-medium transition-colors">
                         Skip for now
                     </button>
-                    <button onClick={onBack} className="w-full text-center text-slate-300 hover:text-red-500 text-xs font-medium transition-colors mt-2">
+                    <button onClick={onBack} className="w-full text-center text-stone-300 hover:text-red-500 text-xs font-medium transition-colors mt-2">
                         Cancel & Sign Out
                     </button>
                 </div>
@@ -372,38 +371,36 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
   if (isForgotPassword) {
       return (
-          <div className="min-h-screen bg-white relative flex flex-col items-center justify-center p-4 font-sans">
-              <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-              
+          <div className="min-h-screen bg-[#FAFAF9] relative flex flex-col items-center justify-center p-4 font-sans">
               <div className="relative z-10 w-full max-w-md">
-                  <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100">
-                      <h2 className="text-2xl font-bold text-slate-900 mb-2 text-center">Reset Password</h2>
-                      <p className="text-slate-500 text-center mb-6">Enter your email to receive a reset link.</p>
-                      
+                  <div className="bg-white p-8 rounded-3xl shadow-xl shadow-stone-200/50 border border-stone-100">
+                      <h2 className="text-2xl font-bold text-stone-900 mb-2 text-center">Reset Password</h2>
+                      <p className="text-stone-500 text-center mb-6">Enter your email to receive a reset link.</p>
+
                       <form onSubmit={handleForgotPassword} className="space-y-4">
                           <div>
-                              <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">Email Address</label>
+                              <label className="block text-sm font-medium text-stone-700 mb-1.5 ml-1">Email Address</label>
                               <div className="relative">
-                                  <Mail className="absolute left-3.5 top-3 text-slate-400" size={18} />
-                                  <input 
-                                      type="email" 
+                                  <Mail className="absolute left-3.5 top-3 text-stone-400" size={18} />
+                                  <input
+                                      type="email"
                                       required
-                                      className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                      className="w-full pl-10 pr-4 py-2.5 border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-500 focus:border-stone-500 outline-none transition-all"
                                       placeholder="you@example.com"
                                       value={email}
                                       onChange={(e) => setEmail(e.target.value)}
                                   />
                               </div>
                           </div>
-                          <Button fullWidth size="lg" type="submit" isLoading={isLoading} className="mt-2 h-11 shadow-lg shadow-blue-500/20">
+                          <Button fullWidth size="lg" type="submit" isLoading={isLoading} className="mt-2 h-11 shadow-lg shadow-stone-900/20">
                               Send Reset Link
                           </Button>
                       </form>
-                      
+
                       <div className="mt-6 text-center">
-                          <button 
+                          <button
                               onClick={() => setIsForgotPassword(false)}
-                              className="text-sm font-semibold text-slate-500 hover:text-slate-700 transition-colors"
+                              className="text-sm font-semibold text-stone-500 hover:text-stone-700 transition-colors"
                           >
                               Back to Sign In
                           </button>
@@ -415,26 +412,24 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   }
 
   return (
-    <div className="min-h-screen bg-white relative flex flex-col items-center justify-center p-4 font-sans">
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-      
+    <div className="min-h-screen bg-[#FAFAF9] relative flex flex-col items-center justify-center p-4 font-sans">
       <div className="relative z-10 w-full max-w-md">
-        <div 
+        <div
           onClick={onBack}
-          className="mb-8 flex justify-center items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          className="mb-8 flex justify-center items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity"
         >
-          <BlueCheckLogo size={32} className="text-blue-600" />
-          <span className="font-bold text-xl tracking-tighter text-slate-900">BLUECHECKED</span>
+          <BlueCheckLogo size={28} className="text-stone-800" />
+          <span className="font-semibold text-lg tracking-tight text-stone-800">bluechecked</span>
         </div>
 
-        <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100">
-          <h2 className="text-2xl font-bold text-slate-900 mb-2 text-center">
+        <div className="bg-white p-8 rounded-3xl shadow-xl shadow-stone-200/50 border border-stone-100">
+          <h2 className="text-2xl font-bold text-stone-900 mb-2 text-center">
             {isSignUp ? 'Create Account' : 'Welcome Back'}
           </h2>
-          <p className="text-slate-500 text-center mb-6">
+          <p className="text-stone-500 text-center mb-6">
             {isSignUp ? 'Join the guaranteed response marketplace.' : 'Sign in to access your dashboard.'}
           </p>
-          
+
           <div className="space-y-5">
             {/* Role Selection */}
             <div className="grid grid-cols-2 gap-3 mb-2">
@@ -442,9 +437,9 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 type="button"
                 onClick={() => setRole('CREATOR')}
                 className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${
-                  role === 'CREATOR' 
-                    ? 'bg-blue-50 border-blue-500 text-blue-700 ring-1 ring-blue-500' 
-                    : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                  role === 'CREATOR'
+                    ? 'bg-stone-50 border-stone-900 text-stone-900 ring-1 ring-stone-900'
+                    : 'bg-white border-stone-200 text-stone-500 hover:border-stone-300'
                 }`}
               >
                 <User size={20} />
@@ -454,9 +449,9 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 type="button"
                 onClick={() => setRole('FAN')}
                 className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${
-                  role === 'FAN' 
-                    ? 'bg-purple-50 border-purple-500 text-purple-700 ring-1 ring-purple-500' 
-                    : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                  role === 'FAN'
+                    ? 'bg-amber-50 border-amber-600 text-amber-700 ring-1 ring-amber-600'
+                    : 'bg-white border-stone-200 text-stone-500 hover:border-stone-300'
                 }`}
               >
                 <MessageSquare size={20} />
@@ -470,7 +465,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 type="button"
                 onClick={() => handleSocialLogin('google')}
                 disabled={isSocialLoading || isLoading}
-                className="flex items-center justify-center gap-2 bg-white border border-slate-300 text-slate-700 font-medium py-2.5 rounded-xl hover:bg-slate-50 hover:border-slate-400 transition-all"
+                className="flex items-center justify-center gap-2 bg-white border border-stone-200 text-stone-700 font-medium py-2.5 rounded-xl hover:bg-stone-50 hover:border-stone-300 transition-all"
                 >
                 <GoogleLogo className="w-5 h-5" />
                 <span className="text-sm">{role === 'CREATOR' ? 'Log in as Creator' : 'Log in as Fan'}</span>
@@ -479,21 +474,21 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
             <div className="relative py-2">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200"></div>
+                <div className="w-full border-t border-stone-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-slate-400">Or continue with</span>
+                <span className="px-2 bg-white text-stone-400">Or continue with</span>
               </div>
             </div>
 
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               {isSignUp && (
                 <div className="animate-in fade-in slide-in-from-top-4 duration-300">
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">Full Name</label>
-                  <input 
-                    type="text" 
+                  <label className="block text-sm font-medium text-stone-700 mb-1.5 ml-1">Full Name</label>
+                  <input
+                    type="text"
                     required={isSignUp}
-                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    className="w-full px-4 py-2.5 border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-500 focus:border-stone-500 outline-none transition-all"
                     placeholder={role === 'CREATOR' ? "Creator Name" : "Your Name"}
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
@@ -502,39 +497,39 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
               )}
 
               <div className="animate-in fade-in zoom-in-95 duration-200">
-                <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">Email Address</label>
+                <label className="block text-sm font-medium text-stone-700 mb-1.5 ml-1">Email Address</label>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-3 text-slate-400" size={18} />
-                  <input 
-                    type="email" 
+                  <Mail className="absolute left-3.5 top-3 text-stone-400" size={18} />
+                  <input
+                    type="email"
                     required
-                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-500 focus:border-stone-500 outline-none transition-all"
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
               </div>
-              
+
               <div>
                 <div className="flex justify-between items-center mb-1.5 ml-1">
-                    <label className="block text-sm font-medium text-slate-700">Password</label>
+                    <label className="block text-sm font-medium text-stone-700">Password</label>
                     {!isSignUp && (
-                        <button 
+                        <button
                             type="button"
                             onClick={() => setIsForgotPassword(true)}
-                            className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+                            className="text-xs font-semibold text-stone-500 hover:text-stone-700"
                         >
                             Forgot Password?
                         </button>
                     )}
                 </div>
                 <div className="relative">
-                   <Lock className="absolute left-3.5 top-3 text-slate-400" size={18} />
-                   <input 
-                    type="password" 
+                   <Lock className="absolute left-3.5 top-3 text-stone-400" size={18} />
+                   <input
+                    type="password"
                     required
-                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-500 focus:border-stone-500 outline-none transition-all"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -542,47 +537,47 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 </div>
               </div>
 
-              <Button 
-                fullWidth 
-                size="lg" 
-                type="submit" 
-                isLoading={isLoading} 
-                className={`mt-2 h-11 shadow-lg ${role === 'FAN' ? 'shadow-purple-500/20 bg-purple-600 hover:bg-purple-700' : 'shadow-blue-500/20'}`}
+              <Button
+                fullWidth
+                size="lg"
+                type="submit"
+                isLoading={isLoading}
+                className={`mt-2 h-11 shadow-lg ${role === 'FAN' ? 'shadow-amber-500/20 bg-amber-600 hover:bg-amber-700' : 'shadow-stone-900/20'}`}
                 disabled={isSocialLoading}
               >
-                {isSignUp 
-                  ? (role === 'CREATOR' ? 'Continue' : 'Create Fan Account') 
+                {isSignUp
+                  ? (role === 'CREATOR' ? 'Continue' : 'Create Fan Account')
                   : (role === 'CREATOR' ? 'Creator Sign In' : 'Fan Sign In')
                 }
               </Button>
             </form>
 
             {showResend && (
-                <button onClick={handleResend} className="w-full text-center text-xs text-blue-600 hover:underline mt-2">
+                <button onClick={handleResend} className="w-full text-center text-xs text-stone-600 hover:underline mt-2">
                     Didn't receive the email? Click to resend.
                 </button>
             )}
           </div>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-stone-500">
               {isSignUp ? 'Already have an account?' : "Don't have an account?"}
-              <button 
+              <button
                 onClick={() => {
                   setIsSignUp(!isSignUp);
                   setEmail('');
                   setPassword('');
                 }}
-                className={`ml-1.5 font-semibold transition-colors ${role === 'FAN' ? 'text-purple-600 hover:text-purple-700' : 'text-blue-600 hover:text-blue-700'}`}
+                className={`ml-1.5 font-semibold transition-colors ${role === 'FAN' ? 'text-amber-600 hover:text-amber-700' : 'text-stone-700 hover:text-stone-900'}`}
               >
                 {isSignUp ? 'Sign in' : 'Sign up'}
               </button>
             </p>
           </div>
         </div>
-        
+
         <div className="mt-8 text-center">
-             <button onClick={onBack} className="text-slate-400 hover:text-slate-600 text-sm transition-colors">
+             <button onClick={onBack} className="text-stone-400 hover:text-stone-600 text-sm transition-colors">
                &larr; Back to Home
              </button>
         </div>

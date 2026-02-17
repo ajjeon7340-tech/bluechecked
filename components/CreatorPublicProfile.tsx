@@ -469,10 +469,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           <div className="w-full">
              <div className="bg-white rounded-3xl border border-stone-100 shadow-sm relative transition-all hover:shadow-md">
                 <div className="p-6 sm:p-8 relative z-10">
-                    <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
+                    <div className="flex flex-row gap-4 sm:gap-8 items-start">
                         {/* LEFT: Avatar + Stats */}
                         <div className="flex flex-col items-center gap-3 flex-shrink-0">
-                        <div className="relative w-24 h-24 rounded-full p-1 overflow-hidden border border-stone-100 shadow-sm bg-white group">
+                        <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 overflow-hidden border border-stone-100 shadow-sm bg-white group">
                            {!imgError && (editedCreator.avatarUrl || DEFAULT_AVATAR) ? (
                                <img 
                                     src={editedCreator.avatarUrl || DEFAULT_AVATAR} 
@@ -522,7 +522,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         <div className="text-stone-300 leading-snug">
                                             {getResponseTimeTooltip(creator.stats.responseTimeAvg)}
                                         </div>
-                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
+                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-stone-900"></div>
                                     </div>
                                 </div>
                             </div>
@@ -531,23 +531,21 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                         {/* RIGHT: Content Wrapper */}
                         <div className="flex-1 min-w-0 w-full">
-                            <div className="flex flex-col sm:flex-row gap-8">
-                                {/* LEFT: Name & Bio */}
-                                <div className="flex-1 min-w-0">
+                            <div className="w-full">
                                 {isCustomizeMode ? (
                                     <div className="space-y-2">
                                         <input 
                                             type="text" 
                                             value={editedCreator.displayName} 
                                             onChange={(e) => updateField('displayName', e.target.value)}
-                                            className="block w-full text-2xl sm:text-3xl font-bold text-stone-900 border-b border-dashed border-stone-300 focus:border-black focus:outline-none bg-transparent placeholder-slate-300 text-left"
+                                            className="block w-full text-2xl sm:text-3xl font-bold text-stone-900 border-b border-dashed border-stone-300 focus:border-black focus:outline-none bg-transparent placeholder-stone-300 text-left"
                                             placeholder="Display Name"
                                         />
                                         <input 
                                             type="text" 
                                             value={editedCreator.handle} 
                                             onChange={(e) => updateField('handle', e.target.value)}
-                                            className="block w-full text-sm text-stone-500 font-medium border-b border-dashed border-stone-300 focus:border-black focus:outline-none bg-transparent placeholder-slate-300 text-left"
+                                            className="block w-full text-sm text-stone-500 font-medium border-b border-dashed border-stone-300 focus:border-black focus:outline-none bg-transparent placeholder-stone-300 text-left"
                                             placeholder="@handle"
                                         />
                                         <textarea
@@ -559,64 +557,60 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                     </div>
                                 ) : (
                                     <>
-                                        <div className="w-full">
-                                            <h1 className="text-lg sm:text-xl font-black text-stone-900 tracking-tight leading-tight mb-1">
-                                                {creator.displayName}
-                                            </h1>
-                                            <p className="text-sm text-stone-600 leading-relaxed font-normal mt-2 truncate">
-                                                {creator.bio}
-                                            </p>
-                                        </div>
+                                        <h1 className="text-lg sm:text-xl font-black text-stone-900 tracking-tight leading-tight mb-1">
+                                            {creator.displayName}
+                                        </h1>
+                                        <p className="text-sm text-stone-600 leading-relaxed font-normal mt-2 truncate">
+                                            {creator.bio}
+                                        </p>
                                     </>
                                 )}
-                                </div>
 
-                                {/* RIGHT: Platforms (Aligned with Name) */}
-                                <div className="w-full sm:w-auto flex-shrink-0 pt-1">
-                                    {platforms.length > 0 ? (
-                                        <div className="flex flex-col gap-2">
+                                {/* Platforms & Actions Row */}
+                                <div className="flex items-center gap-2 mt-4 w-full">
+                                    {platforms.length > 0 && (
+                                        <div className="flex items-center gap-1 p-1 bg-white border border-stone-200 rounded-xl shadow-sm overflow-x-auto no-scrollbar max-w-[40%] sm:max-w-none flex-shrink-0">
                                             {platforms.map(platform => {
-                                                const platformId = typeof platform === 'string' ? platform : platform.id;
-                                                const platformUrl = typeof platform === 'string' ? '' : platform.url;
+                                            const platformId = typeof platform === 'string' ? platform : platform.id;
+                                            const platformUrl = typeof platform === 'string' ? '' : platform.url;
 
-                                                return (
-                                                    <a
-                                                        key={platformId}
-                                                        href={platformUrl ? ensureProtocol(platformUrl) : '#'}
-                                                        target={platformUrl ? "_blank" : undefined}
-                                                        rel="noopener noreferrer"
-                                                        className={`flex items-center gap-2 bg-stone-50 px-3 py-2 rounded-xl border border-stone-100 transition-all w-full sm:w-40 ${platformUrl ? 'hover:border-indigo-300 hover:bg-white hover:shadow-sm cursor-pointer' : 'opacity-70 cursor-default'}`}
-                                                    >
-                                                        {getPlatformIcon(platformId)}
-                                                        <span className="text-xs font-bold text-stone-700 capitalize">{platformId}</span>
-                                                    </a>
-                                                );
+                                            return (
+                                                <a
+                                                    key={platformId}
+                                                    href={platformUrl ? ensureProtocol(platformUrl) : '#'}
+                                                    target={platformUrl ? "_blank" : undefined}
+                                                    rel="noopener noreferrer"
+                                                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all flex-shrink-0 ${platformUrl ? 'hover:bg-stone-100 cursor-pointer text-stone-700' : 'opacity-40 cursor-default text-stone-400'}`}
+                                                    title={platformId}
+                                                >
+                                                    {getPlatformIcon(platformId)}
+                                                </a>
+                                            );
                                             })}
                                         </div>
-                                    ) : (
-                                        <p className="text-xs text-stone-400 italic">No platforms connected.</p>
+                                    )}
+                                    
+                                    {!isCustomizeMode && (
+                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            <button
+                                                onClick={handleShare}
+                                                className="w-10 h-10 bg-white border border-stone-200 text-stone-700 rounded-xl hover:bg-stone-50 transition-colors flex items-center justify-center shadow-sm flex-shrink-0"
+                                                title="Share"
+                                            >
+                                                <Share size={18} />
+                                            </button>
+                                            <button
+                                                onClick={currentUser ? handleOpenModal : onLoginRequest}
+                                                className="flex-1 bg-stone-900 text-white font-bold h-10 rounded-xl hover:bg-stone-800 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-stone-900/20 text-sm whitespace-nowrap px-4 min-w-0"
+                                            >
+                                                <MessageSquare size={16} className="flex-shrink-0" /> <span className="truncate">Ask me anything</span>
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    {!isCustomizeMode && (
-                        <div className="flex gap-3 mt-8 max-w-md mx-auto">
-                            <button
-                                onClick={handleShare}
-                                className="flex-1 bg-white border border-stone-200 text-stone-700 font-bold py-2.5 rounded-xl hover:bg-stone-50 transition-colors flex items-center justify-center gap-2 shadow-sm text-sm"
-                            >
-                                <Share size={18} /> Share
-                            </button>
-                            <button
-                                onClick={currentUser ? handleOpenModal : onLoginRequest}
-                                className="flex-1 bg-stone-900 text-white font-bold py-2.5 rounded-xl hover:bg-stone-800 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-stone-900/20 text-sm"
-                            >
-                                <MessageSquare size={18} /> Ask me anything
-                            </button>
-                        </div>
-                    )}
                 </div>
              </div>
           </div>
@@ -634,6 +628,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         {displayedLinks.map((link) => {
                             const isProduct = link.type === 'DIGITAL_PRODUCT';
                             const isSupport = link.type === 'SUPPORT';
+                            const hasThumbnail = !!link.thumbnailUrl;
                             return (
                                 <div key={link.id} className="relative group">
                                     {isCustomizeMode ? (
@@ -649,14 +644,14 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                  <div className="flex items-center gap-2 mb-1">
                                                      {isProduct ? <span className="text-[10px] font-bold bg-purple-200 text-purple-700 px-1.5 rounded uppercase">Product</span> : isSupport ? <span className="text-[10px] font-bold bg-pink-200 text-pink-700 px-1.5 rounded uppercase">Support</span> : null}
                                                      <input 
-                                                        className="block w-full font-bold text-stone-800 text-lg leading-tight bg-transparent outline-none border-b border-transparent focus:border-stone-300 placeholder-slate-300"
+                                                        className="block w-full font-bold text-stone-800 text-lg leading-tight bg-transparent outline-none border-b border-transparent focus:border-stone-300 placeholder-stone-300"
                                                         value={link.title}
                                                         onChange={(e) => handleUpdateLink(link.id, 'title', e.target.value)}
                                                         placeholder="Link Title"
                                                     />
                                                  </div>
                                                 <input 
-                                                    className="block w-full text-xs text-stone-400 mt-1 bg-transparent outline-none border-b border-transparent focus:border-stone-300 placeholder-slate-300"
+                                                    className="block w-full text-xs text-stone-400 mt-1 bg-transparent outline-none border-b border-transparent focus:border-stone-300 placeholder-stone-300"
                                                     value={link.url}
                                                     onChange={(e) => handleUpdateLink(link.id, 'url', e.target.value)}
                                                     placeholder="URL"
@@ -671,9 +666,15 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 className="w-full text-left bg-gradient-to-r from-pink-50 to-rose-50 p-3 sm:p-4 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-3 sm:gap-4 group cursor-pointer hover:border-pink-300 transition-all hover:shadow-md relative overflow-hidden"
                                             >
                                                 <div className="hidden sm:block absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-full blur-2xl -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
-                                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white text-pink-500 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform">
-                                                    <Heart size={20} className="sm:hidden fill-pink-500" />
-                                                    <Heart size={24} className="hidden sm:block fill-pink-500" />
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : 'bg-white text-pink-500'} flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform`}>
+                                                    {hasThumbnail ? (
+                                                        <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
+                                                    ) : (
+                                                        <>
+                                                            <Heart size={20} className="sm:hidden fill-pink-500" />
+                                                            <Heart size={24} className="hidden sm:block fill-pink-500" />
+                                                        </>
+                                                    )}
                                                 </div>
                                                 <div className="flex-1 relative z-10 min-w-0 text-left">
                                                     <h4 className="font-bold text-stone-900 text-sm sm:text-base group-hover:text-pink-600 transition-colors truncate">{link.title}</h4>
@@ -689,9 +690,15 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 className="w-full text-left bg-gradient-to-r from-purple-50 to-indigo-50 p-3 sm:p-4 rounded-2xl border border-purple-100 shadow-sm flex items-center gap-3 sm:gap-4 group cursor-pointer hover:border-purple-300 transition-all hover:shadow-md relative overflow-hidden"
                                             >
                                                 <div className="hidden sm:block absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-full blur-2xl -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
-                                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white text-purple-600 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform">
-                                                    <FileText size={20} className="sm:hidden" />
-                                                    <FileText size={24} className="hidden sm:block" />
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : 'bg-white text-purple-600'} flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform`}>
+                                                    {hasThumbnail ? (
+                                                        <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
+                                                    ) : (
+                                                        <>
+                                                            <FileText size={20} className="sm:hidden" />
+                                                            <FileText size={24} className="hidden sm:block" />
+                                                        </>
+                                                    )}
                                                 </div>
                                                 <div className="flex-1 relative z-10 min-w-0 text-left">
                                                     <h4 className="font-bold text-stone-900 text-sm sm:text-base group-hover:text-purple-700 transition-colors truncate">{link.title}</h4>
@@ -711,8 +718,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                             >
                                                 {link.isPromoted && <div className="hidden sm:block absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-full blur-2xl -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>}
                                                 
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform ${link.isPromoted ? 'bg-white text-amber-500' : 'bg-stone-50 text-stone-500 group-hover:bg-stone-100'}`}>
-                                                    {link.isPromoted ? (
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : (link.isPromoted ? 'bg-white text-amber-500' : 'bg-stone-50 text-stone-500 group-hover:bg-stone-100')}`}>
+                                                    {hasThumbnail ? (
+                                                        <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
+                                                    ) : link.isPromoted ? (
                                                         <>
                                                             <Sparkles size={20} className="sm:hidden" />
                                                             <Sparkles size={24} className="hidden sm:block" />

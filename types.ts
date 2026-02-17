@@ -23,6 +23,7 @@ export interface AffiliateLink {
   isPromoted?: boolean;
   type?: 'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT';
   price?: number; // In Credits
+  thumbnailUrl?: string;
 }
 
 export interface Product {
@@ -67,6 +68,7 @@ export interface ChatMessage {
   role: 'CREATOR' | 'FAN';
   content: string;
   timestamp: string;
+  attachmentUrl?: string;
 }
 
 export interface Message {

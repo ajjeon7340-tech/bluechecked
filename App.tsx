@@ -179,14 +179,14 @@ function App() {
   }, [isLoading, creator, currentPage]);
 
   if (error) return (
-    <div className="min-h-screen flex items-center justify-center bg-white text-slate-900 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9] text-stone-900 p-4">
       <div className="max-w-md text-center space-y-4">
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl">⚠️</span>
         </div>
-        <h2 className="text-xl font-bold text-slate-900">Connection Error</h2>
-        <p className="text-slate-600">{error}</p>
-        <div className="bg-slate-50 p-4 rounded-lg text-sm text-slate-500 text-left">
+        <h2 className="text-xl font-bold text-stone-900">Connection Error</h2>
+        <p className="text-stone-600">{error}</p>
+        <div className="bg-stone-50 p-4 rounded-2xl text-sm text-stone-500 text-left border border-stone-100">
             <p className="font-bold mb-1">Troubleshooting:</p>
             <ul className="list-disc pl-4 space-y-1">
                 <li>Check your internet connection</li>
@@ -194,9 +194,9 @@ function App() {
                 <li>Run the database seed script in Supabase SQL Editor</li>
             </ul>
         </div>
-        <button 
+        <button
           onClick={() => loadCreatorData()}
-          className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20"
+          className="px-6 py-3 bg-stone-900 text-white rounded-full font-medium hover:bg-stone-800 transition-colors shadow-lg shadow-stone-900/20"
         >
           Retry Connection
         </button>
@@ -205,9 +205,9 @@ function App() {
   );
 
   if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center bg-white text-slate-400">
+    <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9] text-stone-400">
       <div className="flex flex-col items-center gap-2">
-        <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+        <div className="animate-spin h-6 w-6 border-2 border-stone-800 border-t-transparent rounded-full"></div>
         <span className="text-sm font-medium">Loading Bluechecked...</span>
       </div>
     </div>
@@ -277,7 +277,7 @@ function App() {
   };
 
   return (
-    <div className="font-sans text-slate-900">
+    <div className="font-sans text-stone-900">
       
       {currentPage === 'LANDING' && (
         <LandingPage
@@ -400,16 +400,16 @@ function App() {
 
       {/* Sign Up Confirmation Modal */}
       {showSignUpConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-            <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl text-center">
-                <h3 className="text-xl font-bold text-slate-900 mb-2">Create Account?</h3>
-                <p className="text-slate-500 mb-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center border border-stone-100">
+                <h3 className="text-xl font-bold text-stone-900 mb-2">Create Account?</h3>
+                <p className="text-stone-500 mb-6">
                     We couldn't find an account linked to this email. Please select your account type to continue.
                 </p>
                 <div className="flex flex-col gap-3">
-                    <button onClick={() => handleConfirmSignUp('CREATOR')} className="w-full px-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">Create Creator Account</button>
-                    <button onClick={() => handleConfirmSignUp('FAN')} className="w-full px-4 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/20">Create Fan Account</button>
-                    <button onClick={handleCancelSignUp} className="w-full px-4 py-2 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors mt-2">Cancel</button>
+                    <button onClick={() => handleConfirmSignUp('CREATOR')} className="w-full px-4 py-3 bg-stone-900 text-white rounded-xl font-bold hover:bg-stone-800 transition-colors shadow-lg shadow-stone-900/20">Create Creator Account</button>
+                    <button onClick={() => handleConfirmSignUp('FAN')} className="w-full px-4 py-3 bg-amber-600 text-white rounded-xl font-bold hover:bg-amber-700 transition-colors shadow-lg shadow-amber-500/20">Create Fan Account</button>
+                    <button onClick={handleCancelSignUp} className="w-full px-4 py-2 text-sm font-bold text-stone-400 hover:text-stone-600 transition-colors mt-2">Cancel</button>
                 </div>
             </div>
         </div>

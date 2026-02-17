@@ -74,7 +74,8 @@ const mapDbMessageToAppMessage = (m: any, currentUserId: string): Message => {
             id: line.id,
             role: line.role, // 'FAN' or 'CREATOR' stored in DB
             content: line.content,
-            timestamp: line.created_at
+            timestamp: line.created_at,
+            attachmentUrl: line.attachment_url
         }));
         // Sort by time
         conversation.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
@@ -869,8 +870,8 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
     return mapDbMessageToAppMessage(message, userId);
 };
 
-export const replyToMessage = async (messageId: string, replyText: string, isComplete: boolean): Promise<void> => {
-    if (!isConfigured) return MockBackend.replyToMessage(messageId, replyText, isComplete);
+export const replyToMessage = async (messageId: string, replyText: string, isComplete: boolean, attachmentUrl?: string | null): Promise<void> => {
+    if (!isConfigured) return MockBackend.replyToMessage(messageId, replyText, isComplete, attachmentUrl);
 
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error("Not logged in");
@@ -887,12 +888,13 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
     }
 
     // 1. Add Chat Line
-    if (replyText.trim()) {
+    if (replyText.trim() || attachmentUrl) {
         const { error: chatError } = await supabase.from('chat_lines').insert({
             message_id: messageId,
             sender_id: session.session.user.id,
             role: 'CREATOR',
-            content: replyText
+            content: replyText,
+            attachment_url: attachmentUrl
         });
         if (chatError) throw chatError;
 
