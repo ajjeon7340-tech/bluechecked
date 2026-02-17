@@ -907,13 +907,17 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
 
     // 1. Add Chat Line
     if (replyText.trim() || attachmentUrl) {
-        const { error: chatError } = await supabase.from('chat_lines').insert({
+        const payload: any = {
             message_id: messageId,
             sender_id: session.session.user.id,
             role: 'CREATOR',
-            content: replyText,
-            attachment_url: attachmentUrl
-        });
+            content: replyText
+        };
+        if (attachmentUrl) {
+            payload.attachment_url = attachmentUrl;
+        }
+
+        const { error: chatError } = await supabase.from('chat_lines').insert(payload);
         if (chatError) throw chatError;
 
         // Touch the message to trigger realtime updates for listeners (Fan Dashboard)

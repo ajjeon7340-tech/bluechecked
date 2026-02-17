@@ -622,21 +622,28 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     if (isComplete && !hasText && !hasAttachment && !hasManualReply) return;
 
     setIsSendingReply(true);
-    await new Promise(r => setTimeout(r, 800)); // Simulate delay
     
-    // The backend now handles empty replyText by skipping message creation but updating status
-    await replyToMessage(activeMessage.id, replyText, isComplete, replyAttachment);
-    await loadData(true); 
-    setReplyText('');
-    setReplyAttachment(null);
-    setIsSendingReply(false);
+    try {
+        await new Promise(r => setTimeout(r, 800)); // Simulate delay
+        
+        // The backend now handles empty replyText by skipping message creation but updating status
+        await replyToMessage(activeMessage.id, replyText, isComplete, replyAttachment);
+        await loadData(true); 
+        setReplyText('');
+        setReplyAttachment(null);
 
-    if (isComplete) {
-        setCollectedAmount(activeMessage.amount);
-        setShowCollectAnimation(true);
-        setShowReadCelebration(true); // Trigger confetti for collection
-        setTimeout(() => setShowReadCelebration(false), 4000);
-        setTimeout(() => setShowCollectAnimation(false), 3500);
+        if (isComplete) {
+            setCollectedAmount(activeMessage.amount);
+            setShowCollectAnimation(true);
+            setShowReadCelebration(true); // Trigger confetti for collection
+            setTimeout(() => setShowReadCelebration(false), 4000);
+            setTimeout(() => setShowCollectAnimation(false), 3500);
+        }
+    } catch (error) {
+        console.error("Failed to send reply:", error);
+        alert("Failed to send reply. Please try again.");
+    } finally {
+        setIsSendingReply(false);
     }
   };
 
