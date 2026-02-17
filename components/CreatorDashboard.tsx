@@ -2074,7 +2074,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         const [firstChat, ...restChats] = sortedConversation;
 
                                         return (
-                                            <div key={msg.id} className={`px-4 py-3 ${msgIndex > 0 ? 'border-t border-stone-100' : ''} relative`}>
+                                            <div key={msg.id} className="px-4 py-3 relative">
+                                                {/* Session Divider */}
+                                                {msgIndex > 0 && (
+                                                    <div className="flex items-center gap-3 mb-4 -mt-1">
+                                                        <div className="flex-1 h-px bg-stone-200/60"></div>
+                                                        <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">New request</span>
+                                                        <div className="flex-1 h-px bg-stone-200/60"></div>
+                                                    </div>
+                                                )}
                                                 {/* 1. First Message (The Request) */}
                                                 {firstChat && (
                                                 <div className="flex relative z-10">
@@ -2321,6 +2329,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         <div className="flex-1 flex items-center">
                                                             <span className="text-[15px] text-stone-400">Reply to thread...</span>
                                                         </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Collected indicator */}
+                                                {msg.status === 'REPLIED' && (
+                                                    <div className="flex items-center gap-3 mt-4 pt-2">
+                                                        <div className="flex-1 h-px bg-emerald-100"></div>
+                                                        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600 uppercase tracking-wider">
+                                                            <CheckCircle2 size={12} />
+                                                            <span>Collected {msg.amount} credits</span>
+                                                        </div>
+                                                        <div className="flex-1 h-px bg-emerald-100"></div>
                                                     </div>
                                                 )}
                                             </div>
