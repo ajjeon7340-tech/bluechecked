@@ -65,7 +65,8 @@ import {
   MousePointerClick,
   GripVertical,
   Smile,
-  ThumbsUp
+  ThumbsUp,
+  Pencil
 } from 'lucide-react';
 
 export const GoogleLogo = ({ className }: { className?: string }) => (
@@ -202,5 +203,6 @@ export {
   MousePointerClick,
   GripVertical,
   Smile,
-  ThumbsUp
+  ThumbsUp,
+  Pencil
 };

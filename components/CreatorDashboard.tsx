@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { CreatorProfile, Message, DashboardStats, MonthlyStat, AffiliateLink, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
-import { getMessages, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile } from '../services/realBackend';
+import { getMessages, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage } from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
 import { 
   Clock, CheckCircle2, AlertCircle, DollarSign, Sparkles, ChevronLeft, LogOut, 
@@ -9,7 +9,7 @@ import {
   Home, BarChart3, Wallet, Users, Bell, Search, Menu, ChevronDown, Ban, Check,
   Heart, Star, Eye, TrendingUp, MessageSquare, ArrowRight, Lock, 
   InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Download, ShoppingBag, FileText, PieChart as PieIcon, LayoutGrid, MonitorPlay, Link as LinkIcon, Calendar, ChevronRight, Coins, CreditCard
-  , MousePointerClick, GripVertical, Smile
+  , MousePointerClick, GripVertical, Smile, Pencil
 } from './Icons';
 import { Button } from './Button';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid, PieChart, Pie, Cell, Legend, ComposedChart, Line } from 'recharts';
@@ -203,6 +203,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Chat Reaction State
   const [messageReactions, setMessageReactions] = useState<Record<string, string>>({});
   const [activeReactionPicker, setActiveReactionPicker] = useState<string | null>(null);
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
 
   const handleReactionClick = (msgId: string, emoji: string) => {
       setMessageReactions(prev => {
@@ -215,6 +217,26 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           return { ...prev, [msgId]: emoji };
       });
       setActiveReactionPicker(null);
+  };
+
+  const handleEditChat = async (chatId: string, messageId: string) => {
+      if (!editContent.trim()) return;
+      try {
+          await editChatMessage(chatId, editContent.trim());
+          setMessages(prev => prev.map(m => {
+              if (m.id !== messageId) return m;
+              return {
+                  ...m,
+                  conversation: m.conversation.map(c =>
+                      c.id === chatId ? { ...c, content: editContent.trim() } : c
+                  )
+              };
+          }));
+          setEditingChatId(null);
+          setEditContent('');
+      } catch (err) {
+          console.error('Failed to edit message:', err);
+      }
   };
 
   useEffect(() => {
@@ -2095,7 +2117,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 {/* Attachment */}
                                                 {msg.attachmentUrl && (
                                                     <div className="mt-3 rounded-lg overflow-hidden border border-stone-200">
-                                                        <img src={msg.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
+                                                        {msg.attachmentUrl.toLowerCase().endsWith('.pdf') ? (
+                                                            <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
+                                                                <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-sm font-medium text-stone-700 truncate">{msg.attachmentUrl.split('/').pop() || 'Document.pdf'}</p>
+                                                                    <p className="text-xs text-stone-400">PDF Document</p>
+                                                                </div>
+                                                                <Download size={16} className="text-stone-400 flex-shrink-0" />
+                                                            </a>
+                                                        ) : (
+                                                            <img src={msg.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
+                                                        )}
                                                     </div>
                                                 )}
                                                             </div>
@@ -2199,7 +2232,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                                                 {chat.attachmentUrl && (
                                                                     <div className="mt-3 rounded-lg overflow-hidden border border-stone-200">
-                                                                        <img src={chat.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
+                                                                        {chat.attachmentUrl.toLowerCase().endsWith('.pdf') ? (
+                                                                            <a href={chat.attachmentUrl} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
+                                                                                <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
+                                                                                <div className="flex-1 min-w-0">
+                                                                                    <p className="text-sm font-medium text-stone-700 truncate">{chat.attachmentUrl.split('/').pop() || 'Document.pdf'}</p>
+                                                                                    <p className="text-xs text-stone-400">PDF Document</p>
+                                                                                </div>
+                                                                                <Download size={16} className="text-stone-400 flex-shrink-0" />
+                                                                            </a>
+                                                                        ) : (
+                                                                            <img src={chat.attachmentUrl} className="max-w-full w-full object-cover" alt="attachment" />
+                                                                        )}
                                                                     </div>
                                                                 )}
 
