@@ -224,6 +224,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       
       messages.forEach(msg => {
           if (msg.content.startsWith('Purchased Product:')) return;
+          if (msg.content.startsWith('Fan Tip:')) return;
 
           const cId = msg.creatorId || 'unknown';
           if (!groups[cId]) {
@@ -284,7 +285,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const threadMessages = useMemo(() => {
       if (!selectedCreatorId) return [];
       return messages
-        .filter(m => m.creatorId === selectedCreatorId && !m.content.startsWith('Purchased Product:'))
+        .filter(m => m.creatorId === selectedCreatorId && !m.content.startsWith('Purchased Product:') && !m.content.startsWith('Fan Tip:'))
         .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }, [messages, selectedCreatorId]);
 
@@ -1161,6 +1162,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         {displayedMessages.map(msg => {
                                             const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
                                             const isProduct = msg.content.startsWith('Purchased Product:');
+                                            const isTip = msg.content.startsWith('Fan Tip:');
 
                                             return (
                                                 <tr key={msg.id} className="hover:bg-stone-50 transition-colors group">
@@ -1168,13 +1170,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200">
-                                                                {isProduct ? <FileText size={14} /> : <User size={14} />}
+                                                                {isProduct ? <FileText size={14} /> : isTip ? <Heart size={14} /> : <User size={14} />}
                                                             </div>
                                                             <div>
                                                                 <div className="font-bold text-stone-900 text-sm">
-                                                                    {isProduct ? 'Digital Content Purchase' : 'Priority DM Request'}
+                                                                    {isProduct ? 'Digital Content Purchase' : isTip ? 'Fan Tip' : 'Priority DM Request'}
                                                                 </div>
-                                                                <div className="text-xs text-stone-400 truncate max-w-[200px]">{isProduct ? msg.content.replace('Purchased Product: ', '') : msg.content}</div>
+                                                                <div className="text-xs text-stone-400 truncate max-w-[200px]">{isProduct ? msg.content.replace('Purchased Product: ', '') : isTip ? msg.content.replace('Fan Tip: ', '') : msg.content}</div>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -1215,17 +1217,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 {displayedMessages.map(msg => {
                                     const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
                                     const isProduct = msg.content.startsWith('Purchased Product:');
+                                    const isTip = msg.content.startsWith('Fan Tip:');
                                     
                                     return (
                                         <div key={msg.id} className="p-4 flex flex-col gap-3">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200">
-                                                        {isProduct ? <FileText size={18} /> : <User size={18} />}
+                                                        {isProduct ? <FileText size={18} /> : isTip ? <Heart size={18} /> : <User size={18} />}
                                                     </div>
                                                     <div>
                                                         <div className="font-bold text-stone-900 text-sm">
-                                                            {isProduct ? 'Digital Content' : 'Priority Request'}
+                                                            {isProduct ? 'Digital Content' : isTip ? 'Fan Tip' : 'Priority Request'}
                                                         </div>
                                                         <div className="text-xs text-stone-400">{new Date(msg.createdAt).toLocaleDateString()}</div>
                                                     </div>
@@ -1235,7 +1238,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 </div>
                                             </div>
                                             <div className="flex items-center justify-between text-xs">
-                                                <div className="text-stone-500 truncate max-w-[200px]">{isProduct ? msg.content.replace('Purchased Product: ', '') : msg.content}</div>
+                                                <div className="text-stone-500 truncate max-w-[200px]">{isProduct ? msg.content.replace('Purchased Product: ', '') : isTip ? msg.content.replace('Fan Tip: ', '') : msg.content}</div>
                                                 {msg.status === 'PENDING' && <span className="font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Pending</span>}
                                                 {msg.status === 'REPLIED' && <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Completed</span>}
                                                 {isRefunded && <span className="font-bold text-stone-500 bg-stone-100 px-2 py-0.5 rounded">Refunded</span>}

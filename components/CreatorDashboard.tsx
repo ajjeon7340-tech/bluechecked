@@ -604,7 +604,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const threadMessages = useMemo(() => {
       if (!selectedSenderEmail) return [];
       return incomingMessages
-          .filter(m => m.senderEmail === selectedSenderEmail && !m.content.startsWith('Purchased Product:'))
+          .filter(m => m.senderEmail === selectedSenderEmail && !m.content.startsWith('Purchased Product:') && !m.content.startsWith('Fan Tip:'))
           .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }, [incomingMessages, selectedSenderEmail]);
 
