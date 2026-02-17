@@ -557,21 +557,22 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
       messages.forEach(msg => {
           const isProduct = msg.content.startsWith('Purchased Product:');
+          const isTip = msg.content.startsWith('Fan Tip:');
 
           // 1. Sent Request
           if (!isProduct) {
               list.push({
                   id: `sent-${msg.id}`,
-                  icon: Send,
-                  text: `You sent a request to ${msg.creatorName || 'Creator'}`,
+                  icon: isTip ? Heart : Send,
+                  text: isTip ? `You sent a tip to ${msg.creatorName || 'Creator'}` : `You sent a request to ${msg.creatorName || 'Creator'}`,
                   time: new Date(msg.createdAt),
-                  color: 'bg-stone-100 text-stone-700',
+                  color: isTip ? 'bg-pink-100 text-pink-600' : 'bg-stone-100 text-stone-700',
                   creatorId: msg.creatorId
               });
           }
 
           // 2. Reply Received
-          if (msg.status === 'REPLIED' && msg.replyAt && !isProduct) {
+          if (msg.status === 'REPLIED' && msg.replyAt && !isProduct && !isTip) {
               list.push({
                   id: `reply-${msg.id}`,
                   icon: MessageSquare,

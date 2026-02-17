@@ -12,10 +12,10 @@ const getColorForSource = (source: string) => {
     if (s.includes('instagram')) return '#E1306C';
     if (s.includes('x') || s.includes('twitter')) return '#000000';
     if (s.includes('tiktok')) return '#000000';
-    if (s.includes('linkedin')) return '#0077B5';
-    if (s.includes('facebook')) return '#1877F2';
-    if (s.includes('google')) return '#4285F4';
+    if (s.includes('twitch')) return '#9146FF';
+    if (s.includes('search')) return '#4285F4';
     if (s.includes('direct')) return '#64748b';
+    if (s.includes('shared')) return '#10B981';
     return '#94a3b8';
 };
 
@@ -843,9 +843,11 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
             emailBody = `<p><strong>${senderName}</strong> purchased <strong>${productName}</strong> for <strong>${amount} credits</strong>.</p>`;
             emailContent = "";
         } else if (isTip) {
+            const tipMessage = content.replace('Fan Tip: ', '');
             emailSubject = `New Tip from ${senderName}`;
             emailHeader = "You Received a Tip!";
             emailBody = `<p><strong>${senderName}</strong> sent you a tip of <strong>${amount} credits</strong>.</p>`;
+            emailContent = `<div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;"><p style="margin: 0; font-style: italic;">"${tipMessage}"</p></div>`;
         }
 
         supabase.functions.invoke('send-email', {
@@ -1116,9 +1118,19 @@ export const logAnalyticsEvent = async (creatorId: string, eventType: 'VIEW' | '
     if (!isConfigured) return MockBackend.logAnalyticsEvent(creatorId, eventType, metadata);
 
     const params = new URLSearchParams(window.location.search);
-    let source = params.get('utm_source') || params.get('source');
+    let rawSource = params.get('utm_source') || params.get('source');
+    let source = 'Direct Link';
     
-    if (!source) {
+    if (rawSource) {
+        const s = rawSource.toLowerCase();
+        if (s.includes('youtube') || s === 'yt_desc') source = 'YouTube';
+        else if (s.includes('instagram') || s === 'ig_bio' || s === 'ig_story') source = 'Instagram';
+        else if (s.includes('twitter') || s === 'x' || s === 'tw_bio') source = 'X (Twitter)';
+        else if (s.includes('tiktok') || s === 'tt_bio') source = 'TikTok';
+        else if (s.includes('twitch')) source = 'Twitch';
+        else if (s === 'search') source = 'Search';
+        else source = 'Shared Link';
+    } else {
         const referrer = document.referrer;
         if (referrer) {
             try {
@@ -1129,26 +1141,15 @@ export const logAnalyticsEvent = async (creatorId: string, eventType: 'VIEW' | '
                 else if (hostname.includes('instagram')) source = 'Instagram';
                 else if (hostname.includes('twitter') || hostname.includes('x.com') || hostname.includes('t.co')) source = 'X (Twitter)';
                 else if (hostname.includes('tiktok')) source = 'TikTok';
-                else if (hostname.includes('linkedin')) source = 'LinkedIn';
-                else if (hostname.includes('facebook') || hostname.includes('fb.com')) source = 'Facebook';
-                else if (hostname.includes('google')) source = 'Google Search';
-                else if (hostname.includes('bing')) source = 'Bing Search';
-                else source = hostname.replace(/^www\./, '');
+                else if (hostname.includes('twitch')) source = 'Twitch';
+                else if (hostname.includes('google') || hostname.includes('bing') || hostname.includes('yahoo') || hostname.includes('duckduckgo') || hostname.includes('baidu')) source = 'Search';
+                else source = 'Shared Link';
             } catch {
-                source = 'Other Website';
+                source = 'Shared Link';
             }
         } else {
-            source = 'Direct Link / Bookmark';
+            source = 'Direct Link';
         }
-    } else {
-        // Make technical UTM tags friendlier
-        const s = source.toLowerCase();
-        if (s === 'ig_bio') source = 'Instagram Bio';
-        else if (s === 'ig_story') source = 'Instagram Story';
-        else if (s === 'yt_desc') source = 'YouTube Description';
-        else if (s === 'tw_bio') source = 'X (Twitter) Bio';
-        else if (s === 'tt_bio') source = 'TikTok Bio';
-        else if (s === 'ln_bio') source = 'LinkedIn Bio';
     }
 
     const { error } = await supabase.from('analytics_events').insert({
@@ -1201,7 +1202,7 @@ export const getProAnalytics = async (): Promise<ProAnalyticsData | null> => {
     const views = events.filter(e => e.event_type === 'VIEW');
     const sources: Record<string, number> = {};
     views.forEach(v => {
-        const s = v.source || 'Direct Link / Bookmark';
+        const s = v.source || 'Direct Link';
         sources[s] = (sources[s] || 0) + 1;
     });
 
@@ -1466,6 +1467,9 @@ export const sendFanAppreciation = async (messageId: string, text: string): Prom
 
     const userId = session.session.user.id;
     
+    // Fetch sender name for email
+    const { data: senderProfile } = await supabase.from('profiles').select('display_name').eq('id', userId).single();
+    
     // Deduct credits (50) for the tip
     const { data: profile } = await supabase.from('profiles').select('credits').eq('id', userId).single();
     if (!profile || profile.credits < 50) {
@@ -1495,6 +1499,32 @@ export const sendFanAppreciation = async (messageId: string, text: string): Prom
     await supabase.from('messages').update({ 
         updated_at: new Date().toISOString() 
     }).eq('id', messageId);
+
+    // Send Email Notification
+    if (msg && msg.creator_id) {
+        const senderName = senderProfile?.display_name || 'Fan';
+        console.log(`[Email] Triggering tip notification for Creator ID: ${msg.creator_id}`);
+        
+        supabase.functions.invoke('send-email', {
+            body: {
+                creatorId: msg.creator_id,
+                subject: `New Tip from ${senderName}`,
+                html: `
+                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h1 style="color: #4f46e5;">You Received a Tip!</h1>
+                        <p><strong>${senderName}</strong> sent you a tip of <strong>50 credits</strong> on an existing conversation.</p>
+                        <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                            <p style="margin: 0; font-style: italic;">"${text}"</p>
+                        </div>
+                        <a href="${getSiteUrl()}" style="background: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">View Conversation</a>
+                    </div>
+                `
+            },
+            headers: {
+                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+            }
+        });
+    }
 };
 
 export const subscribeToMessages = (userId: string, onUpdate: () => void) => {

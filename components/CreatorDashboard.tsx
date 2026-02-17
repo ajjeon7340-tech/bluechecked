@@ -269,13 +269,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
               });
           }
           
-          // 3. Tips (Fan Appreciation)
+          // 3. Tips (Fan Appreciation & Direct Tips)
           msg.conversation.forEach(chat => {
-              if (chat.role === 'FAN' && chat.content.startsWith('Fan Appreciation:')) {
+              const isAppreciation = chat.content.startsWith('Fan Appreciation:');
+              const isTip = chat.content.startsWith('Fan Tip:');
+              
+              if (chat.role === 'FAN' && (isAppreciation || isTip)) {
+                  const prefix = isAppreciation ? 'Fan Appreciation: ' : 'Fan Tip: ';
+                  const tipText = chat.content.replace(prefix, '');
+                  
                   list.push({
                       id: `tip-${chat.id}`,
                       icon: Heart,
-                      text: `${msg.senderName} sent a tip!`,
+                      text: `${msg.senderName} sent a tip: "${tipText}"`,
                       time: new Date(chat.timestamp),
                       color: 'bg-pink-100 text-pink-600',
                       senderEmail: msg.senderEmail
@@ -457,6 +463,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       
       incomingMessages.forEach(msg => {
           if (msg.content.startsWith('Purchased Product:')) return;
+          if (msg.content.startsWith('Fan Tip:')) return;
 
           const email = msg.senderEmail;
           if (!groups[email]) {
@@ -482,7 +489,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       .reduce((sum, m) => sum + m.amount, 0);
     
     // Filter out products for message metrics
-    const messageOnly = incomingMessages.filter(m => !m.content.startsWith('Purchased Product:'));
+    const messageOnly = incomingMessages.filter(m => !m.content.startsWith('Purchased Product:') && !m.content.startsWith('Fan Tip:'));
 
     const pendingCount = messageOnly.filter(m => m.status === 'PENDING').length;
     const repliedCount = messageOnly.filter(m => m.status === 'REPLIED').length;
@@ -1203,7 +1210,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             </linearGradient>
                                         </defs>
                                         <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#a8a29e', fontSize: 12}} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#a8a29e', fontSize: 12}} domain={[0, (dataMax: number) => Math.max(dataMax, 10000)]} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#a8a29e', fontSize: 12}} domain={[0, 'auto']} />
                                         <Tooltip cursor={{fill: 'rgba(120, 113, 108, 0.06)'}} contentStyle={{borderRadius: '12px', border: '1px solid #e7e5e4', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)', backgroundColor: '#fff'}} />
                                         <Area type="monotone" dataKey="totalRevenue" stroke="#78716c" strokeWidth={2} fillOpacity={1} fill="url(#colorEarnings)" />
                                     </AreaChart>
