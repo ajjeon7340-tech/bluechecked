@@ -69,25 +69,44 @@ const mapDbMessageToAppMessage = (m: any, currentUserId: string): Message => {
     // If chat_lines is empty (legacy or new msg), build default from content
     let conversation: ChatMessage[] = [];
     
+    // 1. Parse chat_lines if available
+    let lines: ChatMessage[] = [];
     if (m.chat_lines && m.chat_lines.length > 0) {
-        conversation = m.chat_lines.map((line: any) => ({
+        lines = m.chat_lines.map((line: any) => ({
             id: line.id,
             role: line.role, // 'FAN' or 'CREATOR' stored in DB
             content: line.content,
             timestamp: line.created_at,
             attachmentUrl: line.attachment_url
         }));
-        // Sort by time
-        conversation.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-    } else {
-        // Fallback for initial message if no chat lines yet
-        conversation = [{ 
-            id: `${m.id}-init`, 
-            role: 'FAN', 
-            content: m.content, 
-            timestamp: m.created_at 
-        }];
     }
+
+    // 2. Check if the initial message (stored in parent row) is already in chat_lines
+    const initialMsg: ChatMessage = {
+        id: `${m.id}-init`,
+        role: 'FAN',
+        content: m.content,
+        timestamp: m.created_at,
+        attachmentUrl: m.attachment_url
+    };
+
+    const hasInitial = lines.some(l => 
+        l.role === 'FAN' && 
+        l.content === m.content && 
+        Math.abs(new Date(l.timestamp).getTime() - new Date(m.created_at).getTime()) < 5000
+    );
+
+    conversation = hasInitial ? lines : [initialMsg, ...lines];
+
+    // 3. Sort & Deduplicate
+    conversation.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    
+    // Remove duplicates (same content/role within 2s)
+    conversation = conversation.filter((msg, index, self) => 
+        index === self.findIndex((t) => (
+            t.role === msg.role && t.content === msg.content && Math.abs(new Date(t.timestamp).getTime() - new Date(msg.timestamp).getTime()) < 2000
+        ))
+    );
 
     return {
         id: m.id,
@@ -815,14 +834,6 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
         .single();
 
     if (msgError) throw msgError;
-
-    // C. Add Initial Chat Line
-    await supabase.from('chat_lines').insert({
-        message_id: message.id,
-        sender_id: userId,
-        role: 'FAN',
-        content: content
-    });
 
     // D. Send Email Notification to Creator (via Edge Function)
     // We don't await this to keep the UI responsive
