@@ -559,14 +559,16 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           const isProduct = msg.content.startsWith('Purchased Product:');
 
           // 1. Sent Request
-          list.push({
-              id: `sent-${msg.id}`,
-              icon: Send,
-              text: `You sent a request to ${msg.creatorName || 'Creator'}`,
-              time: new Date(msg.createdAt),
-              color: 'bg-stone-100 text-stone-700',
-              creatorId: msg.creatorId
-          });
+          if (!isProduct) {
+              list.push({
+                  id: `sent-${msg.id}`,
+                  icon: Send,
+                  text: `You sent a request to ${msg.creatorName || 'Creator'}`,
+                  time: new Date(msg.createdAt),
+                  color: 'bg-stone-100 text-stone-700',
+                  creatorId: msg.creatorId
+              });
+          }
 
           // 2. Reply Received
           if (msg.status === 'REPLIED' && msg.replyAt && !isProduct) {

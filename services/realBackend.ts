@@ -830,19 +830,35 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
     // We attempt to send even if email is missing on client (RLS), hoping Edge Function can resolve it via creatorId
     if (session.session) {
         console.log(`[Email] Triggering notification for Creator ID: ${creatorId}`);
+        
+        let emailSubject = `New Request from ${senderName}`;
+        let emailHeader = "New Priority Request";
+        let emailBody = `<p><strong>${senderName}</strong> has sent you a request for <strong>${amount} credits</strong>.</p>`;
+        let emailContent = `<div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;"><p style="margin: 0; font-style: italic;">"${content}"</p></div>`;
+
+        if (isProductPurchase) {
+            const productName = content.replace('Purchased Product: ', '');
+            emailSubject = `New Sale: ${productName}`;
+            emailHeader = "New Digital Product Sale";
+            emailBody = `<p><strong>${senderName}</strong> purchased <strong>${productName}</strong> for <strong>${amount} credits</strong>.</p>`;
+            emailContent = "";
+        } else if (isTip) {
+            emailSubject = `New Tip from ${senderName}`;
+            emailHeader = "You Received a Tip!";
+            emailBody = `<p><strong>${senderName}</strong> sent you a tip of <strong>${amount} credits</strong>.</p>`;
+        }
+
         supabase.functions.invoke('send-email', {
             body: {
                 creatorId: creatorId,
                 // to: creatorProfile.email, // Let Edge Function resolve email via Service Role to ensure accuracy
-                subject: `New Request from ${senderName}`,
+                subject: emailSubject,
                 html: `
                     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-                        <h1 style="color: #4f46e5;">New Priority Request</h1>
-                        <p><strong>${senderName}</strong> has sent you a request for <strong>${amount} credits</strong>.</p>
-                        <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;">
-                            <p style="margin: 0; font-style: italic;">"${content}"</p>
-                        </div>
-                        <a href="${getSiteUrl()}" style="background: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">View Request</a>
+                        <h1 style="color: #4f46e5;">${emailHeader}</h1>
+                        ${emailBody}
+                        ${emailContent}
+                        <a href="${getSiteUrl()}" style="background: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">View Dashboard</a>
                     </div>
                 `
             },
