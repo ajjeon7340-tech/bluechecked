@@ -1543,7 +1543,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                 {/* --- VIEW: CHAT (Sub-view of Overview) --- */}
                 {selectedCreatorId && (
-                     <div className="h-full flex flex-col bg-[#F0EEEA] animate-in slide-in-from-right-4 relative">
+                     <div className="h-full flex flex-col bg-[#F0EEEA] animate-in slide-in-from-right-4 relative overflow-x-hidden">
                         {/* Celebration Overlay */}
                         {showReadCelebration && (
                             <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
@@ -1607,7 +1607,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 const [firstChat, ...restChats] = sortedConversation;
 
                                 return (
-                                    <div key={msg.id} className="px-4 py-3 relative">
+                                    <div key={msg.id} className="px-3 sm:px-4 py-3 relative">
                                         {/* Session Divider */}
                                         {msgIndex > 0 && (
                                             <div className="flex items-center gap-3 mb-4 -mt-1">
@@ -1657,7 +1657,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                                                         {/* Attachment */}
                                                         {msg.attachmentUrl && (
-                                                            <div className="mt-3 rounded-lg overflow-hidden border border-stone-200 w-fit">
+                                                            <div className="mt-3 rounded-lg overflow-hidden border border-stone-200 w-fit max-w-full">
                                                                 {msg.attachmentUrl.toLowerCase().endsWith('.pdf') ? (
                                                                     <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
                                                                         <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
@@ -1668,7 +1668,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                                         <Download size={16} className="text-stone-400 flex-shrink-0" />
                                                                     </a>
                                                                 ) : (
-                                                                    <img src={msg.attachmentUrl} className="max-w-[280px] max-h-[240px] rounded-lg object-contain" alt="attachment" />
+                                                                    <img src={msg.attachmentUrl} className="max-w-full sm:max-w-[280px] max-h-[240px] rounded-lg object-contain" alt="attachment" />
                                                                 )}
                                                             </div>
                                                         )}
@@ -1773,7 +1773,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         {chat.isEdited && <span className="text-[10px] text-stone-400 mt-1 block">edited</span>}
 
                                                         {chat.attachmentUrl && (
-                                                            <div className="mt-3 rounded-lg overflow-hidden border border-stone-200 w-fit">
+                                                            <div className="mt-3 rounded-lg overflow-hidden border border-stone-200 w-fit max-w-full">
                                                                 {chat.attachmentUrl.toLowerCase().endsWith('.pdf') ? (
                                                                     <a href={chat.attachmentUrl} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
                                                                         <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
@@ -1784,7 +1784,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                                         <Download size={16} className="text-stone-400 flex-shrink-0" />
                                                                     </a>
                                                                 ) : (
-                                                                    <img src={chat.attachmentUrl} className="max-w-[280px] max-h-[240px] rounded-lg object-contain" alt="attachment" />
+                                                                    <img src={chat.attachmentUrl} className="max-w-full sm:max-w-[280px] max-h-[240px] rounded-lg object-contain" alt="attachment" />
                                                                 )}
                                                             </div>
                                                         )}
@@ -1861,64 +1861,64 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         {/* Bottom Actions */}
                         <div className="bg-white border-t border-stone-200 shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.05)] z-20 flex-shrink-0">
                             {latestMessage && latestMessage.status === 'PENDING' && (
-                                <div className="p-4 flex items-center justify-between bg-stone-50">
-                                    <div className="flex items-center gap-3">
+                                <div className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between bg-stone-50 gap-3">
+                                    <div className="flex items-center gap-3 min-w-0">
                                         {(() => {
                                             const lastChat = latestMessage.conversation[latestMessage.conversation.length - 1];
                                             const isCreatorReplied = lastChat?.role === 'CREATOR';
-                                            
+
                                             if (isCreatorReplied) {
                                                 const diff = new Date(latestMessage.expiresAt).getTime() - Date.now();
                                                 const hours = Math.max(0, Math.floor(diff / (1000 * 60 * 60)));
                                                 return (
                                                     <>
-                                                        <div className="bg-white p-2 rounded-full border border-stone-200 shadow-sm">
+                                                        <div className="bg-white p-2 rounded-full border border-stone-200 shadow-sm flex-shrink-0">
                                                             <MessageSquare size={20} className="text-stone-700" />
                                                         </div>
-                                                        <div>
+                                                        <div className="min-w-0">
                                                             <p className="text-sm font-bold text-stone-700">Creator answering</p>
-                                                            <p className="text-xs text-stone-400">Creator has {hours} hours left to complete the answer</p>
+                                                            <p className="text-xs text-stone-400 truncate">Creator has {hours} hours left to complete</p>
                                                         </div>
                                                     </>
                                                 );
                                             } else if (latestMessage.isRead) {
                                                 return (
                                                     <>
-                                                        <div className="bg-white p-2 rounded-full border border-stone-200 shadow-sm">
+                                                        <div className="bg-white p-2 rounded-full border border-stone-200 shadow-sm flex-shrink-0">
                                                             <Check size={20} className="text-stone-500" />
                                                         </div>
-                                                        <div>
+                                                        <div className="min-w-0">
                                                             <p className="text-sm font-bold text-stone-700">Read</p>
-                                                            <p className="text-xs text-stone-400">Request expires in {getTimeLeft(latestMessage.expiresAt).text}</p>
+                                                            <p className="text-xs text-stone-400 truncate">Expires in {getTimeLeft(latestMessage.expiresAt).text}</p>
                                                         </div>
                                                     </>
                                                 );
                                             } else {
                                                 return (
                                                     <>
-                                                        <div className="bg-white p-2 rounded-full border border-stone-200 shadow-sm">
+                                                        <div className="bg-white p-2 rounded-full border border-stone-200 shadow-sm flex-shrink-0">
                                                             <Clock size={20} className="text-stone-400" />
                                                         </div>
-                                                        <div>
+                                                        <div className="min-w-0">
                                                             <p className="text-sm font-bold text-stone-700">Not yet read</p>
-                                                            <p className="text-xs text-stone-400">Request expires in {getTimeLeft(latestMessage.expiresAt).text}</p>
+                                                            <p className="text-xs text-stone-400 truncate">Expires in {getTimeLeft(latestMessage.expiresAt).text}</p>
                                                         </div>
                                                     </>
                                                 );
                                             }
                                         })()}
                                     </div>
-                                    
+
                                     {confirmCancelId === latestMessage.id ? (
-                                        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
-                                            <span className="text-xs font-bold text-stone-500 mr-2 flex items-center gap-1">Refund <Coins size={10}/>{latestMessage.amount}?</span>
+                                        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 flex-shrink-0">
+                                            <span className="text-xs font-bold text-stone-500 mr-1 flex items-center gap-1 whitespace-nowrap">Refund <Coins size={10}/>{latestMessage.amount}?</span>
                                             <Button size="sm" variant="ghost" onClick={() => setConfirmCancelId(null)}>No</Button>
-                                            <Button size="sm" variant="danger" onClick={processCancellation} isLoading={isCancelling}>Yes, Cancel</Button>
+                                            <Button size="sm" variant="danger" onClick={processCancellation} isLoading={isCancelling}>Yes</Button>
                                         </div>
                                     ) : (
-                                        <button 
+                                        <button
                                             onClick={() => handleCancelClick(latestMessage.id)}
-                                            className="text-stone-400 hover:text-red-600 text-xs font-bold hover:bg-red-50 px-3 py-1.5 rounded-full transition-colors"
+                                            className="text-stone-400 hover:text-red-600 text-xs font-bold hover:bg-red-50 px-3 py-1.5 rounded-full transition-colors flex-shrink-0 self-end sm:self-auto"
                                         >
                                             Cancel Request
                                         </button>

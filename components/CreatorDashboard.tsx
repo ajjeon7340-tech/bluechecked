@@ -1822,59 +1822,94 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    {/* Traffic Sources Pie Chart */}
-                                    <div className="bg-white p-6 rounded-2xl border border-stone-200/60 shadow-sm">
-                                        <h3 className="text-sm font-bold text-stone-900 mb-6 flex items-center gap-2">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                    {/* Traffic Sources */}
+                                    <div className="bg-white p-6 rounded-2xl border border-stone-200/60">
+                                        <h3 className="text-sm font-bold text-stone-900 mb-1 flex items-center gap-2">
                                             <PieIcon size={14} className="text-stone-400" /> Traffic Sources
                                         </h3>
-                                        <div className="h-64 flex items-center justify-center">
+                                        <p className="text-xs text-stone-400 mb-5">Where your visitors come from</p>
+                                        <div className="h-52 flex items-center justify-center">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <PieChart>
                                                     <Pie
                                                         data={analyticsData.trafficSources}
                                                         cx="50%"
                                                         cy="50%"
-                                                        innerRadius={60}
-                                                        outerRadius={80}
-                                                        paddingAngle={5}
+                                                        innerRadius={55}
+                                                        outerRadius={75}
+                                                        paddingAngle={4}
                                                         dataKey="value"
                                                     >
                                                         {analyticsData.trafficSources.map((entry, index) => (
                                                             <Cell key={`cell-${index}`} fill={entry.color} />
                                                         ))}
                                                     </Pie>
-                                                    <Tooltip contentStyle={{borderRadius: '12px', border: '1px solid #e7e5e4', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)', backgroundColor: '#fff'}} />
-                                                    <Legend verticalAlign="bottom" height={36} iconType="circle"/>
+                                                    <Tooltip contentStyle={{borderRadius: '10px', border: '1px solid #e7e5e4', boxShadow: '0 4px 12px rgba(0,0,0,0.06)', backgroundColor: '#fff', fontSize: '12px'}} />
+                                                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{fontSize: '11px'}} />
                                                 </PieChart>
                                             </ResponsiveContainer>
                                         </div>
                                     </div>
 
-                                    {/* Conversion Funnel - Simplified Visual */}
-                                    <div className="bg-white p-6 rounded-2xl border border-stone-200/60 shadow-sm flex flex-col">
-                                        <h3 className="text-sm font-bold text-stone-900 mb-6 flex items-center gap-2">
+                                    {/* Conversion Funnel */}
+                                    <div className="bg-white p-6 rounded-2xl border border-stone-200/60">
+                                        <h3 className="text-sm font-bold text-stone-900 mb-1 flex items-center gap-2">
                                             <TrendingUp size={14} className="text-stone-400" /> Conversion Funnel
                                         </h3>
-                                        <div className="flex-1 flex flex-col justify-center space-y-8">
+                                        <p className="text-xs text-stone-400 mb-5">Visitor journey breakdown</p>
+                                        <div className="space-y-5">
                                             {analyticsData.funnel.map((step, index) => {
                                                 const maxVal = analyticsData.funnel[0].count || 1;
                                                 const percent = (step.count / maxVal) * 100;
+                                                const dropoff = index > 0 ? (((analyticsData.funnel[index - 1].count - step.count) / analyticsData.funnel[index - 1].count) * 100).toFixed(0) : null;
                                                 return (
-                                                    <div key={step.name} className="relative">
-                                                        <div className="flex justify-between text-sm font-medium mb-2">
-                                                            <span className="text-stone-700">{step.name}</span>
-                                                            <span className="text-stone-900 font-bold">{step.count.toLocaleString()}</span>
+                                                    <div key={step.name}>
+                                                        <div className="flex justify-between items-baseline mb-1.5">
+                                                            <span className="text-xs font-medium text-stone-600">{step.name}</span>
+                                                            <div className="flex items-center gap-2">
+                                                                {dropoff && <span className="text-[10px] text-stone-400">-{dropoff}%</span>}
+                                                                <span className="text-xs font-bold text-stone-900">{step.count.toLocaleString()}</span>
+                                                            </div>
                                                         </div>
-                                                        <div className="w-full bg-stone-100 rounded-full h-3 overflow-hidden">
-                                                            <div 
-                                                                className="h-full rounded-full transition-all duration-1000" 
+                                                        <div className="w-full bg-stone-100 rounded-full h-2 overflow-hidden">
+                                                            <div
+                                                                className="h-full rounded-full transition-all duration-1000"
                                                                 style={{ width: `${percent}%`, backgroundColor: step.fill }}
-                                                            ></div>
+                                                            />
                                                         </div>
                                                     </div>
                                                 );
                                             })}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Audience Split */}
+                                <div className="bg-white p-6 rounded-2xl border border-stone-200/60">
+                                    <h3 className="text-sm font-bold text-stone-900 mb-1 flex items-center gap-2">
+                                        <Users size={14} className="text-stone-400" /> Audience
+                                    </h3>
+                                    <p className="text-xs text-stone-400 mb-5">New vs returning visitors</p>
+                                    <div className="flex items-center gap-6">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <div className="h-2 flex-1 bg-stone-100 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-stone-700 rounded-full transition-all duration-1000" style={{ width: `${analyticsData.audienceType.new}%` }} />
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between text-xs">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-stone-700" />
+                                                    <span className="text-stone-600">New visitors</span>
+                                                    <span className="font-bold text-stone-900">{analyticsData.audienceType.new}%</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-stone-200" />
+                                                    <span className="text-stone-600">Returning</span>
+                                                    <span className="font-bold text-stone-900">{analyticsData.audienceType.returning}%</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1923,7 +1958,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             )}
 
             {currentView === 'INBOX' && (
-                <div className="h-[calc(100vh-64px)] flex bg-[#FAF9F6] animate-in fade-in">
+                <div className="h-[calc(100vh-64px)] flex bg-[#FAF9F6] animate-in fade-in overflow-x-hidden">
                     {/* List Column */}
                     <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col bg-white ${selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
                         <div className="p-4 border-b border-stone-100 flex flex-col gap-3">
@@ -2063,14 +2098,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 )}
 
                                 {/* Header & Chat Content */}
-                                <div className="px-6 py-4 border-b border-stone-200/60 flex items-center justify-between bg-white sticky top-0 z-10">
-                                    <div className="flex items-center gap-4">
-                                        <button onClick={() => setSelectedSenderEmail(null)} className="md:hidden p-2 -ml-2 hover:bg-stone-50 rounded-full text-stone-400 hover:text-stone-700">
+                                <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-stone-200/60 flex items-center justify-between bg-white sticky top-0 z-10 gap-2">
+                                    <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                                        <button onClick={() => setSelectedSenderEmail(null)} className="md:hidden p-2 -ml-2 hover:bg-stone-50 rounded-full text-stone-400 hover:text-stone-700 flex-shrink-0">
                                             <ChevronLeft size={20} />
                                         </button>
-                                        <div>
+                                        <div className="min-w-0">
                                             <div className="flex items-center gap-2">
-                                                <h3 className="font-bold text-stone-900">{activeMessage.senderName}</h3>
+                                                <h3 className="font-bold text-stone-900 truncate">{activeMessage.senderName}</h3>
                                                 {activeMessage.status === 'PENDING' && (
                                                     <button 
                                                         onClick={(e) => handleReject(e)}
@@ -2090,19 +2125,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </div>
                                     </div>
                                     
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-shrink-0">
                                         {activeMessage.status === 'PENDING' && (
-                                            <div className="text-xs font-medium text-stone-500 bg-stone-100 px-3 py-1.5 rounded-full flex items-center gap-1 border border-stone-200/60">
+                                            <div className="text-[10px] sm:text-xs font-medium text-stone-500 bg-stone-100 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1 border border-stone-200/60 whitespace-nowrap">
                                                 <Clock size={12} /> {getTimeLeft(activeMessage.expiresAt).text}
                                             </div>
                                         )}
                                         {activeMessage.status === 'REPLIED' && (
-                                            <div className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full flex items-center gap-1 border border-emerald-100">
+                                            <div className="text-[10px] sm:text-xs font-bold text-emerald-600 bg-emerald-50 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1 border border-emerald-100 whitespace-nowrap">
                                                 <CheckCircle2 size={12} /> Completed
                                             </div>
                                         )}
                                         {(activeMessage.status === 'EXPIRED' || activeMessage.status === 'CANCELLED') && (
-                                            <div className="text-xs font-bold text-stone-500 bg-stone-100 px-3 py-1.5 rounded-full border border-stone-200">
+                                            <div className="text-[10px] sm:text-xs font-bold text-stone-500 bg-stone-100 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-stone-200 whitespace-nowrap">
                                                 Refunded
                                             </div>
                                         )}
@@ -2119,7 +2154,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         const [firstChat, ...restChats] = sortedConversation;
 
                                         return (
-                                            <div key={msg.id} className="px-4 py-3 relative">
+                                            <div key={msg.id} className="px-3 sm:px-4 py-3 relative">
                                                 {/* Session Divider */}
                                                 {msgIndex > 0 && (
                                                     <div className="flex items-center gap-3 mb-4 -mt-1">
@@ -2169,7 +2204,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                                 {/* Attachment */}
                                                 {msg.attachmentUrl && (
-                                                    <div className="mt-3 rounded-lg overflow-hidden border border-stone-200 w-fit">
+                                                    <div className="mt-3 rounded-lg overflow-hidden border border-stone-200 w-fit max-w-full">
                                                         {msg.attachmentUrl.toLowerCase().endsWith('.pdf') ? (
                                                             <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
                                                                 <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
@@ -2180,7 +2215,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 <Download size={16} className="text-stone-400 flex-shrink-0" />
                                                             </a>
                                                         ) : (
-                                                            <img src={msg.attachmentUrl} className="max-w-[280px] max-h-[240px] rounded-lg object-contain" alt="attachment" />
+                                                            <img src={msg.attachmentUrl} className="max-w-full sm:max-w-[280px] max-h-[240px] rounded-lg object-contain" alt="attachment" />
                                                         )}
                                                     </div>
                                                 )}
@@ -2329,7 +2364,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                                                 {/* Attachment (shown when NOT editing) */}
                                                                 {editingChatId !== chat.id && chat.attachmentUrl && (
-                                                                    <div className="mt-3 rounded-lg overflow-hidden border border-stone-200 w-fit">
+                                                                    <div className="mt-3 rounded-lg overflow-hidden border border-stone-200 w-fit max-w-full">
                                                                         {chat.attachmentUrl.toLowerCase().endsWith('.pdf') ? (
                                                                             <a href={chat.attachmentUrl} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
                                                                                 <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
@@ -2340,7 +2375,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                                 <Download size={16} className="text-stone-400 flex-shrink-0" />
                                                                             </a>
                                                                         ) : (
-                                                                            <img src={chat.attachmentUrl} className="max-w-[280px] max-h-[240px] rounded-lg object-contain" alt="attachment" />
+                                                                            <img src={chat.attachmentUrl} className="max-w-full sm:max-w-[280px] max-h-[240px] rounded-lg object-contain" alt="attachment" />
                                                                         )}
                                                                     </div>
                                                                 )}
@@ -2440,19 +2475,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                 {/* Reply Input Area */}
                                 {activeMessage.status === 'PENDING' && (
-                                    <div className="p-4 bg-white border-t border-stone-200/60 z-20">
-                                        <div className="flex justify-between items-center mb-3">
-                                            <div className="flex items-center gap-2 text-xs text-stone-500">
-                                                <span className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded border border-green-100 font-medium">
-                                                    <Coins size={12} /> Payment held in escrow
+                                    <div className="p-3 sm:p-4 bg-white border-t border-stone-200/60 z-20">
+                                        <div className="flex justify-between items-center mb-3 gap-2">
+                                            <div className="flex items-center gap-2 text-xs text-stone-500 min-w-0">
+                                                <span className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded border border-green-100 font-medium whitespace-nowrap text-[10px] sm:text-xs">
+                                                    <Coins size={12} className="flex-shrink-0" /> <span className="hidden sm:inline">Payment held in </span>escrow
                                                 </span>
                                             </div>
-                                            <Button 
-                                                size="sm" 
-                                                variant="ghost" 
-                                                onClick={handleGenerateAI} 
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={handleGenerateAI}
                                                 disabled={isGeneratingAI}
-                                                className="text-xs h-7 text-stone-500 hover:text-stone-700 hover:bg-stone-50"
+                                                className="text-xs h-7 text-stone-500 hover:text-stone-700 hover:bg-stone-50 flex-shrink-0"
                                             >
                                                 <Sparkles size={12} className="mr-1.5" />
                                                 {isGeneratingAI ? 'Drafting...' : 'AI Draft'}
@@ -2484,34 +2519,34 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 className="w-full bg-stone-50/50 border border-stone-200/60 rounded-xl p-3 pb-12 text-sm focus:ring-1 focus:ring-stone-400 focus:border-stone-300 outline-none resize-none min-h-[100px] text-stone-900 placeholder:text-stone-400"
                                             />
                                             
-                                            <div className="absolute bottom-3 right-3 flex items-center gap-3">
+                                            <div className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 flex items-center gap-1.5 sm:gap-3">
                                                 <button
                                                     onClick={() => replyFileInputRef.current?.click()}
                                                     disabled={isUploadingReplyAttachment}
-                                                    className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-colors"
+                                                    className="p-1.5 sm:p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-colors"
                                                     title="Attach file"
                                                 >
                                                     {isUploadingReplyAttachment ? <div className="w-4 h-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" /> : <Paperclip size={16} />}
                                                 </button>
                                                 <input type="file" ref={replyFileInputRef} className="hidden" onChange={handleReplyFileChange} />
 
-                                                <button 
-                                                    onClick={() => handleSendReply(false)} 
+                                                <button
+                                                    onClick={() => handleSendReply(false)}
                                                     disabled={(!replyText.trim() && !replyAttachment) || isSendingReply || isRejecting}
-                                                    className="h-10 px-4 rounded-full bg-stone-600 text-white hover:bg-stone-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold text-xs"
+                                                    className="h-8 sm:h-10 px-3 sm:px-4 rounded-full bg-stone-600 text-white hover:bg-stone-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 sm:gap-2 font-semibold text-[11px] sm:text-xs"
                                                     title="Send reply (Keep Pending)"
                                                 >
-                                                    <span>Send</span> <Send size={14} />
+                                                    <span className="hidden sm:inline">Send</span> <Send size={14} />
                                                 </button>
 
-                                                <button 
-                                                    onClick={() => handleSendReply(true)} 
+                                                <button
+                                                    onClick={() => handleSendReply(true)}
                                                     disabled={((!replyText.trim() && !replyAttachment) && !hasManualCreatorReply) || isSendingReply || isRejecting}
-                                                    className="h-10 px-5 rounded-full bg-stone-900 text-white hover:bg-stone-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold group"
+                                                    className="h-8 sm:h-10 px-3 sm:px-5 rounded-full bg-stone-900 text-white hover:bg-stone-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 sm:gap-2 font-semibold text-[11px] sm:text-sm group"
                                                     title="Complete & Collect"
                                                 >
-                                                    <CheckCircle2 size={18} className="text-emerald-400" />
-                                                    <span>Collect {activeMessage.amount}</span>
+                                                    <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0" />
+                                                    <span className="whitespace-nowrap">Collect {activeMessage.amount}</span>
                                                 </button>
                                             </div>
                                         </div>
