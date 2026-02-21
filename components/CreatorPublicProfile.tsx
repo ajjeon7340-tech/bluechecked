@@ -416,6 +416,14 @@ export const CreatorPublicProfile: React.FC<Props> = ({
             </div>
 
             <div className="flex items-center gap-2">
+                <button
+                    onClick={handleShare}
+                    className="w-9 h-9 bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-700 rounded-full transition-colors flex items-center justify-center flex-shrink-0"
+                    title="Share"
+                >
+                    <Share size={16} />
+                </button>
+
                 {currentUser ? (
                   <button
                       onClick={onNavigateToDashboard}
@@ -566,8 +574,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                     </>
                                 )}
 
-                                {/* Platforms & Actions Row */}
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-4 w-full">
+                                {/* Platforms & Response Time Row */}
+                                <div className="flex items-center gap-2 mt-4 w-full flex-wrap">
                                     {platforms.length > 0 && (
                                         <div className="flex items-center gap-1 p-1 bg-white border border-stone-200 rounded-xl shadow-sm overflow-x-auto no-scrollbar flex-shrink-0 w-fit">
                                             {platforms.map(platform => {
@@ -591,25 +599,23 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                     )}
 
                                     {!isCustomizeMode && (
-                                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                                            <button
-                                                onClick={handleShare}
-                                                className="w-10 h-10 bg-white border border-stone-200 text-stone-700 rounded-xl hover:bg-stone-50 transition-colors flex items-center justify-center shadow-sm flex-shrink-0"
-                                                title="Share"
-                                            >
-                                                <Share size={18} />
-                                            </button>
-                                            <button
-                                                onClick={currentUser ? handleOpenModal : onLoginRequest}
-                                                className="flex-1 bg-stone-900 text-white font-semibold h-10 rounded-xl hover:bg-stone-800 transition-colors flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-3 sm:px-4 min-w-0 overflow-hidden"
-                                            >
-                                                <MessageSquare size={16} className="flex-shrink-0" />
-                                                <span className="truncate">Ask me anything</span>
-                                                <span className="text-stone-400 text-[10px] font-medium flex-shrink-0 hidden sm:inline">· {creator.responseWindowHours}h reply</span>
-                                            </button>
+                                        <div className="flex items-center gap-1.5 bg-white border border-stone-200 rounded-xl px-2.5 py-1.5 shadow-sm text-[10px] sm:text-xs font-medium text-stone-500">
+                                            <Clock size={12} className="text-emerald-500 flex-shrink-0" />
+                                            <span className="whitespace-nowrap">Guaranteed {creator.responseWindowHours}h reply</span>
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Ask Me Anything Button */}
+                                {!isCustomizeMode && (
+                                    <button
+                                        onClick={currentUser ? handleOpenModal : onLoginRequest}
+                                        className="w-full bg-stone-900 text-white font-semibold h-10 rounded-xl hover:bg-stone-800 transition-colors flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-3 sm:px-4 mt-3"
+                                    >
+                                        <MessageSquare size={16} className="flex-shrink-0" />
+                                        <span>Ask me anything</span>
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>

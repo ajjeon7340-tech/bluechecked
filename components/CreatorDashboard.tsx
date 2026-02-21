@@ -62,10 +62,11 @@ const getRelativeTime = (dateString: string) => {
 
 const DUMMY_PRO_DATA: ProAnalyticsData = {
     trafficSources: [
-        { name: 'YouTube', value: 45, color: '#FF0000' },
-        { name: 'Instagram', value: 25, color: '#E1306C' },
-        { name: 'X', value: 20, color: '#000000' },
-        { name: 'Other', value: 10, color: '#64748b' }
+        { name: 'Google Search', value: 35, color: '#4285F4' },
+        { name: 'Instagram', value: 28, color: '#E1306C' },
+        { name: 'YouTube', value: 20, color: '#FF0000' },
+        { name: 'X (Twitter)', value: 10, color: '#000000' },
+        { name: 'Direct Link', value: 7, color: '#64748b' }
     ],
     funnel: [
         { name: 'Profile Views', count: 15420, fill: '#6366F1' },
@@ -702,12 +703,31 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       setIsRejecting(false);
   };
 
+  const hasUnsavedChanges = () => {
+    if (currentView !== 'SETTINGS') return false;
+    return JSON.stringify(editedCreator) !== JSON.stringify(creator);
+  };
+
+  const handleNavigate = (view: DashboardView) => {
+    if (hasUnsavedChanges() && view !== 'SETTINGS') {
+      if (!window.confirm('You have unsaved changes. Are you sure you want to leave?')) return;
+      setEditedCreator(creator);
+    }
+    if (view === 'NOTIFICATIONS') {
+      setLastReadTime(Date.now());
+      localStorage.setItem('bluechecked_creator_last_read_time', Date.now().toString());
+    }
+    setCurrentView(view);
+    setSelectedSenderEmail(null);
+    setIsSidebarOpen(false);
+  };
+
   const handleSaveProfile = async () => {
     setIsSavingProfile(true);
     setShowSaveSuccess(false);
     try {
         await updateCreatorProfile(editedCreator);
-        await onRefreshData(); 
+        await onRefreshData();
         setShowSaveSuccess(true);
         setTimeout(() => setShowSaveSuccess(false), 3000);
     } catch (e) {
@@ -972,8 +992,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     : false;
 
   const SidebarItem = ({ icon: Icon, label, view, badge }: { icon: any, label: string, view: DashboardView, badge?: number }) => (
-    <button 
-      onClick={() => { setCurrentView(view); setSelectedSenderEmail(null); setIsSidebarOpen(false); }}
+    <button
+      onClick={() => handleNavigate(view)}
       className={`w-full flex items-center justify-between px-3 py-2 rounded-md mb-1 transition-colors text-sm font-medium ${
         currentView === view 
           ? 'bg-stone-200 text-stone-900' 
@@ -1010,7 +1030,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
         <div className="p-4 flex flex-col h-full">
             {/* Brand */}
             <div 
-                onClick={() => { setCurrentView('OVERVIEW'); setSelectedSenderEmail(null); }}
+                onClick={() => handleNavigate('OVERVIEW')}
                 className="flex items-center gap-2 px-3 py-4 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
             >
                 <BlueCheckLogo size={28} className="text-stone-900" />
@@ -1026,7 +1046,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <SidebarItem icon={Home} label="Overview" view="OVERVIEW" />
                 <SidebarItem icon={Users} label="Inbox" view="INBOX" badge={stats.pendingCount > 0 ? stats.pendingCount : undefined} />
                 <SidebarItem icon={Wallet} label="Finance" view="FINANCE" />
-                <SidebarItem icon={Bell} label="Notifications" view="NOTIFICATIONS" badge={notifications.length > 0 ? notifications.length : undefined} />
+                <SidebarItem icon={Bell} label="Notifications" view="NOTIFICATIONS" badge={notifications.filter(n => n.time.getTime() > lastReadTime).length || undefined} />
                 <SidebarItem icon={Star} label="Reviews" view="REVIEWS" />
                 <SidebarItem icon={TrendingUp} label="Analytics" view="ANALYTICS" />
                 <SidebarItem icon={AlertCircle} label="Support" view="SUPPORT" />
@@ -1308,7 +1328,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             </div>
                                         )}
                                         <button 
-                                            onClick={() => setCurrentView('REVIEWS')}
+                                            onClick={() => handleNavigate('REVIEWS')}
                                             className="text-xs font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-50 px-2 py-1 rounded transition-colors"
                                         >
                                             View All
@@ -1823,29 +1843,27 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     {/* Traffic Sources */}
                                     <div className="bg-white p-4 sm:p-6 rounded-2xl border border-stone-200/60">
                                         <h3 className="text-sm font-bold text-stone-900 mb-1 flex items-center gap-2">
-                                            <PieIcon size={14} className="text-stone-400" /> Traffic Sources
+                                            <PieIcon size={14} className="text-stone-400" /> Where visitors find you
                                         </h3>
-                                        <p className="text-xs text-stone-400 mb-4 sm:mb-5">Where your visitors come from</p>
-                                        <div className="h-48 sm:h-52 flex items-center justify-center">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <PieChart>
-                                                    <Pie
-                                                        data={analyticsData.trafficSources}
-                                                        cx="50%"
-                                                        cy="50%"
-                                                        innerRadius={45}
-                                                        outerRadius={65}
-                                                        paddingAngle={4}
-                                                        dataKey="value"
-                                                    >
-                                                        {analyticsData.trafficSources.map((entry, index) => (
-                                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                                        ))}
-                                                    </Pie>
-                                                    <Tooltip contentStyle={{borderRadius: '10px', border: '1px solid #e7e5e4', boxShadow: '0 4px 12px rgba(0,0,0,0.06)', backgroundColor: '#fff', fontSize: '12px'}} />
-                                                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{fontSize: '11px'}} />
-                                                </PieChart>
-                                            </ResponsiveContainer>
+                                        <p className="text-xs text-stone-400 mb-4 sm:mb-5">Top sources driving traffic to your page</p>
+                                        <div className="space-y-3.5">
+                                            {analyticsData.trafficSources.map((source) => (
+                                                <div key={source.name}>
+                                                    <div className="flex items-center justify-between mb-1.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: source.color }} />
+                                                            <span className="text-sm font-medium text-stone-700">{source.name}</span>
+                                                        </div>
+                                                        <span className="text-sm font-bold text-stone-900">{source.value}%</span>
+                                                    </div>
+                                                    <div className="w-full bg-stone-100 rounded-full h-2 overflow-hidden">
+                                                        <div
+                                                            className="h-full rounded-full transition-all duration-1000"
+                                                            style={{ width: `${source.value}%`, backgroundColor: source.color, opacity: 0.8 }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
 
@@ -2607,12 +2625,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                     {/* Pro Banner in Settings */}
                     {!creator.isPremium && (
-                         <div className="bg-stone-900 rounded-xl p-6 text-white flex justify-between items-center">
+                         <div className="bg-stone-900 rounded-xl p-4 sm:p-6 text-white flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                             <div>
-                                <h3 className="font-bold text-lg flex items-center gap-2"><Sparkles className="text-yellow-300 fill-yellow-300" size={18}/> Bluechecked Pro</h3>
-                                <p className="text-stone-400 text-sm mt-1">Upgrade to unlock analytics and remove commissions.</p>
+                                <h3 className="font-bold text-base sm:text-lg flex items-center gap-2"><Sparkles className="text-yellow-300 fill-yellow-300" size={18}/> Bluechecked Pro</h3>
+                                <p className="text-stone-400 text-xs sm:text-sm mt-1">Upgrade to unlock analytics and remove commissions.</p>
                             </div>
-                            <Button className="bg-white text-stone-900 hover:bg-stone-50" onClick={() => setShowPremiumModal(true)}>Upgrade for 2000 Credits/mo</Button>
+                            <Button className="bg-white text-stone-900 hover:bg-stone-50 text-sm whitespace-nowrap flex-shrink-0" onClick={() => setShowPremiumModal(true)}>Upgrade</Button>
                         </div>
                     )}
 
@@ -2622,35 +2640,35 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         <div className="space-y-6">
                             {/* ... Profile Settings Form (Unchanged) ... */}
                             {/* Avatar Edit */}
-                            <div className="flex items-center gap-6">
-                                <div className="w-20 h-20 rounded-full bg-stone-100 flex-shrink-0 overflow-hidden border border-stone-200">
-                                    <img 
-                                        src={editedCreator.avatarUrl || DEFAULT_AVATAR} 
-                                        alt="Avatar Preview" 
-                                        className="w-full h-full object-cover" 
+                            <div className="flex items-start gap-4 sm:gap-6">
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-stone-100 flex-shrink-0 overflow-hidden border border-stone-200">
+                                    <img
+                                        src={editedCreator.avatarUrl || DEFAULT_AVATAR}
+                                        alt="Avatar Preview"
+                                        className="w-full h-full object-cover"
                                         onError={(e) => {
                                             e.currentTarget.src = DEFAULT_AVATAR;
                                         }}
                                     />
                                 </div>
-                                <div className="flex-1">
+                                <div className="flex-1 min-w-0">
                                     <label className="block text-sm font-medium text-stone-700 mb-1">Profile Photo</label>
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-col sm:flex-row gap-2">
                                         {editedCreator.avatarUrl ? (
-                                            <div className="flex items-center gap-2 w-full px-3 py-2 border border-stone-300 rounded-lg bg-stone-50 text-stone-500 text-sm">
+                                            <div className="flex items-center gap-2 w-full px-3 py-2 border border-stone-300 rounded-lg bg-stone-50 text-stone-500 text-sm min-w-0">
                                                 <span className="truncate flex-1">
-                                                    {avatarFileName || (editedCreator.avatarUrl.startsWith('data:') ? "Uploaded Image" : "Current Profile Photo")}
+                                                    {avatarFileName || (editedCreator.avatarUrl.startsWith('data:') ? "Uploaded Image" : "Current Photo")}
                                                 </span>
-                                                <button onClick={() => { setEditedCreator({...editedCreator, avatarUrl: ''}); setAvatarFileName(''); }} className="text-red-500 hover:text-red-700"><X size={14}/></button>
+                                                <button onClick={() => { setEditedCreator({...editedCreator, avatarUrl: ''}); setAvatarFileName(''); }} className="text-red-500 hover:text-red-700 flex-shrink-0"><X size={14}/></button>
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-2 w-full px-3 py-2 border border-stone-300 rounded-lg bg-stone-50 text-stone-400 text-sm italic">
                                                 No image selected
                                             </div>
                                         )}
-                                        <button 
+                                        <button
                                             onClick={() => fileInputRef.current?.click()}
-                                            className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
+                                            className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0"
                                         >
                                             <Camera size={16} /> Upload
                                         </button>
@@ -2988,8 +3006,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             </div>
                         </div>
 
-                        <div className="mt-8 flex justify-end">
-                            <Button onClick={handleSaveProfile} isLoading={isSavingProfile}>Save Changes</Button>
+                        <div className="mt-8 flex justify-center">
+                            <Button onClick={handleSaveProfile} isLoading={isSavingProfile} className="px-8">Save Changes</Button>
                         </div>
                     </div>
                 </div>

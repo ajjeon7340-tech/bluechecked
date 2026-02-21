@@ -13,6 +13,8 @@ const getColorForSource = (source: string) => {
     if (s.includes('x') || s.includes('twitter')) return '#000000';
     if (s.includes('tiktok')) return '#000000';
     if (s.includes('twitch')) return '#9146FF';
+    if (s.includes('google')) return '#4285F4';
+    if (s.includes('bing')) return '#00809D';
     if (s.includes('search')) return '#4285F4';
     if (s.includes('direct')) return '#64748b';
     if (s.includes('shared')) return '#10B981';
@@ -1258,7 +1260,7 @@ export const logAnalyticsEvent = async (creatorId: string, eventType: 'VIEW' | '
         else if (s.includes('twitter') || s === 'x' || s === 'tw_bio') source = 'X (Twitter)';
         else if (s.includes('tiktok') || s === 'tt_bio') source = 'TikTok';
         else if (s.includes('twitch')) source = 'Twitch';
-        else if (s === 'search') source = 'Search';
+        else if (s === 'search') source = 'Google Search';
         else source = 'Shared Link';
     } else {
         const referrer = document.referrer;
@@ -1272,7 +1274,9 @@ export const logAnalyticsEvent = async (creatorId: string, eventType: 'VIEW' | '
                 else if (hostname.includes('twitter') || hostname.includes('x.com') || hostname.includes('t.co')) source = 'X (Twitter)';
                 else if (hostname.includes('tiktok')) source = 'TikTok';
                 else if (hostname.includes('twitch')) source = 'Twitch';
-                else if (hostname.includes('google') || hostname.includes('bing') || hostname.includes('yahoo') || hostname.includes('duckduckgo') || hostname.includes('baidu')) source = 'Search';
+                else if (hostname.includes('google')) source = 'Google Search';
+                else if (hostname.includes('bing')) source = 'Bing Search';
+                else if (hostname.includes('yahoo') || hostname.includes('duckduckgo') || hostname.includes('baidu')) source = 'Web Search';
                 else source = 'Shared Link';
             } catch {
                 source = 'Shared Link';
