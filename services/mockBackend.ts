@@ -112,6 +112,29 @@ let mockLikesLog: LikeEvent[] = (() => {
 })();
 const saveLikesLog = () => localStorage.setItem('bluechecked_mock_likes_log', JSON.stringify(mockLikesLog));
 
+// Mock Withdrawals Store
+export interface Withdrawal {
+    id: string;
+    amount: number;
+    status: 'PENDING' | 'COMPLETED';
+    createdAt: string;
+}
+
+let withdrawals: Withdrawal[] = (() => {
+    try {
+        const saved = localStorage.getItem('bluechecked_mock_withdrawals');
+        return saved ? JSON.parse(saved) : [];
+    } catch {
+        return [];
+    }
+})();
+
+const saveWithdrawals = () => localStorage.setItem('bluechecked_mock_withdrawals', JSON.stringify(withdrawals));
+
+let isStripeConnected = (() => {
+    return localStorage.getItem('bluechecked_mock_stripe_connected') === 'true';
+})();
+
 // Mock Analytics Store
 interface AnalyticsEvent {
     id: string;
@@ -781,4 +804,35 @@ export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date
     }
 
     return stats;
+};
+
+export const connectStripeAccount = async (): Promise<boolean> => {
+    await new Promise(r => setTimeout(r, 1000));
+    isStripeConnected = true;
+    localStorage.setItem('bluechecked_mock_stripe_connected', 'true');
+    return true;
+};
+
+export const getStripeConnectionStatus = async (): Promise<boolean> => {
+    return isStripeConnected;
+};
+
+export const requestWithdrawal = async (amount: number): Promise<Withdrawal> => {
+    if (!isStripeConnected) throw new Error("Stripe account not connected");
+    
+    await new Promise(r => setTimeout(r, 1000));
+
+    const withdrawal: Withdrawal = {
+        id: `w-${Date.now()}`,
+        amount,
+        status: 'COMPLETED',
+        createdAt: new Date().toISOString()
+    };
+    withdrawals.push(withdrawal);
+    saveWithdrawals();
+    return withdrawal;
+};
+
+export const getWithdrawalHistory = async (): Promise<Withdrawal[]> => {
+    return [...withdrawals].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };

@@ -405,8 +405,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
       </div>
 
       {/* Navigation / Header - Weverse Style */}
-      <div className="fixed top-0 left-0 w-full z-40 px-4 py-4 transition-all">
-        <div className="max-w-2xl mx-auto bg-white/95 sm:bg-white/80 sm:backdrop-blur-xl border border-stone-100 shadow-sm rounded-full py-3 px-5 flex justify-between items-center">
+      <div className="fixed top-0 left-0 w-full z-40 transition-all">
+        <div className="max-w-2xl mx-auto px-4 py-4">
+          <div className="bg-white/95 sm:bg-white/80 sm:backdrop-blur-xl border border-stone-100 shadow-sm rounded-full py-3 px-5 flex justify-between items-center">
             <div
               onClick={onCreateOwn}
               className="flex items-center gap-2.5 cursor-pointer hover:opacity-70 transition-opacity pl-1"
@@ -451,6 +452,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                     </button>
                 )}
             </div>
+          </div>
         </div>
       </div>
 
@@ -595,26 +597,26 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         </p>
                                     </>
                                 )}
-
-                                {/* Guaranteed Reply + Ask Me Anything */}
-                                {!isCustomizeMode && (
-                                    <button
-                                        onClick={currentUser ? handleOpenModal : onLoginRequest}
-                                        className="fixed bottom-4 left-4 right-4 z-50 h-14 shadow-xl border-stone-200 sm:static sm:mt-4 sm:w-full sm:h-12 sm:shadow-sm sm:z-auto bg-white rounded-2xl border hover:border-stone-300 transition-all flex items-center justify-between px-5 group"
-                                    >
-                                        <span className="text-sm font-black text-stone-900 tracking-tight">BLUECHECKED</span>
-                                        <div className="flex items-center gap-1.5 text-xs font-medium text-stone-500 bg-stone-100 px-2.5 py-1 rounded-full">
-                                            <ShieldCheck size={13} className="text-stone-400" />
-                                            <span>Guaranteed {creator.responseWindowHours}h reply</span>
-                                        </div>
-                                    </button>
-                                )}
                             </div>
                         </div>
                     </div>
                 </div>
              </div>
           </div>
+
+          {/* Guaranteed Reply + Ask Me Anything */}
+          {!isCustomizeMode && (
+              <button
+                  onClick={currentUser ? handleOpenModal : onLoginRequest}
+                  className="fixed bottom-4 left-4 right-4 z-50 h-14 shadow-xl border-stone-200 sm:static sm:w-full sm:h-12 sm:shadow-sm sm:z-auto bg-white rounded-2xl border hover:border-stone-300 transition-all flex items-center justify-between px-5 group"
+              >
+                  <span className="text-sm font-black text-stone-900 tracking-tight">BLUECHECKED</span>
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-stone-500 bg-stone-100 px-2.5 py-1 rounded-full">
+                      <ShieldCheck size={13} className="text-stone-400" />
+                      <span>Guaranteed {creator.responseWindowHours}h reply</span>
+                  </div>
+              </button>
+          )}
 
           {/* 4. AFFILIATE LINKS & DIGITAL PRODUCTS */}
           <div className="w-full space-y-4">

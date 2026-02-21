@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { CreatorProfile, Message, DashboardStats, MonthlyStat, AffiliateLink, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
-import { getMessages, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage } from '../services/realBackend';
+import { getMessages, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, Withdrawal } from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
 import { 
   Clock, CheckCircle2, AlertCircle, DollarSign, Sparkles, ChevronLeft, LogOut, 
@@ -88,6 +88,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [selectedSenderEmail, setSelectedSenderEmail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [historicalStats, setHistoricalStats] = useState<MonthlyStat[]>([]);
+  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   
   // Credit Trend Chart State
   const [trendTimeFrame, setTrendTimeFrame] = useState<StatTimeFrame>('DAILY'); // Default to 'Week' view (Daily data)
@@ -418,6 +419,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     const msgs = await getMessages();
     setMessages(msgs);
 
+    // Load Stripe Status & Withdrawals
+    const stripeStatus = await getStripeConnectionStatus();
+    setIsStripeConnected(stripeStatus);
+    const withdrawalHistory = await getWithdrawalHistory();
+    setWithdrawals(withdrawalHistory);
+
     // Initial load for trend data
     if (trendData.length === 0) {
         const data = await getFinancialStatistics(trendTimeFrame, trendDate);
@@ -548,34 +555,50 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
         avgResponseTime = `${avgHours}h`;
     }
 
+    const totalWithdrawn = withdrawals.reduce((sum, w) => sum + w.amount, 0);
+    const availableBalance = totalEarnings - totalWithdrawn;
+
     return {
       totalEarnings,
       pendingCount,
       responseRate,
       // @ts-ignore - Adding temporary field to stats object
       avgResponseTime,
-      monthlyStats: [] // Deprecated in favor of trendData
+      // @ts-ignore
+      availableBalance,
+      monthlyStats: []
     };
-  }, [incomingMessages, historicalStats]);
+  }, [incomingMessages, historicalStats, withdrawals]);
 
   const handleWithdraw = async () => {
-    if (stats.totalEarnings <= 0) return;
-    if (!window.confirm(`Withdraw ${stats.totalEarnings} credits to your connected account?`)) return;
+    // @ts-ignore
+    const balance = stats.availableBalance;
+    if (balance <= 0) return;
+    if (!window.confirm(`Withdraw ${balance} credits to your connected account?`)) return;
     
     setIsWithdrawing(true);
-    // Simulate network request
-    await new Promise(r => setTimeout(r, 2000));
-    setIsWithdrawing(false);
-    alert(`Successfully transferred ${stats.totalEarnings} credits.`);
+    try {
+        await requestWithdrawal(balance);
+        await loadData(true);
+        alert(`Successfully transferred ${balance} credits.`);
+    } catch (e) {
+        alert("Withdrawal failed.");
+    } finally {
+        setIsWithdrawing(false);
+    }
   };
 
   const handleConnectStripe = async () => {
       if (isStripeConnected) return;
       setIsConnectingStripe(true);
-      // Simulate Stripe OAuth flow
-      await new Promise(r => setTimeout(r, 2000));
-      setIsStripeConnected(true);
-      setIsConnectingStripe(false);
+      try {
+          await connectStripeAccount();
+          setIsStripeConnected(true);
+      } catch (e) {
+          alert("Failed to connect Stripe.");
+      } finally {
+          setIsConnectingStripe(false);
+      }
   };
 
   const handleOpenChat = async (senderEmail: string) => {
@@ -1575,8 +1598,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Available Balance</span>
                                     </div>
                                     <div className="text-2xl font-bold text-stone-900 tracking-tight flex items-baseline gap-1">
-                                        {stats.totalEarnings.toLocaleString()}
-                                        {/* Note: Using totalEarnings as current balance for MVP simulation */}
+                                        {/* @ts-ignore */}
+                                        {stats.availableBalance.toLocaleString()}
                                         <span className="text-sm font-medium text-stone-400">credits</span>
                                     </div>
                                     <p className="text-[11px] text-emerald-600 mt-1.5 font-medium">Ready to payout</p>
@@ -1589,12 +1612,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <Button
                                             onClick={handleWithdraw}
                                             isLoading={isWithdrawing}
-                                            disabled={stats.totalEarnings === 0}
+                                            // @ts-ignore
+                                            disabled={stats.availableBalance === 0}
                                             fullWidth
                                             className="bg-stone-900 text-white hover:bg-stone-800 h-12 shadow-md flex items-center justify-center gap-2"
                                         >
                                             <CreditCard size={16} />
-                                            Withdraw ${(stats.totalEarnings / 100).toFixed(2)}
+                                            {/* @ts-ignore */}
+                                            Withdraw ${(stats.availableBalance / 100).toFixed(2)}
                                         </Button>
                                         <p className="text-[10px] text-stone-400 mt-3 text-center">
                                             Transfers typically take 1-3 business days.
