@@ -370,12 +370,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   // Helper to get platform icon
   const getPlatformIcon = (platform: string) => {
       switch(platform.toLowerCase()) {
-          case 'youtube': return <YouTubeLogo className="w-5 h-5 text-[#FF0000]" />;
-          case 'instagram': return <InstagramLogo className="w-5 h-5 text-[#E4405F]" />;
-          case 'x': return <XLogo className="w-4 h-4 text-black" />;
-          case 'tiktok': return <TikTokLogo className="w-4 h-4 text-black" />;
-          case 'twitch': return <Twitch size={18} className="text-[#9146FF]" />;
-          default: return <Sparkles size={18} className="text-stone-400" />;
+          case 'youtube': return <YouTubeLogo className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF0000]" />;
+          case 'instagram': return <InstagramLogo className="w-4 h-4 sm:w-5 sm:h-5 text-[#E4405F]" />;
+          case 'x': return <XLogo className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black" />;
+          case 'tiktok': return <TikTokLogo className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black" />;
+          case 'twitch': return <Twitch size={16} className="sm:!w-[18px] sm:!h-[18px] text-[#9146FF]" />;
+          default: return <Sparkles size={16} className="sm:!w-[18px] sm:!h-[18px] text-stone-400" />;
       }
   };
 
@@ -565,12 +565,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                     </div>
                                 ) : (
                                     <>
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <h1 className="text-lg sm:text-xl font-black text-stone-900 tracking-tight leading-tight">
+                                        <div className="flex items-center gap-1 sm:gap-2">
+                                            <h1 className="text-base sm:text-xl font-black text-stone-900 tracking-tight leading-tight truncate">
                                                 {creator.displayName}
                                             </h1>
                                             {platforms.length > 0 && (
-                                                <div className="flex items-center gap-0.5">
+                                                <div className="flex items-center flex-shrink-0">
                                                     {platforms.map(platform => {
                                                     const platformId = typeof platform === 'string' ? platform : platform.id;
                                                     const platformUrl = typeof platform === 'string' ? '' : platform.url;
@@ -580,7 +580,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                             href={platformUrl ? ensureProtocol(platformUrl) : '#'}
                                                             target={platformUrl ? "_blank" : undefined}
                                                             rel="noopener noreferrer"
-                                                            className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all flex-shrink-0 ${platformUrl ? 'hover:bg-stone-100 cursor-pointer text-stone-500' : 'opacity-40 cursor-default text-stone-400'}`}
+                                                            className={`w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-md transition-all flex-shrink-0 ${platformUrl ? 'hover:bg-stone-100 cursor-pointer text-stone-500' : 'opacity-40 cursor-default text-stone-400'}`}
                                                             title={platformId}
                                                         >
                                                             {getPlatformIcon(platformId)}
