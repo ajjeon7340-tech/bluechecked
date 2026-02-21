@@ -598,19 +598,16 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                                 {/* Guaranteed Reply + Ask Me Anything */}
                                 {!isCustomizeMode && (
-                                    <div className="flex items-center gap-2 mt-4 w-full">
-                                        <div className="flex items-center gap-1.5 bg-white border border-stone-200 rounded-xl px-2.5 py-2 shadow-sm text-[10px] sm:text-xs font-medium text-stone-500 flex-shrink-0">
-                                            <Clock size={12} className="text-emerald-500 flex-shrink-0" />
-                                            <span className="whitespace-nowrap">{creator.responseWindowHours}h reply</span>
+                                    <button
+                                        onClick={currentUser ? handleOpenModal : onLoginRequest}
+                                        className="mt-4 w-full bg-white h-12 rounded-2xl border border-stone-200 shadow-sm hover:shadow-md hover:border-stone-300 transition-all flex items-center justify-between px-5 group"
+                                    >
+                                        <span className="text-sm font-semibold text-stone-700 group-hover:text-stone-900 transition-colors">Ask me anything</span>
+                                        <div className="flex items-center gap-1.5 text-xs font-medium text-stone-400 group-hover:text-stone-500 transition-colors">
+                                            <ShieldCheck size={13} className="text-stone-300 group-hover:text-stone-400 transition-colors" />
+                                            <span>Guaranteed {creator.responseWindowHours}h reply</span>
                                         </div>
-                                        <button
-                                            onClick={currentUser ? handleOpenModal : onLoginRequest}
-                                            className="flex-1 bg-stone-900 text-white font-semibold h-10 rounded-xl hover:bg-stone-800 transition-colors flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-3 sm:px-4 min-w-0"
-                                        >
-                                            <MessageSquare size={16} className="flex-shrink-0" />
-                                            <span className="truncate">Ask me anything</span>
-                                        </button>
-                                    </div>
+                                    </button>
                                 )}
                             </div>
                         </div>
