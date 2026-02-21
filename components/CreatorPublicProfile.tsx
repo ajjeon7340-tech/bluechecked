@@ -444,15 +444,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                             <Share size={16} />
                         </button>
 
-                        {currentUser ? (
-                          <button
-                              onClick={onNavigateToDashboard}
-                              className="flex items-center gap-2 text-stone-700 bg-stone-100 hover:bg-stone-200 px-4 py-2 rounded-full transition-colors text-xs font-medium"
-                          >
-                              {currentUser.role === 'FAN' && <span className="text-stone-500 mr-1"><Coins size={12} className="inline mr-1"/>{currentUser.credits}</span>}
-                              Dashboard
-                          </button>
-                        ) : (
+                        {!currentUser && (
                           <button
                               onClick={onLoginRequest}
                               className="text-stone-500 hover:text-stone-900 px-4 py-2 font-medium text-xs transition-colors"
