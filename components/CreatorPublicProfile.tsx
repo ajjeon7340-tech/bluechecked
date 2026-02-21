@@ -600,11 +600,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                 {!isCustomizeMode && (
                                     <button
                                         onClick={currentUser ? handleOpenModal : onLoginRequest}
-                                        className="mt-4 w-full bg-white h-12 rounded-2xl border border-stone-200 shadow-sm hover:shadow-md hover:border-stone-300 transition-all flex items-center justify-between px-5 group"
+                                        className="fixed bottom-4 left-4 right-4 z-50 h-14 shadow-xl border-stone-200 sm:static sm:mt-4 sm:w-full sm:h-12 sm:shadow-sm sm:z-auto bg-white rounded-2xl border hover:border-stone-300 transition-all flex items-center justify-between px-5 group"
                                     >
-                                        <span className="text-sm font-semibold text-stone-700 group-hover:text-stone-900 transition-colors">Ask me anything</span>
-                                        <div className="flex items-center gap-1.5 text-xs font-medium text-stone-400 group-hover:text-stone-500 transition-colors">
-                                            <ShieldCheck size={13} className="text-stone-300 group-hover:text-stone-400 transition-colors" />
+                                        <span className="text-sm font-black text-stone-900 tracking-tight">BLUECHECKED</span>
+                                        <div className="flex items-center gap-1.5 text-xs font-medium text-stone-500 bg-stone-100 px-2.5 py-1 rounded-full">
+                                            <ShieldCheck size={13} className="text-stone-400" />
                                             <span>Guaranteed {creator.responseWindowHours}h reply</span>
                                         </div>
                                     </button>
