@@ -592,8 +592,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
           {/* Guaranteed Reply + Ask Me Anything */}
           {!isCustomizeMode && (
-              <button
-                  onClick={currentUser ? handleOpenModal : onLoginRequest}
+              <div
+                  onClick={onCreateOwn}
                   className="w-full text-left bg-white p-3 sm:p-4 rounded-2xl border border-stone-200/60 flex items-center gap-3 sm:gap-4 group cursor-pointer hover:border-stone-300 transition-all hover:shadow-sm relative overflow-hidden"
               >
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-stone-50 text-stone-900 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform border border-stone-100">
@@ -607,10 +607,16 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                           <span>Guaranteed {creator.responseWindowHours}h reply</span>
                       </div>
                   </div>
-                  <div className="bg-stone-900 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold hover:bg-stone-800 transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
+                  <button
+                      onClick={(e) => {
+                          e.stopPropagation();
+                          currentUser ? handleOpenModal() : onLoginRequest();
+                      }}
+                      className="bg-stone-900 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold hover:bg-stone-800 transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap z-20"
+                  >
                       Request
-                  </div>
-              </button>
+                  </button>
+              </div>
           )}
 
           {/* 4. AFFILIATE LINKS & DIGITAL PRODUCTS */}
