@@ -565,56 +565,52 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                     </div>
                                 ) : (
                                     <>
-                                        <h1 className="text-lg sm:text-xl font-black text-stone-900 tracking-tight leading-tight mb-1">
-                                            {creator.displayName}
-                                        </h1>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <h1 className="text-lg sm:text-xl font-black text-stone-900 tracking-tight leading-tight">
+                                                {creator.displayName}
+                                            </h1>
+                                            {platforms.length > 0 && (
+                                                <div className="flex items-center gap-0.5">
+                                                    {platforms.map(platform => {
+                                                    const platformId = typeof platform === 'string' ? platform : platform.id;
+                                                    const platformUrl = typeof platform === 'string' ? '' : platform.url;
+                                                    return (
+                                                        <a
+                                                            key={platformId}
+                                                            href={platformUrl ? ensureProtocol(platformUrl) : '#'}
+                                                            target={platformUrl ? "_blank" : undefined}
+                                                            rel="noopener noreferrer"
+                                                            className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all flex-shrink-0 ${platformUrl ? 'hover:bg-stone-100 cursor-pointer text-stone-500' : 'opacity-40 cursor-default text-stone-400'}`}
+                                                            title={platformId}
+                                                        >
+                                                            {getPlatformIcon(platformId)}
+                                                        </a>
+                                                    );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
                                         <p className="text-sm text-stone-600 leading-relaxed font-normal mt-2 truncate">
                                             {creator.bio}
                                         </p>
                                     </>
                                 )}
 
-                                {/* Platforms & Response Time Row */}
-                                <div className="flex items-center gap-2 mt-4 w-full flex-wrap">
-                                    {platforms.length > 0 && (
-                                        <div className="flex items-center gap-1 p-1 bg-white border border-stone-200 rounded-xl shadow-sm overflow-x-auto no-scrollbar flex-shrink-0 w-fit">
-                                            {platforms.map(platform => {
-                                            const platformId = typeof platform === 'string' ? platform : platform.id;
-                                            const platformUrl = typeof platform === 'string' ? '' : platform.url;
-
-                                            return (
-                                                <a
-                                                    key={platformId}
-                                                    href={platformUrl ? ensureProtocol(platformUrl) : '#'}
-                                                    target={platformUrl ? "_blank" : undefined}
-                                                    rel="noopener noreferrer"
-                                                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all flex-shrink-0 ${platformUrl ? 'hover:bg-stone-100 cursor-pointer text-stone-700' : 'opacity-40 cursor-default text-stone-400'}`}
-                                                    title={platformId}
-                                                >
-                                                    {getPlatformIcon(platformId)}
-                                                </a>
-                                            );
-                                            })}
-                                        </div>
-                                    )}
-
-                                    {!isCustomizeMode && (
-                                        <div className="flex items-center gap-1.5 bg-white border border-stone-200 rounded-xl px-2.5 py-1.5 shadow-sm text-[10px] sm:text-xs font-medium text-stone-500">
-                                            <Clock size={12} className="text-emerald-500 flex-shrink-0" />
-                                            <span className="whitespace-nowrap">Guaranteed {creator.responseWindowHours}h reply</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Ask Me Anything Button */}
+                                {/* Guaranteed Reply + Ask Me Anything */}
                                 {!isCustomizeMode && (
-                                    <button
-                                        onClick={currentUser ? handleOpenModal : onLoginRequest}
-                                        className="w-full bg-stone-900 text-white font-semibold h-10 rounded-xl hover:bg-stone-800 transition-colors flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-3 sm:px-4 mt-3"
-                                    >
-                                        <MessageSquare size={16} className="flex-shrink-0" />
-                                        <span>Ask me anything</span>
-                                    </button>
+                                    <div className="flex items-center gap-2 mt-4 w-full">
+                                        <div className="flex items-center gap-1.5 bg-white border border-stone-200 rounded-xl px-2.5 py-2 shadow-sm text-[10px] sm:text-xs font-medium text-stone-500 flex-shrink-0">
+                                            <Clock size={12} className="text-emerald-500 flex-shrink-0" />
+                                            <span className="whitespace-nowrap">{creator.responseWindowHours}h reply</span>
+                                        </div>
+                                        <button
+                                            onClick={currentUser ? handleOpenModal : onLoginRequest}
+                                            className="flex-1 bg-stone-900 text-white font-semibold h-10 rounded-xl hover:bg-stone-800 transition-colors flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-3 sm:px-4 min-w-0"
+                                        >
+                                            <MessageSquare size={16} className="flex-shrink-0" />
+                                            <span className="truncate">Ask me anything</span>
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         </div>
