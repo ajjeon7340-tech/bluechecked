@@ -1805,3 +1805,28 @@ export const getCreatorLikeStatus = async (creatorId: string): Promise<boolean> 
     const { data } = await supabase.from('creator_likes').select('id').eq('creator_id', creatorId).eq('fan_id', session.session.user.id).maybeSingle();
     return !!data;
 };
+
+// --- STRIPE & PAYOUTS ---
+
+export type Withdrawal = MockBackend.Withdrawal;
+
+export const connectStripeAccount = async (): Promise<boolean> => {
+    if (!isConfigured) return MockBackend.connectStripeAccount();
+    console.log("Connect Stripe not implemented for real backend");
+    return false;
+};
+
+export const getStripeConnectionStatus = async (): Promise<boolean> => {
+    if (!isConfigured) return MockBackend.getStripeConnectionStatus();
+    return false;
+};
+
+export const requestWithdrawal = async (amount: number): Promise<Withdrawal> => {
+    if (!isConfigured) return MockBackend.requestWithdrawal(amount);
+    throw new Error("Withdrawals not implemented for real backend");
+};
+
+export const getWithdrawalHistory = async (): Promise<Withdrawal[]> => {
+    if (!isConfigured) return MockBackend.getWithdrawalHistory();
+    return [];
+};
