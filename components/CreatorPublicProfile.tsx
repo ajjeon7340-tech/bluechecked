@@ -479,10 +479,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           <div className="w-full">
              <div className="bg-white rounded-2xl border border-stone-200/60 relative transition-all">
                 <div className="p-6 sm:p-8 relative z-10">
-                    <div className="flex flex-row gap-4 sm:gap-8 items-start">
-                        {/* LEFT: Avatar + Stats */}
-                        <div className="flex flex-col items-center gap-3 flex-shrink-0">
-                        <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 overflow-hidden border border-stone-100 shadow-sm bg-white group">
+                    <div className="flex flex-col items-center text-center gap-5">
+                        {/* Avatar + Stats */}
+                        <div className="flex flex-col items-center gap-3 flex-shrink-0 relative">
+                        <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full p-1 overflow-hidden border border-stone-100 shadow-sm bg-white group">
                            {!imgError && (editedCreator.avatarUrl || DEFAULT_AVATAR) ? (
                                <img 
                                     src={editedCreator.avatarUrl || DEFAULT_AVATAR} 
@@ -496,7 +496,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                     className={`w-full h-full rounded-full bg-stone-100 flex items-center justify-center text-stone-300 ${isCustomizeMode ? 'cursor-pointer hover:bg-stone-200' : ''}`}
                                     onClick={isCustomizeMode ? handleAvatarEdit : undefined}
                                >
-                                   <User size={40} />
+                                   <User size={48} />
                                </div>
                            )}
                         
@@ -504,24 +504,24 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                 <div 
                                     className="absolute inset-0 flex items-center justify-center rounded-full cursor-pointer pointer-events-none z-20"
                                 >
-                                    <div className="bg-black/50 p-2 rounded-full text-white backdrop-blur-sm"><Camera size={16} /></div>
+                                    <div className="bg-black/50 p-2 rounded-full text-white backdrop-blur-sm"><Camera size={20} /></div>
                                 </div>
                             )}
                         </div>
 
                         {/* Likes & Rating (Moved below avatar) */}
                         {!isCustomizeMode && (
-                            <div className="flex items-center gap-2 -mt-6 relative z-20">
+                            <div className="flex items-center gap-2 -mt-5 relative z-20">
                                 <button
                                     onClick={handleLike}
-                                    className={`flex items-center justify-center gap-1 bg-white px-2.5 py-1 rounded-full border border-stone-100 text-[10px] font-bold shadow-sm transition-colors ${hasLiked ? 'text-pink-600 border-pink-100' : 'text-stone-500 hover:text-pink-600 hover:bg-pink-50'}`}
+                                    className={`flex items-center justify-center gap-1 bg-white px-3 py-1.5 rounded-full border border-stone-100 text-xs font-bold shadow-sm transition-colors ${hasLiked ? 'text-pink-600 border-pink-100' : 'text-stone-500 hover:text-pink-600 hover:bg-pink-50'}`}
                                 >
-                                    <Heart size={12} className={hasLiked ? "fill-current" : ""} />
+                                    <Heart size={14} className={hasLiked ? "fill-current" : ""} />
                                     <span>{likes}</span>
                                 </button>
 
-                                <div className="relative group/tooltip flex items-center justify-center gap-1 bg-white px-2.5 py-1 rounded-full border border-stone-100 text-[10px] font-bold text-stone-500 shadow-sm cursor-help">
-                                    <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                                <div className="relative group/tooltip flex items-center justify-center gap-1 bg-white px-3 py-1.5 rounded-full border border-stone-100 text-xs font-bold text-stone-500 shadow-sm cursor-help">
+                                    <Star size={14} className="text-yellow-400 fill-yellow-400" />
                                     <span className="text-stone-700">{creator.stats.averageRating}</span>
                                     
                                     {/* Response Time Tooltip */}
@@ -539,62 +539,62 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         )}
                         </div>
 
-                        {/* RIGHT: Content Wrapper */}
-                        <div className="flex-1 min-w-0 w-full">
-                            <div className="w-full">
+                        {/* Content Wrapper */}
+                        <div className="flex-1 min-w-0 w-full flex flex-col items-center">
+                            <div className="w-full flex flex-col items-center">
                                 {isCustomizeMode ? (
-                                    <div className="space-y-2">
+                                    <div className="space-y-4 w-full text-center">
                                         <input 
                                             type="text" 
                                             value={editedCreator.displayName} 
                                             onChange={(e) => updateField('displayName', e.target.value)}
-                                            className="block w-full text-2xl sm:text-3xl font-bold text-stone-900 border-b border-dashed border-stone-300 focus:border-black focus:outline-none bg-transparent placeholder-stone-300 text-left"
+                                            className="block w-full text-2xl sm:text-3xl font-bold text-stone-900 border-b border-dashed border-stone-300 focus:border-black focus:outline-none bg-transparent placeholder-stone-300 text-center"
                                             placeholder="Display Name"
                                         />
                                         <input 
                                             type="text" 
                                             value={editedCreator.handle} 
                                             onChange={(e) => updateField('handle', e.target.value)}
-                                            className="block w-full text-sm text-stone-500 font-medium border-b border-dashed border-stone-300 focus:border-black focus:outline-none bg-transparent placeholder-stone-300 text-left"
+                                            className="block w-full text-sm text-stone-500 font-medium border-b border-dashed border-stone-300 focus:border-black focus:outline-none bg-transparent placeholder-stone-300 text-center"
                                             placeholder="@handle"
                                         />
                                         <textarea
                                             value={editedCreator.bio}
                                             onChange={(e) => updateField('bio', e.target.value)}
-                                            className="block w-full text-stone-600 border border-dashed border-stone-300 rounded-xl p-3 focus:ring-1 focus:ring-black min-h-[80px] bg-white text-sm mt-2"
+                                            className="block w-full text-stone-600 border border-dashed border-stone-300 rounded-xl p-3 focus:ring-1 focus:ring-black min-h-[80px] bg-white text-sm mt-2 text-center"
                                             placeholder="Your bio..."
                                         />
                                     </div>
                                 ) : (
                                     <>
-                                        <div className="flex items-center gap-1 sm:gap-2">
-                                            <h1 className="text-base sm:text-xl font-black text-stone-900 tracking-tight leading-tight truncate">
-                                                {creator.displayName}
-                                            </h1>
-                                            {platforms.length > 0 && (
-                                                <div className="flex items-center flex-shrink-0">
-                                                    {platforms.map(platform => {
-                                                    const platformId = typeof platform === 'string' ? platform : platform.id;
-                                                    const platformUrl = typeof platform === 'string' ? '' : platform.url;
-                                                    return (
-                                                        <a
-                                                            key={platformId}
-                                                            href={platformUrl ? ensureProtocol(platformUrl) : '#'}
-                                                            target={platformUrl ? "_blank" : undefined}
-                                                            rel="noopener noreferrer"
-                                                            className={`w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-md transition-all flex-shrink-0 ${platformUrl ? 'hover:bg-stone-100 cursor-pointer text-stone-500' : 'opacity-40 cursor-default text-stone-400'}`}
-                                                            title={platformId}
-                                                        >
-                                                            {getPlatformIcon(platformId)}
-                                                        </a>
-                                                    );
-                                                    })}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <p className="text-sm text-stone-600 leading-relaxed font-normal mt-2 truncate">
+                                        <h1 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight leading-tight mb-2">
+                                            {creator.displayName}
+                                        </h1>
+                                        
+                                        <p className="text-sm text-stone-600 leading-relaxed font-medium max-w-md mx-auto mb-4">
                                             {creator.bio}
                                         </p>
+
+                                        {platforms.length > 0 && (
+                                            <div className="flex items-center justify-center gap-3">
+                                                {platforms.map(platform => {
+                                                const platformId = typeof platform === 'string' ? platform : platform.id;
+                                                const platformUrl = typeof platform === 'string' ? '' : platform.url;
+                                                return (
+                                                    <a
+                                                        key={platformId}
+                                                        href={platformUrl ? ensureProtocol(platformUrl) : '#'}
+                                                        target={platformUrl ? "_blank" : undefined}
+                                                        rel="noopener noreferrer"
+                                                        className={`w-8 h-8 flex items-center justify-center rounded-full bg-stone-50 border border-stone-100 transition-all ${platformUrl ? 'hover:bg-stone-100 hover:scale-110 cursor-pointer text-stone-600' : 'opacity-40 cursor-default text-stone-400'}`}
+                                                        title={platformId}
+                                                    >
+                                                        {getPlatformIcon(platformId)}
+                                                    </a>
+                                                );
+                                                })}
+                                            </div>
+                                        )}
                                     </>
                                 )}
                             </div>
