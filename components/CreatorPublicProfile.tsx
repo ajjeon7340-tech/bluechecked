@@ -608,12 +608,21 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           {!isCustomizeMode && (
               <button
                   onClick={currentUser ? handleOpenModal : onLoginRequest}
-                  className="fixed bottom-4 left-4 right-4 z-50 h-14 shadow-xl border-stone-200 sm:static sm:w-full sm:h-12 sm:shadow-sm sm:z-auto bg-white rounded-2xl border hover:border-stone-300 transition-all flex items-center justify-between px-5 group"
+                  className="fixed bottom-4 left-4 right-4 z-50 shadow-xl border-stone-200 sm:static sm:w-full sm:shadow-sm sm:z-auto bg-white p-3 sm:p-4 rounded-2xl border hover:border-stone-300 transition-all flex items-center gap-3 sm:gap-4 group cursor-pointer relative overflow-hidden"
               >
-                  <span className="text-sm font-black text-stone-900 tracking-tight">BLUECHECKED</span>
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-stone-500 bg-stone-100 px-2.5 py-1 rounded-full">
-                      <ShieldCheck size={13} className="text-stone-400" />
-                      <span>Guaranteed {creator.responseWindowHours}h reply</span>
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-stone-50 text-stone-900 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform border border-stone-100">
+                      <BlueCheckLogo size={20} className="sm:hidden" />
+                      <BlueCheckLogo size={24} className="hidden sm:block" />
+                  </div>
+                  <div className="flex-1 relative z-10 min-w-0 text-left">
+                      <h4 className="font-black text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">BLUECHECKED</h4>
+                      <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-stone-500 mt-0.5 font-medium truncate">
+                          <ShieldCheck size={12} className="text-emerald-500" />
+                          <span>Guaranteed {creator.responseWindowHours}h reply</span>
+                      </div>
+                  </div>
+                  <div className="bg-stone-900 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-bold hover:bg-stone-800 transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
+                      Request
                   </div>
               </button>
           )}
