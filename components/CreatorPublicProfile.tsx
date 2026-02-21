@@ -404,58 +404,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           <div className="absolute bottom-[0%] -left-[10%] w-[500px] h-[500px] bg-stone-100/30 rounded-full blur-[80px]"></div>
       </div>
 
-      {/* Navigation / Header - Weverse Style */}
-      <div className="fixed top-0 left-0 w-full z-40 transition-all">
-        <div className="max-w-2xl mx-auto px-4 py-4">
-          <div className="bg-white/95 sm:bg-white/80 sm:backdrop-blur-xl border border-stone-100 shadow-sm rounded-full py-3 px-5 flex justify-between items-center">
-            <div
-              onClick={onCreateOwn}
-              className="flex items-center gap-2.5 cursor-pointer hover:opacity-70 transition-opacity pl-1"
-            >
-              <BlueCheckLogo size={24} className="text-stone-800" />
-              <span className="font-semibold tracking-tight text-sm text-stone-800">bluechecked</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-                <button
-                    onClick={handleShare}
-                    className="w-9 h-9 bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-700 rounded-full transition-colors flex items-center justify-center flex-shrink-0"
-                    title="Share"
-                >
-                    <Share size={16} />
-                </button>
-
-                {currentUser ? (
-                  <button
-                      onClick={onNavigateToDashboard}
-                      className="flex items-center gap-2 text-stone-700 bg-stone-100 hover:bg-stone-200 px-4 py-2 rounded-full transition-colors text-xs font-medium"
-                  >
-                      {currentUser.role === 'FAN' && <span className="text-stone-500 mr-1"><Coins size={12} className="inline mr-1"/>{currentUser.credits}</span>}
-                      Dashboard
-                  </button>
-                ) : (
-                  <button
-                      onClick={onLoginRequest}
-                      className="text-stone-500 hover:text-stone-900 px-4 py-2 font-medium text-xs transition-colors"
-                  >
-                      Sign In
-                  </button>
-                )}
-
-                {!currentUser && (
-                    <button
-                      onClick={() => setIsCustomizeMode(!isCustomizeMode)}
-                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 border ${isCustomizeMode ? 'bg-stone-900 border-stone-900 text-white' : 'bg-transparent border-stone-200 text-stone-400 hover:border-stone-400'}`}
-                    >
-                      {isCustomizeMode ? <CheckCircle2 size={10} /> : null}
-                      {isCustomizeMode ? 'Editing' : 'Edit'}
-                    </button>
-                )}
-            </div>
-          </div>
-        </div>
-      </div>
-
       <input 
         type="file" 
         ref={avatarInputRef} 
@@ -473,11 +421,57 @@ export const CreatorPublicProfile: React.FC<Props> = ({
         )}
 
       {/* Main Layout - Single Column / Vertical Stack */}
-      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-24 sm:pt-28 flex flex-col gap-5 items-center">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-6 flex flex-col gap-5 items-center">
 
           {/* 1. PROFILE INFO & STATS */}
           <div className="w-full">
              <div className="bg-white rounded-2xl border border-stone-200/60 relative transition-all">
+                <div className="px-6 pt-6 flex justify-between items-center">
+                    <div
+                      onClick={onCreateOwn}
+                      className="flex items-center gap-2.5 cursor-pointer hover:opacity-70 transition-opacity pl-1"
+                    >
+                      <BlueCheckLogo size={24} className="text-stone-800" />
+                      <span className="font-semibold tracking-tight text-sm text-stone-800">bluechecked</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleShare}
+                            className="w-9 h-9 bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-700 rounded-full transition-colors flex items-center justify-center flex-shrink-0"
+                            title="Share"
+                        >
+                            <Share size={16} />
+                        </button>
+
+                        {currentUser ? (
+                          <button
+                              onClick={onNavigateToDashboard}
+                              className="flex items-center gap-2 text-stone-700 bg-stone-100 hover:bg-stone-200 px-4 py-2 rounded-full transition-colors text-xs font-medium"
+                          >
+                              {currentUser.role === 'FAN' && <span className="text-stone-500 mr-1"><Coins size={12} className="inline mr-1"/>{currentUser.credits}</span>}
+                              Dashboard
+                          </button>
+                        ) : (
+                          <button
+                              onClick={onLoginRequest}
+                              className="text-stone-500 hover:text-stone-900 px-4 py-2 font-medium text-xs transition-colors"
+                          >
+                              Sign In
+                          </button>
+                        )}
+
+                        {!currentUser && (
+                            <button
+                              onClick={() => setIsCustomizeMode(!isCustomizeMode)}
+                              className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 border ${isCustomizeMode ? 'bg-stone-900 border-stone-900 text-white' : 'bg-transparent border-stone-200 text-stone-400 hover:border-stone-400'}`}
+                            >
+                              {isCustomizeMode ? <CheckCircle2 size={10} /> : null}
+                              {isCustomizeMode ? 'Editing' : 'Edit'}
+                            </button>
+                        )}
+                    </div>
+                </div>
                 <div className="p-6 sm:p-8 relative z-10">
                     <div className="flex flex-col items-center text-center gap-5">
                         {/* Avatar + Stats */}
