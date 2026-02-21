@@ -1082,27 +1082,26 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       <main className="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden relative">
         
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-stone-200 flex items-center justify-between px-6 shrink-0">
-            {/* ... (Header Content Unchanged) ... */}
-            <div className="flex items-center gap-4">
-                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500">
+        <header className="h-14 sm:h-16 bg-white border-b border-stone-200 flex items-center justify-between px-3 sm:px-6 shrink-0 overflow-x-hidden">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 flex-shrink-0">
                     <Menu size={20} />
                 </button>
-                <h2 className="font-semibold text-stone-800">
+                <h2 className="font-semibold text-stone-800 text-sm sm:text-base truncate">
                     {currentView.charAt(0) + currentView.slice(1).toLowerCase()}
                 </h2>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
                 <div className="relative hidden sm:block">
                     <Search className="absolute left-3 top-2.5 text-stone-400" size={16} />
-                    <input 
-                        type="text" 
-                        placeholder="Search..." 
+                    <input
+                        type="text"
+                        placeholder="Search..."
                         className="pl-9 pr-4 py-2 bg-stone-100 border-none rounded-lg text-sm text-stone-600 focus:ring-2 focus:ring-stone-200 outline-none w-64 transition-all"
                     />
                 </div>
                 <div className="relative">
-                    <button 
+                    <button
                         onClick={handleToggleNotifications}
                         className="relative text-stone-400 hover:text-stone-600 transition-colors p-2 rounded-full hover:bg-stone-100"
                     >
@@ -1113,7 +1112,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     {showNotifications && (
                         <>
                             <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)}></div>
-                            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                            <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                                 <div className="px-4 py-3 border-b border-stone-50 bg-stone-50/50 flex justify-between items-center">
                                     <h3 className="font-bold text-sm text-stone-900">Notifications</h3>
                                     <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{notifications.length} Updates</span>
@@ -1123,19 +1122,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <div className="p-8 text-center text-stone-400 text-xs">No notifications yet.</div>
                                     ) : (
                                         notifications.map(notif => (
-                                            <div 
-                                                key={notif.id} 
+                                            <div
+                                                key={notif.id}
                                                 onClick={() => handleNotificationClick(notif)}
                                                 className="px-4 py-3 hover:bg-stone-50 transition-colors flex gap-3 border-b border-stone-50 last:border-0 group relative pr-8 cursor-pointer"
                                             >
                                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
                                                     <notif.icon size={14} />
                                                 </div>
-                                                <div>
+                                                <div className="min-w-0">
                                                     <p className="text-xs text-stone-600 leading-snug mb-1 font-medium">{notif.text}</p>
                                                     <p className="text-[10px] text-stone-400">{notif.time.toLocaleDateString()} • {notif.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
                                                 </div>
-                                                <button 
+                                                <button
                                                     onClick={(e) => handleDeleteNotification(e, notif.id)}
                                                     className="absolute top-3 right-3 text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                                                     title="Dismiss"
@@ -1151,9 +1150,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     )}
                 </div>
 
-                <div className="h-6 w-px bg-stone-200"></div>
-                <button onClick={onViewProfile} className="text-sm font-medium text-stone-600 hover:text-stone-900 flex items-center gap-1">
-                    Public Page <ExternalLink size={14} />
+                <div className="h-6 w-px bg-stone-200 hidden sm:block"></div>
+                <button onClick={onViewProfile} className="text-xs sm:text-sm font-medium text-stone-600 hover:text-stone-900 flex items-center gap-1 flex-shrink-0">
+                    <span className="hidden sm:inline">Public Page</span> <ExternalLink size={14} />
                 </button>
             </div>
         </header>
@@ -1355,86 +1354,84 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
              {/* --- VIEW: FINANCE OR STATISTICS --- */}
             {(currentView === 'FINANCE' || currentView === 'STATISTICS') && (
-                <div className="max-w-6xl mx-auto animate-in fade-in space-y-8">
+                <div className="max-w-6xl mx-auto animate-in fade-in space-y-6 sm:space-y-8 overflow-x-hidden">
                      {/* Header Controls */}
-                     <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+                     <div className="flex flex-col gap-4">
                          <div>
-                             <h2 className="text-2xl font-bold text-stone-900">
+                             <h2 className="text-xl sm:text-2xl font-bold text-stone-900">
                                  {currentView === 'FINANCE' ? 'Finance & Credits' : 'Activity Statistics'}
                              </h2>
-                             <p className="text-stone-500 text-sm">
-                                 {currentView === 'FINANCE' 
-                                    ? 'Manage your earnings, withdrawals, and transaction history.' 
+                             <p className="text-stone-500 text-xs sm:text-sm">
+                                 {currentView === 'FINANCE'
+                                    ? 'Manage your earnings, withdrawals, and transaction history.'
                                     : 'Track your profile performance and engagement metrics.'}
                              </p>
                          </div>
-                         
-                         <div className="flex flex-wrap gap-4 items-center">
-                             {currentView === 'STATISTICS' && (
-                                <div className="flex gap-4 items-center bg-white p-1 rounded-xl border border-stone-200 shadow-sm">
-                                    {/* Timeframe Toggle - ONLY FOR STATISTICS */}
-                                    <div className="flex bg-stone-100 p-1 rounded-lg">
-                                        {(['DAILY', 'WEEKLY', 'MONTHLY'] as const).map((tf) => (
-                                            <button
-                                                key={tf}
-                                                onClick={() => { setStatsTimeFrame(tf); setStatsDate(new Date()); }}
-                                                className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all uppercase tracking-wide ${
-                                                    statsTimeFrame === tf 
-                                                    ? 'bg-white text-stone-900 shadow-sm' 
-                                                    : 'text-stone-500 hover:text-stone-900'
-                                                }`}
-                                            >
-                                                {tf}
-                                            </button>
-                                        ))}
-                                    </div>
 
-                                    {/* Date Picker / Navigation */}
-                                    <div className="flex items-center gap-2 pr-2">
-                                        <button onClick={() => handleDateNavigate('PREV')} className="p-1 hover:bg-stone-100 rounded text-stone-500">
-                                            <ChevronLeft size={16} />
+                         {currentView === 'STATISTICS' && (
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 sm:items-center bg-white p-1.5 sm:p-1 rounded-xl border border-stone-200 shadow-sm w-full sm:w-fit">
+                                {/* Timeframe Toggle */}
+                                <div className="flex bg-stone-100 p-1 rounded-lg">
+                                    {(['DAILY', 'WEEKLY', 'MONTHLY'] as const).map((tf) => (
+                                        <button
+                                            key={tf}
+                                            onClick={() => { setStatsTimeFrame(tf); setStatsDate(new Date()); }}
+                                            className={`flex-1 sm:flex-initial px-3 py-1.5 text-[10px] font-bold rounded-md transition-all uppercase tracking-wide ${
+                                                statsTimeFrame === tf
+                                                ? 'bg-white text-stone-900 shadow-sm'
+                                                : 'text-stone-500 hover:text-stone-900'
+                                            }`}
+                                        >
+                                            {tf}
                                         </button>
-                                        <div className="flex items-center gap-2 px-2 min-w-[120px] justify-center">
-                                            <Calendar size={14} className="text-stone-400" />
-                                            <span className="text-xs font-bold text-stone-900">{getStatsDateLabel()}</span>
-                                        </div>
-                                        <button onClick={() => handleDateNavigate('NEXT')} className="p-1 hover:bg-stone-100 rounded text-stone-500">
-                                            <ChevronRight size={16} />
-                                        </button>
-                                    </div>
+                                    ))}
                                 </div>
-                             )}
-                         </div>
+
+                                {/* Date Picker / Navigation */}
+                                <div className="flex items-center justify-center gap-2 sm:pl-3 sm:pr-2">
+                                    <button onClick={() => handleDateNavigate('PREV')} className="p-1.5 hover:bg-stone-100 rounded text-stone-500">
+                                        <ChevronLeft size={16} />
+                                    </button>
+                                    <div className="flex items-center gap-2 px-2 min-w-[120px] justify-center">
+                                        <Calendar size={14} className="text-stone-400" />
+                                        <span className="text-xs font-bold text-stone-900">{getStatsDateLabel()}</span>
+                                    </div>
+                                    <button onClick={() => handleDateNavigate('NEXT')} className="p-1.5 hover:bg-stone-100 rounded text-stone-500">
+                                        <ChevronRight size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                         )}
                      </div>
 
                      {/* CONTENT FOR STATISTICS (ACTIVITY) */}
                      {currentView === 'STATISTICS' && (
                          <>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in zoom-in-95 duration-300">
-                                <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Eye size={14}/></div>
-                                        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Total Views</span>
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-in fade-in zoom-in-95 duration-300">
+                                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
+                                    <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+                                        <div className="p-1 sm:p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Eye size={14}/></div>
+                                        <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Views</span>
                                     </div>
-                                    <div className="text-2xl font-bold text-stone-900 tracking-tight">
+                                    <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
                                         {detailedStats.reduce((acc, curr) => acc + curr.views, 0).toLocaleString()}
                                     </div>
                                 </div>
-                                <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Heart size={14} className="fill-current"/></div>
-                                        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Total Likes</span>
+                                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
+                                    <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+                                        <div className="p-1 sm:p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Heart size={14} className="fill-current"/></div>
+                                        <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Likes</span>
                                     </div>
-                                    <div className="text-2xl font-bold text-stone-900 tracking-tight">
+                                    <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
                                         {detailedStats.reduce((acc, curr) => acc + curr.likes, 0).toLocaleString()}
                                     </div>
                                 </div>
-                                <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Star size={14} className="fill-current"/></div>
-                                        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Avg Rating</span>
+                                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
+                                    <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+                                        <div className="p-1 sm:p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Star size={14} className="fill-current"/></div>
+                                        <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Rating</span>
                                     </div>
-                                    <div className="text-2xl font-bold text-stone-900 tracking-tight">
+                                    <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
                                         {(() => {
                                             const valid = detailedStats.filter(s => s.rating > 0);
                                             const avg = valid.length > 0 ? valid.reduce((acc, curr) => acc + curr.rating, 0) / valid.length : 0;
@@ -1442,12 +1439,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         })()}
                                     </div>
                                 </div>
-                                <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Clock size={14}/></div>
-                                        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Avg Response</span>
+                                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
+                                    <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+                                        <div className="p-1 sm:p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Clock size={14}/></div>
+                                        <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Response</span>
                                     </div>
-                                    <div className="text-2xl font-bold text-stone-900 tracking-tight">
+                                    <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
                                         {(() => {
                                             const valid = detailedStats.filter(s => s.responseTime > 0);
                                             const avg = valid.length > 0 ? valid.reduce((acc, curr) => acc + curr.responseTime, 0) / valid.length : 0;
@@ -1455,9 +1452,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             if (avg <= 0) return 'N/A';
 
                                             return (
-                                                <div className="flex items-baseline gap-2">
+                                                <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
                                                     <span>{avg.toFixed(1)}h</span>
-                                                    <span className="text-[10px] font-medium text-stone-500 bg-stone-50 px-2 py-0.5 rounded-full uppercase tracking-wide border border-stone-200">
+                                                    <span className="text-[9px] sm:text-[10px] font-medium text-stone-500 bg-stone-50 px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wide border border-stone-200 w-fit">
                                                         {getResponseCategory(avg)}
                                                     </span>
                                                 </div>
@@ -1467,16 +1464,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
                                 {/* Profile Views Chart */}
-                                <div className="bg-white p-6 rounded-2xl border border-stone-200/60">
+                                <div className="bg-white p-4 sm:p-6 rounded-2xl border border-stone-200/60">
                                     <h3 className="text-sm font-bold text-stone-900 mb-1 flex items-center gap-2">
                                         <Eye size={14} className="text-stone-400" />
                                         Profile Views
                                     </h3>
-                                    <p className="text-xs text-stone-400 mb-5">{getStatsDateLabel()}</p>
+                                    <p className="text-xs text-stone-400 mb-4 sm:mb-5">{getStatsDateLabel()}</p>
 
-                                    <div className="h-52 w-full">
+                                    <div className="h-44 sm:h-52 w-full">
                                         {isLoadingStats ? (
                                             <div className="h-full w-full flex items-center justify-center text-stone-400 text-sm">Loading...</div>
                                         ) : (
@@ -1503,14 +1500,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
 
                                 {/* Likes Chart */}
-                                <div className="bg-white p-6 rounded-2xl border border-stone-200/60">
+                                <div className="bg-white p-4 sm:p-6 rounded-2xl border border-stone-200/60">
                                     <h3 className="text-sm font-bold text-stone-900 mb-1 flex items-center gap-2">
                                         <Heart size={14} className="text-stone-400 fill-current" />
                                         Likes
                                     </h3>
-                                    <p className="text-xs text-stone-400 mb-5">{getStatsDateLabel()}</p>
+                                    <p className="text-xs text-stone-400 mb-4 sm:mb-5">{getStatsDateLabel()}</p>
 
-                                    <div className="h-52 w-full">
+                                    <div className="h-44 sm:h-52 w-full">
                                         {isLoadingStats ? (
                                             <div className="h-full w-full flex items-center justify-center text-stone-400 text-sm">Loading...</div>
                                         ) : (
@@ -1733,12 +1730,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
             {/* --- VIEW: ANALYTICS (Pro Feature) --- */}
             {currentView === 'ANALYTICS' && (
-                <div className="max-w-6xl mx-auto animate-in fade-in relative min-h-[80vh]">
+                <div className="max-w-6xl mx-auto animate-in fade-in relative min-h-[80vh] overflow-x-hidden">
                     {/* Header - Always visible */}
-                    <div className="flex justify-between items-center mb-8">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-6 sm:mb-8">
                         <div>
-                            <h2 className="text-2xl font-bold text-stone-900">Analytics Overview</h2>
-                            <p className="text-stone-500 text-sm">Performance metrics for the last 30 days.</p>
+                            <h2 className="text-xl sm:text-2xl font-bold text-stone-900">Analytics Overview</h2>
+                            <p className="text-stone-500 text-xs sm:text-sm">Performance metrics for the last 30 days.</p>
                         </div>
                         <div className="flex gap-2">
                             <button className="px-3 py-1.5 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm hover:bg-stone-50">Export Report</button>
@@ -1778,25 +1775,25 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             <div className={`space-y-6 transition-all duration-500 ${!creator.isPremium ? 'filter blur-sm opacity-50 pointer-events-none select-none' : ''}`}>
                                 
                                 {/* 1. Key Metrics Cards */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="bg-white p-5 rounded-2xl border border-stone-200/60 hover:shadow-sm transition-all">
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Eye size={14}/></div>
-                                            <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Profile Views</span>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+                                    <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 hover:shadow-sm transition-all">
+                                        <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+                                            <div className="p-1 sm:p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Eye size={14}/></div>
+                                            <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Views</span>
                                         </div>
-                                        <div className="text-2xl font-bold text-stone-900 tracking-tight">
+                                        <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
                                             {analyticsData.funnel.find(f => f.name === 'Profile Views')?.count.toLocaleString() || 0}
                                         </div>
                                     </div>
-                                    <div className="bg-white p-5 rounded-2xl border border-stone-200/60 hover:shadow-sm transition-all">
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><MousePointerClick size={14}/></div>
-                                            <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Interactions</span>
+                                    <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 hover:shadow-sm transition-all">
+                                        <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+                                            <div className="p-1 sm:p-1.5 bg-stone-100 text-stone-400 rounded-lg"><MousePointerClick size={14}/></div>
+                                            <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Interactions</span>
                                         </div>
-                                        <div className="text-2xl font-bold text-stone-900 tracking-tight">
+                                        <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
                                             {analyticsData.funnel.find(f => f.name === 'Interactions')?.count.toLocaleString() || 0}
                                         </div>
-                                        <div className="text-[11px] text-emerald-600 font-medium mt-1.5">
+                                        <div className="text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-1">
                                             {(() => {
                                                 const views = analyticsData.funnel.find(f => f.name === 'Profile Views')?.count || 0;
                                                 const interactions = analyticsData.funnel.find(f => f.name === 'Interactions')?.count || 0;
@@ -1804,15 +1801,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             })()}% Engagement
                                         </div>
                                     </div>
-                                    <div className="bg-white p-5 rounded-2xl border border-stone-200/60 hover:shadow-sm transition-all">
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><CheckCircle2 size={14}/></div>
-                                            <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Conversions</span>
+                                    <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 hover:shadow-sm transition-all col-span-2 sm:col-span-1">
+                                        <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+                                            <div className="p-1 sm:p-1.5 bg-stone-100 text-stone-400 rounded-lg"><CheckCircle2 size={14}/></div>
+                                            <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Conversions</span>
                                         </div>
-                                        <div className="text-2xl font-bold text-stone-900 tracking-tight">
+                                        <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
                                             {analyticsData.funnel.find(f => f.name === 'Conversions')?.count.toLocaleString() || 0}
                                         </div>
-                                        <div className="text-[11px] text-emerald-600 font-medium mt-1.5">
+                                        <div className="text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-1">
                                             {(() => {
                                                 const views = analyticsData.funnel.find(f => f.name === 'Profile Views')?.count || 0;
                                                 const conversions = analyticsData.funnel.find(f => f.name === 'Conversions')?.count || 0;
@@ -1822,22 +1819,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                                     {/* Traffic Sources */}
-                                    <div className="bg-white p-6 rounded-2xl border border-stone-200/60">
+                                    <div className="bg-white p-4 sm:p-6 rounded-2xl border border-stone-200/60">
                                         <h3 className="text-sm font-bold text-stone-900 mb-1 flex items-center gap-2">
                                             <PieIcon size={14} className="text-stone-400" /> Traffic Sources
                                         </h3>
-                                        <p className="text-xs text-stone-400 mb-5">Where your visitors come from</p>
-                                        <div className="h-52 flex items-center justify-center">
+                                        <p className="text-xs text-stone-400 mb-4 sm:mb-5">Where your visitors come from</p>
+                                        <div className="h-48 sm:h-52 flex items-center justify-center">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <PieChart>
                                                     <Pie
                                                         data={analyticsData.trafficSources}
                                                         cx="50%"
                                                         cy="50%"
-                                                        innerRadius={55}
-                                                        outerRadius={75}
+                                                        innerRadius={45}
+                                                        outerRadius={65}
                                                         paddingAngle={4}
                                                         dataKey="value"
                                                     >
@@ -1853,11 +1850,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     </div>
 
                                     {/* Conversion Funnel */}
-                                    <div className="bg-white p-6 rounded-2xl border border-stone-200/60">
+                                    <div className="bg-white p-4 sm:p-6 rounded-2xl border border-stone-200/60">
                                         <h3 className="text-sm font-bold text-stone-900 mb-1 flex items-center gap-2">
                                             <TrendingUp size={14} className="text-stone-400" /> Conversion Funnel
                                         </h3>
-                                        <p className="text-xs text-stone-400 mb-5">Visitor journey breakdown</p>
+                                        <p className="text-xs text-stone-400 mb-4 sm:mb-5">Visitor journey breakdown</p>
                                         <div className="space-y-5">
                                             {analyticsData.funnel.map((step, index) => {
                                                 const maxVal = analyticsData.funnel[0].count || 1;
@@ -1886,11 +1883,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
 
                                 {/* Audience Split */}
-                                <div className="bg-white p-6 rounded-2xl border border-stone-200/60">
+                                <div className="bg-white p-4 sm:p-6 rounded-2xl border border-stone-200/60">
                                     <h3 className="text-sm font-bold text-stone-900 mb-1 flex items-center gap-2">
                                         <Users size={14} className="text-stone-400" /> Audience
                                     </h3>
-                                    <p className="text-xs text-stone-400 mb-5">New vs returning visitors</p>
+                                    <p className="text-xs text-stone-400 mb-4 sm:mb-5">New vs returning visitors</p>
                                     <div className="flex items-center gap-6">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-3">
@@ -1916,11 +1913,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                 {/* Top Performing Assets */}
                                 <div className="bg-white border border-stone-200/60 rounded-2xl shadow-sm overflow-hidden">
-                                    <div className="px-6 py-4 border-b border-stone-100 flex items-center gap-2">
+                                    <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-stone-100 flex items-center gap-2">
                                         <Star size={16} className="text-yellow-500" />
                                         <h3 className="text-sm font-bold text-stone-900">Top Performing Content</h3>
                                     </div>
-                                    <div className="overflow-x-auto">
+                                    {/* Desktop Table */}
+                                    <div className="hidden sm:block overflow-x-auto">
                                         <table className="w-full text-left text-sm">
                                             <thead className="bg-stone-50 text-stone-500 font-bold border-b border-stone-100 text-xs uppercase tracking-wider">
                                                 <tr>
@@ -1949,6 +1947,28 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 ))}
                                             </tbody>
                                         </table>
+                                    </div>
+                                    {/* Mobile Card View */}
+                                    <div className="sm:hidden divide-y divide-stone-100">
+                                        {analyticsData.topAssets.map((asset) => (
+                                            <div key={asset.id} className="p-4 flex items-center gap-3">
+                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${asset.type === 'PRODUCT' ? 'bg-purple-100 text-purple-600' : 'bg-stone-100 text-stone-500'}`}>
+                                                    {asset.type === 'PRODUCT' ? <ShoppingBag size={18}/> : <ExternalLink size={18}/>}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-bold text-stone-800 text-sm truncate">{asset.title}</div>
+                                                    <div className="text-[10px] text-stone-400 flex items-center gap-2 mt-0.5">
+                                                        <span>{asset.clicks.toLocaleString()} clicks</span>
+                                                        <span>·</span>
+                                                        <span>{asset.ctr} CTR</span>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right flex-shrink-0">
+                                                    <div className="font-mono font-bold text-emerald-600 text-sm">{asset.revenue > 0 ? asset.revenue : '-'}</div>
+                                                    <div className="text-[10px] text-stone-400">credits</div>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             </div>

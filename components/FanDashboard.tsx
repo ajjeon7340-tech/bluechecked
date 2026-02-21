@@ -787,12 +787,6 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             <LogOut size={16} />
                         </button>
                     </div>
-                    <div className="mt-3 flex flex-col items-center gap-1">
-                        <div className="text-[10px] text-stone-400 font-mono opacity-50">v3.6.30</div>
-                        <div className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${isBackendConfigured() ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
-                            {isBackendConfigured() ? '● LIVE DB' : '○ MOCK DB'}
-                        </div>
-                    </div>
                 </div>
             </div>
         </aside>

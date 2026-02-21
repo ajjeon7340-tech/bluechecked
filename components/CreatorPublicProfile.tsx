@@ -463,7 +463,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
         )}
 
       {/* Main Layout - Single Column / Vertical Stack */}
-      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-20 sm:pt-24 flex flex-col gap-5 items-center">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-24 sm:pt-28 flex flex-col gap-5 items-center">
 
           {/* 1. PROFILE INFO & STATS */}
           <div className="w-full">
@@ -567,9 +567,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                 )}
 
                                 {/* Platforms & Actions Row */}
-                                <div className="flex items-center gap-2 mt-4 w-full">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-4 w-full">
                                     {platforms.length > 0 && (
-                                        <div className="flex items-center gap-1 p-1 bg-white border border-stone-200 rounded-xl shadow-sm overflow-x-auto no-scrollbar max-w-[40%] sm:max-w-none flex-shrink-0">
+                                        <div className="flex items-center gap-1 p-1 bg-white border border-stone-200 rounded-xl shadow-sm overflow-x-auto no-scrollbar flex-shrink-0 w-fit">
                                             {platforms.map(platform => {
                                             const platformId = typeof platform === 'string' ? platform : platform.id;
                                             const platformUrl = typeof platform === 'string' ? '' : platform.url;
@@ -589,7 +589,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                             })}
                                         </div>
                                     )}
-                                    
+
                                     {!isCustomizeMode && (
                                         <div className="flex items-center gap-2 flex-1 min-w-0">
                                             <button
@@ -601,11 +601,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                             </button>
                                             <button
                                                 onClick={currentUser ? handleOpenModal : onLoginRequest}
-                                                className="flex-1 bg-stone-900 text-white font-semibold h-10 rounded-xl hover:bg-stone-800 transition-colors flex items-center justify-center gap-2 text-sm whitespace-nowrap px-4 min-w-0"
+                                                className="flex-1 bg-stone-900 text-white font-semibold h-10 rounded-xl hover:bg-stone-800 transition-colors flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-3 sm:px-4 min-w-0 overflow-hidden"
                                             >
                                                 <MessageSquare size={16} className="flex-shrink-0" />
                                                 <span className="truncate">Ask me anything</span>
-                                                <span className="text-stone-400 text-[10px] font-medium flex-shrink-0">· {creator.responseWindowHours}h reply</span>
+                                                <span className="text-stone-400 text-[10px] font-medium flex-shrink-0 hidden sm:inline">· {creator.responseWindowHours}h reply</span>
                                             </button>
                                         </div>
                                     )}
