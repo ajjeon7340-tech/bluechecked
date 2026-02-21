@@ -816,7 +816,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       if (existingIndex >= 0) {
           const existingPlatform = currentPlatforms[existingIndex];
           const currentUrl = typeof existingPlatform === 'object' ? existingPlatform.url : '';
-          const url = window.prompt(`Edit URL for ${platformId} (Leave empty to remove):`, currentUrl);
+          const url = window.prompt(`Edit URL for ${platformId} (Clear to remove):`, currentUrl);
           
           if (url === null) return;
 
@@ -831,14 +831,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
               setEditedCreator(prev => ({ ...prev, platforms: updatedPlatforms }));
           }
       } else {
-          const url = window.prompt(`Enter URL for ${platformId} (optional):`);
-          if (url === null) return;
-          const newPlatform = url.trim() ? { id: platformId, url: url.trim() } : platformId;
-
-          setEditedCreator(prev => ({
-              ...prev,
-              platforms: [...(prev.platforms || []), newPlatform]
-          }));
+          const url = window.prompt(`Enter URL for ${platformId}:`);
+          if (url && url.trim()) {
+              const newPlatform = { id: platformId, url: url.trim() };
+              setEditedCreator(prev => ({
+                  ...prev,
+                  platforms: [...(prev.platforms || []), newPlatform]
+              }));
+          }
       }
   };
 
@@ -2760,7 +2760,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
                             </div>
 
-                            {/* REPLACED TAGS WITH PLATFORM SELECTOR */}
                             <div>
                                 <label className="block text-sm font-medium text-stone-700 mb-2">Connected Platforms</label>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

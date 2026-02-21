@@ -39,7 +39,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   // Creator Config
   const [price, setPrice] = useState(20);
   const [responseHours, setResponseHours] = useState(48);
-  const [platforms, setPlatforms] = useState<string[]>([]);
+  const [platforms, setPlatforms] = useState<(string | { id: string, url: string })[]>([]);
 
   // Shared Profile Config
   const [displayName, setDisplayName] = useState(currentUser?.name || '');
@@ -120,10 +120,14 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   };
 
   const handleTogglePlatform = (platformId: string) => {
-      if (platforms.includes(platformId)) {
-          setPlatforms(prev => prev.filter(p => p !== platformId));
+      const existingIndex = platforms.findIndex(p => (typeof p === 'string' ? p : p.id) === platformId);
+      if (existingIndex >= 0) {
+          setPlatforms(prev => prev.filter((_, i) => i !== existingIndex));
       } else {
-          setPlatforms(prev => [...prev, platformId]);
+          const url = window.prompt(`Enter URL for ${platformId}:`);
+          if (url && url.trim()) {
+              setPlatforms(prev => [...prev, { id: platformId, url: url.trim() }]);
+          }
       }
   };
 
@@ -332,20 +336,28 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 {SUPPORTED_PLATFORMS.map(platform => {
-                                    const isSelected = platforms.includes(platform.id);
+                                    const platformData = platforms.find(p => (typeof p === 'string' ? p : p.id) === platform.id);
+                                    const isSelected = !!platformData;
+                                    const url = typeof platformData === 'object' ? platformData.url : '';
+
                                     return (
                                         <button
                                             key={platform.id}
                                             onClick={() => handleTogglePlatform(platform.id)}
-                                            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all ${
+                                            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all text-left ${
                                                 isSelected
                                                 ? 'bg-stone-900 text-white border-stone-900 shadow-md'
                                                 : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
                                             }`}
                                         >
-                                            <platform.icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-stone-400'}`} />
-                                            <span className="text-xs font-bold">{platform.label}</span>
-                                            {isSelected && <Check size={12} className="ml-auto text-green-400" />}
+                                            <platform.icon className={`w-4 h-4 flex-shrink-0 ${isSelected ? 'text-white' : 'text-stone-400'}`} />
+                                            <div className="flex-1 min-w-0">
+                                                <span className="text-xs font-bold block">{platform.label}</span>
+                                                {isSelected && url && (
+                                                    <span className="text-[9px] text-stone-300 truncate block">{url.replace(/^https?:\/\/(www\.)?/, '')}</span>
+                                                )}
+                                            </div>
+                                            {isSelected && <Check size={12} className="ml-auto text-green-400 flex-shrink-0" />}
                                         </button>
                                     )
                                 })}
