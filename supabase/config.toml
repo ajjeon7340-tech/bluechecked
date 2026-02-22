@@ -399,3 +399,15 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/stripe-connect/deno.json"
 entrypoint = "./functions/stripe-connect/index.ts"
+
+[functions.create-payment-intent]
+enabled = true
+verify_jwt = false
+import_map = "./functions/create-payment-intent/deno.json"
+entrypoint = "./functions/create-payment-intent/index.ts"
+
+[functions.stripe-webhook]
+enabled = true
+verify_jwt = false
+import_map = "./functions/stripe-webhook/deno.json"
+entrypoint = "./functions/stripe-webhook/index.ts"

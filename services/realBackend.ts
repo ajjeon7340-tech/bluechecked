@@ -1139,14 +1139,26 @@ export const addCredits = async (amount: number): Promise<CurrentUser> => {
     if (!session.session) throw new Error("No user");
 
     const { data: profile } = await supabase.from('profiles').select('credits').eq('id', session.session.user.id).single();
-    
+
     const newBalance = (profile?.credits || 0) + amount;
-    
+
     await supabase.from('profiles').update({ credits: newBalance }).eq('id', session.session.user.id);
-    
+
     // Return updated user object
     const { data: updated } = await supabase.from('profiles').select('*').eq('id', session.session.user.id).single();
     return mapProfileToUser(updated);
+};
+
+export const createPaymentIntent = async (credits: number): Promise<{ clientSecret: string }> => {
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) throw new Error('Not authenticated');
+
+    const res = await supabase.functions.invoke('create-payment-intent', {
+        body: { credits },
+    });
+
+    if (res.error) throw new Error(res.error.message || 'Failed to create payment intent');
+    return { clientSecret: res.data.clientSecret };
 };
 
 export const uploadProductFile = async (file: File, creatorId: string): Promise<string> => {
