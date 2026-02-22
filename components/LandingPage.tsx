@@ -13,38 +13,38 @@ const FEATURED_CONVERSATIONS = [
   {
     id: '1',
     creator: {
-      name: 'Sarah Chen',
-      role: 'Fitness Coach',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face',
+      name: 'Ji-won Kim',
+      role: 'Career Mentor',
+      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face',
     },
-    request: "I feel my lower back taking over during deadlifts. Any cues to help engage my glutes instead?",
-    response: "Your form looks good! For the hip hinge, try pushing your hips back before bending your knees. Think 'close the car door with your hips' - that cue helps a lot.",
-    gradient: 'from-rose-100 to-orange-50',
-    time: '2h ago'
+    request: "I've been waiting for your guidance. Could you help my resume shine with your warm perspective? ✨",
+    response: "I can feel your sincerity in every word. Let’s polish this together so you can walk into that interview with a smile! 😊",
+    gradient: 'from-purple-100 to-violet-50',
+    time: '1h ago'
   },
   {
     id: '2',
     creator: {
-      name: 'Marcus Lee',
-      role: 'Career Coach',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
+      name: 'Chloe Park',
+      role: 'Fashion Stylist',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face',
     },
-    request: "I have a stable job at Big Tech but got an offer from a Series A startup. Is the equity worth the risk?",
-    response: "Take the startup. At your stage, equity + learning velocity beats salary. Big Tech will always be there - this window won't.",
-    gradient: 'from-sky-100 to-indigo-50',
-    time: '4h ago'
+    request: "I'm looking forward to your styling tips. Can you help me find the look that makes me truly glow? ✨",
+    response: "Your style has such a lovely vibe! I’ll pick the perfect pieces so you can feel confident and radiant tomorrow. 🤗",
+    gradient: 'from-pink-100 to-rose-50',
+    time: '3h ago'
   },
   {
     id: '3',
     creator: {
-      name: 'Emma Wilson',
-      role: 'Relationship Expert',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
+      name: 'David Roh',
+      role: 'Investment Expert',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face',
     },
-    request: "I've been seeing someone for a month but they take days to reply. Should I double text?",
-    response: "Silence is an answer. Don't double text - invest your energy in people who invest in you. You deserve reciprocity.",
-    gradient: 'from-violet-100 to-purple-50',
-    time: '5h ago'
+    request: "I've been waiting for your sharp insights. Could you guide my portfolio to be more solid and healthy? 📈",
+    response: "Market volatility is tough, but I’m here to help. Let’s adjust your balance to build a more secure future together. ✨",
+    gradient: 'from-emerald-100 to-teal-50',
+    time: '6h ago'
   },
 ];
 
