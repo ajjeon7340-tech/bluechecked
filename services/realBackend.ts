@@ -1,6 +1,9 @@
-import { supabase, isConfigured } from './supabaseClient';
+import { supabase, isConfigured as isSupabaseConfigured } from './supabaseClient';
 import { CreatorProfile, Message, MessageStatus, CurrentUser, UserRole, ChatMessage, StatTimeFrame, DetailedStat, DetailedFinancialStat, MonthlyStat, ProAnalyticsData } from '../types';
 import * as MockBackend from './mockBackend';
+
+// Allow forcing mock mode via environment variable (VITE_USE_MOCK=true)
+const isConfigured = isSupabaseConfigured && import.meta.env.VITE_USE_MOCK !== 'true';
 
 export const DEFAULT_AVATAR = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
 
@@ -32,6 +35,11 @@ const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
 };
 
 const getSiteUrl = () => {
+    // If running locally, use the current window origin to ensure redirects return to localhost
+    // This overrides VITE_SITE_URL which might be set to production
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return window.location.origin;
+    }
     // Allow overriding the site URL via environment variable (e.g. VITE_SITE_URL=https://telepossible.com)
     if (import.meta.env.VITE_SITE_URL) {
         return import.meta.env.VITE_SITE_URL.replace(/\/$/, "");
