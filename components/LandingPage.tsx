@@ -9,33 +9,42 @@ interface Props {
 }
 
 // Featured creators for the landing page
-const FEATURED_CREATORS = [
+const FEATURED_CONVERSATIONS = [
   {
     id: '1',
-    name: 'Sarah Chen',
-    handle: '@sarahchen',
-    role: 'Fitness Coach',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face',
-    message: "Your form looks good! For the hip hinge, try pushing your hips back before bending your knees. Think 'close the car door with your hips' - that cue helps a lot.",
+    creator: {
+      name: 'Sarah Chen',
+      role: 'Fitness Coach',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face',
+    },
+    request: "I feel my lower back taking over during deadlifts. Any cues to help engage my glutes instead?",
+    response: "Your form looks good! For the hip hinge, try pushing your hips back before bending your knees. Think 'close the car door with your hips' - that cue helps a lot.",
     gradient: 'from-rose-100 to-orange-50',
+    time: '2h ago'
   },
   {
     id: '2',
-    name: 'Marcus Lee',
-    handle: '@marcuslee',
-    role: 'Career Coach',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
-    message: "Take the startup. At your stage, equity + learning velocity beats salary. Big Tech will always be there - this window won't.",
+    creator: {
+      name: 'Marcus Lee',
+      role: 'Career Coach',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
+    },
+    request: "I have a stable job at Big Tech but got an offer from a Series A startup. Is the equity worth the risk?",
+    response: "Take the startup. At your stage, equity + learning velocity beats salary. Big Tech will always be there - this window won't.",
     gradient: 'from-sky-100 to-indigo-50',
+    time: '4h ago'
   },
   {
     id: '3',
-    name: 'Emma Wilson',
-    handle: '@emmawilson',
-    role: 'Relationship Expert',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
-    message: "Silence is an answer. Don't double text - invest your energy in people who invest in you. You deserve reciprocity.",
+    creator: {
+      name: 'Emma Wilson',
+      role: 'Relationship Expert',
+      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
+    },
+    request: "I've been seeing someone for a month but they take days to reply. Should I double text?",
+    response: "Silence is an answer. Don't double text - invest your energy in people who invest in you. You deserve reciprocity.",
     gradient: 'from-violet-100 to-purple-50',
+    time: '5h ago'
   },
 ];
 
@@ -164,30 +173,35 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
 
           {/* Creator Cards - Editorial Grid */}
           <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-            {FEATURED_CREATORS.map((creator, idx) => (
+            {FEATURED_CONVERSATIONS.map((item, idx) => (
               <div
-                key={creator.id}
-                className={`group bg-gradient-to-b ${creator.gradient} rounded-3xl p-6 lg:p-8 cursor-pointer transition-all duration-500 hover:shadow-xl hover:shadow-stone-200/50 hover:-translate-y-1`}
+                key={item.id}
+                className={`group bg-gradient-to-b ${item.gradient} rounded-3xl p-6 lg:p-8 cursor-pointer transition-all duration-500 hover:shadow-xl hover:shadow-stone-200/50 hover:-translate-y-1`}
                 onClick={() => setActiveCreator(idx)}
               >
                 {/* Creator Header */}
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white shadow-sm">
-                    <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover" />
+                  <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white shadow-sm flex-shrink-0">
+                    <img src={item.creator.avatar} alt={item.creator.name} className="w-full h-full object-cover" />
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-stone-900">{creator.name}</span>
+                      <span className="font-semibold text-stone-900">{item.creator.name}</span>
                       <CheckCircle2 size={14} className="text-blue-500 fill-blue-500" />
                     </div>
-                    <span className="text-sm text-stone-500">{creator.role}</span>
+                    <span className="text-sm text-stone-500">{item.creator.role}</span>
                   </div>
                 </div>
 
-                {/* Message Content - The Hero */}
-                <p className="text-stone-700 leading-relaxed text-[15px] mb-6">
-                  "{creator.message}"
-                </p>
+                {/* Conversation Thread */}
+                <div className="space-y-4 mb-6">
+                    <div className="bg-white/60 backdrop-blur-sm p-4 rounded-2xl rounded-tl-none text-sm text-stone-600 leading-relaxed border border-white/50">
+                        <p>"{item.request}"</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-2xl rounded-tr-none text-sm text-stone-800 leading-relaxed shadow-sm border border-stone-100/50">
+                        <p className="font-medium">"{item.response}"</p>
+                    </div>
+                </div>
 
                 {/* Footer */}
                 <div className="flex items-center justify-between pt-4 border-t border-stone-200/50">
@@ -199,7 +213,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                       <MessageSquare size={18} />
                     </button>
                   </div>
-                  <span className="text-xs text-stone-400 font-medium">2h ago</span>
+                  <span className="text-xs text-stone-400 font-medium">{item.time}</span>
                 </div>
               </div>
             ))}
