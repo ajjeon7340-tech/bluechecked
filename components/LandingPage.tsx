@@ -176,44 +176,57 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
             {FEATURED_CONVERSATIONS.map((item, idx) => (
               <div
                 key={item.id}
-                className={`group bg-gradient-to-b ${item.gradient} rounded-3xl p-6 lg:p-8 cursor-pointer transition-all duration-500 hover:shadow-xl hover:shadow-stone-200/50 hover:-translate-y-1`}
+                className="group bg-white rounded-3xl p-6 border border-stone-200 shadow-sm hover:shadow-xl hover:shadow-stone-200/50 hover:-translate-y-1 transition-all duration-500 cursor-pointer flex flex-col"
                 onClick={() => setActiveCreator(idx)}
               >
-                {/* Creator Header */}
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white shadow-sm flex-shrink-0">
-                    <img src={item.creator.avatar} alt={item.creator.name} className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-stone-900">{item.creator.name}</span>
-                      <CheckCircle2 size={14} className="text-blue-500 fill-blue-500" />
+                {/* 1. Request (Fan) */}
+                <div className="flex relative z-10">
+                    {/* Left: Avatar + Thread Line */}
+                    <div className="flex flex-col items-center mr-3 relative">
+                        <div className="absolute left-[17px] top-10 -bottom-6 w-0.5 bg-stone-200"></div>
+                        <div className="w-9 h-9 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200 flex-shrink-0">
+                            <User size={16} />
+                        </div>
                     </div>
-                    <span className="text-sm text-stone-500">{item.creator.role}</span>
-                  </div>
+
+                    {/* Right: Content */}
+                    <div className="flex-1 min-w-0 pb-6">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="font-semibold text-sm text-stone-900">Anonymous Fan</span>
+                            <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                                <User size={10} className="fill-current" />
+                                <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
+                            </div>
+                        </div>
+                        <div className="bg-white p-4 rounded-2xl rounded-tl-lg border border-stone-200 shadow-sm">
+                            <p className="text-sm text-stone-700 leading-relaxed">{item.request}</p>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Conversation Thread */}
-                <div className="space-y-4 mb-6">
-                    <div className="bg-white/60 backdrop-blur-sm p-4 rounded-2xl rounded-tl-none text-sm text-stone-600 leading-relaxed border border-white/50">
-                        <p>"{item.request}"</p>
+                {/* 2. Response (Creator) */}
+                <div className="flex relative z-10">
+                    {/* Left: Avatar */}
+                    <div className="flex flex-col items-center mr-3 relative">
+                        <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-stone-200">
+                            <img src={item.creator.avatar} alt={item.creator.name} className="w-full h-full object-cover" />
+                        </div>
                     </div>
-                    <div className="bg-white p-4 rounded-2xl rounded-tr-none text-sm text-stone-800 leading-relaxed shadow-sm border border-stone-100/50">
-                        <p className="font-medium">"{item.response}"</p>
-                    </div>
-                </div>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between pt-4 border-t border-stone-200/50">
-                  <div className="flex items-center gap-4 text-stone-400">
-                    <button className="hover:text-red-500 transition-colors">
-                      <Heart size={18} />
-                    </button>
-                    <button className="hover:text-stone-600 transition-colors">
-                      <MessageSquare size={18} />
-                    </button>
-                  </div>
-                  <span className="text-xs text-stone-400 font-medium">{item.time}</span>
+                    {/* Right: Content */}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="font-semibold text-sm text-stone-900">{item.creator.name}</span>
+                            <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                                <CheckCircle2 size={10} className="fill-current" />
+                                <span className="text-[9px] font-semibold uppercase tracking-wide">Creator</span>
+                            </div>
+                            <span className="text-xs font-medium text-stone-400">• {item.time}</span>
+                        </div>
+                        <div className="bg-stone-50 p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
+                            <p className="text-sm text-stone-700 leading-relaxed">{item.response}</p>
+                        </div>
+                    </div>
                 </div>
               </div>
             ))}
