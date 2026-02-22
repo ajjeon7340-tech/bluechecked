@@ -643,10 +643,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Thread messages for the selected sender
   const threadMessages = useMemo(() => {
       if (!selectedSenderEmail) return [];
+      const leftAt = leftChatrooms[selectedSenderEmail];
       return incomingMessages
           .filter(m => m.senderEmail === selectedSenderEmail && !m.content.startsWith('Purchased Product:') && !m.content.startsWith('Fan Tip:'))
+          .filter(m => !leftAt || new Date(m.createdAt).getTime() >= leftAt)
           .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  }, [incomingMessages, selectedSenderEmail]);
+  }, [incomingMessages, selectedSenderEmail, leftChatrooms]);
 
   // Determine the "Active" message for the reply input (Latest Pending, or just latest)
   const activeMessage = useMemo(() => {

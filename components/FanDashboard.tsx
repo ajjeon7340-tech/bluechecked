@@ -302,10 +302,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
   const threadMessages = useMemo(() => {
       if (!selectedCreatorId) return [];
+      const leftAt = leftChatrooms[selectedCreatorId];
       return messages
         .filter(m => m.creatorId === selectedCreatorId && !m.content.startsWith('Purchased Product:') && !m.content.startsWith('Fan Tip:'))
+        .filter(m => !leftAt || new Date(m.createdAt).getTime() >= leftAt)
         .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  }, [messages, selectedCreatorId]);
+  }, [messages, selectedCreatorId, leftChatrooms]);
 
   const latestMessage = threadMessages.length > 0 ? threadMessages[threadMessages.length - 1] : null;
 

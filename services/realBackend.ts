@@ -1044,6 +1044,22 @@ export const editChatMessage = async (chatLineId: string, newContent: string, at
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error("Not logged in");
 
+    // Handle synthetic init IDs (e.g. "msgId-init") — these are parent message rows, not chat_lines
+    if (chatLineId.endsWith('-init')) {
+        const parentId = chatLineId.replace(/-init$/, '');
+        const updatePayload: any = { content: newContent };
+        if (attachmentUrl !== undefined) {
+            updatePayload.attachment_url = attachmentUrl;
+        }
+        const { error } = await supabase
+            .from('messages')
+            .update(updatePayload)
+            .eq('id', parentId);
+        if (error) throw error;
+        return;
+    }
+
+    // Try updating with updated_at + attachment_url
     const updatePayload: any = {
         content: newContent,
         updated_at: new Date().toISOString()
@@ -1059,26 +1075,19 @@ export const editChatMessage = async (chatLineId: string, newContent: string, at
         .eq('sender_id', session.session.user.id);
 
     if (error) {
-        // Fallback for missing column (PGRST204)
-        if (error.code === 'PGRST204' || error.code === '42703') {
-             let fallbackContent = newContent;
-             if (attachmentUrl) {
-                 fallbackContent = `${newContent.trim()}\n\nAttachment`;
-             }
-             
-             const { error: retryError } = await supabase
-                .from('chat_lines')
-                .update({
-                    content: fallbackContent,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', chatLineId)
-                .eq('sender_id', session.session.user.id);
-             
-             if (retryError) throw retryError;
-        } else {
-            throw error;
+        // Fallback: column may not exist — try minimal update
+        let fallbackContent = newContent;
+        if (attachmentUrl) {
+            fallbackContent = `${newContent.trim()}\n\n[Attachment](${attachmentUrl})`;
         }
+
+        const { error: retryError } = await supabase
+            .from('chat_lines')
+            .update({ content: fallbackContent })
+            .eq('id', chatLineId)
+            .eq('sender_id', session.session.user.id);
+
+        if (retryError) throw retryError;
     }
 };
 
