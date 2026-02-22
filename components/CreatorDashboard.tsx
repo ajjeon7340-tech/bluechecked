@@ -340,7 +340,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                   list.push({
                       id: `tip-${chat.id}`,
                       icon: Heart,
-                      text: `${msg.senderName} sent a tip: "${tipText}"`,
+                      text: isAppreciation ? `${msg.senderName} sent appreciation: "${tipText}"` : `${msg.senderName} sent a tip: "${tipText}"`,
                       time: new Date(chat.timestamp),
                       color: 'bg-pink-100 text-pink-600',
                       senderEmail: msg.senderEmail
@@ -2583,16 +2583,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     <Coins size={12} className="flex-shrink-0" /> <span className="hidden sm:inline">Payment held in </span>escrow
                                                 </span>
                                             </div>
-                                            <Button
-                                                size="sm"
-                                                variant="ghost"
-                                                onClick={handleGenerateAI}
-                                                disabled={isGeneratingAI}
-                                                className="text-xs h-7 text-stone-500 hover:text-stone-700 hover:bg-stone-50 flex-shrink-0"
+                                            <button
+                                                onClick={() => handleSendReply(true)}
+                                                disabled={((!replyText.trim() && !replyAttachment) && !hasManualCreatorReply) || isSendingReply || isRejecting}
+                                                className="h-7 px-3 rounded-full bg-stone-900 text-white hover:bg-stone-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 font-semibold text-xs group"
+                                                title="Complete & Collect"
                                             >
-                                                <Sparkles size={12} className="mr-1.5" />
-                                                {isGeneratingAI ? 'Drafting...' : 'AI Draft'}
-                                            </Button>
+                                                <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
+                                                <span className="whitespace-nowrap">Collect {activeMessage.amount}</span>
+                                            </button>
                                         </div>
 
                                         <div className="relative">
@@ -2638,16 +2637,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     title="Send reply (Keep Pending)"
                                                 >
                                                     <span className="hidden sm:inline">Send</span> <Send size={14} />
-                                                </button>
-
-                                                <button
-                                                    onClick={() => handleSendReply(true)}
-                                                    disabled={((!replyText.trim() && !replyAttachment) && !hasManualCreatorReply) || isSendingReply || isRejecting}
-                                                    className="h-8 sm:h-10 px-3 sm:px-5 rounded-full bg-stone-900 text-white hover:bg-stone-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 sm:gap-2 font-semibold text-[11px] sm:text-sm group"
-                                                    title="Complete & Collect"
-                                                >
-                                                    <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0" />
-                                                    <span className="whitespace-nowrap">Collect {activeMessage.amount}</span>
                                                 </button>
                                             </div>
                                         </div>
