@@ -2759,6 +2759,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 />
                             </div>
 
+                            <div>
+                                <label className="block text-sm font-medium text-stone-700 mb-1">Request Instructions (Important)</label>
+                                <textarea 
+                                    value={editedCreator.intakeInstructions || ''}
+                                    onChange={e => setEditedCreator({...editedCreator, intakeInstructions: e.target.value})}
+                                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none h-24 resize-none"
+                                    placeholder="Please be as detailed as possible so I can give you the best answer."
+                                />
+                                <p className="text-[10px] text-stone-400 mt-1">This is shown to fans before they send a request.</p>
+                            </div>
+
                              {/* New Welcome Message Field */}
                             <div>
                                 <label className="block text-sm font-medium text-stone-700 mb-1">Auto-Reply Welcome Message</label>
