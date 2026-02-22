@@ -1702,7 +1702,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                        <tbody className="divide-y divide-stone-100">
                                            {displayedFinance.map(msg => {
                                                const isProduct = msg.content.startsWith('Purchased Product:');
-                                               const isTip = msg.conversation.some(c => c.role === 'FAN' && c.content.startsWith('Fan Appreciation:'));
+                                               const isTip = msg.content.startsWith('Fan Tip:');
                                                
                                                return (
                                                <tr key={msg.id} className="hover:bg-stone-50 transition-colors">
@@ -1736,7 +1736,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="md:hidden divide-y divide-stone-100">
                                     {displayedFinance.map(msg => {
                                         const isProduct = msg.content.startsWith('Purchased Product:');
-                                        const isTip = msg.conversation.some(c => c.role === 'FAN' && c.content.startsWith('Fan Appreciation:'));
+                                        const isTip = msg.content.startsWith('Fan Tip:');
                                         
                                         return (
                                             <div key={msg.id} className="p-4 flex items-center justify-between">
