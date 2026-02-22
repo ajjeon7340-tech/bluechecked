@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-import Stripe from "https://esm.sh/stripe@14.14.0?target=deno"
 
 const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
@@ -11,7 +10,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' }) : null
+// Stripe REST API helper
+async function stripeRequest(endpoint: string, params?: Record<string, string>) {
+  const res = await fetch(`https://api.stripe.com/v1${endpoint}`, {
+    method: params ? 'POST' : 'GET',
+    headers: {
+      'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: params ? new URLSearchParams(params).toString() : undefined,
+  })
+  const data = await res.json()
+  if (data.error) {
+    throw new Error(data.error.message || 'Stripe API error')
+  }
+  return data
+}
 
 function errorResponse(message: string, status = 400) {
   return new Response(JSON.stringify({ error: message }), {
@@ -27,7 +41,6 @@ function jsonResponse(data: Record<string, unknown>, status = 200) {
   })
 }
 
-// Get authenticated user from the request's Authorization header
 async function getUser(req: Request) {
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) return null
@@ -39,7 +52,6 @@ async function getUser(req: Request) {
   return user
 }
 
-// Get or create the service-role Supabase client
 function getAdminClient() {
   return createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
 }
@@ -49,7 +61,7 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  if (!stripe) {
+  if (!STRIPE_SECRET_KEY) {
     return errorResponse('Stripe is not configured', 500)
   }
 
@@ -68,7 +80,6 @@ Deno.serve(async (req) => {
 
     // ---- CREATE ACCOUNT ----
     if (action === 'create-account') {
-      // Check if user already has a Stripe account
       const { data: existing } = await adminClient
         .from('stripe_accounts')
         .select('stripe_account_id')
@@ -78,15 +89,13 @@ Deno.serve(async (req) => {
       let stripeAccountId = existing?.stripe_account_id
 
       if (!stripeAccountId) {
-        // Create a new Stripe Connect Express account
-        const account = await stripe.accounts.create({
+        const account = await stripeRequest('/accounts', {
           type: 'express',
-          email: user.email,
-          metadata: { supabase_user_id: user.id },
+          email: user.email || '',
+          'metadata[supabase_user_id]': user.id,
         })
         stripeAccountId = account.id
 
-        // Save to DB
         const { error: insertError } = await adminClient
           .from('stripe_accounts')
           .insert({
@@ -100,8 +109,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Create an account onboarding link
-      const accountLink = await stripe.accountLinks.create({
+      const accountLink = await stripeRequest('/account_links', {
         account: stripeAccountId,
         refresh_url: `${APP_URL}/dashboard?stripe=refresh`,
         return_url: `${APP_URL}/dashboard?stripe=return`,
@@ -123,11 +131,9 @@ Deno.serve(async (req) => {
         return jsonResponse({ connected: false })
       }
 
-      // Check if the account is fully onboarded
-      const account = await stripe.accounts.retrieve(existing.stripe_account_id)
+      const account = await stripeRequest(`/accounts/${existing.stripe_account_id}`)
       const connected = account.charges_enabled && account.payouts_enabled
 
-      // Update onboarded status in DB
       if (connected) {
         await adminClient
           .from('stripe_accounts')
@@ -144,7 +150,6 @@ Deno.serve(async (req) => {
         return errorResponse('Invalid amount')
       }
 
-      // Get the user's Stripe account
       const { data: existing } = await adminClient
         .from('stripe_accounts')
         .select('stripe_account_id, onboarded')
@@ -155,21 +160,16 @@ Deno.serve(async (req) => {
         return errorResponse('Stripe account not connected or not fully onboarded')
       }
 
-      // Convert credits to cents (1 credit = $1 USD for simplicity)
       const amountInCents = Math.round(amount * 100)
 
-      // Create a Transfer to the connected account
-      const transfer = await stripe.transfers.create({
-        amount: amountInCents,
+      const transfer = await stripeRequest('/transfers', {
+        amount: amountInCents.toString(),
         currency: 'usd',
         destination: existing.stripe_account_id,
-        metadata: {
-          supabase_user_id: user.id,
-          credits: amount.toString(),
-        },
+        'metadata[supabase_user_id]': user.id,
+        'metadata[credits]': amount.toString(),
       })
 
-      // Record withdrawal in DB
       const { data: withdrawal, error: withdrawalError } = await adminClient
         .from('withdrawals')
         .insert({
@@ -184,7 +184,6 @@ Deno.serve(async (req) => {
 
       if (withdrawalError) {
         console.error('Failed to record withdrawal:', withdrawalError)
-        // Transfer already happened, so log but don't fail
       }
 
       return jsonResponse({

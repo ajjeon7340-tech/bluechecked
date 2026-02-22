@@ -2148,7 +2148,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     </div>
                     
                     {/* Detail Column */}
-                    <div className={`flex-1 flex flex-col bg-[#F0EEEA] ${!selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
+                    <div className={`flex-1 flex flex-col bg-[#FAF9F6] ${!selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
                         {!activeMessage ? (
                             <div className="flex-1 flex flex-col items-center justify-center text-stone-400">
                                 {/* Celebration Overlay (Reused from FanDashboard logic but triggered on Collect) */}
@@ -2179,7 +2179,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <p className="text-sm font-medium">Select a message to view details</p>
                             </div>
                         ) : (
-                             <div className="h-full flex flex-col bg-[#F0EEEA] relative overflow-hidden">
+                             <div className="h-full flex flex-col bg-[#FAF9F6] relative overflow-hidden">
                                 {/* Celebration Overlay (Inside Chat View) */}
                                 {showReadCelebration && (
                                     <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
@@ -2278,7 +2278,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     </div>
                                 </div>
 
-                                <div className="flex-1 overflow-y-auto" ref={scrollRef}>
+                                <div className="flex-1 overflow-y-auto bg-white" ref={scrollRef}>
                                     {threadMessages.map((msg, msgIndex) => {
                                         const isPending = msg.status === 'PENDING';
                                         const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
