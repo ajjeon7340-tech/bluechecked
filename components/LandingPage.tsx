@@ -14,11 +14,11 @@ const FEATURED_CONVERSATIONS = [
     id: '1',
     creator: {
       name: 'Sarah Chen',
-      role: 'Fitness Coach',
+      role: 'Fashion Stylist',
       avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face',
     },
-    request: "I feel my lower back taking over during deadlifts. Any cues to help engage my glutes instead?",
-    response: "Your form looks good! For the hip hinge, try pushing your hips back before bending your knees. Think 'close the car door with your hips' - that cue helps a lot.",
+    request: "I am sincerely looking forward to your suggestions for my look tomorrow. Every time I open my closet, I feel a bit overwhelmed, so I’ve been waiting to see things through your artistic lens instead. ✨\n\nIt would be so meaningful to me if my everyday clothes could be transformed into a special style with your help. Could you guide me with your signature aesthetic and warm perspective so I can look my absolute best? 😊\n\nI’ll be waiting for your style proposal with an open heart. 🤗\n(Attachment: Outfit_Options.png)",
+    response: "I can really feel how important this occasion is to you from your message. I’ll look through everything very carefully.\n\nLooking at your options, I see you prefer a clean, minimal mood. But like you said, we need that 'extra 10%' to make it pop. ✨\n\nI’m putting together the best combination to highlight your charm while keeping it professional.\n\nJust a moment! I’ll send over the final guide so you can walk in there feeling confident and radiant tomorrow. 😊",
     gradient: 'from-rose-100 to-orange-50',
     time: '2h ago'
   },
@@ -26,11 +26,11 @@ const FEATURED_CONVERSATIONS = [
     id: '2',
     creator: {
       name: 'Marcus Lee',
-      role: 'Career Coach',
+      role: 'Career Mentor',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
     },
-    request: "I have a stable job at Big Tech but got an offer from a Series A startup. Is the equity worth the risk?",
-    response: "Take the startup. At your stage, equity + learning velocity beats salary. Big Tech will always be there - this window won't.",
+    request: "I have been so looking forward to the moment I could receive your professional career insights. My resume feels a bit lost on its own, but I’ve been eagerly waiting for the day I could experience your warm guidance and expertise. 😊\n\nIt would mean so much to me if my humble career history could be reborn through your touch. ⌛️💗 With a mix of nerves and excitement, I’m sending this over. Could you help me prepare for my future with the keen eye and encouraging smile you’re known for? ✨\n\nI am sincerely—and very patiently—waiting for your feedback. 🤗\n(Attachment: Resume_Draft.pdf)",
+    response: "What a heartfelt request... Reading this truly warmed my heart! ✨\n\nI can feel exactly how much you want this role in every single sentence. ⌛️💗\n\nDon't worry! As your mentor, I’ll make sure your sincerity shines through in this resume.\n\nI’m opening the file now. I'll get my feedback to you shortly so we can get you that 'Accepted' letter! 😊",
     gradient: 'from-sky-100 to-indigo-50',
     time: '4h ago'
   },
@@ -38,11 +38,11 @@ const FEATURED_CONVERSATIONS = [
     id: '3',
     creator: {
       name: 'Emma Wilson',
-      role: 'Relationship Expert',
+      role: 'Investment Advisor',
       avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
     },
-    request: "I've been seeing someone for a month but they take days to reply. Should I double text?",
-    response: "Silence is an answer. Don't double text - invest your energy in people who invest in you. You deserve reciprocity.",
+    request: "It’s not easy to stay grounded in such a volatile market lately. Rather than struggling with charts on my own, I have been genuinely looking forward to this chance to receive your sharp insights and wisdom.\n\nIf my portfolio could be refined into something more solid and healthy through your perspective, it would mean so much more to me than just a simple investment tip. ✨ Could you help correct my shortcomings with the vision you’ve built over the years and be the guide I need to move forward with confidence?\n\nI am sincerely looking forward to your thoughts. 🤗\n(Attachment: Portfolio_Status.xlsx)",
+    response: "I know how uneasy it feels when the market is shaking, so thank you for reaching out and trusting me.\n\nI see a lot of thought went into your portfolio, but your tech exposure seems a bit at odds with current macro trends.\n\nThis isn't just about buying or selling; I’ll give you feedback focused on risk management so you can stay in the game for the long run. ✨\n\nI’m currently calculating the optimal rebalancing based on the data. I’ll message you back very soon. 😊",
     gradient: 'from-violet-100 to-purple-50',
     time: '5h ago'
   },
@@ -199,7 +199,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                             </div>
                         </div>
                         <div className="bg-white p-4 rounded-2xl rounded-tl-lg border border-stone-200 shadow-sm">
-                            <p className="text-sm text-stone-700 leading-relaxed">{item.request}</p>
+                            <p className="text-sm text-stone-700 leading-relaxed whitespace-pre-wrap">{item.request}</p>
                         </div>
                     </div>
                 </div>
@@ -224,7 +224,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                             <span className="text-xs font-medium text-stone-400">• {item.time}</span>
                         </div>
                         <div className="bg-stone-50 p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
-                            <p className="text-sm text-stone-700 leading-relaxed">{item.response}</p>
+                            <p className="text-sm text-stone-700 leading-relaxed whitespace-pre-wrap">{item.response}</p>
                         </div>
                     </div>
                 </div>
