@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from './Button';
-import { BlueCheckLogo, CheckCircle2, MessageSquare, ArrowRight, Clock, Sparkles, User, Heart, Lock, Check, ShoppingBag, FileText, Coins, Star } from './Icons';
+import { BlueCheckLogo, CheckCircle2, MessageSquare, ArrowRight, Clock, Sparkles, User, Heart, Lock, Check, ShoppingBag, FileText, Coins } from './Icons';
 
 interface Props {
   onLoginClick: () => void;
@@ -46,24 +46,6 @@ const FEATURED_CONVERSATIONS = [
     gradient: 'from-emerald-100 to-teal-50',
     time: '6h ago'
   },
-];
-
-const TESTIMONIALS = [
-  {
-    quote: "Finally, a way to help my community without burning out. I can actually respond thoughtfully now.",
-    author: "Fitness Creator",
-    followers: "850K followers"
-  },
-  {
-    quote: "My fans love knowing they'll get a real response. The guarantee builds so much trust.",
-    author: "Life Coach",
-    followers: "1.2M followers"
-  },
-  {
-    quote: "Turned my DMs from a burden into my favorite part of the day. And the income is nice too.",
-    author: "Career Mentor",
-    followers: "420K followers"
-  }
 ];
 
 export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
@@ -374,48 +356,6 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                 ))}
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials - Cozy & Intimate */}
-      <section className="py-24 bg-stone-900">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <p className="text-sm font-medium text-stone-500 uppercase tracking-wider mb-4">Creator Stories</p>
-            <h2 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight">
-              Loved by creators worldwide
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((item, idx) => (
-              <div
-                key={idx}
-                className="bg-stone-800/50 rounded-3xl p-8 border border-stone-700/50 hover:bg-stone-800 transition-all"
-              >
-                {/* Stars */}
-                <div className="flex gap-1 mb-6">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={16} className="text-amber-400 fill-amber-400" />
-                  ))}
-                </div>
-
-                <p className="text-white/90 leading-relaxed mb-8 text-[15px]">
-                  "{item.quote}"
-                </p>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-stone-700 flex items-center justify-center">
-                    <User size={18} className="text-stone-400" />
-                  </div>
-                  <div>
-                    <div className="text-white font-medium text-sm">{item.author}</div>
-                    <div className="text-stone-500 text-sm">{item.followers}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>

@@ -522,7 +522,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                                 <div className="relative group/tooltip flex items-center justify-center gap-1 bg-white px-3 py-1.5 rounded-full border border-stone-100 text-xs font-bold text-stone-500 shadow-sm cursor-help">
                                     <Star size={14} className="text-yellow-400 fill-yellow-400" />
-                                    <span className="text-stone-700">{creator.stats.averageRating}</span>
+                                    <span className="text-stone-700">{creator.stats.averageRating.toFixed(1)}</span>
                                     
                                     {/* Response Time Tooltip */}
                                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[160px] bg-stone-900 text-white text-[10px] font-medium py-2 px-3 rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-all duration-200 pointer-events-none z-50 text-center shadow-xl normal-case tracking-normal whitespace-normal transform translate-y-2 group-hover/tooltip:translate-y-0">

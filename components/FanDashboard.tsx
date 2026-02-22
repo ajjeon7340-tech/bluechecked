@@ -1102,7 +1102,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     })}
                                                 </div>
                                                 <div className="flex items-center justify-center gap-3 text-xs text-stone-500 font-medium">
-                                                    <span className="flex items-center gap-1"><Star size={10} className="fill-yellow-400 text-yellow-400"/> {creator.stats.averageRating}</span>
+                                                    <span className="flex items-center gap-1"><Star size={10} className="fill-yellow-400 text-yellow-400"/> {creator.stats.averageRating.toFixed(1)}</span>
                                                     <span className="w-1 h-1 rounded-full bg-stone-300"></span>
                                                     <span>{likesFormatted} Likes</span>
                                                 </div>
@@ -1410,7 +1410,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                       {/* Conversation List */}
                       <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
                          <div className="px-6 py-4 border-b border-stone-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-                             <h3 className="text-sm font-bold text-stone-900">Your Conversations</h3>
+                             <h3 className="text-sm font-bold text-stone-900">Message Filters</h3>
                              {/* Search Input - More Prominent */}
                              <div className="relative w-full sm:w-auto group">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-stone-600 transition-colors" size={16} />
