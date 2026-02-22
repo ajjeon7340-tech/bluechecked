@@ -700,6 +700,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const handleSendReply = async (isComplete: boolean) => {
     if (!activeMessage) return;
     
+    if (isComplete) {
+        if (!window.confirm("Collecting payment will complete this request and close the conversation. You won't be able to send further messages. Are you sure?")) {
+            return;
+        }
+    }
+
     const hasText = replyText.trim().length > 0;
     const hasAttachment = !!replyAttachment;
     // CRITICAL FIX: Exclude auto-replies when checking for creator participation
