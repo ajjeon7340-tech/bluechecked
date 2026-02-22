@@ -2086,8 +2086,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     const latestMsg = group.latestMessage;
                                     const timeLeft = getTimeLeft(latestMsg.expiresAt);
                                     // Check unread based on role
-                                    const lastChatRole = latestMsg.conversation[latestMsg.conversation.length - 1]?.role;
-                                    const isUnread = incomingMessages.some(m => m.senderEmail === group.senderEmail && !m.isRead && (lastChatRole === 'FAN' || !lastChatRole));
+                                    const isUnread = incomingMessages.some(m => {
+                                        if (m.senderEmail !== group.senderEmail) return false;
+                                        if (m.isRead) return false;
+                                        const lastMsg = m.conversation[m.conversation.length - 1];
+                                        return !lastMsg || lastMsg.role === 'FAN';
+                                    });
                                     
                                     return (
                                         <div 
