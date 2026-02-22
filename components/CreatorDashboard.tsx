@@ -366,6 +366,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
         .sort((a, b) => b.time.getTime() - a.time.getTime());
   }, [messages, creator.id, deletedNotificationIds]);
 
+  // Ensure pagination stays valid when items are deleted
+  useEffect(() => {
+      const totalPages = Math.ceil(notifications.length / ITEMS_PER_PAGE);
+      if (notificationPage > totalPages && totalPages > 0) {
+          setNotificationPage(totalPages);
+      }
+  }, [notifications.length, notificationPage]);
+
   const handleDeleteNotification = (e: React.MouseEvent, id: string) => {
       e.stopPropagation();
       setDeletedNotificationIds(prev => [...prev, id]);
@@ -757,6 +765,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     if (view === 'NOTIFICATIONS') {
       setLastReadTime(Date.now());
       localStorage.setItem('bluechecked_creator_last_read_time', Date.now().toString());
+      setNotificationPage(1);
+    } else if (view === 'REVIEWS') {
+        setReviewsPage(1);
     }
     setCurrentView(view);
     setSelectedSenderEmail(null);
