@@ -415,6 +415,23 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     }
   }, [currentUser]);
 
+  // Check Stripe connection status when returning from Stripe onboarding
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('stripe') === 'return' || params.get('stripe') === 'refresh') {
+      // Clean up URL params
+      const url = new URL(window.location.href);
+      url.searchParams.delete('stripe');
+      window.history.replaceState({}, '', url.toString());
+
+      // Re-check Stripe status
+      getStripeConnectionStatus().then(status => {
+        setIsStripeConnected(status);
+        if (status) setCurrentView('FINANCE');
+      });
+    }
+  }, []);
+
   useEffect(() => {
       loadTrendData();
   }, [trendTimeFrame, trendDate]);
@@ -616,8 +633,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       if (isStripeConnected) return;
       setIsConnectingStripe(true);
       try {
-          await connectStripeAccount();
-          setIsStripeConnected(true);
+          const url = await connectStripeAccount();
+          if (url) {
+              // Real backend: open Stripe's hosted onboarding in a new tab
+              window.open(url, '_blank');
+          } else {
+              // Mock backend: just mark as connected
+              setIsStripeConnected(true);
+          }
       } catch (e) {
           alert("Failed to connect Stripe.");
       } finally {
@@ -2125,7 +2148,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     </div>
                     
                     {/* Detail Column */}
-                    <div className={`flex-1 flex flex-col bg-[#FAF9F6] ${!selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
+                    <div className={`flex-1 flex flex-col bg-[#F0EEEA] ${!selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
                         {!activeMessage ? (
                             <div className="flex-1 flex flex-col items-center justify-center text-stone-400">
                                 {/* Celebration Overlay (Reused from FanDashboard logic but triggered on Collect) */}
@@ -2156,7 +2179,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <p className="text-sm font-medium">Select a message to view details</p>
                             </div>
                         ) : (
-                             <div className="h-full flex flex-col bg-[#FAF9F6] relative overflow-hidden">
+                             <div className="h-full flex flex-col bg-[#F0EEEA] relative overflow-hidden">
                                 {/* Celebration Overlay (Inside Chat View) */}
                                 {showReadCelebration && (
                                     <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">

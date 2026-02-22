@@ -1835,23 +1835,70 @@ export const getCreatorLikeStatus = async (creatorId: string): Promise<boolean> 
 
 export type Withdrawal = MockBackend.Withdrawal;
 
-export const connectStripeAccount = async (): Promise<boolean> => {
-    if (!isConfigured) return MockBackend.connectStripeAccount();
-    console.log("Connect Stripe not implemented for real backend");
-    return false;
+const callStripeConnect = async (body: Record<string, unknown>) => {
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) throw new Error('Not authenticated');
+
+    const res = await supabase.functions.invoke('stripe-connect', {
+        body,
+    });
+
+    if (res.error) throw new Error(res.error.message || 'Edge function error');
+    return res.data;
+};
+
+export const connectStripeAccount = async (): Promise<string | null> => {
+    if (!isConfigured) {
+        await MockBackend.connectStripeAccount();
+        return null;
+    }
+
+    const data = await callStripeConnect({ action: 'create-account' });
+    return data.url || null;
 };
 
 export const getStripeConnectionStatus = async (): Promise<boolean> => {
     if (!isConfigured) return MockBackend.getStripeConnectionStatus();
-    return false;
+
+    try {
+        const data = await callStripeConnect({ action: 'check-status' });
+        return data.connected === true;
+    } catch {
+        return false;
+    }
 };
 
 export const requestWithdrawal = async (amount: number): Promise<Withdrawal> => {
     if (!isConfigured) return MockBackend.requestWithdrawal(amount);
-    throw new Error("Withdrawals not implemented for real backend");
+
+    const data = await callStripeConnect({ action: 'create-payout', amount });
+    const w = data.withdrawal;
+    return {
+        id: w.id,
+        amount: w.amount,
+        status: w.status,
+        createdAt: w.created_at,
+    };
 };
 
 export const getWithdrawalHistory = async (): Promise<Withdrawal[]> => {
     if (!isConfigured) return MockBackend.getWithdrawalHistory();
-    return [];
+
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) return [];
+
+    const { data, error } = await supabase
+        .from('withdrawals')
+        .select('id, amount, status, created_at')
+        .eq('creator_id', session.session.user.id)
+        .order('created_at', { ascending: false });
+
+    if (error || !data) return [];
+
+    return data.map((w: { id: string; amount: number; status: string; created_at: string }) => ({
+        id: w.id,
+        amount: w.amount,
+        status: w.status as 'PENDING' | 'COMPLETED',
+        createdAt: w.created_at,
+    }));
 };
