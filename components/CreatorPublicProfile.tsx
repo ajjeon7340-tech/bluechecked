@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CreatorProfile, CurrentUser, AffiliateLink, Product } from '../types';
-import { BlueCheckLogo, CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share } from './Icons';
+import { BlueCheckLogo, CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share, Image as ImageIcon } from './Icons';
 import { Button } from './Button';
 import { sendMessage, updateCreatorProfile, addCredits, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus, getSecureDownloadUrl, logAnalyticsEvent } from '../services/realBackend';
 
@@ -43,8 +43,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [generalMessage, setGeneralMessage] = useState(''); 
-  const [attachment, setAttachment] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [attachments, setAttachments] = useState<{url: string, type: 'IMAGE' | 'FILE', name: string}[]>([]);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const docInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Product Purchase State
@@ -106,7 +107,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const handleOpenModal = () => {
     if (!isCustomizeMode) {
       setGeneralMessage('');
-      setAttachment(null);
+      setAttachments([]);
       setStep('compose');
       setIsModalOpen(true);
     }
@@ -159,7 +160,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const handleSend = async () => {
     setIsSubmitting(true);
     try {
-        await sendMessage(creator.id, name, email, generalMessage, creator.pricePerMessage, attachment || undefined);
+        await sendMessage(creator.id, name, email, generalMessage, creator.pricePerMessage, attachments);
         logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'MESSAGE' });
         setIsSubmitting(false);
         setIsModalOpen(false);
@@ -217,7 +218,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     setIsModalOpen(false);
     setStep('compose');
     setGeneralMessage('');
-    setAttachment(null);
+    setAttachments([]);
     setSelectedProductLink(null);
     if (step === 'success') onMessageSent();
   };
@@ -320,19 +321,32 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     avatarInputRef.current?.click();
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAttachment(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const handleAttachmentSelect = (e: React.ChangeEvent<HTMLInputElement>, type: 'IMAGE' | 'FILE') => {
+    const files = e.target.files;
+    if (!files) return;
 
-  const triggerFileSelect = () => {
-    fileInputRef.current?.click();
+    const currentTypeCount = attachments.filter(a => a.type === type).length;
+    const max = 3;
+
+    if (currentTypeCount + files.length > max) {
+        alert(`You can only attach up to ${max} ${type === 'IMAGE' ? 'photos' : 'files'}.`);
+        if (e.target) e.target.value = '';
+        return;
+    }
+
+    Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setAttachments(prev => [...prev, {
+                url: reader.result as string,
+                type,
+                name: file.name
+            }]);
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    if (e.target) e.target.value = '';
   };
 
   const handleLike = async () => {
@@ -822,31 +836,55 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                     
                     {/* Attachment UI */}
                     <div className="flex justify-between items-center mt-3">
-                         <div className="flex items-center gap-2">
-                             <input 
-                                type="file" 
-                                ref={fileInputRef}
-                                className="hidden"
-                                accept="image/*"
-                                onChange={handleFileSelect}
-                             />
-                             <button 
-                                onClick={triggerFileSelect}
-                                className="text-stone-500 hover:text-stone-700 hover:bg-stone-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
-                             >
-                                <Paperclip size={16} />
-                                Attach Photo
-                             </button>
+                         <div className="flex flex-col gap-2 w-full">
+                             <div className="flex items-center gap-2">
+                                 <input 
+                                    type="file" 
+                                    ref={photoInputRef}
+                                    className="hidden"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={(e) => handleAttachmentSelect(e, 'IMAGE')}
+                                 />
+                                 <button 
+                                    onClick={() => photoInputRef.current?.click()}
+                                    className="text-stone-500 hover:text-stone-700 hover:bg-stone-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                                 >
+                                    <ImageIcon size={16} />
+                                    Attach Photos
+                                 </button>
 
-                             {attachment && (
-                                <div className="flex items-center gap-1 bg-stone-100 pl-2 pr-1 py-1 rounded-lg text-xs font-medium text-stone-600 border border-stone-200/60">
-                                    <span>Image attached</span>
-                                    <button onClick={() => setAttachment(null)} className="hover:bg-stone-200 p-0.5 rounded ml-1 transition-colors"><X size={12}/></button>
-                                </div>
+                                 <input 
+                                    type="file" 
+                                    ref={docInputRef}
+                                    className="hidden"
+                                    accept=".pdf,.doc,.docx,.txt"
+                                    multiple
+                                    onChange={(e) => handleAttachmentSelect(e, 'FILE')}
+                                 />
+                                 <button 
+                                    onClick={() => docInputRef.current?.click()}
+                                    className="text-stone-500 hover:text-stone-700 hover:bg-stone-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                                 >
+                                    <Paperclip size={16} />
+                                    Attach Files
+                                 </button>
+                             </div>
+
+                             {attachments.length > 0 && (
+                                 <div className="flex flex-wrap gap-2">
+                                     {attachments.map((att, idx) => (
+                                         <div key={idx} className="flex items-center gap-1.5 bg-stone-100 pl-2 pr-1 py-1 rounded-lg text-xs font-medium text-stone-600 border border-stone-200/60">
+                                             {att.type === 'IMAGE' ? <ImageIcon size={12}/> : <FileText size={12}/>}
+                                             <span className="truncate max-w-[150px]">{att.name}</span>
+                                             <button onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))} className="hover:bg-stone-200 p-0.5 rounded ml-1 transition-colors"><X size={12}/></button>
+                                         </div>
+                                     ))}
+                                 </div>
                              )}
                          </div>
 
-                         <span className={`text-xs font-medium ${generalMessage.length > 500 ? 'text-red-500' : 'text-stone-300'}`}>
+                         <span className={`text-xs font-medium whitespace-nowrap ml-2 ${generalMessage.length > 500 ? 'text-red-500' : 'text-stone-300'}`}>
                            {generalMessage.length}/500
                          </span>
                     </div>

@@ -2056,7 +2056,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     {/* List Column */}
                     <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col bg-white ${selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
                         <div className="p-4 border-b border-stone-100 flex flex-col gap-3">
-                            <span className="font-semibold text-stone-900">Messages</span>
+                            <span className="font-semibold text-stone-900">Message Filters</span>
                             <div className="flex flex-wrap gap-1 bg-stone-100/60 p-1 rounded-lg">
                                 {(['ALL', 'PENDING', 'REPLIED', 'REJECTED'] as const).map(f => (
                                     <button

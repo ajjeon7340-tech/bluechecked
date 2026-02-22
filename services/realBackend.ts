@@ -767,8 +767,8 @@ export const getMessages = async (): Promise<Message[]> => {
     return data.map(m => mapDbMessageToAppMessage(m, session.session!.user.id));
 };
 
-export const sendMessage = async (creatorId: string, senderName: string, senderEmail: string, content: string, amount: number, attachmentUrl?: string): Promise<Message> => {
-    if (!isConfigured) return MockBackend.sendMessage(creatorId, senderName, senderEmail, content, amount, attachmentUrl);
+export const sendMessage = async (creatorId: string, senderName: string, senderEmail: string, content: string, amount: number, attachments?: {url: string, type: 'IMAGE' | 'FILE', name: string}[]): Promise<Message> => {
+    if (!isConfigured) return MockBackend.sendMessage(creatorId, senderName, senderEmail, content, amount, attachments);
 
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error("Must be logged in");
@@ -833,16 +833,26 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
          }
     }
 
+    // Handle Attachments
+    // Use the first attachment as the primary one for the DB column
+    const primaryAttachmentUrl = attachments && attachments.length > 0 ? attachments[0].url : undefined;
+    
+    // Append additional attachments to content
+    let finalContent = content;
+    if (attachments && attachments.length > 1) {
+        finalContent += '\n\n' + attachments.slice(1).map(att => `Attachment: ${att.name}`).join('\n');
+    }
+
     // B. Create Message
     const { data: message, error: msgError } = await supabase
         .from('messages')
         .insert({
             sender_id: userId,
             creator_id: creatorId,
-            content: content,
+            content: finalContent,
             amount: amount,
             status: (isProductPurchase || isTip) ? 'REPLIED' : 'PENDING',
-            attachment_url: attachmentUrl,
+            attachment_url: primaryAttachmentUrl,
             expires_at: new Date(Date.now() + (responseWindow * 3600000)).toISOString(),
             reply_at: (isProductPurchase || isTip) ? new Date().toISOString() : null,
             is_read: (isProductPurchase || isTip) // Mark as read if product purchase or tip

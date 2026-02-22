@@ -414,7 +414,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       if (!latestMessage || !followUpText.trim()) return;
       setIsSendingFollowUp(true);
       try {
-          await sendMessage(latestMessage.creatorId || '', latestMessage.senderName, latestMessage.senderEmail, followUpText, latestMessage.amount);
+          await sendMessage(latestMessage.creatorId || '', latestMessage.senderName, latestMessage.senderEmail, followUpText, latestMessage.amount, undefined);
           await loadMessages(true);
           setShowFollowUpInput(false);
           setFollowUpText('');

@@ -255,7 +255,7 @@ export const getMessages = async (): Promise<Message[]> => {
     return [...messages];
 };
 
-export const sendMessage = async (creatorId: string, name: string, email: string, content: string, amount: number, attachmentUrl?: string): Promise<Message> => {
+export const sendMessage = async (creatorId: string, name: string, email: string, content: string, amount: number, attachments?: {url: string, type: 'IMAGE' | 'FILE', name: string}[]): Promise<Message> => {
     
     const isProductPurchase = content.startsWith('Purchased Product:');
     const isTip = content.startsWith('Fan Tip:');
