@@ -69,17 +69,17 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       } catch { return 0; }
   });
 
-  // Left Chatrooms (hidden, not deleted from DB)
-  const [leftChatrooms, setLeftChatrooms] = useState<string[]>(() => {
+  // Left Chatrooms (hidden, not deleted from DB) - stores timestamp of when left
+  const [leftChatrooms, setLeftChatrooms] = useState<Record<string, number>>(() => {
       try {
           const saved = localStorage.getItem('bluechecked_fan_left_chatrooms');
-          return saved ? JSON.parse(saved) : [];
-      } catch { return []; }
+          return saved ? JSON.parse(saved) : {};
+      } catch { return {}; }
   });
 
   const leaveChatroom = (creatorId: string) => {
       if (!window.confirm('Leave this conversation? It will be hidden from your inbox but not deleted.')) return;
-      const updated = [...leftChatrooms, creatorId];
+      const updated = { ...leftChatrooms, [creatorId]: Date.now() };
       setLeftChatrooms(updated);
       localStorage.setItem('bluechecked_fan_left_chatrooms', JSON.stringify(updated));
       setSelectedCreatorId(null);
@@ -262,10 +262,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   }, [messages]);
 
   const filteredGroups = useMemo(() => {
-      return conversationGroups.filter(g =>
-          !leftChatrooms.includes(g.creatorId) &&
-          g.creatorName.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      return conversationGroups.filter(g => {
+          const leftAt = leftChatrooms[g.creatorId];
+          if (leftAt && new Date(g.latestMessage.createdAt).getTime() < leftAt) return false;
+          return g.creatorName.toLowerCase().includes(searchQuery.toLowerCase());
+      });
   }, [conversationGroups, searchQuery, leftChatrooms]);
 
   const filteredCreators = useMemo(() => {

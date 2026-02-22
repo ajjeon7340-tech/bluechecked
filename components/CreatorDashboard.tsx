@@ -179,17 +179,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const ITEMS_PER_PAGE = 10;
   const OVERVIEW_REVIEWS_PER_PAGE = 5;
 
-  // Left Chatrooms (hidden, not deleted from DB)
-  const [leftChatrooms, setLeftChatrooms] = useState<string[]>(() => {
+  // Left Chatrooms (hidden, not deleted from DB) - stores timestamp of when left
+  const [leftChatrooms, setLeftChatrooms] = useState<Record<string, number>>(() => {
       try {
           const saved = localStorage.getItem('bluechecked_creator_left_chatrooms');
-          return saved ? JSON.parse(saved) : [];
-      } catch { return []; }
+          return saved ? JSON.parse(saved) : {};
+      } catch { return {}; }
   });
 
   const leaveChatroom = (senderEmail: string) => {
       if (!window.confirm('Leave this conversation? It will be hidden from your inbox but not deleted.')) return;
-      const updated = [...leftChatrooms, senderEmail];
+      const updated = { ...leftChatrooms, [senderEmail]: Date.now() };
       setLeftChatrooms(updated);
       localStorage.setItem('bluechecked_creator_left_chatrooms', JSON.stringify(updated));
       setSelectedSenderEmail(null);
@@ -1017,7 +1017,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   };
 
   const filteredGroups = useMemo(() => conversationGroups.filter(group => {
-      if (leftChatrooms.includes(group.senderEmail)) return false;
+      const leftAt = leftChatrooms[group.senderEmail];
+      if (leftAt && new Date(group.latestMessage.createdAt).getTime() < leftAt) return false;
       const status = group.latestMessage.status;
 
       if (inboxFilter === 'ALL') return true;
