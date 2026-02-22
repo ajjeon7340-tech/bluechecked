@@ -179,6 +179,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const ITEMS_PER_PAGE = 10;
   const OVERVIEW_REVIEWS_PER_PAGE = 5;
 
+  // Left Chatrooms (hidden, not deleted from DB)
+  const [leftChatrooms, setLeftChatrooms] = useState<string[]>(() => {
+      try {
+          const saved = localStorage.getItem('bluechecked_creator_left_chatrooms');
+          return saved ? JSON.parse(saved) : [];
+      } catch { return []; }
+  });
+
+  const leaveChatroom = (senderEmail: string) => {
+      if (!window.confirm('Leave this conversation? It will be hidden from your inbox but not deleted.')) return;
+      const updated = [...leftChatrooms, senderEmail];
+      setLeftChatrooms(updated);
+      localStorage.setItem('bluechecked_creator_left_chatrooms', JSON.stringify(updated));
+      setSelectedSenderEmail(null);
+  };
+
   // Drag and Drop State for Links
   const [draggedLinkIndex, setDraggedLinkIndex] = useState<number | null>(null);
 
@@ -1001,6 +1017,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   };
 
   const filteredGroups = useMemo(() => conversationGroups.filter(group => {
+      if (leftChatrooms.includes(group.senderEmail)) return false;
       const status = group.latestMessage.status;
 
       if (inboxFilter === 'ALL') return true;
@@ -1008,7 +1025,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       if (inboxFilter === 'REPLIED') return status === 'REPLIED';
       if (inboxFilter === 'REJECTED') return status === 'EXPIRED' || status === 'CANCELLED';
       return false;
-  }), [conversationGroups, inboxFilter]);
+  }), [conversationGroups, inboxFilter, leftChatrooms]);
 
   const hasManualCreatorReply = activeMessage 
     ? activeMessage.conversation.some(m => m.role === 'CREATOR' && !m.id.endsWith('-auto'))
@@ -2204,6 +2221,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 Refunded
                                             </div>
                                         )}
+                                        <button
+                                            onClick={() => leaveChatroom(activeMessage.senderEmail)}
+                                            className="p-1.5 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                            title="Leave conversation"
+                                        >
+                                            <LogOut size={16} />
+                                        </button>
                                     </div>
                                 </div>
 

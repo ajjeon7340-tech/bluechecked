@@ -69,6 +69,22 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       } catch { return 0; }
   });
 
+  // Left Chatrooms (hidden, not deleted from DB)
+  const [leftChatrooms, setLeftChatrooms] = useState<string[]>(() => {
+      try {
+          const saved = localStorage.getItem('bluechecked_fan_left_chatrooms');
+          return saved ? JSON.parse(saved) : [];
+      } catch { return []; }
+  });
+
+  const leaveChatroom = (creatorId: string) => {
+      if (!window.confirm('Leave this conversation? It will be hidden from your inbox but not deleted.')) return;
+      const updated = [...leftChatrooms, creatorId];
+      setLeftChatrooms(updated);
+      localStorage.setItem('bluechecked_fan_left_chatrooms', JSON.stringify(updated));
+      setSelectedCreatorId(null);
+  };
+
   // Chat Reaction State
   const [messageReactions, setMessageReactions] = useState<Record<string, string>>({});
   const [activeReactionPicker, setActiveReactionPicker] = useState<string | null>(null);
@@ -246,10 +262,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   }, [messages]);
 
   const filteredGroups = useMemo(() => {
-      return conversationGroups.filter(g => 
+      return conversationGroups.filter(g =>
+          !leftChatrooms.includes(g.creatorId) &&
           g.creatorName.toLowerCase().includes(searchQuery.toLowerCase())
       );
-  }, [conversationGroups, searchQuery]);
+  }, [conversationGroups, searchQuery, leftChatrooms]);
 
   const filteredCreators = useMemo(() => {
     const list = featuredCreators.filter(c => 
@@ -1572,6 +1589,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     <p className="text-[10px] text-stone-500 font-medium">Verified Expert</p>
                                 </div>
                             </div>
+                            <button
+                                onClick={() => selectedCreatorId && leaveChatroom(selectedCreatorId)}
+                                className="p-1.5 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Leave conversation"
+                            >
+                                <LogOut size={16} />
+                            </button>
                         </div>
 
                         {/* Read Banner */}
