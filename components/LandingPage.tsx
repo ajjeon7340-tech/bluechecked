@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from './Button';
-import { DiemLogo, CheckCircle2, MessageSquare, ArrowRight, Clock, Sparkles, User, Heart, Lock, Check, ShoppingBag, FileText, Coins, X, Download
+import { DiemLogo, CheckCircle2, MessageSquare, ArrowRight, Clock, Sparkles, User, Heart, Lock, Check, ShoppingBag, FileText, Coins, X, Download, Verified } from './Icons';
 interface Props {
   onLoginClick: () => void;
   onDemoClick: () => void;
@@ -212,7 +212,10 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                             <span className="font-semibold text-sm text-stone-900">{item.creator.name}</span>
-                            <Verified size={14} />l-assName="text-sm text-stone-700 leading-relaxed">{item.response}</p>
+                            <Verified size={14} />
+                        </div>
+                        <div className="bg-stone-50 p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
+                            <p className="text-sm text-stone-700 leading-relaxed">{item.response}</p>
                         </div>
                     </div>
                 </div>
@@ -502,30 +505,64 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                 </div>
                 
                 {/* Body */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[#FAF9F6]">
-                    {expandedConversation.fullThread.map((msg: any, idx: number) => (
-                        <div key={idx} className={`flex ${msg.role === 'FAN' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[85%] rounded-2xl p-4 ${msg.role === 'FAN' ? 'bg-stone-900 text-white rounded-tr-none' : 'bg-white border border-stone-200 text-stone-700 rounded-tl-none shadow-sm'}`}>
-                                {msg.content && <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>}
-                                
-                                {msg.attachment && (
-                                    <div className="mt-3 flex items-center gap-3 p-3 bg-stone-50 rounded-xl border border-stone-100">
-                                        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-stone-200 text-red-500">
-                                            <FileText size={20} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-bold text-stone-900 truncate">{msg.attachment.name}</p>
-                                            <p className="text-[10px] text-stone-500 uppercase">{msg.attachment.type}</p>
-                                        </div>
-                                        <button className="p-2 text-stone-400 hover:text-stone-600">
-                                            <Download size={16} />
-                                        </button>
+                <div className="flex-1 overflow-y-auto p-6 bg-[#FAF9F6]">
+                    {expandedConversation.fullThread.map((msg: any, idx: number) => {
+                        const isLast = idx === expandedConversation.fullThread.length - 1;
+                        const isFan = msg.role === 'FAN';
+                        
+                        return (
+                            <div key={idx} className="flex relative z-10 pb-6 last:pb-0">
+                                {/* Left: Avatar + Thread Line */}
+                                <div className="flex flex-col items-center mr-4 relative">
+                                    {!isLast && (
+                                        <div className="absolute left-[17px] top-10 -bottom-6 w-0.5 bg-stone-200"></div>
+                                    )}
+                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center border border-stone-200 flex-shrink-0 ${isFan ? 'bg-stone-100 text-stone-400' : 'overflow-hidden'}`}>
+                                        {isFan ? (
+                                            <User size={16} />
+                                        ) : (
+                                            <img src={expandedConversation.creator.avatar} className="w-full h-full object-cover" alt="" />
+                                        )}
                                     </div>
-                                )}
-                                <p className={`text-[10px] mt-2 ${msg.role === 'FAN' ? 'text-stone-400' : 'text-stone-400'}`}>{msg.time}</p>
+                                </div>
+
+                                {/* Right: Content */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="font-semibold text-sm text-stone-900">{isFan ? 'Anonymous Fan' : expandedConversation.creator.name}</span>
+                                        {isFan ? (
+                                            <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                                                <User size={10} className="fill-current" />
+                                                <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
+                                            </div>
+                                        ) : (
+                                            <Verified size={14} />
+                                        )}
+                                        <span className="text-xs font-medium text-stone-400">• {msg.time}</span>
+                                    </div>
+                                    
+                                    <div className={`p-4 rounded-2xl border shadow-sm ${isFan ? 'bg-white border-stone-200 rounded-tl-lg' : 'bg-stone-50 border-stone-200/60 rounded-tl-lg'}`}>
+                                        {msg.content && <p className="text-sm text-stone-700 leading-relaxed whitespace-pre-wrap">{msg.content}</p>}
+                                        
+                                        {msg.attachment && (
+                                            <div className="mt-3 flex items-center gap-3 p-3 bg-white rounded-xl border border-stone-200 hover:border-stone-300 transition-colors cursor-pointer group">
+                                                <div className="w-10 h-10 bg-stone-50 rounded-lg flex items-center justify-center border border-stone-100 text-red-500">
+                                                    <FileText size={20} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-bold text-stone-900 truncate group-hover:text-stone-700 transition-colors">{msg.attachment.name}</p>
+                                                    <p className="text-[10px] text-stone-500 uppercase">{msg.attachment.type} Document</p>
+                                                </div>
+                                                <button className="p-2 text-stone-400 hover:text-stone-600">
+                                                    <Download size={16} />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
         </div>
