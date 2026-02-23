@@ -1,8 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from './Button';
-import { DiemLogo, CheckCircle2, MessageSquare, ArrowRight, Clock, Sparkles, User, Heart, Lock, Check, ShoppingBag, FileText, Coins, X, Download } from './Icons';
-
+import { DiemLogo, CheckCircle2, MessageSquare, ArrowRight, Clock, Sparkles, User, Heart, Lock, Check, ShoppingBag, FileText, Coins, X, Download
 interface Props {
   onLoginClick: () => void;
   onDemoClick: () => void;
@@ -213,14 +212,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                             <span className="font-semibold text-sm text-stone-900">{item.creator.name}</span>
-                            <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
-                                <CheckCircle2 size={10} className="fill-current" />
-                                <span className="text-[9px] font-semibold uppercase tracking-wide">Creator</span>
-                            </div>
-                            <span className="text-xs font-medium text-stone-400">• {item.time}</span>
-                        </div>
-                        <div className="bg-stone-50 p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
-                            <p className="text-sm text-stone-700 leading-relaxed">{item.response}</p>
+                            <Verified size={14} />l-assName="text-sm text-stone-700 leading-relaxed">{item.response}</p>
                         </div>
                     </div>
                 </div>
