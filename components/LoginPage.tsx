@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Button } from './Button';
-import { BlueCheckLogo, CheckCircle2, Lock, GoogleLogo, InstagramLogo, Mail, User, MessageSquare, Camera, X, Plus, YouTubeLogo, XLogo, TikTokLogo, Twitch, Check, Phone } from './Icons';
+import { DiemLogo, CheckCircle2, Lock, GoogleLogo, InstagramLogo, Mail, User, MessageSquare, Camera, X, Plus, YouTubeLogo, XLogo, TikTokLogo, Twitch, Check, Phone } from './Icons';
 import { CurrentUser } from '../types';
 import { loginUser, updateCreatorProfile, getCreatorProfile, updateCurrentUser, signInWithSocial, resendConfirmationEmail, sendPasswordResetEmail, updatePassword, signOut } from '../services/realBackend';
 
@@ -430,8 +430,8 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
           onClick={onBack}
           className="mb-8 flex justify-center items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity"
         >
-          <BlueCheckLogo size={28} className="text-stone-800" />
-          <span className="font-semibold text-lg tracking-tight text-stone-800">bluechecked</span>
+          <DiemLogo size={28} className="text-stone-800" />
+          <span className="font-semibold text-lg tracking-tight text-stone-800">diem</span>
         </div>
 
         <div className="bg-white p-8 rounded-3xl shadow-xl shadow-stone-200/50 border border-stone-100">

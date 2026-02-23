@@ -208,7 +208,7 @@ function App() {
     <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9] text-stone-400">
       <div className="flex flex-col items-center gap-2">
         <div className="animate-spin h-6 w-6 border-2 border-stone-800 border-t-transparent rounded-full"></div>
-        <span className="text-sm font-medium">Loading Bluechecked...</span>
+        <span className="text-sm font-medium">Loading Diem...</span>
       </div>
     </div>
   );

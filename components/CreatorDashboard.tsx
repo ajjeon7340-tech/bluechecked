@@ -5,7 +5,7 @@ import { getMessages, replyToMessage, updateCreatorProfile, markMessageAsRead, c
 import { generateReplyDraft } from '../services/geminiService';
 import { 
   Clock, CheckCircle2, AlertCircle, DollarSign, Sparkles, ChevronLeft, LogOut, 
-  ExternalLink, User, Settings, Plus, Trash, X, Camera, Paperclip, Send, BlueCheckLogo,
+  ExternalLink, User, Settings, Plus, Trash, X, Camera, Paperclip, Send, DiemLogo,
   Home, BarChart3, Wallet, Users, Bell, Search, Menu, ChevronDown, Ban, Check,
   Heart, Star, Eye, TrendingUp, MessageSquare, ArrowRight, Lock, 
   InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Download, ShoppingBag, FileText, PieChart as PieIcon, LayoutGrid, MonitorPlay, Link as LinkIcon, Calendar, ChevronRight, Coins, CreditCard
@@ -1136,8 +1136,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 onClick={() => handleNavigate('OVERVIEW')}
                 className="flex items-center gap-2 px-3 py-4 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
             >
-                <BlueCheckLogo size={28} className="text-stone-900" />
-                <span className="font-bold text-stone-900 tracking-tight">BLUECHECKED</span>
+                <DiemLogo size={28} className="text-stone-900" />
+                <span className="font-bold text-stone-900 tracking-tight">DIEM</span>
                 {creator.isPremium && (
                    <span className="bg-yellow-100 text-yellow-700 text-[9px] font-bold px-1.5 py-0.5 rounded border border-yellow-200 ml-1">PRO</span>
                 )}
@@ -2732,7 +2732,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     {!creator.isPremium && (
                          <div className="bg-stone-900 rounded-xl p-4 sm:p-6 text-white flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                             <div>
-                                <h3 className="font-bold text-base sm:text-lg flex items-center gap-2"><Sparkles className="text-yellow-300 fill-yellow-300" size={18}/> Bluechecked Pro</h3>
+                                <h3 className="font-bold text-base sm:text-lg flex items-center gap-2"><Sparkles className="text-yellow-300 fill-yellow-300" size={18}/> Diem Pro</h3>
                                 <p className="text-stone-400 text-xs sm:text-sm mt-1">Upgrade to unlock analytics and remove commissions.</p>
                             </div>
                             <Button className="bg-white text-stone-900 hover:bg-stone-50 text-sm whitespace-nowrap flex-shrink-0" onClick={() => setShowPremiumModal(true)}>Upgrade</Button>
@@ -3311,7 +3311,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 px-3 py-1 rounded-full text-xs font-bold text-white mb-3 backdrop-blur-md">
                              <Sparkles size={12} className="text-yellow-400" /> RECOMMENDED
                          </div>
-                         <h2 className="text-3xl font-black text-white tracking-tight">Bluechecked Pro</h2>
+                         <h2 className="text-3xl font-black text-white tracking-tight">Diem Pro</h2>
                      </div>
                 </div>
 

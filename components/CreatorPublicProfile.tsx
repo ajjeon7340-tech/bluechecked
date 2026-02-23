@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CreatorProfile, CurrentUser, AffiliateLink, Product } from '../types';
-import { BlueCheckLogo, CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share, Image as ImageIcon } from './Icons';
+import { DiemLogo, CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share, Image as ImageIcon } from './Icons';
 import { Button } from './Button';
 import { sendMessage, updateCreatorProfile, addCredits, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus, getSecureDownloadUrl, logAnalyticsEvent } from '../services/realBackend';
 
@@ -445,8 +445,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       onClick={onCreateOwn}
                       className="flex items-center gap-2.5 cursor-pointer hover:opacity-70 transition-opacity pl-1"
                     >
-                      <BlueCheckLogo size={24} className="text-stone-800" />
-                      <span className="font-semibold tracking-tight text-sm text-stone-800">bluechecked</span>
+                      <DiemLogo size={24} className="text-stone-800" />
+                      <span className="font-semibold tracking-tight text-sm text-stone-800">diem</span>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -611,11 +611,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                   className="w-full text-left bg-white p-3 sm:p-4 rounded-2xl border border-stone-200/60 flex items-center gap-3 sm:gap-4 group cursor-pointer hover:border-stone-300 transition-all hover:shadow-sm relative overflow-hidden"
               >
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-stone-50 text-stone-900 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform border border-stone-100">
-                      <BlueCheckLogo size={20} className="sm:hidden" />
-                      <BlueCheckLogo size={24} className="hidden sm:block" />
+                      <DiemLogo size={20} className="sm:hidden" />
+                      <DiemLogo size={24} className="hidden sm:block" />
                   </div>
                   <div className="flex-1 relative z-10 min-w-0 text-left">
-                      <h4 className="font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">BLUECHECKED</h4>
+                      <h4 className="font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">DIEM</h4>
                       <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-stone-500 mt-0.5 font-medium truncate">
                           <ShieldCheck size={12} className="text-emerald-500" />
                           <span>Guaranteed {creator.responseWindowHours}h reply</span>

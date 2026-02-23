@@ -123,7 +123,7 @@ export const Coins = ({ className, size = 24, ...props }: any) => (
   </svg>
 );
 
-export const BlueCheckLogo = ({ className, size = 24, ...props }: any) => (
+export const DiemLogo = ({ className, size = 24, ...props }: any) => (
   <svg
     width={size}
     height={size}

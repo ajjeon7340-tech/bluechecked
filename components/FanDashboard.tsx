@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { CurrentUser, Message, CreatorProfile } from '../types';
 import { Button } from './Button';
-import { BlueCheckLogo, CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download, Smile } from './Icons';
+import { DiemLogo, CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download, Smile } from './Icons';
 import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createCheckoutSession, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl } from '../services/realBackend';
 
 interface Props {
@@ -606,7 +606,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       list.push({
           id: 'welcome',
           icon: Sparkles,
-          text: 'Welcome to Bluechecked! Find a creator to start.',
+          text: 'Welcome to Diem! Find a creator to start.',
           time: new Date(),
           color: 'bg-stone-100 text-stone-600'
       });
@@ -808,8 +808,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                     onClick={() => { setCurrentView('OVERVIEW'); setSelectedCreatorId(null); }}
                     className="flex items-center gap-2 px-3 py-4 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
                 >
-                    <BlueCheckLogo size={28} className="text-stone-900" />
-                    <span className="font-bold text-stone-900 tracking-tight">BLUECHECKED</span>
+                    <DiemLogo size={28} className="text-stone-900" />
+                    <span className="font-bold text-stone-900 tracking-tight">DIEM</span>
                 </div>
 
                 {/* Nav Links */}
@@ -1327,7 +1327,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                              <div className="pt-6 border-t border-stone-100">
                                  <p className="text-xs text-stone-400">
-                                     Direct Email: <a href="#" className="text-stone-900 font-semibold hover:underline">support@bluechecked.com</a>
+                                     Direct Email: <a href="#" className="text-stone-900 font-semibold hover:underline">support@diem.com</a>
                                  </p>
                              </div>
                          </div>
@@ -2154,21 +2154,16 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 mb-6">
-                            {[500, 1000, 2500, 5000].map(amt => {
-                                const baseCents = amt;
-                                const feeCents = Math.ceil((baseCents + 30) / (1 - 0.029) - baseCents);
-                                return (
-                                    <button
-                                    key={amt}
-                                    onClick={() => setTopUpAmount(amt)}
-                                    className={`p-3 rounded-xl border text-center transition-all ${topUpAmount === amt ? 'bg-stone-900 border-stone-900 text-white' : 'bg-white border-stone-200 hover:border-stone-300 text-stone-900'}`}
-                                    >
-                                        <div className="font-bold text-lg">{amt}</div>
-                                        <div className={`text-[10px] font-semibold uppercase ${topUpAmount === amt ? 'text-stone-400' : 'text-stone-400'}`}>Credits</div>
-                                        <div className={`text-[10px] mt-0.5 ${topUpAmount === amt ? 'text-stone-400' : 'text-stone-400'}`}>${(amt / 100).toFixed(2)} + ${(feeCents / 100).toFixed(2)} fee</div>
-                                    </button>
-                                );
-                            })}
+                            {[500, 1000, 2500, 5000].map(amt => (
+                                <button
+                                key={amt}
+                                onClick={() => setTopUpAmount(amt)}
+                                className={`p-3 rounded-xl border text-center transition-all ${topUpAmount === amt ? 'bg-stone-900 border-stone-900 text-white' : 'bg-white border-stone-200 hover:border-stone-300 text-stone-900'}`}
+                                >
+                                    <div className="font-bold text-lg">{amt}</div>
+                                    <div className={`text-[10px] font-semibold uppercase ${topUpAmount === amt ? 'text-stone-400' : 'text-stone-400'}`}>Credits</div>
+                                </button>
+                            ))}
                         </div>
 
                         {(() => {
