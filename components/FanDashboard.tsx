@@ -1187,13 +1187,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                 {/* --- VIEW: HISTORY --- */}
                 {currentView === 'HISTORY' && (
-                    <div className="p-6 max-w-5xl mx-auto animate-in fade-in">
-                        {(() => {
-                            const totalPages = Math.ceil(messages.length / ITEMS_PER_PAGE);
-                            const displayedMessages = messages.slice((historyPage - 1) * ITEMS_PER_PAGE, historyPage * ITEMS_PER_PAGE);
-                            return (
-                        <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
-                             <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
+                    <div className="p-4 md:p-6 max-w-5xl mx-auto animate-in fade-in h-full flex flex-col">
+                        <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+                             <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between shrink-0">
                                  <h3 className="text-sm font-bold text-stone-900">Transaction History</h3>
                                  <Button variant="ghost" size="sm" className="text-xs"><ExternalLink size={14} className="mr-1"/> Export CSV</Button>
                              </div>
@@ -1202,13 +1198,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     <thead className="bg-stone-50 text-stone-500 font-bold border-b border-stone-100 text-xs uppercase tracking-wider">
                                         <tr>
                                             <th className="px-6 py-3">Date</th>
-                                            <th className="px-6 py-3">Description</th>
+                                            <th className="px-6 py-3">To</th>
+                                            <th className="px-6 py-3">Type</th>
                                             <th className="px-6 py-3">Status</th>
                                             <th className="px-6 py-3 text-right">Amount (Credits)</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-stone-100">
-                                        {displayedMessages.map(msg => {
+                                        {messages.map(msg => {
                                             const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
                                             const isProduct = msg.content.startsWith('Purchased Product:');
                                             const isTip = msg.content.startsWith('Fan Tip:');
@@ -1218,16 +1215,16 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     <td className="px-6 py-4 text-stone-500 font-mono text-xs">{new Date(msg.createdAt).toLocaleDateString()}</td>
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200">
-                                                                {isProduct ? <FileText size={14} /> : isTip ? <Heart size={14} /> : <User size={14} />}
+                                                            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200 overflow-hidden">
+                                                                {msg.creatorAvatarUrl ? <img src={msg.creatorAvatarUrl} className="w-full h-full object-cover" /> : <User size={14} />}
                                                             </div>
-                                                            <div>
-                                                                <div className="font-bold text-stone-900 text-sm">
-                                                                    {isProduct ? 'Digital Content Purchase' : isTip ? 'Fan Tip' : 'Priority DM Request'}
-                                                                </div>
-                                                                <div className="text-xs text-stone-400 truncate max-w-[200px]">{isProduct ? msg.content.replace('Purchased Product: ', '') : isTip ? msg.content.replace('Fan Tip: ', '') : msg.content}</div>
-                                                            </div>
+                                                            <span className="font-bold text-stone-900 text-sm">{msg.creatorName || 'Creator'}</span>
                                                         </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="text-sm text-stone-600">
+                                                            {isProduct ? 'Digital Content' : isTip ? 'Fan Tip' : 'Diem Request'}
+                                                        </span>
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         {msg.status === 'PENDING' && (
@@ -1254,73 +1251,50 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 </tr>
                                             )
                                         })}
-                                        {displayedMessages.length === 0 && (
-                                            <tr><td colSpan={4} className="p-12 text-center text-stone-400">No transactions found.</td></tr>
+                                        {messages.length === 0 && (
+                                            <tr><td colSpan={5} className="p-12 text-center text-stone-400">No transactions found.</td></tr>
                                         )}
                                     </tbody>
                                 </table>
                              </div>
 
-                             {/* Mobile List View */}
-                             <div className="md:hidden divide-y divide-stone-100">
-                                {displayedMessages.map(msg => {
+                             {/* Mobile List View — scrollable, fits in viewport */}
+                             <div className="md:hidden flex-1 overflow-y-auto divide-y divide-stone-100">
+                                {messages.map(msg => {
                                     const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
                                     const isProduct = msg.content.startsWith('Purchased Product:');
                                     const isTip = msg.content.startsWith('Fan Tip:');
-                                    
+
                                     return (
-                                        <div key={msg.id} className="p-4 flex flex-col gap-3">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200">
-                                                        {isProduct ? <FileText size={18} /> : isTip ? <Heart size={18} /> : <User size={18} />}
-                                                    </div>
-                                                    <div>
-                                                        <div className="font-bold text-stone-900 text-sm">
-                                                            {isProduct ? 'Digital Content' : isTip ? 'Fan Tip' : 'Priority Request'}
-                                                        </div>
-                                                        <div className="text-xs text-stone-400">{new Date(msg.createdAt).toLocaleDateString()}</div>
-                                                    </div>
-                                                </div>
-                                                <div className={`font-mono font-bold ${isRefunded ? 'text-stone-400 line-through' : 'text-stone-900'}`}>
-                                                    {msg.amount}
-                                                </div>
+                                        <div key={msg.id} className="px-4 py-3 flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200 shrink-0 overflow-hidden">
+                                                {msg.creatorAvatarUrl ? <img src={msg.creatorAvatarUrl} className="w-full h-full object-cover" /> : <User size={18} />}
                                             </div>
-                                            <div className="flex items-center justify-between text-xs">
-                                                <div className="text-stone-500 truncate max-w-[200px]">{isProduct ? msg.content.replace('Purchased Product: ', '') : isTip ? msg.content.replace('Fan Tip: ', '') : msg.content}</div>
-                                                {msg.status === 'PENDING' && <span className="font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Pending</span>}
-                                                {msg.status === 'REPLIED' && <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Completed</span>}
-                                                {isRefunded && <span className="font-bold text-stone-500 bg-stone-100 px-2 py-0.5 rounded">Refunded</span>}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-bold text-stone-900 text-sm truncate">{msg.creatorName || 'Creator'}</span>
+                                                    <span className={`font-mono font-bold text-sm shrink-0 ml-2 ${isRefunded ? 'text-stone-400 line-through' : 'text-stone-900'}`}>
+                                                        {msg.amount}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center justify-between mt-0.5">
+                                                    <span className="text-xs text-stone-500">
+                                                        {isProduct ? 'Digital Content' : isTip ? 'Fan Tip' : 'Diem Request'}
+                                                    </span>
+                                                    <span className="text-xs text-stone-400">{new Date(msg.createdAt).toLocaleDateString()}</span>
+                                                </div>
+                                                <div className="mt-1">
+                                                    {msg.status === 'PENDING' && <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Pending</span>}
+                                                    {msg.status === 'REPLIED' && <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">Completed</span>}
+                                                    {isRefunded && <span className="text-[10px] font-bold text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">Refunded</span>}
+                                                </div>
                                             </div>
                                         </div>
                                     );
                                 })}
-                                {displayedMessages.length === 0 && <div className="p-8 text-center text-stone-400 text-sm">No transactions found.</div>}
+                                {messages.length === 0 && <div className="p-8 text-center text-stone-400 text-sm">No transactions found.</div>}
                              </div>
-                             
-                             {/* Pagination Controls */}
-                             {totalPages > 1 && (
-                                <div className="px-6 py-4 border-t border-stone-100 flex items-center justify-center gap-4">
-                                    <button 
-                                        onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
-                                        disabled={historyPage === 1}
-                                        className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
-                                    >
-                                        <ChevronLeft size={16} />
-                                    </button>
-                                    <span className="text-xs font-bold text-stone-600">Page {historyPage} of {totalPages}</span>
-                                    <button 
-                                        onClick={() => setHistoryPage(p => Math.min(totalPages, p + 1))}
-                                        disabled={historyPage === totalPages}
-                                        className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
-                                    >
-                                        <ChevronRight size={16} />
-                                    </button>
-                                </div>
-                             )}
                         </div>
-                        );
-                        })()}
                     </div>
                 )}
 
