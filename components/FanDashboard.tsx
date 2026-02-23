@@ -3,58 +3,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { CurrentUser, Message, CreatorProfile } from '../types';
 import { Button } from './Button';
 import { BlueCheckLogo, CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download, Smile } from './Icons';
-import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createPaymentIntent, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl } from '../services/realBackend';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-
-const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
-
-// Stripe Checkout Form rendered inside <Elements>
-function StripeCheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: (msg: string) => void }) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-
-    setIsProcessing(true);
-    try {
-      const { error } = await stripe.confirmPayment({
-        elements,
-        redirect: 'if_required',
-      });
-
-      if (error) {
-        onError(error.message || 'Payment failed');
-      } else {
-        onSuccess();
-      }
-    } catch (err: any) {
-      onError(err.message || 'Payment failed');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <PaymentElement options={{ layout: 'tabs', wallets: { applePay: 'auto', googlePay: 'auto' } }} />
-      <Button
-        fullWidth
-        size="lg"
-        type="submit"
-        isLoading={isProcessing}
-        disabled={!stripe || !elements}
-        className="bg-stone-900 text-white rounded-xl h-12 font-bold shadow-lg shadow-stone-900/20 mt-4"
-      >
-        Pay Now
-      </Button>
-    </form>
-  );
-}
+import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createCheckoutSession, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl } from '../services/realBackend';
 
 interface Props {
   currentUser: CurrentUser | null;
@@ -220,6 +169,27 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         return () => unsubscribe();
     }
   }, [currentUser]);
+
+  // Handle return from Stripe Checkout
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('checkout') === 'success') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('checkout');
+      window.history.replaceState({}, '', url.toString());
+      setTimeout(async () => {
+        try {
+          const updatedUser = await addCredits(0);
+          if (onUpdateUser) onUpdateUser(updatedUser);
+        } catch {}
+      }, 2000);
+      setToastMessage('Payment successful! Credits are being added.');
+    } else if (params.get('checkout') === 'cancel') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('checkout');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, []);
 
   // Auto-refresh creators when entering Explore view
   useEffect(() => {
@@ -529,19 +499,16 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       }
   };
 
-  const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
-
   const handleTopUp = async () => {
-      // If Stripe is configured, create a PaymentIntent and show Stripe form
-      if (stripePromise && isBackendConfigured()) {
+      // If real backend is configured, redirect to Stripe Checkout
+      if (isBackendConfigured()) {
           setIsProcessingTopUp(true);
           try {
-              const { clientSecret } = await createPaymentIntent(topUpAmount);
-              setStripeClientSecret(clientSecret);
+              const { url } = await createCheckoutSession(topUpAmount);
+              window.location.href = url;
           } catch (e: any) {
               console.error(e);
-              alert(e.message || "Failed to start payment");
-          } finally {
+              alert(e.message || "Failed to start checkout");
               setIsProcessingTopUp(false);
           }
           return;
@@ -560,20 +527,6 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       } finally {
           setIsProcessingTopUp(false);
       }
-  };
-
-  const handleStripePaymentSuccess = async () => {
-      setStripeClientSecret(null);
-      setShowTopUpModal(false);
-      // Credits are added by the webhook, but refresh user data to show updated balance
-      // Small delay to let webhook process
-      setTimeout(async () => {
-          try {
-              const updatedUser = await addCredits(0); // Just fetches current user
-              if (onUpdateUser) onUpdateUser(updatedUser);
-          } catch {}
-      }, 2000);
-      alert(`Payment successful! ${topUpAmount} credits will be added shortly.`);
   };
 
   const handleSaveProfile = async () => {
@@ -2226,56 +2179,58 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             <h3 className="font-bold text-lg text-stone-800">Add Credits</h3>
                         </div>
 
-                        {stripeClientSecret && stripePromise ? (
-                            /* Stripe Payment Form */
-                            <Elements stripe={stripePromise} options={{ clientSecret: stripeClientSecret, appearance: { theme: 'stripe', variables: { borderRadius: '12px' } } }}>
-                                <div className="bg-stone-50 p-4 rounded-xl flex justify-between items-center mb-4 border border-stone-100">
-                                    <span className="text-sm font-medium text-stone-600">{topUpAmount.toLocaleString()} credits</span>
-                                    <span className="font-black text-stone-900 text-xl">${(topUpAmount / 100).toFixed(2)}</span>
-                                </div>
-                                <StripeCheckoutForm
-                                    onSuccess={handleStripePaymentSuccess}
-                                    onError={(msg) => alert(msg)}
-                                />
-                                <button
-                                    onClick={() => setStripeClientSecret(null)}
-                                    className="w-full mt-3 text-sm text-stone-500 hover:text-stone-700 transition-colors"
-                                >
-                                    Change amount
-                                </button>
-                            </Elements>
-                        ) : (
-                            /* Credit Selection */
-                            <>
-                                <div className="grid grid-cols-2 gap-3 mb-6">
-                                    {[500, 1000, 2500, 5000].map(amt => (
-                                        <button
-                                        key={amt}
-                                        onClick={() => setTopUpAmount(amt)}
-                                        className={`p-3 rounded-xl border text-center transition-all ${topUpAmount === amt ? 'bg-stone-900 border-stone-900 text-white' : 'bg-white border-stone-200 hover:border-stone-300 text-stone-900'}`}
-                                        >
-                                            <div className="font-bold text-lg">{amt}</div>
-                                            <div className={`text-[10px] font-semibold uppercase ${topUpAmount === amt ? 'text-stone-400' : 'text-stone-400'}`}>Credits</div>
-                                        </button>
-                                    ))}
-                                </div>
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                            {[500, 1000, 2500, 5000].map(amt => {
+                                const baseCents = amt;
+                                const feeCents = Math.ceil((baseCents + 30) / (1 - 0.029) - baseCents);
+                                return (
+                                    <button
+                                    key={amt}
+                                    onClick={() => setTopUpAmount(amt)}
+                                    className={`p-3 rounded-xl border text-center transition-all ${topUpAmount === amt ? 'bg-stone-900 border-stone-900 text-white' : 'bg-white border-stone-200 hover:border-stone-300 text-stone-900'}`}
+                                    >
+                                        <div className="font-bold text-lg">{amt}</div>
+                                        <div className={`text-[10px] font-semibold uppercase ${topUpAmount === amt ? 'text-stone-400' : 'text-stone-400'}`}>Credits</div>
+                                        <div className={`text-[10px] mt-0.5 ${topUpAmount === amt ? 'text-stone-400' : 'text-stone-400'}`}>${(amt / 100).toFixed(2)} + ${(feeCents / 100).toFixed(2)} fee</div>
+                                    </button>
+                                );
+                            })}
+                        </div>
 
-                                <div className="bg-stone-50 p-4 rounded-xl flex justify-between items-center mb-6 border border-stone-100">
-                                    <span className="text-sm font-medium text-stone-600">Total Cost</span>
-                                    <span className="font-black text-stone-900 text-xl">${(topUpAmount / 100).toFixed(2)}</span>
+                        {(() => {
+                            const baseCents = topUpAmount;
+                            const feeCents = Math.ceil((baseCents + 30) / (1 - 0.029) - baseCents);
+                            const totalCents = baseCents + feeCents;
+                            return (
+                                <div className="bg-stone-50 p-4 rounded-xl mb-6 border border-stone-100 space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-stone-500">{topUpAmount.toLocaleString()} Credits</span>
+                                        <span className="text-sm font-medium text-stone-700">${(baseCents / 100).toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-stone-500">Processing Fee</span>
+                                        <span className="text-sm font-medium text-stone-700">${(feeCents / 100).toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs text-stone-400">
+                                        <span>+ Tax (calculated at checkout)</span>
+                                    </div>
+                                    <div className="border-t border-stone-200 pt-2 flex justify-between items-center">
+                                        <span className="text-sm font-bold text-stone-700">Subtotal</span>
+                                        <span className="font-black text-stone-900 text-xl">${(totalCents / 100).toFixed(2)}</span>
+                                    </div>
                                 </div>
+                            );
+                        })()}
 
-                                <Button
-                                    fullWidth
-                                    size="lg"
-                                    onClick={handleTopUp}
-                                    isLoading={isProcessingTopUp}
-                                    className="bg-stone-900 text-white rounded-xl h-12 font-bold shadow-lg shadow-stone-900/20"
-                                >
-                                    Pay & Add Credits
-                                </Button>
-                            </>
-                        )}
+                        <Button
+                            fullWidth
+                            size="lg"
+                            onClick={handleTopUp}
+                            isLoading={isProcessingTopUp}
+                            className="bg-stone-900 text-white rounded-xl h-12 font-bold shadow-lg shadow-stone-900/20"
+                        >
+                            Pay & Add Credits
+                        </Button>
                         <p className="text-center text-[10px] text-stone-400 mt-4 flex items-center justify-center gap-1">
                             <Lock size={10} /> Secure encrypted payment
                         </p>

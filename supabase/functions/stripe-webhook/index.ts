@@ -1,6 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')
 const STRIPE_WEBHOOK_SECRET = Deno.env.get('STRIPE_WEBHOOK_SECRET')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
@@ -35,6 +34,34 @@ async function verifyStripeSignature(payload: string, sigHeader: string, secret:
   return expectedSig === signature
 }
 
+async function addCreditsToUser(userId: string, credits: number) {
+  const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
+
+  const { data: profile, error: fetchError } = await supabase
+    .from('profiles')
+    .select('credits')
+    .eq('id', userId)
+    .single()
+
+  if (fetchError || !profile) {
+    console.error('Failed to fetch user profile:', fetchError)
+    throw new Error('User not found')
+  }
+
+  const newBalance = (profile.credits || 0) + credits
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ credits: newBalance })
+    .eq('id', userId)
+
+  if (updateError) {
+    console.error('Failed to update credits:', updateError)
+    throw new Error('Failed to update credits')
+  }
+
+  console.log(`Added ${credits} credits to user ${userId}. New balance: ${newBalance}`)
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', {
@@ -66,6 +93,26 @@ Deno.serve(async (req) => {
 
     const event = JSON.parse(body)
 
+    // Handle Checkout Session completed (new flow)
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object
+      const userId = session.metadata?.user_id
+      const credits = parseInt(session.metadata?.credits || '0')
+
+      if (!userId || !credits) {
+        console.error('Missing metadata in Checkout Session:', session.id)
+        return new Response('Missing metadata', { status: 400 })
+      }
+
+      // Only credit if payment was successful
+      if (session.payment_status === 'paid') {
+        await addCreditsToUser(userId, credits)
+      } else {
+        console.log(`Checkout session ${session.id} payment_status: ${session.payment_status}, skipping credit`)
+      }
+    }
+
+    // Handle PaymentIntent succeeded (legacy/backwards compat)
     if (event.type === 'payment_intent.succeeded') {
       const paymentIntent = event.data.object
       const userId = paymentIntent.metadata?.user_id
@@ -76,33 +123,7 @@ Deno.serve(async (req) => {
         return new Response('Missing metadata', { status: 400 })
       }
 
-      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-
-      // Get current credits
-      const { data: profile, error: fetchError } = await supabase
-        .from('profiles')
-        .select('credits')
-        .eq('id', userId)
-        .single()
-
-      if (fetchError || !profile) {
-        console.error('Failed to fetch user profile:', fetchError)
-        return new Response('User not found', { status: 400 })
-      }
-
-      // Add credits
-      const newBalance = (profile.credits || 0) + credits
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ credits: newBalance })
-        .eq('id', userId)
-
-      if (updateError) {
-        console.error('Failed to update credits:', updateError)
-        return new Response('Failed to update credits', { status: 500 })
-      }
-
-      console.log(`Added ${credits} credits to user ${userId}. New balance: ${newBalance}`)
+      await addCreditsToUser(userId, credits)
     }
 
     return new Response(JSON.stringify({ received: true }), {

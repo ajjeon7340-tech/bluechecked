@@ -1157,7 +1157,7 @@ export const addCredits = async (amount: number): Promise<CurrentUser> => {
     return mapProfileToUser(updated);
 };
 
-export const createPaymentIntent = async (credits: number): Promise<{ clientSecret: string }> => {
+export const createCheckoutSession = async (credits: number): Promise<{ url: string }> => {
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error('Not authenticated');
 
@@ -1165,8 +1165,8 @@ export const createPaymentIntent = async (credits: number): Promise<{ clientSecr
         body: { credits },
     });
 
-    if (res.error) throw new Error(res.error.message || 'Failed to create payment intent');
-    return { clientSecret: res.data.clientSecret };
+    if (res.error) throw new Error(res.error.message || 'Failed to create checkout session');
+    return { url: res.data.url };
 };
 
 export const uploadProductFile = async (file: File, creatorId: string): Promise<string> => {

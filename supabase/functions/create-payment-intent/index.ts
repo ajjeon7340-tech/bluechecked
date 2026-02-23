@@ -3,14 +3,28 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+const APP_URL = Deno.env.get('APP_URL') || 'https://bluechecked.me'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const VALID_CREDIT_AMOUNTS = [500, 1000, 2500, 5000]
-const CREDITS_TO_CENTS = (credits: number) => credits // 1 credit = $0.01, so 500 credits = 500 cents = $5.00
+// Server-side credit tiers — client amount is validated against these
+const CREDIT_TIERS: Record<number, number> = {
+  500: 500,    // 500 credits = $5.00 = 500 cents
+  1000: 1000,  // 1000 credits = $10.00
+  2500: 2500,  // 2500 credits = $25.00
+  5000: 5000,  // 5000 credits = $50.00
+}
+
+// Calculate service fee to cover Stripe's processing fee (2.9% + $0.30)
+function calculateServiceFee(baseCents: number): number {
+  // fee = (base * 0.029 + 30) / (1 - 0.029) - base
+  const totalNeeded = (baseCents + 30) / (1 - 0.029)
+  const fee = Math.ceil(totalNeeded - baseCents)
+  return fee
+}
 
 async function stripeRequest(endpoint: string, params: Record<string, string>) {
   const res = await fetch(`https://api.stripe.com/v1${endpoint}`, {
@@ -62,29 +76,52 @@ Deno.serve(async (req) => {
 
     const { credits } = await req.json()
 
-    if (!VALID_CREDIT_AMOUNTS.includes(credits)) {
-      return new Response(JSON.stringify({ error: 'Invalid credit amount' }), {
+    // Server-side tier validation
+    const baseCents = CREDIT_TIERS[credits]
+    if (!baseCents) {
+      return new Response(JSON.stringify({ error: 'Invalid credit tier' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const amountInCents = CREDITS_TO_CENTS(credits)
+    const feeCents = calculateServiceFee(baseCents)
 
-    const paymentIntent = await stripeRequest('/payment_intents', {
-      amount: amountInCents.toString(),
-      currency: 'usd',
-      'automatic_payment_methods[enabled]': 'true',
+    // Create Stripe Checkout Session with 2 line items + automatic tax
+    const params: Record<string, string> = {
+      mode: 'payment',
+      billing_address_collection: 'required',
+      'automatic_tax[enabled]': 'true',
+      // Line Item 1: Credits
+      'line_items[0][price_data][currency]': 'usd',
+      'line_items[0][price_data][product_data][name]': `${credits} Credits`,
+      'line_items[0][price_data][product_data][description]': `Top up ${credits} credits to your account`,
+      'line_items[0][price_data][unit_amount]': baseCents.toString(),
+      'line_items[0][price_data][tax_behavior]': 'exclusive',
+      'line_items[0][quantity]': '1',
+      // Line Item 2: Service Fee
+      'line_items[1][price_data][currency]': 'usd',
+      'line_items[1][price_data][product_data][name]': 'Processing Fee',
+      'line_items[1][price_data][product_data][description]': 'Payment processing fee',
+      'line_items[1][price_data][unit_amount]': feeCents.toString(),
+      'line_items[1][price_data][tax_behavior]': 'exclusive',
+      'line_items[1][quantity]': '1',
+      // Metadata for webhook
       'metadata[user_id]': user.id,
       'metadata[credits]': credits.toString(),
-    })
+      // Redirect URLs
+      success_url: `${APP_URL}/dashboard?checkout=success`,
+      cancel_url: `${APP_URL}/dashboard?checkout=cancel`,
+    }
 
-    return new Response(JSON.stringify({ clientSecret: paymentIntent.client_secret }), {
+    const session = await stripeRequest('/checkout/sessions', params)
+
+    return new Response(JSON.stringify({ url: session.url }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (err) {
-    console.error('Create PaymentIntent error:', err)
+    console.error('Create Checkout Session error:', err)
     return new Response(JSON.stringify({ error: err.message || 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

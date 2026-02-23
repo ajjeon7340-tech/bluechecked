@@ -615,15 +615,35 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     // @ts-ignore
     const balance = stats.availableBalance;
     if (balance <= 0) return;
-    if (!window.confirm(`Withdraw ${balance} credits to your connected account?`)) return;
-    
+
+    const MIN_WITHDRAWAL = 2000;
+    const PLATFORM_FEE_RATE = 0.10;
+    const CREDIT_TO_USD = 0.01;
+
+    if (balance < MIN_WITHDRAWAL) {
+        alert(`Minimum withdrawal is ${MIN_WITHDRAWAL.toLocaleString()} credits ($${(MIN_WITHDRAWAL * CREDIT_TO_USD).toFixed(2)}). You have ${balance.toLocaleString()} credits.`);
+        return;
+    }
+
+    const grossUsd = balance * CREDIT_TO_USD;
+    const platformFee = grossUsd * PLATFORM_FEE_RATE;
+    const netUsd = grossUsd - platformFee;
+
+    const confirmed = window.confirm(
+        `Withdraw ${balance.toLocaleString()} credits?\n\n` +
+        `Gross amount: $${grossUsd.toFixed(2)}\n` +
+        `Platform fee (10%): -$${platformFee.toFixed(2)}\n` +
+        `You receive: $${netUsd.toFixed(2)}`
+    );
+    if (!confirmed) return;
+
     setIsWithdrawing(true);
     try {
         await requestWithdrawal(balance);
         await loadData(true);
-        alert(`Successfully transferred ${balance} credits.`);
-    } catch (e) {
-        alert("Withdrawal failed.");
+        alert(`Successfully transferred! You will receive $${netUsd.toFixed(2)}.`);
+    } catch (e: any) {
+        alert(e.message || "Withdrawal failed.");
     } finally {
         setIsWithdrawing(false);
     }
