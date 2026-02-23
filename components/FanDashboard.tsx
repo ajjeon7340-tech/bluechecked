@@ -1167,7 +1167,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             <div className="mt-auto w-full relative z-10">
                                                 <button className="w-full bg-stone-900 text-white rounded-xl py-3 text-sm font-bold shadow-lg shadow-stone-900/20 group-hover:bg-stone-800 group-hover:shadow-stone-900/30 transition-all flex items-center justify-center gap-2">
                                                     <Sparkles size={14} className="text-yellow-300" />
-                                                    <span>Request</span>
+                                                    <span>Diem</span>
                                                     <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-mono">{creator.pricePerMessage}</span>
                                                 </button>
                                             </div>

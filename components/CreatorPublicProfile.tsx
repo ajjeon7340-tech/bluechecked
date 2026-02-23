@@ -628,7 +628,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       }}
                       className="bg-stone-900 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold hover:bg-stone-800 transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap z-20"
                   >
-                      Request
+                      Diem
                   </button>
               </div>
           )}

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from './Button';
-import { DiemLogo, CheckCircle2, MessageSquare, ArrowRight, Clock, Sparkles, User, Heart, Lock, Check, ShoppingBag, FileText, Coins } from './Icons';
+import { DiemLogo, CheckCircle2, MessageSquare, ArrowRight, Clock, Sparkles, User, Heart, Lock, Check, ShoppingBag, FileText, Coins, X, Download } from './Icons';
 
 interface Props {
   onLoginClick: () => void;
@@ -20,7 +20,13 @@ const FEATURED_CONVERSATIONS = [
     request: "I've been waiting for your guidance. Could you help my resume shine with your warm perspective? ✨",
     response: "I can feel your sincerity in every word. Let’s polish this together so you can walk into that interview with a smile! 😊",
     gradient: 'from-purple-100 to-violet-50',
-    time: '1h ago'
+    time: '1h ago',
+    fullThread: [
+        { role: 'FAN', content: "I've been waiting for your guidance. Could you help my resume shine with your warm perspective? ✨", time: '2h ago' },
+        { role: 'CREATOR', content: "I can feel your sincerity in every word. Let’s polish this together so you can walk into that interview with a smile! 😊", time: '1h ago' },
+        { role: 'CREATOR', content: "I've reviewed your experience and it's impressive. I've attached a list of expected interview questions tailored to your background. Practice these!", attachment: { name: 'Expected_Interview_Questions.pdf', type: 'PDF' }, time: '1h ago' },
+        { role: 'CREATOR', content: "Good luck with your interview! You've got this. 🍀", time: '1h ago' }
+    ]
   },
   {
     id: '2',
@@ -32,7 +38,11 @@ const FEATURED_CONVERSATIONS = [
     request: "I'm looking forward to your styling tips. Can you help me find the look that makes me truly glow? ✨",
     response: "Your style has such a lovely vibe! I’ll pick the perfect pieces so you can feel confident and radiant tomorrow. 🤗",
     gradient: 'from-pink-100 to-rose-50',
-    time: '3h ago'
+    time: '3h ago',
+    fullThread: [
+        { role: 'FAN', content: "I'm looking forward to your styling tips. Can you help me find the look that makes me truly glow? ✨", time: '4h ago' },
+        { role: 'CREATOR', content: "Your style has such a lovely vibe! I’ll pick the perfect pieces so you can feel confident and radiant tomorrow. 🤗", time: '3h ago' }
+    ]
   },
   {
     id: '3',
@@ -44,12 +54,16 @@ const FEATURED_CONVERSATIONS = [
     request: "I've been waiting for your sharp insights. Could you guide my portfolio to be more solid and healthy? 📈",
     response: "Market volatility is tough, but I’m here to help. Let’s adjust your balance to build a more secure future together. ✨",
     gradient: 'from-emerald-100 to-teal-50',
-    time: '6h ago'
+    time: '6h ago',
+    fullThread: [
+        { role: 'FAN', content: "I've been waiting for your sharp insights. Could you guide my portfolio to be more solid and healthy? 📈", time: '7h ago' },
+        { role: 'CREATOR', content: "Market volatility is tough, but I’m here to help. Let’s adjust your balance to build a more secure future together. ✨", time: '6h ago' }
+    ]
   },
 ];
 
 export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
-  const [activeCreator, setActiveCreator] = useState(0);
+  const [expandedConversation, setExpandedConversation] = useState<typeof FEATURED_CONVERSATIONS[0] | null>(null);
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
 
   return (
@@ -159,7 +173,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
               <div
                 key={item.id}
                 className="group bg-white rounded-3xl p-6 border border-stone-200 shadow-sm hover:shadow-xl hover:shadow-stone-200/50 hover:-translate-y-1 transition-all duration-500 cursor-pointer flex flex-col"
-                onClick={() => setActiveCreator(idx)}
+                onClick={() => setExpandedConversation(item)}
               >
                 {/* 1. Request (Fan) */}
                 <div className="flex relative z-10">
@@ -474,6 +488,56 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
           </div>
         </div>
       </footer>
+
+      {/* Expanded Conversation Modal */}
+      {expandedConversation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setExpandedConversation(null)}>
+            <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center bg-white z-10">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full overflow-hidden border border-stone-200">
+                            <img src={expandedConversation.creator.avatar} className="w-full h-full object-cover" alt="" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-stone-900 text-sm">{expandedConversation.creator.name}</h3>
+                            <p className="text-xs text-stone-500">{expandedConversation.creator.role}</p>
+                        </div>
+                    </div>
+                    <button onClick={() => setExpandedConversation(null)} className="p-2 hover:bg-stone-100 rounded-full text-stone-400 transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+                
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[#FAF9F6]">
+                    {expandedConversation.fullThread.map((msg: any, idx: number) => (
+                        <div key={idx} className={`flex ${msg.role === 'FAN' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-[85%] rounded-2xl p-4 ${msg.role === 'FAN' ? 'bg-stone-900 text-white rounded-tr-none' : 'bg-white border border-stone-200 text-stone-700 rounded-tl-none shadow-sm'}`}>
+                                {msg.content && <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>}
+                                
+                                {msg.attachment && (
+                                    <div className="mt-3 flex items-center gap-3 p-3 bg-stone-50 rounded-xl border border-stone-100">
+                                        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-stone-200 text-red-500">
+                                            <FileText size={20} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-stone-900 truncate">{msg.attachment.name}</p>
+                                            <p className="text-[10px] text-stone-500 uppercase">{msg.attachment.type}</p>
+                                        </div>
+                                        <button className="p-2 text-stone-400 hover:text-stone-600">
+                                            <Download size={16} />
+                                        </button>
+                                    </div>
+                                )}
+                                <p className={`text-[10px] mt-2 ${msg.role === 'FAN' ? 'text-stone-400' : 'text-stone-400'}`}>{msg.time}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+      )}
     </div>
   );
 };
