@@ -505,7 +505,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                 </div>
                 
                 {/* Body */}
-                <div className="flex-1 overflow-y-auto p-6 bg-[#FAF9F6]">
+                <div className="flex-1 overflow-y-auto p-6 bg-white">
                     {expandedConversation.fullThread.map((msg: any, idx: number) => {
                         const isLast = idx === expandedConversation.fullThread.length - 1;
                         const isFan = msg.role === 'FAN';
@@ -541,7 +541,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                                         <span className="text-xs font-medium text-stone-400">• {msg.time}</span>
                                     </div>
                                     
-                                    <div className={`p-4 rounded-2xl border shadow-sm ${isFan ? 'bg-white border-stone-200 rounded-tl-lg' : 'bg-stone-50 border-stone-200/60 rounded-tl-lg'}`}>
+                                    <div className={`p-4 rounded-2xl border ${isFan ? 'bg-white border-stone-200 rounded-tl-lg shadow-sm' : 'bg-stone-50 border-stone-200/60 rounded-tl-lg'}`}>
                                         {msg.content && <p className="text-sm text-stone-700 leading-relaxed whitespace-pre-wrap">{msg.content}</p>}
                                         
                                         {msg.attachment && (
