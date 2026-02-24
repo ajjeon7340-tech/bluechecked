@@ -212,7 +212,10 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                             <span className="font-semibold text-sm text-stone-900">{item.creator.name}</span>
-                            <Verified size={14} />
+                            <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-1 rounded-full flex-shrink-0 overflow-visible">
+                                <Verified size={12} />
+                                <span className="text-[9px] font-semibold uppercase tracking-wide">Creator</span>
+                            </div>
                         </div>
                         <div className="bg-stone-50 p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
                             <p className="text-sm text-stone-700 leading-relaxed">{item.response}</p>
@@ -487,7 +490,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
       {/* Expanded Conversation Modal */}
       {expandedConversation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setExpandedConversation(null)}>
-            <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center bg-white z-10">
                     <div className="flex items-center gap-3">
