@@ -536,8 +536,8 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                                                 <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
                                             </div>
                                         ) : (
-                                        <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-1 rounded-full flex-shrink-0">
-                                            <Verified size={10} />
+                                        <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-1 rounded-full flex-shrink-0 overflow-visible">
+                                            <Verified size={12} />
                                             <span className="text-[9px] font-semibold uppercase tracking-wide">Creator</span>
                                         </div>
                                         )}
