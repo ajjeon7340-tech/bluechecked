@@ -1352,9 +1352,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     <div className="w-20 h-20 rounded-full bg-stone-100 flex-shrink-0 overflow-hidden border border-stone-200">
                                         {profileForm.avatarUrl ? <img src={profileForm.avatarUrl} className="w-full h-full object-cover" /> : <User size={32} className="m-auto text-stone-300"/>}
                                     </div>
-                                    <div className="flex-1">
+                                    <div className="flex-1 min-w-0">
                                         <label className="block text-sm font-medium text-stone-700 mb-1">Profile Photo</label>
-                                        <div className="flex gap-2">
+                                        <div className="flex flex-col sm:flex-row gap-2">
                                             {profileForm.avatarUrl ? (
                                                 <div className="flex items-center gap-2 w-full px-3 py-2 border border-stone-300 rounded-lg bg-stone-50 text-stone-500 text-sm">
                                                     <span className="truncate flex-1">
@@ -1369,7 +1369,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             )}
                                             <button 
                                                 onClick={() => fileInputRef.current?.click()}
-                                                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
+                                                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0"
                                             >
                                                 <Camera size={16} /> Upload
                                             </button>
