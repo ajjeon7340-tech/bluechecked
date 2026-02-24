@@ -142,7 +142,7 @@ export const Verified = ({ className, size = 24, ...props }: any) => (
   <svg
     width={size}
     height={size}
-    viewBox="0 0 24 25"
+    viewBox="-1 -1 26 27"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     className={`flex-shrink-0 ${className || ''}`}
