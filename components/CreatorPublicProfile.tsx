@@ -439,7 +439,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       onClick={onCreateOwn}
                       className="flex items-center gap-2.5 cursor-pointer hover:opacity-70 transition-opacity pl-1"
                     >
-                      <DiemLogo size={40} className="text-stone-800" />
+                      <DiemLogo size={70} className="text-stone-800" />
                     </div>
 
                     <div className="flex items-center gap-2">
