@@ -485,22 +485,22 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                 </div>
                 <div className="p-6 sm:p-8 relative z-10">
                     <div className="flex flex-col items-center text-center gap-5">
-                        {/* Instagram Notes style: Avatar with speech bubble */}
-                        <div className={`flex flex-col items-center flex-shrink-0 relative ${!isCustomizeMode && creator.bio ? 'mt-16 sm:mt-20' : ''}`}>
-                        {/* Avatar container - bubble is positioned relative to this */}
+                        {/* Instagram Notes style: Avatar with thought bubble overlaid */}
+                        <div className={`flex flex-col items-center flex-shrink-0 relative ${!isCustomizeMode && creator.bio ? 'mt-14 sm:mt-16' : ''}`}>
+                        {/* Avatar container - bubble overlaps onto avatar */}
                         <div className="relative">
-                        {/* Notes-style bubble overlapping top of avatar */}
+                        {/* Thought bubble overlapping top of avatar */}
                         {!isCustomizeMode && creator.bio && (
-                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 -translate-y-full z-30" style={{ width: 'max-content', maxWidth: '220px' }}>
-                                <div className="bg-white rounded-[20px] px-4 py-2.5 shadow-md border border-stone-200/60">
+                            <div className="absolute bottom-[65%] sm:bottom-[60%] left-1/2 -translate-x-1/2 z-30" style={{ width: 'max-content', maxWidth: '220px' }}>
+                                <div className="bg-white rounded-[20px] px-4 py-2.5 shadow-lg border border-stone-200/60">
                                     <p className="text-xs sm:text-sm text-stone-800 leading-snug font-medium text-center">
                                         {creator.bio}
                                     </p>
                                 </div>
-                                {/* Thought bubble dots trailing down */}
-                                <div className="flex flex-col items-center mt-1.5 gap-1">
-                                    <div className="w-3 h-3 bg-white rounded-full shadow-md border border-stone-200/60"></div>
-                                    <div className="w-2 h-2 bg-white rounded-full shadow-md border border-stone-200/60"></div>
+                                {/* Thought bubble dots trailing down onto avatar */}
+                                <div className="flex flex-col items-center mt-1 gap-0.5">
+                                    <div className="w-2.5 h-2.5 bg-white rounded-full shadow-md border border-stone-200/60"></div>
+                                    <div className="w-1.5 h-1.5 bg-white rounded-full shadow-md border border-stone-200/60"></div>
                                 </div>
                             </div>
                         )}
