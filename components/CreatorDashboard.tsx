@@ -2805,6 +2805,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 />
                             </div>
                             <div>
+                                <label className="block text-sm font-medium text-stone-700 mb-1">User ID (Handle)</label>
+                                <input 
+                                    type="text" 
+                                    value={editedCreator.handle}
+                                    onChange={e => setEditedCreator({...editedCreator, handle: e.target.value})}
+                                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none"
+                                />
+                            </div>
+                            <div>
                                 <label className="block text-sm font-medium text-stone-700 mb-1">Bio</label>
                                 <textarea 
                                     value={editedCreator.bio}

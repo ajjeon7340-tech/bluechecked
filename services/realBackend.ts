@@ -756,6 +756,7 @@ export const updateCreatorProfile = async (profile: CreatorProfile): Promise<Cre
     const { error } = await supabase
         .from('profiles')
         .update({
+            handle: profile.handle,
             display_name: profile.displayName,
             bio: profile.bio,
             intake_instructions: profile.intakeInstructions,

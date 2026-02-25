@@ -42,6 +42,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   const [price, setPrice] = useState(20);
   const [responseHours, setResponseHours] = useState(48);
   const [platforms, setPlatforms] = useState<(string | { id: string, url: string })[]>([]);
+  const [handle, setHandle] = useState('');
 
   // Shared Profile Config
   const [displayName, setDisplayName] = useState(currentUser?.name || '');
@@ -174,12 +175,19 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
      // 2. If Creator, Update Creator Profile
      if (finalUser && finalUser.role === 'CREATOR') {
+        if (!handle.trim()) {
+            alert("User ID (Handle) is required.");
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const currentProfile = await getCreatorProfile();
             // We update the newly created blank profile with the setup details
             await updateCreatorProfile({
                 ...currentProfile,
                 displayName: finalUser.name,
+                handle: handle.startsWith('@') ? handle : `@${handle}`,
                 bio: bio || currentProfile.bio,
                 avatarUrl: finalUser.avatarUrl || currentProfile.avatarUrl,
                 pricePerMessage: price,
@@ -187,7 +195,10 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 platforms: platforms.length > 0 ? platforms : (currentProfile.platforms || [])
             });
         } catch (e) {
-            console.error(e);
+            console.error("Failed to setup profile:", e);
+            alert("Failed to save profile. User ID might be taken.");
+            setIsLoading(false);
+            return;
         }
      }
      setIsLoading(false);
@@ -312,6 +323,16 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 {/* Creator Specific Fields */}
                 {role === 'CREATOR' && (
                     <>
+                        <div>
+                            <label className="block text-sm font-medium text-stone-700 mb-1">User ID (Handle)</label>
+                            <input 
+                                type="text" 
+                                value={handle} 
+                                onChange={e => setHandle(e.target.value)} 
+                                placeholder="@username"
+                                className="w-full border border-stone-200 rounded-xl p-3 focus:ring-2 focus:ring-stone-500 outline-none transition-all" 
+                            />
+                        </div>
                         <div className="bg-stone-50 p-5 rounded-2xl border border-stone-100 space-y-4">
                             <h3 className="text-sm font-bold text-stone-900 uppercase tracking-wide flex items-center gap-2">
                                 <MessageSquare size={16} className="text-stone-500"/> {t('auth.messageSettings')}
