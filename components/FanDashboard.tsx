@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CurrentUser, Message, CreatorProfile } from '../types';
 import { Button } from './Button';
 import { DiemLogo, CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download, Smile, Verified } from './Icons';
@@ -12,7 +13,13 @@ interface Props {
   onUpdateUser?: (user: CurrentUser) => void;
 }
 
-const getResponseTimeTooltip = (status: string) => {
+const getResponseTimeTooltip = (status: string, t?: (key: string) => string) => {
+    if (t) {
+        if (status === 'Lightning') return t('common.responseTooltipLightning');
+        if (status === 'Very Fast') return t('common.responseTooltipVeryFast');
+        if (status === 'Fast') return t('common.responseTooltipFast');
+        return t('common.responseTooltipDefault');
+    }
     if (status === 'Lightning') return 'Typically replies in under 1 hour';
     if (status === 'Very Fast') return 'Typically replies in under 4 hours';
     if (status === 'Fast') return 'Typically replies within 24 hours';
@@ -20,7 +27,7 @@ const getResponseTimeTooltip = (status: string) => {
 };
 
 // Instagram/Threads style relative time
-const getRelativeTime = (dateString: string) => {
+const getRelativeTime = (dateString: string, t?: (key: string, opts?: any) => string) => {
     const now = new Date();
     const date = new Date(dateString);
     const diffMs = now.getTime() - date.getTime();
@@ -30,14 +37,22 @@ const getRelativeTime = (dateString: string) => {
     const diffDay = Math.floor(diffHour / 24);
     const diffWeek = Math.floor(diffDay / 7);
 
-    if (diffSec < 60) return 'Just now';
-    if (diffMin < 60) return `${diffMin}m ago`;
-    if (diffHour < 24) return `${diffHour}h ago`;
-    if (diffDay < 7) return `${diffDay}d ago`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    if (t) {
+        if (diffSec < 60) return t('common.justNow');
+        if (diffMin < 60) return t('common.mAgo', { count: diffMin });
+        if (diffHour < 24) return t('common.hAgo', { count: diffHour });
+        if (diffDay < 7) return t('common.dAgo', { count: diffDay });
+    } else {
+        if (diffSec < 60) return 'Just now';
+        if (diffMin < 60) return `${diffMin}m ago`;
+        if (diffHour < 24) return `${diffHour}h ago`;
+        if (diffDay < 7) return `${diffDay}d ago`;
+    }
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 };
 
 export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseCreators, onUpdateUser }) => {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [featuredCreators, setFeaturedCreators] = useState<CreatorProfile[]>([]);
   const [purchasedProducts, setPurchasedProducts] = useState<any[]>([]);
@@ -78,7 +93,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   });
 
   const leaveChatroom = (creatorId: string) => {
-      if (!window.confirm('Leave this conversation? It will be hidden from your inbox but not deleted.')) return;
+      if (!window.confirm(t('fan.leaveConversation'))) return;
       const updated = { ...leftChatrooms, [creatorId]: Date.now() };
       setLeftChatrooms(updated);
       localStorage.setItem('bluechecked_fan_left_chatrooms', JSON.stringify(updated));
@@ -183,7 +198,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           if (onUpdateUser) onUpdateUser(updatedUser);
         } catch {}
       }, 2000);
-      setToastMessage('Payment successful! Credits are being added.');
+      setToastMessage(t('fan.paymentSuccess'));
     } else if (params.get('checkout') === 'cancel') {
       const url = new URL(window.location.href);
       url.searchParams.delete('checkout');
@@ -375,21 +390,21 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   }, [latestMessage, celebratedMessageIds]);
 
   const getSessionStatus = (msg: Message) => {
-      if (msg.status === 'REPLIED') return { label: 'Creator collected', color: 'text-emerald-600', icon: CheckCircle2 };
-      if (msg.status === 'EXPIRED') return { label: 'Expired', color: 'text-stone-400', icon: Ban };
-      if (msg.status === 'CANCELLED') return { label: 'Cancelled', color: 'text-red-600', icon: Ban };
+      if (msg.status === 'REPLIED') return { label: t('creator.collected'), color: 'text-emerald-600', icon: CheckCircle2 };
+      if (msg.status === 'EXPIRED') return { label: t('creator.expired'), color: 'text-stone-400', icon: Ban };
+      if (msg.status === 'CANCELLED') return { label: t('creator.cancelled'), color: 'text-red-600', icon: Ban };
       
       // PENDING
       const lastChat = msg.conversation[msg.conversation.length - 1];
       if (lastChat?.role === 'CREATOR') {
-          return { label: 'Creator answered', color: 'text-stone-700', icon: MessageSquare };
+          return { label: t('fan.creatorAnswering'), color: 'text-stone-700', icon: MessageSquare };
       }
       
       if (msg.isRead) {
-          return { label: 'Read', color: 'text-stone-600', icon: Check };
+          return { label: t('creator.read'), color: 'text-stone-600', icon: Check };
       }
       
-      return { label: 'Not yet read', color: 'text-stone-400', icon: Clock };
+      return { label: t('fan.notYetRead'), color: 'text-stone-400', icon: Clock };
   };
 
   // Derived state for UI logic
@@ -425,7 +440,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         setConfirmCancelId(null);
     } catch (error) {
         console.error("Cancel failed", error);
-        alert("Failed to cancel message. Please try again.");
+        alert(t('fan.failedCancel'));
     } finally {
         setIsCancelling(false);
     }
@@ -439,7 +454,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           await loadMessages(true);
           setShowFollowUpInput(false);
           setFollowUpText('');
-          setToastMessage("Follow-up Sent!");
+          setToastMessage(t('fan.followUpSent'));
           setTimeout(() => setToastMessage(null), 3000);
           // Refresh user balance if updated
           if (onUpdateUser && currentUser) {
@@ -484,7 +499,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           setCustomAppreciationText('');
           setCustomAppreciationMode(false);
           await loadMessages(true);
-          setToastMessage("Appreciation Sent!");
+          setToastMessage(t('fan.appreciationSent'));
           setTimeout(() => setToastMessage(null), 3000);
           // Decrease local credits for the tip (mock 50)
           if (onUpdateUser && currentUser) {
@@ -508,7 +523,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
               window.location.href = url;
           } catch (e: any) {
               console.error(e);
-              alert(e.message || "Failed to start checkout");
+              alert(e.message || t('fan.topUpFailed'));
               setIsProcessingTopUp(false);
           }
           return;
@@ -523,7 +538,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           setShowTopUpModal(false);
       } catch (e) {
           console.error(e);
-          alert("Top up failed");
+          alert(t('fan.topUpFailed'));
       } finally {
           setIsProcessingTopUp(false);
       }
@@ -553,7 +568,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       if (file) {
           setAvatarFileName(file.name);
           if (!file.type.startsWith('image/')) {
-              alert("Please upload a valid image file (JPEG, PNG).");
+              alert(t('fan.invalidImage'));
               return;
           }
 
@@ -606,7 +621,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       list.push({
           id: 'welcome',
           icon: Sparkles,
-          text: 'Welcome to Diem! Find a creator to start.',
+          text: t('fan.welcomeNotification'),
           time: new Date(),
           color: 'bg-stone-100 text-stone-600'
       });
@@ -620,7 +635,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
               list.push({
                   id: `sent-${msg.id}`,
                   icon: isTip ? Heart : Send,
-                  text: isTip ? `You sent a tip to ${msg.creatorName || 'Creator'}` : `You sent a request to ${msg.creatorName || 'Creator'}`,
+                  text: isTip ? t('fan.tipSent', { name: msg.creatorName || t('common.creator') }) : t('fan.requestSent', { name: msg.creatorName || t('common.creator') }),
                   time: new Date(msg.createdAt),
                   color: isTip ? 'bg-pink-100 text-pink-600' : 'bg-stone-100 text-stone-700',
                   creatorId: msg.creatorId
@@ -632,7 +647,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
               list.push({
                   id: `reply-${msg.id}`,
                   icon: MessageSquare,
-                  text: `${msg.creatorName || 'Creator'} replied to your request!`,
+                  text: t('fan.creatorReplied', { name: msg.creatorName || t('common.creator') }),
                   time: new Date(msg.replyAt),
                   color: 'bg-green-100 text-green-600',
                   creatorId: msg.creatorId
@@ -644,7 +659,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
               list.push({
                   id: `exp-${msg.id}`,
                   icon: Coins,
-                  text: `Request to ${msg.creatorName || 'Creator'} expired. ${msg.amount} credits refunded.`,
+                  text: t('fan.requestExpired', { name: msg.creatorName || t('common.creator'), amount: msg.amount }),
                   time: new Date(msg.expiresAt),
                   color: 'bg-amber-100 text-amber-600',
                   creatorId: msg.creatorId
@@ -656,7 +671,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                list.push({
                   id: `can-${msg.id}`,
                   icon: Ban,
-                  text: `Request to ${msg.creatorName || 'Creator'} was rejected.`,
+                  text: t('fan.requestRejected', { name: msg.creatorName || t('common.creator') }),
                   time: new Date(msg.createdAt), // Fallback
                   color: 'bg-red-100 text-red-600',
                   creatorId: msg.creatorId
@@ -669,7 +684,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                list.push({
                   id: `purch-${msg.id}`,
                   icon: ShoppingBag,
-                  text: `You purchased ${productName}`,
+                  text: t('fan.productPurchased', { product: productName }),
                   time: new Date(msg.createdAt),
                   color: 'bg-purple-100 text-purple-600',
                   creatorId: msg.creatorId
@@ -689,7 +704,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
   const handleClearAllNotifications = () => {
       if (notifications.length === 0) return;
-      if (window.confirm("Are you sure you want to clear all notifications?")) {
+      if (window.confirm(t('fan.clearNotifications'))) {
           const allIds = notifications.map(n => n.id);
           setDeletedNotificationIds(prev => [...prev, ...allIds]);
       }
@@ -712,16 +727,16 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   };
 
   const getPageTitle = () => {
-      if (selectedCreatorId) return 'Conversation';
+      if (selectedCreatorId) return t('fan.conversations');
       switch (currentView) {
-          case 'OVERVIEW': return 'Conversations';
-          case 'EXPLORE': return 'Explore Creators';
-          case 'PURCHASED': return 'Purchased Content';
-          case 'HISTORY': return 'Purchase History';
-          case 'SUPPORT': return 'Support';
-          case 'SETTINGS': return 'Profile Settings';
-          case 'NOTIFICATIONS': return 'Notifications';
-          default: return 'Dashboard';
+          case 'OVERVIEW': return t('fan.conversations');
+          case 'EXPLORE': return t('fan.exploreCreators');
+          case 'PURCHASED': return t('fan.purchased');
+          case 'HISTORY': return t('fan.purchaseHistory');
+          case 'SUPPORT': return t('profile.support');
+          case 'SETTINGS': return t('creator.profileSettings');
+          case 'NOTIFICATIONS': return t('creator.notifications');
+          default: return t('common.diem');
       }
   };
 
@@ -771,7 +786,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         <div className="bg-white p-2.5 rounded-full shadow-lg mb-2 ring-1 ring-stone-100 animate-in zoom-in duration-300">
             <Lock size={20} className="text-stone-400" />
         </div>
-        <span className="font-bold text-xs uppercase tracking-wider text-stone-500 bg-white/80 px-3 py-1 rounded-full border border-stone-100">Coming Soon</span>
+        <span className="font-bold text-xs uppercase tracking-wider text-stone-500 bg-white/80 px-3 py-1 rounded-full border border-stone-100">{t('common.comingSoon')}</span>
       </div>
   );
 
@@ -814,18 +829,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                 {/* Nav Links */}
                 <div className="space-y-1 flex-1">
-                    <div className="px-3 mb-2 text-xs font-bold text-stone-400 uppercase tracking-wider">Fan Menu</div>
-                    <SidebarItem icon={Home} label="Conversations" view="OVERVIEW" />
-                    <SidebarItem icon={Search} label="Explore Creators" view="EXPLORE" />
-                    <SidebarItem icon={ShoppingBag} label="Purchased" view="PURCHASED" isBeta={true} />
-                    <SidebarItem icon={Bell} label="Notifications" view="NOTIFICATIONS" />
+                    <div className="px-3 mb-2 text-xs font-bold text-stone-400 uppercase tracking-wider">{t('fan.fanMenu')}</div>
+                    <SidebarItem icon={Home} label={t('fan.conversations')} view="OVERVIEW" />
+                    <SidebarItem icon={Search} label={t('fan.exploreCreators')} view="EXPLORE" />
+                    <SidebarItem icon={ShoppingBag} label={t('fan.purchased')} view="PURCHASED" isBeta={true} />
+                    <SidebarItem icon={Bell} label={t('creator.notifications')} view="NOTIFICATIONS" />
                     {/* Wallet now acts as a trigger for the modal, not a separate view */}
-                    <SidebarItem icon={Wallet} label="My Wallet" onClick={() => setShowTopUpModal(true)} />
-                    <SidebarItem icon={Receipt} label="Purchase History" view="HISTORY" />
-                    <SidebarItem icon={HelpCircle} label="Support" view="SUPPORT" />
+                    <SidebarItem icon={Wallet} label={t('fan.myWallet')} onClick={() => setShowTopUpModal(true)} />
+                    <SidebarItem icon={Receipt} label={t('fan.purchaseHistory')} view="HISTORY" />
+                    <SidebarItem icon={HelpCircle} label={t('profile.support')} view="SUPPORT" />
                     
                     <div className="my-4 mx-3 border-t border-stone-200"></div>
-                    <SidebarItem icon={User} label="Profile" view="SETTINGS" />
+                    <SidebarItem icon={User} label={t('fan.profile')} view="SETTINGS" />
                 </div>
 
                 {/* Profile Snippet Bottom */}
@@ -851,7 +866,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
             {/* Demo Banner */}
             {!isBackendConfigured() && (
                 <div className="bg-stone-800 text-white text-[10px] font-semibold px-4 py-1 text-center z-50">
-                    DEMO MODE: Supabase not configured. Showing mock data.
+                    {t('fan.demoMode')}
                 </div>
             )}
             {/* Header */}
@@ -871,7 +886,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             className="hidden sm:flex items-center gap-2 bg-stone-100 hover:bg-stone-200 transition-colors px-3 py-1.5 rounded-full text-xs font-bold text-stone-600 cursor-pointer"
                         >
                             <Coins size={14} className="text-stone-500" />
-                            {currentUser?.credits || 0} Credits
+                            {currentUser?.credits || 0} {t('common.credits')}
                         </button>
                         <div className="relative">
                             <button 
@@ -887,12 +902,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)}></div>
                                     <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                                         <div className="px-4 py-3 border-b border-stone-50 bg-stone-50/50 flex justify-between items-center">
-                                            <h3 className="font-bold text-sm text-stone-900">Notifications</h3>
-                                            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{notifications.length} Updates</span>
+                                            <h3 className="font-bold text-sm text-stone-900">{t('creator.notifications')}</h3>
+                                            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{t('fan.updates', { count: notifications.length })}</span>
                                         </div>
                                         <div className="max-h-[320px] overflow-y-auto">
                                             {notifications.length === 0 ? (
-                                                <div className="p-8 text-center text-stone-400 text-xs">No notifications yet.</div>
+                                                <div className="p-8 text-center text-stone-400 text-xs">{t('fan.noNotifications')}</div>
                                             ) : (
                                                 notifications.map(notif => (
                                                     <div 
@@ -937,12 +952,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div>
                                     <div className="flex items-center gap-2 mb-3">
-                                        <span className="bg-white/10 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border border-white/10">Beta Access</span>
+                                        <span className="bg-white/10 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border border-white/10">{t('fan.betaAccess')}</span>
                                         <Sparkles size={14} className="text-stone-400" />
                                     </div>
-                                    <h3 className="font-bold text-2xl md:text-3xl mb-2">My Library</h3>
+                                    <h3 className="font-bold text-2xl md:text-3xl mb-2">{t('fan.myLibrary')}</h3>
                                     <p className="text-stone-400 text-sm max-w-lg leading-relaxed">
-                                        Your collection of premium digital assets, guides, and exclusive content from creators you support.
+                                        {t('fan.libraryDesc')}
                                     </p>
                                 </div>
                                 <div className="hidden md:block">
@@ -965,13 +980,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-50'
                                     }`}
                                  >
-                                     {type === 'ALL' ? 'All Content' : type === 'DOCUMENT' ? 'Documents' : type === 'IMAGE' ? 'Images' : 'Videos'}
+                                     {type === 'ALL' ? t('fan.allContent') : type === 'DOCUMENT' ? t('fan.documents') : type === 'IMAGE' ? t('fan.images') : t('fan.videos')}
                                  </button>
                              ))}
                         </div>
 
                         {isLoading ? (
-                            <div className="text-center py-20 text-stone-400">Loading library...</div>
+                            <div className="text-center py-20 text-stone-400">{t('fan.loadingLibrary')}</div>
                         ) : filteredProducts.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filteredProducts.map((product, idx) => (
@@ -998,7 +1013,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         <span className="text-[10px] font-bold text-stone-500">{product.creatorName}</span>
                                     </div>
                                     <h4 className="font-bold text-stone-900 mb-1 leading-tight">{product.title}</h4>
-                                    <p className="text-xs text-stone-500 mb-4 line-clamp-2 flex-1">{product.description || 'Digital Download'}</p>
+                                    <p className="text-xs text-stone-500 mb-4 line-clamp-2 flex-1">{product.description || t('profile.digitalDownload')}</p>
                                     <div className="mt-auto pt-4 border-t border-stone-50 flex justify-between items-center">
                                         <span className="text-[10px] text-stone-400">{new Date(product.purchaseDate).toLocaleDateString()}</span>
                                         <button 
@@ -1015,15 +1030,15 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         link.click();
                                                         document.body.removeChild(link);
                                                     } else {
-                                                        alert("Failed to get download link.");
+                                                        alert(t('profile.failedDownload'));
                                                     }
                                                 } catch (error: any) {
                                                     console.error("Download failed:", error);
-                                                    alert(error.message || "Failed to download file. Please try again.");
+                                                    alert(error.message || t('profile.failedDownloadRetry'));
                                                 }
                                             }}
                                         >
-                                            Download <Download size={12}/>
+                                            {t('profile.downloadFile')} <Download size={12}/>
                                         </button>
                                     </div>
                                 </div>
@@ -1034,10 +1049,10 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             <div className="text-center py-20 text-stone-400 bg-white rounded-3xl border border-stone-100 shadow-sm">
                                 <ShoppingBag size={48} className="mx-auto mb-4 opacity-20" />
                                 <p className="text-lg font-bold text-stone-500">
-                                    {purchasedProducts.length > 0 ? 'No matching content found' : 'No purchases yet'}
+                                    {purchasedProducts.length > 0 ? t('fan.noMatchingContent') : t('fan.noPurchases')}
                                 </p>
                                 <p className="text-sm">
-                                    {purchasedProducts.length > 0 ? 'Try selecting a different filter.' : 'Support creators by purchasing their digital products.'}
+                                    {purchasedProducts.length > 0 ? t('fan.tryDifferentFilter') : t('fan.supportCreatorsProducts')}
                                 </p>
                             </div>
                         )}
@@ -1053,12 +1068,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                             <div>
                                 <h2 className="text-2xl font-black text-stone-900 tracking-tight flex items-center gap-2">
-                                    Featured Experts
-                                    <button onClick={() => loadCreators()} className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-50 rounded-full transition-colors" title="Refresh List">
+                                    {t('fan.featuredExperts')}
+                                    <button onClick={() => loadCreators()} className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-50 rounded-full transition-colors" title={t('fan.refreshList')}>
                                         <RefreshCw size={16} />
                                     </button>
                                 </h2>
-                                <p className="text-stone-500 text-sm mt-1">Verified experts ready to reply.</p>
+                                <p className="text-stone-500 text-sm mt-1">{t('fan.verifiedExperts')}</p>
                             </div>
                             
                             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -1066,16 +1081,16 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-stone-600 transition-colors" size={16} />
                                     <input 
                                         type="text" 
-                                        placeholder="Search creators, tags..." 
+                                        placeholder={t('fan.searchCreators')}
                                         value={exploreQuery}
                                         onChange={(e) => setExploreQuery(e.target.value)}
                                         className="w-full sm:w-64 pl-10 pr-4 py-2.5 bg-white border border-stone-200 rounded-xl text-sm font-medium focus:ring-1 focus:ring-stone-400 outline-none transition-all shadow-sm"
                                     />
                                 </div>
                                 <select className="bg-white border border-stone-200 text-stone-700 text-sm font-bold rounded-xl px-4 py-2.5 outline-none focus:ring-1 focus:ring-stone-400 shadow-sm">
-                                    <option>Sort by: Relevance</option>
-                                    <option>Sort by: Price (Low to High)</option>
-                                    <option>Sort by: Response Time</option>
+                                    <option>{t('fan.sortRelevance')}</option>
+                                    <option>{t('fan.sortPrice')}</option>
+                                    <option>{t('fan.sortResponse')}</option>
                                 </select>
                             </div>
                         </div>
@@ -1101,7 +1116,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 <div className="absolute inset-0 z-50 flex items-center justify-center">
                                                     <div className="bg-stone-900/90 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-bold shadow-xl transform -rotate-3 border border-white/20 flex items-center gap-2">
                                                         <Clock size={12} className="text-yellow-400 animate-pulse" />
-                                                        Application Under Review
+                                                        {t('fan.applicationUnderReview')}
                                                     </div>
                                                 </div>
                                             )}
@@ -1148,17 +1163,17 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 <div 
                                                     className="relative group/tooltip bg-stone-50 rounded-xl p-2.5 border border-stone-100 flex flex-col items-center justify-center cursor-help transition-colors hover:bg-stone-100"
                                                 >
-                                                    <span className="text-[10px] font-bold text-stone-400 uppercase mb-0.5">Reply</span>
+                                                    <span className="text-[10px] font-bold text-stone-400 uppercase mb-0.5">{t('fan.reply')}</span>
                                                     <span className="font-black text-stone-700 text-xs text-center leading-tight">{creator.stats.responseTimeAvg}</span>
                                                     
                                                     {/* Custom Tooltip */}
                                                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[140px] bg-stone-800 text-white text-[10px] font-medium py-1.5 px-2.5 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50 text-center shadow-xl">
-                                                        {getResponseTimeTooltip(creator.stats.responseTimeAvg)}
+                                                        {getResponseTimeTooltip(creator.stats.responseTimeAvg, t)}
                                                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-stone-800"></div>
                                                     </div>
                                                 </div>
                                                 <div className="bg-stone-50 rounded-xl p-2.5 border border-stone-100 flex flex-col items-center justify-center">
-                                                    <span className="text-[10px] font-bold text-stone-400 uppercase mb-0.5">Window</span>
+                                                    <span className="text-[10px] font-bold text-stone-400 uppercase mb-0.5">{t('fan.window')}</span>
                                                     <span className="font-black text-stone-700 text-sm">{creator.responseWindowHours}h</span>
                                                 </div>
                                             </div>
@@ -1167,7 +1182,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             <div className="mt-auto w-full relative z-10">
                                                 <button className="w-full bg-stone-900 text-white rounded-xl py-3 text-sm font-bold shadow-lg shadow-stone-900/20 group-hover:bg-stone-800 group-hover:shadow-stone-900/30 transition-all flex items-center justify-center gap-2">
                                                     <Sparkles size={14} className="text-yellow-300" />
-                                                    <span>Diem</span>
+                                                    <span>{t('common.diem')}</span>
                                                     <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-mono">{creator.pricePerMessage}</span>
                                                 </button>
                                             </div>
@@ -1178,8 +1193,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         ) : (
                             <div className="text-center py-20 text-stone-400 bg-white rounded-3xl border border-stone-100 shadow-sm">
                                 <Search size={48} className="mx-auto mb-4 opacity-20" />
-                                <p className="text-lg font-bold text-stone-500">No creators found</p>
-                                <p className="text-sm">Try searching for "fitness", "react", or specific names.</p>
+                                <p className="text-lg font-bold text-stone-500">{t('fan.noCreatorsFound')}</p>
+                                <p className="text-sm">{t('fan.trySearching')}</p>
                             </div>
                         )}
                     </div>
@@ -1190,18 +1205,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                     <div className="p-4 md:p-6 max-w-5xl mx-auto animate-in fade-in h-full flex flex-col">
                         <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
                              <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between shrink-0">
-                                 <h3 className="text-sm font-bold text-stone-900">Transaction History</h3>
-                                 <Button variant="ghost" size="sm" className="text-xs"><ExternalLink size={14} className="mr-1"/> Export CSV</Button>
+                                 <h3 className="text-sm font-bold text-stone-900">{t('fan.transactionHistory')}</h3>
+                                 <Button variant="ghost" size="sm" className="text-xs"><ExternalLink size={14} className="mr-1"/> {t('fan.exportCSV')}</Button>
                              </div>
                              <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full text-left text-sm whitespace-nowrap">
                                     <thead className="bg-stone-50 text-stone-500 font-bold border-b border-stone-100 text-xs uppercase tracking-wider">
                                         <tr>
-                                            <th className="px-6 py-3">Date</th>
-                                            <th className="px-6 py-3">To</th>
-                                            <th className="px-6 py-3">Type</th>
-                                            <th className="px-6 py-3">Status</th>
-                                            <th className="px-6 py-3 text-right">Amount (Credits)</th>
+                                            <th className="px-6 py-3">{t('fan.date')}</th>
+                                            <th className="px-6 py-3">{t('fan.to')}</th>
+                                            <th className="px-6 py-3">{t('fan.type')}</th>
+                                            <th className="px-6 py-3">{t('fan.status')}</th>
+                                            <th className="px-6 py-3 text-right">{t('fan.amountCredits')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-stone-100">
@@ -1223,23 +1238,23 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <span className="text-sm text-stone-600">
-                                                            {isProduct ? 'Digital Content' : isTip ? 'Fan Tip' : 'Diem Request'}
+                                                            {isProduct ? t('fan.digitalContent') : isTip ? t('fan.fanTip') : t('fan.diemRequest')}
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         {msg.status === 'PENDING' && (
                                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-100">
-                                                                <Clock size={12} /> Pending
+                                                                <Clock size={12} /> {t('common.pending')}
                                                             </span>
                                                         )}
                                                         {msg.status === 'REPLIED' && (
                                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
-                                                                <CheckCircle2 size={12} /> Completed
+                                                                <CheckCircle2 size={12} /> {t('common.completed')}
                                                             </span>
                                                         )}
                                                         {isRefunded && (
                                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-stone-100 text-stone-500 border border-stone-200">
-                                                                <Ban size={12} /> Refunded
+                                                                <Ban size={12} /> {t('common.refunded')}
                                                             </span>
                                                         )}
                                                     </td>
@@ -1252,7 +1267,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             )
                                         })}
                                         {messages.length === 0 && (
-                                            <tr><td colSpan={5} className="p-12 text-center text-stone-400">No transactions found.</td></tr>
+                                            <tr><td colSpan={5} className="p-12 text-center text-stone-400">{t('fan.noTransactions')}</td></tr>
                                         )}
                                     </tbody>
                                 </table>
@@ -1279,20 +1294,20 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 </div>
                                                 <div className="flex items-center justify-between mt-0.5">
                                                     <span className="text-xs text-stone-500">
-                                                        {isProduct ? 'Digital Content' : isTip ? 'Fan Tip' : 'Diem Request'}
+                                                        {isProduct ? t('fan.digitalContent') : isTip ? t('fan.fanTip') : t('fan.diemRequest')}
                                                     </span>
                                                     <span className="text-xs text-stone-400">{new Date(msg.createdAt).toLocaleDateString()}</span>
                                                 </div>
                                                 <div className="mt-1">
-                                                    {msg.status === 'PENDING' && <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Pending</span>}
-                                                    {msg.status === 'REPLIED' && <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">Completed</span>}
-                                                    {isRefunded && <span className="text-[10px] font-bold text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">Refunded</span>}
+                                                    {msg.status === 'PENDING' && <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">{t('common.pending')}</span>}
+                                                    {msg.status === 'REPLIED' && <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">{t('common.completed')}</span>}
+                                                    {isRefunded && <span className="text-[10px] font-bold text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">{t('common.refunded')}</span>}
                                                 </div>
                                             </div>
                                         </div>
                                     );
                                 })}
-                                {messages.length === 0 && <div className="p-8 text-center text-stone-400 text-sm">No transactions found.</div>}
+                                {messages.length === 0 && <div className="p-8 text-center text-stone-400 text-sm">{t('fan.noTransactions')}</div>}
                              </div>
                         </div>
                     </div>
@@ -1310,24 +1325,24 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                              </div>
                              
                              <div>
-                                <h3 className="text-2xl font-black text-stone-900 mb-2">How can we help?</h3>
+                                <h3 className="text-2xl font-black text-stone-900 mb-2">{t('fan.howCanWeHelp')}</h3>
                                 <p className="text-stone-500 text-sm leading-relaxed">
-                                    Our support team is available Monday through Friday, 9am - 5pm EST. We usually respond within 24 hours.
+                                    {t('fan.supportHours')}
                                 </p>
                              </div>
 
                              <div className="space-y-3 pt-2">
                                  <Button fullWidth className="h-12 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-stone-900/10">
-                                    <MessageSquare size={18}/> Contact Support
+                                    <MessageSquare size={18}/> {t('creator.contactSupport')}
                                  </Button>
                                  <Button fullWidth variant="secondary" className="h-12 rounded-xl flex items-center justify-center gap-2 bg-stone-50 hover:bg-stone-100 border border-stone-200">
-                                    <FileText size={18}/> View FAQ & Guides
+                                    <FileText size={18}/> {t('fan.viewFAQ')}
                                  </Button>
                              </div>
 
                              <div className="pt-6 border-t border-stone-100">
                                  <p className="text-xs text-stone-400">
-                                     Direct Email: <a href="#" className="text-stone-900 font-semibold hover:underline">support@diem.com</a>
+                                     {t('fan.directEmail').split('support@diem.com')[0]}<a href="#" className="text-stone-900 font-semibold hover:underline">support@diem.com</a>
                                  </p>
                              </div>
                          </div>
@@ -1341,19 +1356,19 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             <div className="fixed bottom-8 right-8 z-[60] max-w-sm animate-in slide-in-from-bottom-4">
                                 <div className="bg-stone-900 text-white rounded-lg px-4 py-3 shadow-lg flex items-center gap-3">
                                     <CheckCircle2 size={20} className="text-green-400" />
-                                    <span className="font-bold text-sm">Profile updated successfully!</span>
+                                    <span className="font-bold text-sm">{t('fan.profileUpdated')}</span>
                                 </div>
                             </div>
                         )}
                         <div className="bg-white p-6 rounded-xl border border-stone-200">
-                            <h3 className="text-lg font-bold text-stone-900 mb-6 border-b border-stone-100 pb-2">Your Profile</h3>
+                            <h3 className="text-lg font-bold text-stone-900 mb-6 border-b border-stone-100 pb-2">{t('fan.yourProfile')}</h3>
                             <div className="space-y-6">
                                 <div className="flex items-center gap-6">
                                     <div className="w-20 h-20 rounded-full bg-stone-100 flex-shrink-0 overflow-hidden border border-stone-200">
                                         {profileForm.avatarUrl ? <img src={profileForm.avatarUrl} className="w-full h-full object-cover" /> : <User size={32} className="m-auto text-stone-300"/>}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <label className="block text-sm font-medium text-stone-700 mb-1">Profile Photo</label>
+                                        <label className="block text-sm font-medium text-stone-700 mb-1">{t('fan.profilePhoto')}</label>
                                         <div className="flex flex-col sm:flex-row gap-2">
                                             {profileForm.avatarUrl ? (
                                                 <div className="flex items-center gap-2 w-full px-3 py-2 border border-stone-300 rounded-lg bg-stone-50 text-stone-500 text-sm">
@@ -1364,22 +1379,22 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center gap-2 w-full px-3 py-2 border border-stone-300 rounded-lg bg-stone-50 text-stone-400 text-sm italic">
-                                                    No image selected
+                                                    {t('fan.noImageSelected')}
                                                 </div>
                                             )}
                                             <button 
                                                 onClick={() => fileInputRef.current?.click()}
                                                 className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0"
                                             >
-                                                <Camera size={16} /> Upload
+                                                <Camera size={16} /> {t('auth.upload')}
                                             </button>
                                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarFileChange} />
                                         </div>
-                                        <p className="text-[10px] text-stone-400 mt-1">Upload from desktop.</p>
+                                        <p className="text-[10px] text-stone-400 mt-1">{t('fan.uploadFromDesktop')}</p>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-stone-700 mb-1">Display Name</label>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1">{t('fan.displayName')}</label>
                                     <input 
                                         type="text" 
                                         value={profileForm.name} 
@@ -1388,16 +1403,16 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-stone-700 mb-1">Bio</label>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1">{t('fan.bio')}</label>
                                     <textarea 
                                         value={profileForm.bio} 
                                         onChange={e => setProfileForm(p => ({...p, bio: e.target.value}))}
                                         className="w-full px-3 py-2 border border-stone-300 rounded-lg outline-none resize-none h-24"
-                                        placeholder="Tell us about yourself..."
+                                        placeholder={t('fan.bioPlaceholder')}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-stone-700 mb-1">Age (Optional)</label>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1">{t('fan.ageOptional')}</label>
                                     <input 
                                         type="number" 
                                         value={profileForm.age} 
@@ -1406,7 +1421,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     />
                                 </div>
                                 <div className="pt-4 flex justify-end">
-                                    <Button onClick={handleSaveProfile} isLoading={isSavingProfile}>Save Changes</Button>
+                                    <Button onClick={handleSaveProfile} isLoading={isSavingProfile}>{t('common.saveChanges')}</Button>
                                 </div>
                             </div>
                         </div>
@@ -1419,13 +1434,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                       {/* Conversation List */}
                       <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
                          <div className="px-6 py-4 border-b border-stone-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-                             <h3 className="text-sm font-bold text-stone-900">Message Filters</h3>
+                             <h3 className="text-sm font-bold text-stone-900">{t('fan.messageFilters')}</h3>
                              {/* Search Input - More Prominent */}
                              <div className="relative w-full sm:w-auto group">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-stone-600 transition-colors" size={16} />
                                 <input 
                                     type="text" 
-                                    placeholder="Search messages..." 
+                                    placeholder={t('fan.searchMessages')}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="w-full sm:w-72 pl-10 pr-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:ring-1 focus:ring-stone-400 focus:bg-white outline-none transition-all shadow-sm"
@@ -1434,19 +1449,19 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                          </div>
 
                          {isLoading ? (
-                            <div className="text-center py-12 text-sm text-stone-400">Loading requests...</div>
+                            <div className="text-center py-12 text-sm text-stone-400">{t('fan.loadingRequests')}</div>
                          ) : filteredGroups.length === 0 ? (
                             <div className="text-center py-16">
                                 <MessageSquare size={32} className="mx-auto text-stone-300 mb-3" />
                                 <h3 className="text-sm font-bold text-stone-900 mb-1">
-                                    {searchQuery ? 'No conversations found' : 'No messages yet'}
+                                    {searchQuery ? t('fan.noConversations') : t('fan.noMessagesYet')}
                                 </h3>
                                 <p className="text-xs text-stone-500 mb-6">
-                                    {searchQuery ? 'Try a different search term.' : 'Find an expert to help you solve your problem.'}
+                                    {searchQuery ? t('fan.tryDifferentSearch') : t('fan.findExpert')}
                                 </p>
                                 {!searchQuery && (
                                     <Button onClick={() => setCurrentView('EXPLORE')} className="rounded-full shadow-lg shadow-stone-200">
-                                        Explore Creators
+                                        {t('fan.exploreCreators')}
                                     </Button>
                                 )}
                             </div>
@@ -1457,10 +1472,10 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 <table className="w-full text-left border-collapse min-w-[600px]">
                                     <thead>
                                         <tr className="bg-stone-50/50 border-b border-stone-100">
-                                            <th className="px-6 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-wider">Expert</th>
-                                            <th className="px-6 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-wider">Latest Status</th>
-                                            <th className="px-6 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-wider text-right">Sessions</th>
-                                            <th className="px-6 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-wider text-right">Last Active</th>
+                                            <th className="px-6 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-wider">{t('fan.expert')}</th>
+                                            <th className="px-6 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-wider">{t('fan.latestStatus')}</th>
+                                            <th className="px-6 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-wider text-right">{t('fan.sessions')}</th>
+                                            <th className="px-6 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-wider text-right">{t('fan.lastActive')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1480,7 +1495,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             </div>
                                                             <div className="flex flex-col">
                                                                 <span className="text-sm font-bold text-stone-900">{group.creatorName}</span>
-                                                                <span className="text-[10px] text-stone-500">View Conversation &rarr;</span>
+                                                                <span className="text-[10px] text-stone-500">{t('fan.viewConversation')}</span>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -1676,7 +1691,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             <User size={10} className="fill-current" />
                                                             <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
                                                         </div>
-                                                        <span className="text-xs font-medium text-stone-400">• {getRelativeTime(firstChat.timestamp)}</span>
+                                                        <span className="text-xs font-medium text-stone-400">• {getRelativeTime(firstChat.timestamp, t)}</span>
                                                     </div>
                                                 </div>
 
@@ -1795,7 +1810,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                                         <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
                                                                     </div>
                                                                 )}
-                                                            <span className="text-xs font-medium text-stone-400">• {getRelativeTime(chat.timestamp)}</span>
+                                                            <span className="text-xs font-medium text-stone-400">• {getRelativeTime(chat.timestamp, t)}</span>
                                                         </div>
                                                     </div>
                                                     <div className={`${isCreator ? 'bg-stone-50' : 'bg-white'} p-5 sm:p-6 rounded-2xl rounded-tl-lg border border-stone-200/60`}>

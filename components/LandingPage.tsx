@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from './Button';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import { DiemLogo, CheckCircle2, MessageSquare, ArrowRight, Clock, Sparkles, User, Heart, Lock, Check, ShoppingBag, FileText, Coins, X, Download, Verified } from './Icons';
 interface Props {
   onLoginClick: () => void;
@@ -8,60 +10,62 @@ interface Props {
 }
 
 // Featured creators for the landing page
-const FEATURED_CONVERSATIONS = [
+const getFeaturedConversations = (t: (key: string) => string) => [
   {
     id: '1',
     creator: {
-      name: 'Ji-won Kim',
-      role: 'Career Mentor',
+      name: t('landing.conv1CreatorName'),
+      role: t('landing.conv1CreatorRole'),
       avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face',
     },
-    request: "I've been waiting for your guidance. Could you help my resume shine with your warm perspective? ✨",
-    response: "I can feel your sincerity in every word. Let’s polish this together so you can walk into that interview with a smile! 😊",
+    request: t('landing.conv1Request'),
+    response: t('landing.conv1Response'),
     gradient: 'from-purple-100 to-violet-50',
-    time: '1h ago',
+    time: t('landing.conv1Time'),
     fullThread: [
-        { role: 'FAN', content: "I've been waiting for your guidance. Could you help my resume shine with your warm perspective? ✨", time: '2h ago' },
-        { role: 'CREATOR', content: "I can feel your sincerity in every word. Let’s polish this together so you can walk into that interview with a smile! 😊", time: '1h ago' },
-        { role: 'CREATOR', content: "I've reviewed your experience and it's impressive. I've attached a list of expected interview questions tailored to your background. Practice these!", attachment: { name: 'Expected_Interview_Questions.pdf', type: 'PDF' }, time: '1h ago' },
-        { role: 'CREATOR', content: "Good luck with your interview! You've got this. 🍀", time: '1h ago' }
+        { role: 'FAN', content: t('landing.conv1Thread1'), time: t('landing.conv1Thread1Time') },
+        { role: 'CREATOR', content: t('landing.conv1Thread2'), time: t('landing.conv1Thread2Time') },
+        { role: 'CREATOR', content: t('landing.conv1Thread3'), attachment: { name: 'Expected_Interview_Questions.pdf', type: 'PDF' }, time: t('landing.conv1Thread3Time') },
+        { role: 'CREATOR', content: t('landing.conv1Thread4'), time: t('landing.conv1Thread4Time') }
     ]
   },
   {
     id: '2',
     creator: {
-      name: 'Chloe Park',
-      role: 'Fashion Stylist',
+      name: t('landing.conv2CreatorName'),
+      role: t('landing.conv2CreatorRole'),
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face',
     },
-    request: "I'm looking forward to your styling tips. Can you help me find the look that makes me truly glow? ✨",
-    response: "Your style has such a lovely vibe! I’ll pick the perfect pieces so you can feel confident and radiant tomorrow. 🤗",
+    request: t('landing.conv2Request'),
+    response: t('landing.conv2Response'),
     gradient: 'from-pink-100 to-rose-50',
-    time: '3h ago',
+    time: t('landing.conv2Time'),
     fullThread: [
-        { role: 'FAN', content: "I'm looking forward to your styling tips. Can you help me find the look that makes me truly glow? ✨", time: '4h ago' },
-        { role: 'CREATOR', content: "Your style has such a lovely vibe! I’ll pick the perfect pieces so you can feel confident and radiant tomorrow. 🤗", time: '3h ago' }
+        { role: 'FAN', content: t('landing.conv2Thread1'), time: t('landing.conv2Thread1Time') },
+        { role: 'CREATOR', content: t('landing.conv2Thread2'), time: t('landing.conv2Thread2Time') }
     ]
   },
   {
     id: '3',
     creator: {
-      name: 'David Roh',
-      role: 'Investment Expert',
+      name: t('landing.conv3CreatorName'),
+      role: t('landing.conv3CreatorRole'),
       avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face',
     },
-    request: "I've been waiting for your sharp insights. Could you guide my portfolio to be more solid and healthy? 📈",
-    response: "Market volatility is tough, but I’m here to help. Let’s adjust your balance to build a more secure future together. ✨",
+    request: t('landing.conv3Request'),
+    response: t('landing.conv3Response'),
     gradient: 'from-emerald-100 to-teal-50',
-    time: '6h ago',
+    time: t('landing.conv3Time'),
     fullThread: [
-        { role: 'FAN', content: "I've been waiting for your sharp insights. Could you guide my portfolio to be more solid and healthy? 📈", time: '7h ago' },
-        { role: 'CREATOR', content: "Market volatility is tough, but I’m here to help. Let’s adjust your balance to build a more secure future together. ✨", time: '6h ago' }
+        { role: 'FAN', content: t('landing.conv3Thread1'), time: t('landing.conv3Thread1Time') },
+        { role: 'CREATOR', content: t('landing.conv3Thread2'), time: t('landing.conv3Thread2Time') }
     ]
   },
 ];
 
 export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
+  const { t } = useTranslation();
+  const FEATURED_CONVERSATIONS = getFeaturedConversations(t);
   const [expandedConversation, setExpandedConversation] = useState<typeof FEATURED_CONVERSATIONS[0] | null>(null);
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
 
@@ -97,18 +101,19 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
           <DiemLogo size={28} className="text-stone-800" />
           <span className="font-semibold text-lg text-stone-800 tracking-tight">diem</span>
         </div>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4">
+          <LanguageSwitcher />
           <button
             onClick={onDemoClick}
             className="hidden sm:block text-sm text-stone-500 hover:text-stone-800 transition-colors font-medium"
           >
-            View Demo
+            {t('landing.viewDemo')}
           </button>
           <button
             onClick={onLoginClick}
             className="bg-stone-900 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-stone-800 transition-all"
           >
-            Sign In
+            {t('common.signIn')}
           </button>
         </div>
       </nav>
@@ -119,21 +124,21 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
           {/* Soft Badge */}
           <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-100 text-amber-700 px-4 py-2 rounded-full text-sm font-medium">
             <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse-soft"></span>
-            Now welcoming creators
+            {t('landing.nowWelcoming')}
           </div>
 
           {/* Main Headline - Editorial Typography */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-stone-900 tracking-tight leading-[1.15]">
-            A quieter space for
+            {t('landing.heroTitle1')}
             <br />
-            <span className="text-stone-400">meaningful conversations.</span>
+            <span className="text-stone-400">{t('landing.heroTitle2')}</span>
           </h1>
 
           {/* Subtext - Generous Line Height */}
           <p className="text-lg sm:text-xl text-stone-500 leading-relaxed max-w-2xl mx-auto font-normal">
-            Connect with your community through paid messages.
-            They get your undivided attention. You get compensated for your time.
-            <span className="text-stone-400"> Everyone wins.</span>
+            {t('landing.heroSubtext1')}
+            {' '}{t('landing.heroSubtext2')}
+            <span className="text-stone-400"> {t('landing.heroSubtext3')}</span>
           </p>
 
           {/* CTA Buttons - Soft & Rounded */}
@@ -142,14 +147,14 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
               onClick={onLoginClick}
               className="w-full sm:w-auto bg-stone-900 text-white px-8 py-4 rounded-full font-medium text-base hover:bg-stone-800 transition-all flex items-center justify-center gap-2 group"
             >
-              Start as Creator
+              {t('landing.startAsCreator')}
               <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </button>
             <button
               onClick={onDemoClick}
               className="w-full sm:w-auto bg-white text-stone-700 border border-stone-200 px-8 py-4 rounded-full font-medium text-base hover:bg-stone-50 transition-all"
             >
-              Explore Demo
+              {t('landing.exploreDemo')}
             </button>
           </div>
         </div>
@@ -160,9 +165,9 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
         <div className="max-w-6xl mx-auto px-6">
           {/* Section Header */}
           <div className="text-center mb-16">
-            <p className="text-sm font-medium text-stone-400 uppercase tracking-wider mb-4">From the Community</p>
+            <p className="text-sm font-medium text-stone-400 uppercase tracking-wider mb-4">{t('landing.fromCommunity')}</p>
             <h2 className="text-3xl sm:text-4xl font-semibold text-stone-900 tracking-tight">
-              Real conversations. Real value.
+              {t('landing.realConversations')}
             </h2>
           </div>
 
@@ -187,10 +192,10 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                     {/* Right: Content */}
                     <div className="flex-1 min-w-0 pb-6">
                         <div className="flex items-center gap-2 mb-2">
-                            <span className="font-semibold text-sm text-stone-900">Anonymous Fan</span>
+                            <span className="font-semibold text-sm text-stone-900">{t('landing.anonymousFan')}</span>
                             <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
                                 <User size={10} className="fill-current" />
-                                <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
+                                <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.fan')}</span>
                             </div>
                         </div>
                         <div className="bg-white p-4 rounded-2xl rounded-tl-lg border border-stone-200 shadow-sm">
@@ -214,7 +219,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                             <span className="font-semibold text-sm text-stone-900">{item.creator.name}</span>
                             <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-1 rounded-full flex-shrink-0 overflow-visible">
                                 <Verified size={12} />
-                                <span className="text-[9px] font-semibold uppercase tracking-wide">Creator</span>
+                                <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.creator')}</span>
                             </div>
                         </div>
                         <div className="bg-stone-50 p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
@@ -232,30 +237,30 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
       <section className="py-24 bg-[#FAFAF9]">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
-            <p className="text-sm font-medium text-stone-400 uppercase tracking-wider mb-4">Simple & Transparent</p>
+            <p className="text-sm font-medium text-stone-400 uppercase tracking-wider mb-4">{t('landing.simpleTransparent')}</p>
             <h2 className="text-3xl sm:text-4xl font-semibold text-stone-900 tracking-tight">
-              How it works
+              {t('landing.howItWorks')}
             </h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
             {[
               {
-                step: '01',
-                title: 'Set your rate',
-                desc: 'Choose what your time is worth. $5 or $500 - you decide. No subscriptions, just pay-per-message.',
+                step: t('landing.step01'),
+                title: t('landing.setYourRate'),
+                desc: t('landing.setYourRateDesc'),
                 icon: Coins
               },
               {
-                step: '02',
-                title: 'Receive questions',
-                desc: 'Fans pay upfront to send you a message. Their payment is held safely until you respond.',
+                step: t('landing.step02'),
+                title: t('landing.receiveQuestions'),
+                desc: t('landing.receiveQuestionsDesc'),
                 icon: MessageSquare
               },
               {
-                step: '03',
-                title: 'Reply & earn',
-                desc: 'Respond within your window and the payment is yours. Miss it? They get an automatic refund.',
+                step: t('landing.step03'),
+                title: t('landing.replyAndEarn'),
+                desc: t('landing.replyAndEarnDesc'),
                 icon: Check
               }
             ].map((item, idx) => (
@@ -302,16 +307,16 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                 {/* Escrow Visualization */}
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100 mb-6">
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-sm font-medium text-stone-500">Payment Status</span>
-                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">Held in Escrow</span>
+                    <span className="text-sm font-medium text-stone-500">{t('landing.paymentStatus')}</span>
+                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">{t('landing.heldInEscrow')}</span>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
                       <Lock size={20} className="text-amber-600" />
                     </div>
                     <div>
-                      <div className="text-2xl font-semibold text-stone-900">500 Credits</div>
-                      <div className="text-sm text-stone-500">Protected until response</div>
+                      <div className="text-2xl font-semibold text-stone-900">{t('landing.fiveHundredCredits')}</div>
+                      <div className="text-sm text-stone-500">{t('landing.protectedUntilResponse')}</div>
                     </div>
                   </div>
                 </div>
@@ -323,12 +328,12 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                       <Clock size={20} className="text-emerald-600" />
                     </div>
                     <div className="flex-1">
-                      <div className="text-sm text-stone-500 mb-1">Response Guarantee</div>
+                      <div className="text-sm text-stone-500 mb-1">{t('landing.responseGuarantee')}</div>
                       <div className="flex items-center gap-2">
                         <div className="h-2 flex-1 bg-stone-100 rounded-full overflow-hidden">
                           <div className="h-full w-3/4 bg-emerald-500 rounded-full"></div>
                         </div>
-                        <span className="text-sm font-medium text-stone-700">36h left</span>
+                        <span className="text-sm font-medium text-stone-700">{t('landing.timeLeft')}</span>
                       </div>
                     </div>
                   </div>
@@ -339,25 +344,24 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
             {/* Right: Text */}
             <div className="space-y-8">
               <div>
-                <p className="text-sm font-medium text-amber-600 uppercase tracking-wider mb-4">Built on Trust</p>
+                <p className="text-sm font-medium text-amber-600 uppercase tracking-wider mb-4">{t('landing.builtOnTrust')}</p>
                 <h2 className="text-3xl sm:text-4xl font-semibold text-stone-900 tracking-tight leading-tight">
-                  Guaranteed response,
+                  {t('landing.guaranteedResponse')}
                   <br />
-                  or your money back.
+                  {t('landing.orMoneyBack')}
                 </h2>
               </div>
 
               <p className="text-lg text-stone-500 leading-relaxed">
-                We hold payments in escrow until the creator responds. If they miss their window,
-                you get an automatic, full refund. No questions asked.
+                {t('landing.escrowDesc')}
               </p>
 
               <div className="space-y-4">
                 {[
-                  'Payments protected until response',
-                  'Automatic refunds if deadline missed',
-                  'Creators set their own response windows',
-                  'Full transparency on expected wait times'
+                  t('landing.paymentsProtected'),
+                  t('landing.automaticRefunds'),
+                  t('landing.creatorsSetWindows'),
+                  t('landing.fullTransparency')
                 ].map((item, idx) => (
                   <div key={idx} className="flex items-center gap-3">
                     <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
@@ -379,21 +383,20 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
             {/* Left: Text */}
             <div className="space-y-8">
               <div>
-                <p className="text-sm font-medium text-violet-600 uppercase tracking-wider mb-4">Beyond Messages</p>
+                <p className="text-sm font-medium text-violet-600 uppercase tracking-wider mb-4">{t('landing.beyondMessages')}</p>
                 <h2 className="text-3xl sm:text-4xl font-semibold text-stone-900 tracking-tight leading-tight">
-                  Sell your expertise,
+                  {t('landing.sellExpertise')}
                   <br />
-                  not just your time.
+                  {t('landing.notJustTime')}
                 </h2>
               </div>
 
               <p className="text-lg text-stone-500 leading-relaxed">
-                Create a digital storefront alongside your inbox. Sell guides, courses,
-                templates, and exclusive content — all in one beautiful profile.
+                {t('landing.digitalStorefront')}
               </p>
 
               <div className="flex flex-wrap gap-3">
-                {['PDF Guides', 'Video Courses', 'Templates', 'Exclusive Content'].map((tag, idx) => (
+                {[t('landing.pdfGuides'), t('landing.videoCourses'), t('landing.templates'), t('landing.exclusiveContent')].map((tag, idx) => (
                   <span key={idx} className="bg-violet-50 text-violet-700 px-4 py-2 rounded-full text-sm font-medium border border-violet-100">
                     {tag}
                   </span>
@@ -404,7 +407,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                 onClick={onLoginClick}
                 className="bg-stone-900 text-white px-6 py-3 rounded-full font-medium hover:bg-stone-800 transition-all inline-flex items-center gap-2 group"
               >
-                Start Selling
+                {t('landing.startSelling')}
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
@@ -424,7 +427,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-stone-900 truncate">{product.title}</div>
-                        <div className="text-sm text-stone-500">{product.sold}{product.suffix || ''} sold</div>
+                        <div className="text-sm text-stone-500">{product.sold}{product.suffix || ''} {t('common.sold')}</div>
                       </div>
                       <div className="flex items-center gap-1 text-stone-900 font-semibold">
                         <Coins size={14} className="text-amber-500" />
@@ -443,11 +446,10 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
       <section className="py-24 bg-gradient-to-b from-amber-50 to-orange-50">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-3xl sm:text-4xl font-semibold text-stone-900 tracking-tight mb-6">
-            Ready to create something meaningful?
+            {t('landing.readyToCreate')}
           </h2>
           <p className="text-lg text-stone-500 leading-relaxed mb-10 max-w-xl mx-auto">
-            Join thousands of creators building deeper relationships with their community.
-            Your fans are waiting.
+            {t('landing.joinThousands')}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -455,13 +457,13 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
               onClick={onLoginClick}
               className="w-full sm:w-auto bg-stone-900 text-white px-10 py-4 rounded-full font-medium text-lg hover:bg-stone-800 transition-all flex items-center justify-center gap-2 group"
             >
-              Get Started Free
+              {t('landing.getStartedFree')}
               <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
 
           <p className="text-sm text-stone-400 mt-6">
-            No credit card required. Set up in 2 minutes.
+            {t('landing.noCreditCard')}
           </p>
         </div>
       </section>
@@ -476,13 +478,13 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
             </div>
 
             <div className="flex items-center gap-8 text-sm text-stone-500">
-              <a href="#" className="hover:text-stone-900 transition-colors">Privacy</a>
-              <a href="#" className="hover:text-stone-900 transition-colors">Terms</a>
-              <a href="#" className="hover:text-stone-900 transition-colors">Twitter</a>
-              <a href="#" className="hover:text-stone-900 transition-colors">Contact</a>
+              <a href="#" className="hover:text-stone-900 transition-colors">{t('landing.privacy')}</a>
+              <a href="#" className="hover:text-stone-900 transition-colors">{t('landing.terms')}</a>
+              <a href="#" className="hover:text-stone-900 transition-colors">{t('landing.twitter')}</a>
+              <a href="#" className="hover:text-stone-900 transition-colors">{t('landing.contact')}</a>
             </div>
 
-            <p className="text-sm text-stone-400">© 2024 Diem</p>
+            <p className="text-sm text-stone-400">{t('landing.copyright')}</p>
           </div>
         </div>
       </footer>
@@ -506,13 +508,13 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                         <X size={20} />
                     </button>
                 </div>
-                
+
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto p-6 bg-white">
                     {expandedConversation.fullThread.map((msg: any, idx: number) => {
                         const isLast = idx === expandedConversation.fullThread.length - 1;
                         const isFan = msg.role === 'FAN';
-                        
+
                         return (
                             <div key={idx} className="flex relative z-10 pb-6 last:pb-0">
                                 {/* Left: Avatar + Thread Line */}
@@ -532,24 +534,24 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                                 {/* Right: Content */}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <span className="font-semibold text-sm text-stone-900">{isFan ? 'Anonymous Fan' : expandedConversation.creator.name}</span>
+                                        <span className="font-semibold text-sm text-stone-900">{isFan ? t('landing.anonymousFan') : expandedConversation.creator.name}</span>
                                         {isFan ? (
                                             <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
                                                 <User size={10} className="fill-current" />
-                                                <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
+                                                <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.fan')}</span>
                                             </div>
                                         ) : (
                                         <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-1 rounded-full flex-shrink-0 overflow-visible">
                                             <Verified size={12} />
-                                            <span className="text-[9px] font-semibold uppercase tracking-wide">Creator</span>
+                                            <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.creator')}</span>
                                         </div>
                                         )}
                                         <span className="text-xs font-medium text-stone-400">• {msg.time}</span>
                                     </div>
-                                    
+
                                     <div className={`p-4 rounded-2xl border ${isFan ? 'bg-white border-stone-200 rounded-tl-lg shadow-sm' : 'bg-stone-50 border-stone-200/60 rounded-tl-lg'}`}>
                                         {msg.content && <p className="text-sm text-stone-700 leading-relaxed whitespace-pre-wrap">{msg.content}</p>}
-                                        
+
                                         {msg.attachment && (
                                             <div className="mt-3 flex items-center gap-3 p-3 bg-white rounded-xl border border-stone-200 hover:border-stone-300 transition-colors cursor-pointer group">
                                                 <div className="w-10 h-10 bg-stone-50 rounded-lg flex items-center justify-center border border-stone-100 text-red-500">
@@ -557,7 +559,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-xs font-bold text-stone-900 truncate group-hover:text-stone-700 transition-colors">{msg.attachment.name}</p>
-                                                    <p className="text-[10px] text-stone-500 uppercase">{msg.attachment.type} Document</p>
+                                                    <p className="text-[10px] text-stone-500 uppercase">{msg.attachment.type} {t('landing.document')}</p>
                                                 </div>
                                                 <button className="p-2 text-stone-400 hover:text-stone-600">
                                                     <Download size={16} />

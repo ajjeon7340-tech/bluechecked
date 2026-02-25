@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CreatorProfile, CurrentUser, AffiliateLink, Product } from '../types';
 import { DiemLogo, CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share, Image as ImageIcon } from './Icons';
 import { Button } from './Button';
@@ -20,11 +21,11 @@ const ensureProtocol = (url: string) => {
     return `https://${url}`;
 };
 
-const getResponseTimeTooltip = (status: string) => {
-    if (status === 'Lightning') return 'Typically replies in under 1 hour';
-    if (status === 'Very Fast') return 'Typically replies in under 4 hours';
-    if (status === 'Fast') return 'Typically replies within 24 hours';
-    return 'Replies within the guaranteed response window';
+const getResponseTimeTooltip = (status: string, t: (key: string) => string) => {
+    if (status === 'Lightning') return t('profile.responseTooltipLightning');
+    if (status === 'Very Fast') return t('profile.responseTooltipVeryFast');
+    if (status === 'Fast') return t('profile.responseTooltipFast');
+    return t('profile.responseTooltipDefault');
 };
 
 export const CreatorPublicProfile: React.FC<Props> = ({ 
@@ -36,6 +37,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   onNavigateToDashboard,
   onRefreshData
 }) => {
+  const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [step, setStep] = useState<'compose' | 'payment' | 'topup' | 'success' | 'product_confirm' | 'product_payment' | 'product_success' | 'support_confirm' | 'support_payment' | 'support_success'>('compose');
   const [email, setEmail] = useState('');
@@ -153,7 +155,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
       } catch (e) {
           console.error(e);
           setIsSubmitting(false);
-          alert("Failed to top up credits. Please try again.");
+          alert(t('profile.failedTopUp'));
       }
   };
 
@@ -231,7 +233,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
         setIsCustomizeMode(false);
     } catch (e) {
         console.error("Failed to save profile", e);
-        alert("Failed to save profile. Please try again.");
+        alert(t('profile.failedSaveProfile'));
     } finally {
         setIsSavingProfile(false);
     }
@@ -280,7 +282,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
-          alert("Please upload a valid image file (JPEG, PNG).");
+          alert(t('profile.uploadValidImage'));
           return;
       }
 
@@ -329,7 +331,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     const max = 3;
 
     if (currentTypeCount + files.length > max) {
-        alert(`You can only attach up to ${max} ${type === 'IMAGE' ? 'photos' : 'files'}.`);
+        alert(t('profile.maxAttachments', { max, type: type === 'IMAGE' ? t('profile.photos') : t('profile.files') }));
         if (e.target) e.target.value = '';
         return;
     }
@@ -377,7 +379,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           }
       } else {
           navigator.clipboard.writeText(window.location.href);
-          alert('Link copied to clipboard!');
+          alert(t('profile.linkCopied'));
       }
   };
 
@@ -429,7 +431,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
       {isCustomizeMode && (
           <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4">
              <Button size="lg" onClick={handleSaveProfile} isLoading={isSavingProfile} className="shadow-xl bg-stone-900 text-white hover:bg-stone-800 rounded-2xl px-6">
-               <Save size={18} className="mr-2" /> Save Changes
+               <Save size={18} className="mr-2" /> {t('common.saveChanges')}
              </Button>
           </div>
         )}
@@ -453,7 +455,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         <button
                             onClick={handleShare}
                             className="w-9 h-9 bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-700 rounded-full transition-colors flex items-center justify-center flex-shrink-0"
-                            title="Share"
+                            title={t('common.share')}
                         >
                             <Share size={16} />
                         </button>
@@ -463,7 +465,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                               onClick={onLoginRequest}
                               className="text-stone-500 hover:text-stone-900 px-4 py-2 font-medium text-xs transition-colors"
                           >
-                              Sign In
+                              {t('common.signIn')}
                           </button>
                         )}
 
@@ -473,7 +475,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                               className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 border ${isCustomizeMode ? 'bg-stone-900 border-stone-900 text-white' : 'bg-transparent border-stone-200 text-stone-400 hover:border-stone-400'}`}
                             >
                               {isCustomizeMode ? <CheckCircle2 size={10} /> : null}
-                              {isCustomizeMode ? 'Editing' : 'Edit'}
+                              {isCustomizeMode ? t('common.editing') : t('common.edit')}
                             </button>
                         )}
                     </div>
@@ -527,10 +529,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                     {/* Response Time Tooltip */}
                                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[160px] bg-stone-900 text-white text-[10px] font-medium py-2 px-3 rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-all duration-200 pointer-events-none z-50 text-center shadow-xl normal-case tracking-normal whitespace-normal transform translate-y-2 group-hover/tooltip:translate-y-0">
                                         <div className="font-bold text-emerald-400 mb-0.5 flex items-center justify-center gap-1">
-                                            <Clock size={10} /> {creator.stats.responseTimeAvg} Response
+                                            <Clock size={10} /> {creator.stats.responseTimeAvg} {t('profile.response')}
                                         </div>
                                         <div className="text-stone-300 leading-snug">
-                                            {getResponseTimeTooltip(creator.stats.responseTimeAvg)}
+                                            {getResponseTimeTooltip(creator.stats.responseTimeAvg, t)}
                                         </div>
                                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-stone-900"></div>
                                     </div>
@@ -549,20 +551,20 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                             value={editedCreator.displayName} 
                                             onChange={(e) => updateField('displayName', e.target.value)}
                                             className="block w-full text-2xl sm:text-3xl font-bold text-stone-900 border-b border-dashed border-stone-300 focus:border-black focus:outline-none bg-transparent placeholder-stone-300 text-center"
-                                            placeholder="Display Name"
+                                            placeholder={t('auth.displayName')}
                                         />
                                         <input 
                                             type="text" 
                                             value={editedCreator.handle} 
                                             onChange={(e) => updateField('handle', e.target.value)}
                                             className="block w-full text-sm text-stone-500 font-medium border-b border-dashed border-stone-300 focus:border-black focus:outline-none bg-transparent placeholder-stone-300 text-center"
-                                            placeholder="@handle"
+                                            placeholder={`@${t('creator.handle').toLowerCase()}`}
                                         />
                                         <textarea
                                             value={editedCreator.bio}
                                             onChange={(e) => updateField('bio', e.target.value)}
                                             className="block w-full text-stone-600 border border-dashed border-stone-300 rounded-xl p-3 focus:ring-1 focus:ring-black min-h-[80px] bg-white text-sm mt-2 text-center"
-                                            placeholder="Your bio..."
+                                            placeholder={t('auth.bioAbout')}
                                         />
                                     </div>
                                 ) : (
@@ -618,7 +620,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       <h4 className="font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">DIEM</h4>
                       <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-stone-500 mt-0.5 font-medium truncate">
                           <ShieldCheck size={12} className="text-emerald-500" />
-                          <span>Guaranteed {creator.responseWindowHours}h reply</span>
+                          <span>{t('profile.guaranteed', { hours: creator.responseWindowHours })}</span>
                       </div>
                   </div>
                   <button
@@ -628,7 +630,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       }}
                       className="bg-stone-900 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold hover:bg-stone-800 transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap z-20"
                   >
-                      Diem
+                      {t('common.diem')}
                   </button>
               </div>
           )}
@@ -637,7 +639,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           <div className="w-full space-y-4">
                 <div className="flex justify-between items-end mb-2">
                     <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
-                        <Tag size={14} /> Featured Links & Products
+                        <Tag size={14} /> {t('profile.featuredLinks')}
                     </h3>
                 </div>
 
@@ -654,25 +656,25 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                             <button 
                                                 onClick={() => handleUpdateLink(link.id, 'isPromoted', !link.isPromoted)}
                                                 className={`w-10 h-10 rounded-xl flex items-center justify-center mr-4 transition-colors hover:bg-stone-100 ${link.isPromoted ? 'bg-stone-100 text-stone-600' : 'bg-white text-stone-400'}`}
-                                                title="Toggle Highlight"
+                                                title={t('profile.toggleHighlight')}
                                             >
                                                 {link.isPromoted ? <Sparkles size={20} /> : <ExternalLink size={20} />}
                                             </button>
                                             <div className="flex-1 min-w-0">
                                                  <div className="flex items-center gap-2 mb-1">
-                                                     {isProduct ? <span className="text-[10px] font-semibold bg-stone-200 text-stone-600 px-1.5 rounded uppercase">Product</span> : isSupport ? <span className="text-[10px] font-semibold bg-stone-200 text-stone-600 px-1.5 rounded uppercase">Support</span> : null}
+                                                     {isProduct ? <span className="text-[10px] font-semibold bg-stone-200 text-stone-600 px-1.5 rounded uppercase">{t('profile.product')}</span> : isSupport ? <span className="text-[10px] font-semibold bg-stone-200 text-stone-600 px-1.5 rounded uppercase">{t('profile.support')}</span> : null}
                                                      <input 
                                                         className="block w-full font-bold text-stone-800 text-lg leading-tight bg-transparent outline-none border-b border-transparent focus:border-stone-300 placeholder-stone-300"
                                                         value={link.title}
                                                         onChange={(e) => handleUpdateLink(link.id, 'title', e.target.value)}
-                                                        placeholder="Link Title"
+                                                        placeholder={t('profile.linkTitle')}
                                                     />
                                                  </div>
                                                 <input 
                                                     className="block w-full text-xs text-stone-400 mt-1 bg-transparent outline-none border-b border-transparent focus:border-stone-300 placeholder-stone-300"
                                                     value={link.url}
                                                     onChange={(e) => handleUpdateLink(link.id, 'url', e.target.value)}
-                                                    placeholder="URL"
+                                                    placeholder={t('profile.url')}
                                                 />
                                             </div>
                                         </div>
@@ -695,10 +697,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 </div>
                                                 <div className="flex-1 relative z-10 min-w-0 text-left">
                                                     <h4 className="font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
-                                                    <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">Send a tip</p>
+                                                    <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">{t('profile.sendTip')}</p>
                                                 </div>
                                                 <div className="bg-stone-900 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold hover:bg-stone-800 transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
-                                                    <Heart size={12} /> Tip
+                                                    <Heart size={12} /> {t('profile.tip')}
                                                 </div>
                                             </button>
                                         ) : isProduct ? (
@@ -718,7 +720,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 </div>
                                                 <div className="flex-1 relative z-10 min-w-0 text-left">
                                                     <h4 className="font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
-                                                    <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">Digital Download</p>
+                                                    <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">{t('profile.digitalDownload')}</p>
                                                 </div>
                                                 <div className="bg-stone-900 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold hover:bg-stone-800 transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
                                                     <Coins size={12} /> {link.price}
@@ -750,11 +752,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 
                                                 <div className="flex-1 relative z-10 min-w-0 text-left">
                                                     <h4 className="font-bold text-sm sm:text-base text-stone-900 group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
-                                                    <p className="text-[10px] text-stone-400 mt-0.5 font-medium truncate">{link.isPromoted ? 'Recommended' : 'External Link'}</p>
+                                                    <p className="text-[10px] text-stone-400 mt-0.5 font-medium truncate">{link.isPromoted ? t('common.recommended') : t('profile.externalLink')}</p>
                                                 </div>
 
                                                 <div className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap ${link.isPromoted ? 'bg-stone-900 text-white hover:bg-stone-800' : 'bg-stone-100 text-stone-600 group-hover:bg-stone-200'}`}>
-                                                    {link.isPromoted ? 'Visit' : 'Open'} <ExternalLink size={12} />
+                                                    {link.isPromoted ? t('common.visit') : t('common.open')} <ExternalLink size={12} />
                                                 </div>
                                             </a>
                                         )
@@ -774,7 +776,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                     </div>
                 ) : (
                     <div className="p-8 text-center border-2 border-dashed border-stone-200 rounded-3xl text-stone-400">
-                        {isCustomizeMode ? "Add a link above" : "No links added yet."}
+                        {isCustomizeMode ? t('profile.addLinkAbove') : t('profile.noLinksYet')}
                     </div>
                 )}
           </div>
@@ -787,16 +789,16 @@ export const CreatorPublicProfile: React.FC<Props> = ({
             {/* Modal Header */}
             <div className="px-6 py-5 border-b border-stone-100 flex justify-between items-center bg-white sm:bg-white/80 sm:backdrop-blur-xl sticky top-0 z-10">
               <h3 className="font-bold text-stone-900 text-lg">
-                {step === 'compose' && 'New Request'}
-                {step === 'payment' && 'Confirm Payment'}
-                {step === 'topup' && 'Top Up Wallet'}
-                {step === 'success' && 'Sent'}
-                {step === 'product_confirm' && 'Checkout'}
-                {step === 'product_payment' && 'Confirm Payment'}
-                {step === 'product_success' && 'Ready to Download'}
-                {step === 'support_confirm' && 'Send a Tip'}
-                {step === 'support_payment' && 'Confirm Tip'}
-                {step === 'support_success' && 'Thank You!'}
+                {step === 'compose' && t('profile.newRequest')}
+                {step === 'payment' && t('profile.confirmPayment')}
+                {step === 'topup' && t('profile.topUpWallet')}
+                {step === 'success' && t('profile.sent')}
+                {step === 'product_confirm' && t('profile.checkout')}
+                {step === 'product_payment' && t('profile.confirmPayment')}
+                {step === 'product_success' && t('profile.readyToDownload')}
+                {step === 'support_confirm' && t('profile.sendATip')}
+                {step === 'support_payment' && t('profile.confirmTip')}
+                {step === 'support_success' && t('profile.thankYou')}
               </h3>
               <button onClick={closeModal} className="p-2 bg-stone-100 rounded-full text-stone-500 hover:bg-stone-200 transition-colors hover:rotate-90 duration-200">
                 <X size={18} />
@@ -814,22 +816,22 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         <User size={20} />
                      </div>
                      <div className="flex-1">
-                        <p className="text-[10px] text-stone-400 uppercase font-bold tracking-wider">Sending as</p>
+                        <p className="text-[10px] text-stone-400 uppercase font-bold tracking-wider">{t('profile.sendingAs')}</p>
                         <p className="text-sm font-bold text-stone-900">{name}</p>
                      </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-stone-900 mb-2">Your Message</label>
+                    <label className="block text-sm font-bold text-stone-900 mb-2">{t('profile.yourMessage')}</label>
                     <div className="mb-3 p-4 bg-stone-50 text-stone-700 rounded-2xl text-sm border border-stone-200/60">
-                        <p className="font-bold mb-1.5 flex items-center gap-2"><Sparkles size={14}/> Important:</p>
+                        <p className="font-bold mb-1.5 flex items-center gap-2"><Sparkles size={14}/> {t('profile.important')}</p>
                         <p className="opacity-80 text-xs sm:text-sm leading-relaxed">
-                            {creator.intakeInstructions || "Please be as detailed as possible so I can give you the best answer."}
+                            {creator.intakeInstructions || t('profile.defaultIntake')}
                         </p>
                     </div>
                     <textarea 
                       className="w-full px-4 py-3 bg-white border border-stone-200/60 rounded-2xl focus:ring-1 focus:ring-stone-400 focus:border-stone-300 outline-none h-40 resize-none text-stone-900 placeholder:text-stone-300 transition-all text-base"
-                      placeholder="Type your message..."
+                      placeholder={t('profile.typeMessage')}
                       value={generalMessage}
                       onChange={e => setGeneralMessage(e.target.value)}
                     />
@@ -851,7 +853,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                     className="text-stone-500 hover:text-stone-700 hover:bg-stone-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
                                  >
                                     <ImageIcon size={16} />
-                                    Attach Photos
+                                    {t('profile.attachPhotos')}
                                  </button>
 
                                  <input 
@@ -867,7 +869,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                     className="text-stone-500 hover:text-stone-700 hover:bg-stone-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
                                  >
                                     <Paperclip size={16} />
-                                    Attach Files
+                                    {t('profile.attachFiles')}
                                  </button>
                              </div>
 
@@ -896,7 +898,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                     onClick={() => setStep('payment')}
                     className="bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg"
                   >
-                    Continue to Payment
+                    {t('profile.continueToPayment')}
                   </Button>
                 </div>
               )}
@@ -906,35 +908,35 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                   {/* Payment UI remains same */}
                   <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100">
                      <div className="flex justify-between text-sm mb-3">
-                       <span className="text-stone-500 font-medium">Request Price</span>
-                       <span className="font-bold text-stone-900">{creator.pricePerMessage} Credits</span>
+                       <span className="text-stone-500 font-medium">{t('profile.requestPrice')}</span>
+                       <span className="font-bold text-stone-900">{creator.pricePerMessage} {t('common.credits')}</span>
                      </div>
                      <div className="flex justify-between items-end border-t border-stone-200 pt-3">
-                       <span className="font-bold text-stone-900 text-lg">Total</span>
+                       <span className="font-bold text-stone-900 text-lg">{t('common.total')}</span>
                        <span className="font-black text-stone-900 text-3xl tracking-tight flex items-center gap-2">
                            <Coins size={24}/> {creator.pricePerMessage}
                        </span>
                      </div>
                      <div className="mt-4 pt-4 border-t border-dashed border-stone-300">
                         <div className="flex justify-between text-sm">
-                            <span className="text-stone-500">Your Wallet Balance:</span>
+                            <span className="text-stone-500">{t('profile.yourWalletBalance')}</span>
                             <span className={`font-bold ${checkBalance(creator.pricePerMessage) ? 'text-green-600' : 'text-red-500'}`}>
-                                {currentUser?.credits || 0} Credits
+                                {currentUser?.credits || 0} {t('common.credits')}
                             </span>
                         </div>
                      </div>
                   </div>
 
                   <div className="flex gap-3 pt-2">
-                    <Button variant="ghost" onClick={() => setStep('compose')} className="flex-1 rounded-2xl font-semibold">Back</Button>
-                    
+                    <Button variant="ghost" onClick={() => setStep('compose')} className="flex-1 rounded-2xl font-semibold">{t('common.back')}</Button>
+
                     {checkBalance(creator.pricePerMessage) ? (
                         <Button fullWidth onClick={handleSend} isLoading={isSubmitting} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg">
-                            Pay & Send
+                            {t('profile.paySend')}
                         </Button>
                     ) : (
                         <Button fullWidth onClick={() => setStep('topup')} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg">
-                            Top Up Credits
+                            {t('profile.topUpCredits')}
                         </Button>
                     )}
                   </div>
@@ -947,8 +949,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                           <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4 text-stone-500">
                               <Wallet size={32} />
                           </div>
-                          <h4 className="font-bold text-stone-900 text-lg">Top Up Wallet</h4>
-                          <p className="text-stone-500 text-sm">You need more credits to complete this request.</p>
+                          <h4 className="font-bold text-stone-900 text-lg">{t('profile.topUpWallet')}</h4>
+                          <p className="text-stone-500 text-sm">{t('profile.needMoreCredits')}</p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
@@ -959,18 +961,18 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                 className={`p-4 rounded-xl border text-center transition-all ${topUpAmount === amt ? 'bg-stone-50 border-stone-900 ring-1 ring-stone-900 text-stone-900' : 'bg-white border-stone-200 hover:border-stone-300'}`}
                               >
                                   <div className="font-black text-xl mb-1">{amt}</div>
-                                  <div className="text-xs text-stone-400 uppercase font-bold">Credits</div>
+                                  <div className="text-xs text-stone-400 uppercase font-bold">{t('common.credits')}</div>
                               </button>
                           ))}
                       </div>
 
                       <div className="bg-stone-50 p-4 rounded-xl flex justify-between items-center">
-                          <span className="text-sm font-medium text-stone-600">Cost</span>
+                          <span className="text-sm font-medium text-stone-600">{t('profile.cost')}</span>
                           <span className="font-bold text-stone-900 text-lg">${(topUpAmount / 100).toFixed(2)}</span>
                       </div>
 
                       <Button fullWidth onClick={handleTopUp} isLoading={isSubmitting} className="bg-stone-900 text-white rounded-2xl h-14 font-bold">
-                          Purchase Credits
+                          {t('profile.purchaseCredits')}
                       </Button>
                   </div>
               )}
@@ -991,13 +993,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                             <div className="bg-white/20 backdrop-blur-md p-4 rounded-full shadow-inner border border-white/40 mb-4 ring-4 ring-white/10">
                                 <Send size={32} className="text-white stroke-[3px]" />
                             </div>
-                            <h3 className="font-black text-white text-3xl tracking-tight mb-2 drop-shadow-sm">It's on the way!</h3>
+                            <h3 className="font-black text-white text-3xl tracking-tight mb-2 drop-shadow-sm">{t('profile.itsOnTheWay')}</h3>
                             <p className="text-white/90 font-medium text-sm leading-relaxed mb-6">
-                                <span className="font-bold text-white">{creator.displayName}</span> has been notified.<br/> We'll email you when the magic happens. <Sparkles size={14} className="text-yellow-300 animate-pulse inline" />
+                                <span className="font-bold text-white">{t('profile.creatorNotified', { name: creator.displayName })}</span><br/> {t('profile.emailWhenMagic')} <Sparkles size={14} className="text-yellow-300 animate-pulse inline" />
                             </p>
                             
                             <Button fullWidth onClick={closeModal} className="bg-white text-stone-900 hover:bg-stone-50 rounded-xl h-12 font-bold text-sm border-none">
-                                Back to Profile
+                                {t('profile.backToProfile')}
                             </Button>
                         </div>
                     </div>
@@ -1012,7 +1014,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                               <FileText size={32} className="text-stone-500" />
                           </div>
                           <h4 className="font-bold text-stone-900 text-lg mb-1">{selectedProductLink.title}</h4>
-                          <p className="text-xs text-stone-500 mb-6">Digital Download • Instant Access</p>
+                          <p className="text-xs text-stone-500 mb-6">{t('profile.digitalDownload')} • {t('profile.instantAccess')}</p>
                           <div className="text-4xl font-black text-stone-900 mb-2 flex items-center gap-2">
                               <Coins size={32} /> {selectedProductLink.price}
                           </div>
@@ -1023,7 +1025,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         onClick={() => setStep('product_payment')}
                         className="bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg"
                       >
-                        Proceed to Checkout
+                        {t('profile.proceedToCheckout')}
                       </Button>
                   </div>
               )}
@@ -1037,35 +1039,35 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                      <FileText size={20} />
                                  </div>
                                  <div className="text-left">
-                                     <p className="text-xs font-bold text-stone-500 uppercase">Item</p>
+                                     <p className="text-xs font-bold text-stone-500 uppercase">{t('profile.item')}</p>
                                      <p className="font-bold text-stone-900 text-sm truncate max-w-[150px]">{selectedProductLink.title}</p>
                                  </div>
                              </div>
-                             <span className="font-bold text-stone-900">{selectedProductLink.price} Credits</span>
+                             <span className="font-bold text-stone-900">{selectedProductLink.price} {t('common.credits')}</span>
                          </div>
                          <div className="flex justify-between items-end">
-                           <span className="font-bold text-stone-900 text-lg">Total</span>
+                           <span className="font-bold text-stone-900 text-lg">{t('common.total')}</span>
                            <span className="font-black text-stone-900 text-3xl tracking-tight flex items-center gap-2"><Coins/> {selectedProductLink.price}</span>
                          </div>
                          <div className="mt-4 pt-4 border-t border-dashed border-stone-300">
                             <div className="flex justify-between text-sm">
-                                <span className="text-stone-500">Your Wallet Balance:</span>
+                                <span className="text-stone-500">{t('profile.yourWalletBalance')}</span>
                                 <span className={`font-bold ${checkBalance(selectedProductLink.price || 0) ? 'text-green-600' : 'text-red-500'}`}>
-                                    {currentUser?.credits || 0} Credits
+                                    {currentUser?.credits || 0} {t('common.credits')}
                                 </span>
                             </div>
                          </div>
                       </div>
 
                       <div className="flex gap-3 pt-2">
-                        <Button variant="ghost" onClick={() => setStep('product_confirm')} className="flex-1 rounded-2xl font-semibold">Back</Button>
+                        <Button variant="ghost" onClick={() => setStep('product_confirm')} className="flex-1 rounded-2xl font-semibold">{t('common.back')}</Button>
                         {checkBalance(selectedProductLink.price || 0) ? (
                             <Button fullWidth onClick={handleProductPurchase} isLoading={isSubmitting} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg">
-                                Pay & Download
+                                {t('profile.payDownload')}
                             </Button>
                         ) : (
                             <Button fullWidth onClick={() => setStep('topup')} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg">
-                                Top Up Credits
+                                {t('profile.topUpCredits')}
                             </Button>
                         )}
                       </div>
@@ -1077,8 +1079,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-6 animate-in zoom-in">
                             <Check size={40} strokeWidth={3} />
                         </div>
-                        <h3 className="text-2xl font-black text-stone-900 mb-2">Payment Successful!</h3>
-                        <p className="text-stone-500 text-sm mb-8">You can now access your content.</p>
+                        <h3 className="text-2xl font-black text-stone-900 mb-2">{t('profile.paymentSuccessful')}</h3>
+                        <p className="text-stone-500 text-sm mb-8">{t('profile.canAccessContent')}</p>
 
                         <a 
                             // href={selectedProductLink.url} // Removed direct href
@@ -1097,20 +1099,20 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         link.click();
                                         document.body.removeChild(link);
                                     } else {
-                                        alert("Failed to get download link.");
+                                        alert(t('profile.failedDownload'));
                                     }
                                 } catch (error: any) {
                                     console.error("Download failed:", error);
-                                    alert(error.message || "Failed to download file. Please try again.");
+                                    alert(error.message || t('profile.failedDownloadRetry'));
                                 }
                             }}
                             className="w-full bg-stone-900 text-white hover:bg-stone-800 rounded-2xl h-14 font-bold text-lg flex items-center justify-center gap-2 shadow-xl shadow-stone-900/20"
                         >
-                            <Download size={20} /> Download File
+                            <Download size={20} /> {t('profile.downloadFile')}
                         </a>
                         
                         <button onClick={closeModal} className="mt-4 text-sm font-medium text-stone-400 hover:text-stone-600">
-                            Close
+                            {t('common.close')}
                         </button>
                   </div>
               )}
@@ -1122,8 +1124,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                           <div className="w-16 h-16 bg-pink-50 rounded-full flex items-center justify-center mx-auto mb-4 text-pink-500">
                               <Heart size={32} className="fill-pink-500" />
                           </div>
-                          <h4 className="font-bold text-stone-900 text-lg">Support {creator.displayName}</h4>
-                          <p className="text-stone-500 text-sm">Select an amount to tip.</p>
+                          <h4 className="font-bold text-stone-900 text-lg">{t('profile.supportCreator', { name: creator.displayName })}</h4>
+                          <p className="text-stone-500 text-sm">{t('profile.selectTipAmount')}</p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
@@ -1139,10 +1141,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       </div>
 
                       <div>
-                          <label className="block text-sm font-bold text-stone-900 mb-2">Message (Optional)</label>
+                          <label className="block text-sm font-bold text-stone-900 mb-2">{t('profile.messageOptional')}</label>
                           <textarea 
                               className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none h-24 resize-none text-sm"
-                              placeholder="Say something nice..."
+                              placeholder={t('profile.saySomethingNice')}
                               value={supportMessage}
                               onChange={e => setSupportMessage(e.target.value)}
                           />
@@ -1153,7 +1155,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         onClick={() => setStep('support_payment')}
                         className="bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg"
                       >
-                        Continue
+                        {t('common.continue')}
                       </Button>
                   </div>
               )}
@@ -1162,28 +1164,28 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                   <div className="space-y-6">
                       <div className="bg-pink-50 p-6 rounded-2xl border border-pink-100">
                          <div className="flex justify-between items-end">
-                           <span className="font-bold text-stone-900 text-lg">Total Tip</span>
+                           <span className="font-bold text-stone-900 text-lg">{t('profile.totalTip')}</span>
                            <span className="font-black text-stone-900 text-3xl tracking-tight flex items-center gap-2"><Coins/> {supportAmount}</span>
                          </div>
                          <div className="mt-4 pt-4 border-t border-dashed border-pink-200">
                             <div className="flex justify-between text-sm">
-                                <span className="text-stone-500">Your Wallet Balance:</span>
+                                <span className="text-stone-500">{t('profile.yourWalletBalance')}</span>
                                 <span className={`font-bold ${checkBalance(supportAmount) ? 'text-green-600' : 'text-red-500'}`}>
-                                    {currentUser?.credits || 0} Credits
+                                    {currentUser?.credits || 0} {t('common.credits')}
                                 </span>
                             </div>
                          </div>
                       </div>
 
                       <div className="flex gap-3 pt-2">
-                        <Button variant="ghost" onClick={() => setStep('support_confirm')} className="flex-1 rounded-2xl font-semibold">Back</Button>
+                        <Button variant="ghost" onClick={() => setStep('support_confirm')} className="flex-1 rounded-2xl font-semibold">{t('common.back')}</Button>
                         {checkBalance(supportAmount) ? (
                             <Button fullWidth onClick={handleSupportPayment} isLoading={isSubmitting} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg">
-                                Pay & Send Tip
+                                {t('profile.paySendTip')}
                             </Button>
                         ) : (
                             <Button fullWidth onClick={() => setStep('topup')} className="flex-[2] bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg">
-                                Top Up Credits
+                                {t('profile.topUpCredits')}
                             </Button>
                         )}
                       </div>
@@ -1195,11 +1197,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         <div className="w-20 h-20 bg-pink-100 rounded-full flex items-center justify-center text-pink-600 mb-6 animate-in zoom-in">
                             <Heart size={40} className="fill-pink-600" />
                         </div>
-                        <h3 className="text-2xl font-black text-stone-900 mb-2">Thank You!</h3>
-                        <p className="text-stone-500 text-sm mb-8">Your support means the world to {creator.displayName}.</p>
+                        <h3 className="text-2xl font-black text-stone-900 mb-2">{t('profile.thankYou')}</h3>
+                        <p className="text-stone-500 text-sm mb-8">{t('profile.supportMeans', { name: creator.displayName })}</p>
                         
                         <button onClick={closeModal} className="w-full bg-stone-100 text-stone-600 hover:bg-stone-200 rounded-2xl h-12 font-bold text-sm">
-                            Close
+                            {t('common.close')}
                         </button>
                   </div>
               )}
@@ -1217,7 +1219,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         <Sparkles size={16} className="text-white fill-white" />
                     </div>
                     <div>
-                        <p className="text-sm font-bold text-white tracking-wide">Request Sent!</p>
+                        <p className="text-sm font-bold text-white tracking-wide">{t('profile.requestSent')}</p>
                     </div>
                 </div>
             </div>

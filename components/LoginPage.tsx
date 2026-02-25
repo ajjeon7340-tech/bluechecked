@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from './Button';
 import { DiemLogo, CheckCircle2, Lock, GoogleLogo, InstagramLogo, Mail, User, MessageSquare, Camera, X, Plus, YouTubeLogo, XLogo, TikTokLogo, Twitch, Check, Phone } from './Icons';
 import { CurrentUser } from '../types';
@@ -20,14 +21,15 @@ const SUPPORTED_PLATFORMS = [
 ];
 
 export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep = 'LOGIN', currentUser }) => {
+  const { t } = useTranslation();
   const [isSignUp, setIsSignUp] = useState(false);
-  const [role, setRole] = useState<'CREATOR' | 'FAN'>(currentUser?.role || 'CREATOR'); 
+  const [role, setRole] = useState<'CREATOR' | 'FAN'>(currentUser?.role || 'CREATOR');
   const [isForgotPassword, setIsForgotPassword] = useState(false);
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [isSocialLoading, setIsSocialLoading] = useState(false);
   const [showResend, setShowResend] = useState(false);
@@ -35,7 +37,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   // Setup / Onboarding State
   const [step, setStep] = useState<'LOGIN' | 'SETUP_PROFILE' | 'RESET_PASSWORD'>(initialStep);
   const [tempUser, setTempUser] = useState<CurrentUser | null>(currentUser || null);
-  
+
   // Creator Config
   const [price, setPrice] = useState(20);
   const [responseHours, setResponseHours] = useState(48);
@@ -51,14 +53,14 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
         // Determine Identifier
         const identifier = email.trim();
-        
+
         // Only pass name if signing up. This tells the backend to use the SignUp flow.
         const user = await loginUser(role, identifier, password, 'EMAIL', isSignUp ? fullName.trim() : undefined);
-        
+
         if (isSignUp) {
             setTempUser(user);
             setDisplayName(fullName); // Pre-fill display name
@@ -68,14 +70,14 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
         }
     } catch (error: any) {
         if (error.message === "CONFIRMATION_REQUIRED") {
-            alert("Confirmation email sent! Please check your inbox (and spam folder) and click the link to activate your account.");
+            alert(t('auth.confirmationSent'));
             setIsSignUp(false); // Switch back to login mode so they are ready to sign in after clicking link
             setShowResend(true);
         } else {
             console.error("Login Error:", error);
-            let msg = error.message || "Login failed. Please try again.";
+            let msg = error.message || t('auth.loginFailed');
             if (msg.includes("timed out") || error.name === 'AuthRetryableFetchError' || error.status === 504) {
-                msg = "Connection Timeout: The email service is not responding. Please check Supabase SMTP settings.";
+                msg = t('auth.connectionTimeout');
             }
             alert(msg);
         }
@@ -91,14 +93,14 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
         // Note: The app will redirect to the provider, so code below won't run immediately.
     } catch (error: any) {
         console.error("Social Login Error:", error);
-        
+
         const errorMessage = error.msg || error.message || "";
 
         // Handle specific Supabase configuration errors
         if (errorMessage.includes("provider is not enabled")) {
-            alert(`Login Failed: The '${provider}' provider is not enabled in your Supabase Project.\n\nPlease go to Authentication > Providers in your Supabase Dashboard to enable it.`);
+            alert(t('auth.providerNotEnabled', { provider }));
         } else if (errorMessage.includes("missing OAuth secret")) {
-            alert(`Login Failed: The '${provider}' provider is missing its Client Secret in Supabase.\n\nPlease go to Authentication > Providers, enter the Client Secret, and click Save.`);
+            alert(t('auth.missingOAuthSecret', { provider }));
         } else {
             alert(errorMessage || "Social login failed");
         }
@@ -111,9 +113,9 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
     setIsLoading(true);
     try {
         await resendConfirmationEmail(email.trim());
-        alert("Confirmation email resent! Please check your inbox.");
+        alert(t('auth.confirmationResent'));
     } catch (e: any) {
-        alert(e.message || "Failed to resend email.");
+        alert(e.message || t('auth.failedResend'));
     } finally {
         setIsLoading(false);
     }
@@ -124,7 +126,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
       if (existingIndex >= 0) {
           setPlatforms(prev => prev.filter((_, i) => i !== existingIndex));
       } else {
-          const url = window.prompt(`Enter URL for ${platformId}:`);
+          const url = window.prompt(t('auth.enterUrlFor', { platform: platformId }));
           if (url && url.trim()) {
               setPlatforms(prev => [...prev, { id: platformId, url: url.trim() }]);
           }
@@ -156,9 +158,9 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
   const handleCompleteSetup = async () => {
      setIsLoading(true);
-     
+
      let finalUser = tempUser;
-     
+
      // 1. Update User Object (Fan or Creator)
      if (tempUser) {
          finalUser = {
@@ -192,7 +194,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
      // Also set the flag on save, to prevent re-entry even if bio is empty.
      localStorage.setItem('bluechecked_skip_setup', 'true');
-     
+
      if (finalUser) {
          onLoginSuccess(finalUser);
      }
@@ -201,17 +203,17 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   const handleForgotPassword = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!email) {
-          alert("Please enter your email address.");
+          alert(t('auth.pleaseEnterEmail'));
           return;
       }
       setIsLoading(true);
       try {
           await sendPasswordResetEmail(email.trim());
-          alert("Password reset email sent! Please check your inbox.");
+          alert(t('auth.passwordResetSent'));
           setIsForgotPassword(false);
       } catch (error: any) {
           console.error("Reset Password Error:", error);
-          alert(error.message || "Failed to send reset email.");
+          alert(error.message || t('auth.failedResetEmail'));
       } finally {
           setIsLoading(false);
       }
@@ -220,19 +222,19 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   const handleUpdatePassword = async (e: React.FormEvent) => {
       e.preventDefault();
       if (newPassword.length < 6) {
-          alert("Password must be at least 6 characters.");
+          alert(t('auth.passwordMinLength'));
           return;
       }
       setIsLoading(true);
       try {
           await updatePassword(newPassword);
-          alert("Password updated successfully! Please log in again.");
-          
+          alert(t('auth.passwordUpdated'));
+
           await signOut();
           onBack();
       } catch (error: any) {
           console.error("Update Password Error:", error);
-          alert(error.message || "Failed to update password.");
+          alert(error.message || t('auth.failedUpdatePassword'));
       } finally {
           setIsLoading(false);
       }
@@ -242,13 +244,13 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
       return (
           <div className="min-h-screen bg-[#FAFAF9] relative flex flex-col items-center justify-center p-4 font-sans">
               <div className="relative z-10 w-full max-w-md bg-white p-8 rounded-3xl shadow-xl shadow-stone-200/50 border border-stone-100">
-                  <h2 className="text-2xl font-bold text-stone-900 mb-2 text-center">Set New Password</h2>
+                  <h2 className="text-2xl font-bold text-stone-900 mb-2 text-center">{t('auth.setNewPassword')}</h2>
                   <form onSubmit={handleUpdatePassword} className="space-y-4 mt-6">
                       <div>
-                          <label className="block text-sm font-medium text-stone-700 mb-1.5 ml-1">New Password</label>
-                          <input type="password" required className="w-full px-4 py-2.5 border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-500 outline-none transition-all" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                          <label className="block text-sm font-medium text-stone-700 mb-1.5 ml-1">{t('auth.newPassword')}</label>
+                          <input type="password" required className="w-full px-4 py-2.5 border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-500 outline-none transition-all" placeholder={t('auth.passwordPlaceholder')} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                       </div>
-                      <Button fullWidth size="lg" type="submit" isLoading={isLoading}>Update Password</Button>
+                      <Button fullWidth size="lg" type="submit" isLoading={isLoading}>{t('auth.updatePassword')}</Button>
                   </form>
               </div>
           </div>
@@ -266,7 +268,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 >
                     {avatarUrl ? <img src={avatarUrl} className="w-full h-full object-cover" /> : <Camera size={32} />}
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-white text-xs font-bold">Upload</span>
+                        <span className="text-white text-xs font-bold">{t('auth.upload')}</span>
                     </div>
                 </div>
                 <input
@@ -277,32 +279,32 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                     onChange={handleFileChange}
                 />
                 <h2 className="text-2xl font-bold text-stone-900">
-                    {role === 'CREATOR' ? 'Setup Creator Profile' : 'Complete Profile'}
+                    {role === 'CREATOR' ? t('auth.setupCreatorProfile') : t('auth.completeProfile')}
                 </h2>
-                <p className="text-stone-500 text-sm">Let's make your profile stand out.</p>
+                <p className="text-stone-500 text-sm">{t('auth.profileStandOut')}</p>
              </div>
 
              <div className="space-y-6">
 
                 {/* Name Field */}
                 <div>
-                   <label className="block text-sm font-medium text-stone-700 mb-1">Display Name</label>
+                   <label className="block text-sm font-medium text-stone-700 mb-1">{t('auth.displayName')}</label>
                    <input
                      type="text"
                      value={displayName}
                      onChange={e => setDisplayName(e.target.value)}
-                     placeholder="Your Name"
+                     placeholder={t('auth.yourName')}
                      className="w-full border border-stone-200 rounded-xl p-3 focus:ring-2 focus:ring-stone-500 outline-none transition-all"
                     />
                 </div>
 
                 {/* Common Fields */}
                 <div>
-                   <label className="block text-sm font-medium text-stone-700 mb-1">Bio / About</label>
+                   <label className="block text-sm font-medium text-stone-700 mb-1">{t('auth.bioAbout')}</label>
                    <textarea
                      value={bio}
                      onChange={e => setBio(e.target.value)}
-                     placeholder={role === 'CREATOR' ? "I help startups with..." : "Tell us a bit about yourself..."}
+                     placeholder={role === 'CREATOR' ? t('auth.creatorBioPlaceholder') : t('auth.fanBioPlaceholder')}
                      className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all"
                     />
                 </div>
@@ -312,27 +314,27 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                     <>
                         <div className="bg-stone-50 p-5 rounded-2xl border border-stone-100 space-y-4">
                             <h3 className="text-sm font-bold text-stone-900 uppercase tracking-wide flex items-center gap-2">
-                                <MessageSquare size={16} className="text-stone-500"/> Message Settings
+                                <MessageSquare size={16} className="text-stone-500"/> {t('auth.messageSettings')}
                             </h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-stone-700 mb-1">Price ($)</label>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1">{t('auth.priceLabel')}</label>
                                     <input type="number" value={price} onChange={e => setPrice(Number(e.target.value))} className="w-full border border-stone-200 rounded-xl p-2 focus:ring-2 focus:ring-stone-500 outline-none transition-all" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-stone-700 mb-1">Reply Time</label>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1">{t('auth.replyTime')}</label>
                                     <select value={responseHours} onChange={e => setResponseHours(Number(e.target.value))} className="w-full border border-stone-200 rounded-xl p-2 bg-white focus:ring-2 focus:ring-stone-500 outline-none transition-all">
-                                        <option value={24}>24 Hours</option>
-                                        <option value={48}>48 Hours</option>
-                                        <option value={72}>72 Hours</option>
+                                        <option value={24}>{t('auth.hours24')}</option>
+                                        <option value={48}>{t('auth.hours48')}</option>
+                                        <option value={72}>{t('auth.hours72')}</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-stone-700 mb-2">Connected Platforms</label>
-                            <p className="text-xs text-stone-500 mb-3">Select the platforms where you have an audience.</p>
+                            <label className="block text-sm font-medium text-stone-700 mb-2">{t('auth.connectedPlatforms')}</label>
+                            <p className="text-xs text-stone-500 mb-3">{t('auth.platformsDesc')}</p>
 
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 {SUPPORTED_PLATFORMS.map(platform => {
@@ -367,12 +369,12 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 )}
 
                 <div className="space-y-3 pt-4">
-                    <Button fullWidth onClick={handleCompleteSetup} isLoading={isLoading} size="lg">Save Profile & Continue</Button>
+                    <Button fullWidth onClick={handleCompleteSetup} isLoading={isLoading} size="lg">{t('auth.saveProfileContinue')}</Button>
                     <button onClick={handleSkipForNow} className="w-full text-center text-stone-400 text-sm hover:text-stone-600 font-medium transition-colors">
-                        Skip for now
+                        {t('auth.skipForNow')}
                     </button>
                     <button onClick={onBack} className="w-full text-center text-stone-300 hover:text-red-500 text-xs font-medium transition-colors mt-2">
-                        Cancel & Sign Out
+                        {t('auth.cancelSignOut')}
                     </button>
                 </div>
              </div>
@@ -386,26 +388,26 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
           <div className="min-h-screen bg-[#FAFAF9] relative flex flex-col items-center justify-center p-4 font-sans">
               <div className="relative z-10 w-full max-w-md">
                   <div className="bg-white p-8 rounded-3xl shadow-xl shadow-stone-200/50 border border-stone-100">
-                      <h2 className="text-2xl font-bold text-stone-900 mb-2 text-center">Reset Password</h2>
-                      <p className="text-stone-500 text-center mb-6">Enter your email to receive a reset link.</p>
+                      <h2 className="text-2xl font-bold text-stone-900 mb-2 text-center">{t('auth.resetPassword')}</h2>
+                      <p className="text-stone-500 text-center mb-6">{t('auth.resetPasswordDesc')}</p>
 
                       <form onSubmit={handleForgotPassword} className="space-y-4">
                           <div>
-                              <label className="block text-sm font-medium text-stone-700 mb-1.5 ml-1">Email Address</label>
+                              <label className="block text-sm font-medium text-stone-700 mb-1.5 ml-1">{t('auth.emailAddress')}</label>
                               <div className="relative">
                                   <Mail className="absolute left-3.5 top-3 text-stone-400" size={18} />
                                   <input
                                       type="email"
                                       required
                                       className="w-full pl-10 pr-4 py-2.5 border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-500 focus:border-stone-500 outline-none transition-all"
-                                      placeholder="you@example.com"
+                                      placeholder={t('auth.emailPlaceholder')}
                                       value={email}
                                       onChange={(e) => setEmail(e.target.value)}
                                   />
                               </div>
                           </div>
                           <Button fullWidth size="lg" type="submit" isLoading={isLoading} className="mt-2 h-11 shadow-lg shadow-stone-900/20">
-                              Send Reset Link
+                              {t('auth.sendResetLink')}
                           </Button>
                       </form>
 
@@ -414,7 +416,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                               onClick={() => setIsForgotPassword(false)}
                               className="text-sm font-semibold text-stone-500 hover:text-stone-700 transition-colors"
                           >
-                              Back to Sign In
+                              {t('auth.backToSignIn')}
                           </button>
                       </div>
                   </div>
@@ -436,10 +438,10 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
         <div className="bg-white p-8 rounded-3xl shadow-xl shadow-stone-200/50 border border-stone-100">
           <h2 className="text-2xl font-bold text-stone-900 mb-2 text-center">
-            {isSignUp ? 'Create Account' : 'Welcome Back'}
+            {isSignUp ? t('auth.createAccountTitle') : t('auth.welcomeBack')}
           </h2>
           <p className="text-stone-500 text-center mb-6">
-            {isSignUp ? 'Join the guaranteed response marketplace.' : 'Sign in to access your dashboard.'}
+            {isSignUp ? t('auth.joinMarketplace') : t('auth.signInDashboard')}
           </p>
 
           <div className="space-y-5">
@@ -455,7 +457,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 }`}
               >
                 <User size={20} />
-                <span className="text-sm font-semibold">I'm a Creator</span>
+                <span className="text-sm font-semibold">{t('auth.imACreator')}</span>
               </button>
               <button
                 type="button"
@@ -467,7 +469,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 }`}
               >
                 <MessageSquare size={20} />
-                <span className="text-sm font-semibold">I'm a Fan</span>
+                <span className="text-sm font-semibold">{t('auth.imAFan')}</span>
               </button>
             </div>
 
@@ -480,7 +482,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 className="flex items-center justify-center gap-2 bg-white border border-stone-200 text-stone-700 font-medium py-2.5 rounded-xl hover:bg-stone-50 hover:border-stone-300 transition-all"
                 >
                 <GoogleLogo className="w-5 h-5" />
-                <span className="text-sm">{role === 'CREATOR' ? 'Log in as Creator' : 'Log in as Fan'}</span>
+                <span className="text-sm">{role === 'CREATOR' ? t('auth.logInAsCreator') : t('auth.logInAsFan')}</span>
                 </button>
             </div>
 
@@ -489,19 +491,19 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 <div className="w-full border-t border-stone-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-stone-400">Or continue with</span>
+                <span className="px-2 bg-white text-stone-400">{t('auth.orContinueWith')}</span>
               </div>
             </div>
 
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               {isSignUp && (
                 <div className="animate-in fade-in slide-in-from-top-4 duration-300">
-                  <label className="block text-sm font-medium text-stone-700 mb-1.5 ml-1">Full Name</label>
+                  <label className="block text-sm font-medium text-stone-700 mb-1.5 ml-1">{t('auth.fullName')}</label>
                   <input
                     type="text"
                     required={isSignUp}
                     className="w-full px-4 py-2.5 border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-500 focus:border-stone-500 outline-none transition-all"
-                    placeholder={role === 'CREATOR' ? "Creator Name" : "Your Name"}
+                    placeholder={role === 'CREATOR' ? t('auth.creatorName') : t('auth.yourName')}
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                   />
@@ -509,14 +511,14 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
               )}
 
               <div className="animate-in fade-in zoom-in-95 duration-200">
-                <label className="block text-sm font-medium text-stone-700 mb-1.5 ml-1">Email Address</label>
+                <label className="block text-sm font-medium text-stone-700 mb-1.5 ml-1">{t('auth.emailAddress')}</label>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-3 text-stone-400" size={18} />
                   <input
                     type="email"
                     required
                     className="w-full pl-10 pr-4 py-2.5 border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-500 focus:border-stone-500 outline-none transition-all"
-                    placeholder="you@example.com"
+                    placeholder={t('auth.emailPlaceholder')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
@@ -525,14 +527,14 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
               <div>
                 <div className="flex justify-between items-center mb-1.5 ml-1">
-                    <label className="block text-sm font-medium text-stone-700">Password</label>
+                    <label className="block text-sm font-medium text-stone-700">{t('auth.password')}</label>
                     {!isSignUp && (
                         <button
                             type="button"
                             onClick={() => setIsForgotPassword(true)}
                             className="text-xs font-semibold text-stone-500 hover:text-stone-700"
                         >
-                            Forgot Password?
+                            {t('auth.forgotPassword')}
                         </button>
                     )}
                 </div>
@@ -542,7 +544,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                     type="password"
                     required
                     className="w-full pl-10 pr-4 py-2.5 border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-500 focus:border-stone-500 outline-none transition-all"
-                    placeholder="••••••••"
+                    placeholder={t('auth.passwordPlaceholder')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
@@ -558,22 +560,22 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 disabled={isSocialLoading}
               >
                 {isSignUp
-                  ? (role === 'CREATOR' ? 'Continue' : 'Create Fan Account')
-                  : (role === 'CREATOR' ? 'Creator Sign In' : 'Fan Sign In')
+                  ? (role === 'CREATOR' ? t('common.continue') : t('auth.createFanAccountBtn'))
+                  : (role === 'CREATOR' ? t('auth.creatorSignIn') : t('auth.fanSignIn'))
                 }
               </Button>
             </form>
 
             {showResend && (
                 <button onClick={handleResend} className="w-full text-center text-xs text-stone-600 hover:underline mt-2">
-                    Didn't receive the email? Click to resend.
+                    {t('auth.resendEmail')}
                 </button>
             )}
           </div>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-stone-500">
-              {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+              {isSignUp ? t('auth.alreadyHaveAccount') : t('auth.dontHaveAccount')}
               <button
                 onClick={() => {
                   setIsSignUp(!isSignUp);
@@ -582,7 +584,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 }}
                 className={`ml-1.5 font-semibold transition-colors ${role === 'FAN' ? 'text-amber-600 hover:text-amber-700' : 'text-stone-700 hover:text-stone-900'}`}
               >
-                {isSignUp ? 'Sign in' : 'Sign up'}
+                {isSignUp ? t('common.signIn') : t('common.signUp')}
               </button>
             </p>
           </div>
@@ -590,7 +592,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
         <div className="mt-8 text-center">
              <button onClick={onBack} className="text-stone-400 hover:text-stone-600 text-sm transition-colors">
-               &larr; Back to Home
+               {t('auth.backToHome')}
              </button>
         </div>
       </div>

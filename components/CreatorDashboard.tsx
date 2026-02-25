@@ -1,8 +1,10 @@
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CreatorProfile, Message, DashboardStats, MonthlyStat, AffiliateLink, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
 import { getMessages, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, Withdrawal } from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import { 
   Clock, CheckCircle2, AlertCircle, DollarSign, Sparkles, ChevronLeft, LogOut, 
   ExternalLink, User, Settings, Plus, Trash, X, Camera, Paperclip, Send, DiemLogo,
@@ -33,15 +35,15 @@ const SUPPORTED_PLATFORMS = [
     { id: 'twitch', label: 'Twitch', icon: Twitch },
 ];
 
-const getResponseCategory = (hours: number) => {
-    if (hours < 1) return 'Lightning';
-    if (hours < 4) return 'Very Fast';
-    if (hours < 24) return 'Fast';
-    return 'Standard';
+const getResponseCategory = (hours: number, t?: (key: string) => string) => {
+    if (hours < 1) return t ? t('common.responseCategoryLightning') : 'Lightning';
+    if (hours < 4) return t ? t('common.responseCategoryVeryFast') : 'Very Fast';
+    if (hours < 24) return t ? t('common.responseCategoryFast') : 'Fast';
+    return t ? t('common.responseCategoryStandard') : 'Standard';
 };
 
 // Instagram/Threads style relative time
-const getRelativeTime = (dateString: string) => {
+const getRelativeTime = (dateString: string, t?: (key: string, opts?: any) => string) => {
     const now = new Date();
     const date = new Date(dateString);
     const diffMs = now.getTime() - date.getTime();
@@ -51,13 +53,20 @@ const getRelativeTime = (dateString: string) => {
     const diffDay = Math.floor(diffHour / 24);
     const diffWeek = Math.floor(diffDay / 7);
 
-    if (diffSec < 60) return 'Just now';
-    if (diffMin < 60) return `${diffMin}m ago`;
-    if (diffHour < 24) return `${diffHour}h ago`;
-    if (diffDay < 7) return `${diffDay}d ago`;
-    
+    if (t) {
+        if (diffSec < 60) return t('common.justNow');
+        if (diffMin < 60) return t('common.mAgo', { count: diffMin });
+        if (diffHour < 24) return t('common.hAgo', { count: diffHour });
+        if (diffDay < 7) return t('common.dAgo', { count: diffDay });
+    } else {
+        if (diffSec < 60) return 'Just now';
+        if (diffMin < 60) return `${diffMin}m ago`;
+        if (diffHour < 24) return `${diffHour}h ago`;
+        if (diffDay < 7) return `${diffDay}d ago`;
+    }
+
     // Editorial style date: "Feb 15"
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 };
 
 const DUMMY_PRO_DATA: ProAnalyticsData = {
@@ -82,6 +91,7 @@ const DUMMY_PRO_DATA: ProAnalyticsData = {
 };
 
 export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogout, onViewProfile, onRefreshData }) => {
+  const { t } = useTranslation();
   const [currentView, setCurrentView] = useState<DashboardView>('OVERVIEW');
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
@@ -188,7 +198,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   });
 
   const leaveChatroom = (senderEmail: string) => {
-      if (!window.confirm('Leave this conversation? It will be hidden from your inbox but not deleted.')) return;
+      if (!window.confirm(t('creator.leaveConversation'))) return;
       const updated = { ...leftChatrooms, [senderEmail]: Date.now() };
       setLeftChatrooms(updated);
       localStorage.setItem('bluechecked_creator_left_chatrooms', JSON.stringify(updated));
@@ -381,7 +391,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const handleClearAllNotifications = () => {
       if (notifications.length === 0) return;
-      if (window.confirm("Are you sure you want to clear all notifications?")) {
+      if (window.confirm(t('creator.clearAllConfirm'))) {
           const allIds = notifications.map(n => n.id);
           setDeletedNotificationIds(prev => [...prev, ...allIds]);
       }
@@ -533,7 +543,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const getStatsDateLabel = () => {
       if (statsTimeFrame === 'DAILY') {
-          return statsDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+          return statsDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
       } else if (statsTimeFrame === 'WEEKLY') {
           const q = Math.floor(statsDate.getMonth() / 3) + 1;
           return `Q${q} ${statsDate.getFullYear()}`;
@@ -621,7 +631,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     const CREDIT_TO_USD = 0.01;
 
     if (balance < MIN_WITHDRAWAL) {
-        alert(`Minimum withdrawal is ${MIN_WITHDRAWAL.toLocaleString()} credits ($${(MIN_WITHDRAWAL * CREDIT_TO_USD).toFixed(2)}). You have ${balance.toLocaleString()} credits.`);
+        alert(t('creator.minimumWithdrawal') + ` You have ${balance.toLocaleString()} ${t('common.credits').toLowerCase()}.`);
         return;
     }
 
@@ -641,9 +651,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     try {
         await requestWithdrawal(balance);
         await loadData(true);
-        alert(`Successfully transferred! You will receive $${netUsd.toFixed(2)}.`);
+        alert(t('creator.withdrawSuccess') + ` $${netUsd.toFixed(2)}.`);
     } catch (e: any) {
-        alert(e.message || "Withdrawal failed.");
+        alert(e.message || t('creator.withdrawFailed'));
     } finally {
         setIsWithdrawing(false);
     }
@@ -662,7 +672,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
               setIsStripeConnected(true);
           }
       } catch (e) {
-          alert("Failed to connect Stripe.");
+          alert(t('creator.withdrawFailed'));
       } finally {
           setIsConnectingStripe(false);
       }
@@ -734,7 +744,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           setReplyAttachment(url);
       } catch (error) {
           console.error("Upload failed", error);
-          alert("Failed to upload attachment.");
+          alert(t('creator.failedSaveProfile'));
       } finally {
           setIsUploadingReplyAttachment(false);
       }
@@ -744,7 +754,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     if (!activeMessage) return;
     
     if (isComplete) {
-        if (!window.confirm("Collecting payment will complete this request and close the conversation. You won't be able to send further messages. Are you sure?")) {
+        if (!window.confirm(t('creator.confirmWithdraw'))) {
             return;
         }
     }
@@ -781,7 +791,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
         }
     } catch (error) {
         console.error("Failed to send reply:", error);
-        alert("Failed to send reply. Please try again.");
+        alert(t('creator.failedSaveProfile'));
     } finally {
         setIsSendingReply(false);
     }
@@ -793,7 +803,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           e.stopPropagation();
       }
       if (!activeMessage) return;
-      if (!window.confirm("Are you sure you want to reject this request? The funds will be refunded to the user immediately.")) return;
+      if (!window.confirm(t('creator.rejectRequest'))) return;
       
       setIsRejecting(true);
       await cancelMessage(activeMessage.id);
@@ -808,7 +818,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const handleNavigate = (view: DashboardView) => {
     if (hasUnsavedChanges() && view !== 'SETTINGS') {
-      if (!window.confirm('You have unsaved changes. Are you sure you want to leave?')) return;
+      if (!window.confirm(t('creator.leaveConversation'))) return;
       setEditedCreator(creator);
     }
     if (view === 'NOTIFICATIONS') {
@@ -833,7 +843,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
         setTimeout(() => setShowSaveSuccess(false), 3000);
     } catch (e) {
         console.error("Failed to save profile", e);
-        alert("Failed to save profile changes. Please try again.");
+        alert(t('creator.failedSaveProfile'));
     } finally {
         setIsSavingProfile(false);
     }
@@ -844,7 +854,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       if (file) {
           setAvatarFileName(file.name);
           if (!file.type.startsWith('image/')) {
-              alert("Please upload a valid image file (JPEG, PNG).");
+              alert(t('profile.uploadValidImage'));
               return;
           }
 
@@ -894,7 +904,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       if (existingIndex >= 0) {
           const existingPlatform = currentPlatforms[existingIndex];
           const currentUrl = typeof existingPlatform === 'object' ? existingPlatform.url : '';
-          const url = window.prompt(`Edit URL for ${platformId} (Clear to remove):`, currentUrl);
+          const url = window.prompt(t('common.editUrlFor', { platform: platformId }), currentUrl);
           
           if (url === null) return;
 
@@ -909,7 +919,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
               setEditedCreator(prev => ({ ...prev, platforms: updatedPlatforms }));
           }
       } else {
-          const url = window.prompt(`Enter URL for ${platformId}:`);
+          const url = window.prompt(t('auth.enterUrlFor', { platform: platformId }));
           if (url && url.trim()) {
               const newPlatform = { id: platformId, url: url.trim() };
               setEditedCreator(prev => ({
@@ -942,7 +952,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           }
       } catch (error) {
           console.error("Upload failed", error);
-          alert("Failed to upload thumbnail.");
+          alert(t('common.uploading'));
       } finally {
           if (!linkId) setIsUploadingThumbnail(false);
       }
@@ -954,7 +964,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     
     // Price validation for products
     if (newLinkType === 'DIGITAL_PRODUCT' && (!newLinkPrice || isNaN(Number(newLinkPrice)))) {
-        alert("Please enter a valid credit price for the digital product.");
+        alert(t('creator.failedSaveProfile'));
         return;
     }
 
@@ -993,7 +1003,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           setNewFileName(file.name);
       } catch (error) {
           console.error("Upload failed", error);
-          alert("Failed to upload file.");
+          alert(t('creator.failedSaveProfile'));
       } finally {
           setIsUploadingProduct(false);
       }
@@ -1015,7 +1025,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           setNewFileName(file.name);
       } catch (error) {
           console.error("Upload failed", error);
-          alert("Failed to upload file.");
+          alert(t('creator.failedSaveProfile'));
       } finally {
           setIsUploadingProduct(false);
       }
@@ -1033,7 +1043,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           handleUpdateLink(linkId, 'fileName', file.name);
       } catch (error) {
           console.error("Upload failed", error);
-          alert("Failed to upload file.");
+          alert(t('creator.failedSaveProfile'));
       }
   };
 
@@ -1050,7 +1060,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           handleUpdateLink(linkId, 'fileName', file.name);
       } catch (error) {
           console.error("Upload failed", error);
-          alert("Failed to upload file.");
+          alert(t('creator.failedSaveProfile'));
       }
   };
 
@@ -1145,18 +1155,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
             {/* Nav Links */}
             <div className="space-y-1 flex-1">
-                <div className="px-3 mb-2 text-xs font-bold text-stone-400 uppercase tracking-wider">Main</div>
-                <SidebarItem icon={Home} label="Overview" view="OVERVIEW" />
-                <SidebarItem icon={Users} label="Inbox" view="INBOX" badge={stats.pendingCount > 0 ? stats.pendingCount : undefined} />
-                <SidebarItem icon={Wallet} label="Finance" view="FINANCE" />
-                <SidebarItem icon={Bell} label="Notifications" view="NOTIFICATIONS" badge={notifications.filter(n => n.time.getTime() > lastReadTime).length || undefined} />
-                <SidebarItem icon={Star} label="Reviews" view="REVIEWS" />
-                <SidebarItem icon={TrendingUp} label="Analytics" view="ANALYTICS" />
-                <SidebarItem icon={AlertCircle} label="Support" view="SUPPORT" />
-                <SidebarItem icon={PieIcon} label="Statistics" view="STATISTICS" />
-                
-                <div className="px-3 mt-8 mb-2 text-xs font-bold text-stone-400 uppercase tracking-wider">Settings</div>
-                <SidebarItem icon={User} label="Profile" view="SETTINGS" />
+                <div className="px-3 mb-2 text-xs font-bold text-stone-400 uppercase tracking-wider">{t('creator.main')}</div>
+                <SidebarItem icon={Home} label={t('creator.overview')} view="OVERVIEW" />
+                <SidebarItem icon={Users} label={t('creator.inbox')} view="INBOX" badge={stats.pendingCount > 0 ? stats.pendingCount : undefined} />
+                <SidebarItem icon={Wallet} label={t('creator.finance')} view="FINANCE" />
+                <SidebarItem icon={Bell} label={t('creator.notifications')} view="NOTIFICATIONS" badge={notifications.filter(n => n.time.getTime() > lastReadTime).length || undefined} />
+                <SidebarItem icon={Star} label={t('creator.reviews')} view="REVIEWS" />
+                <SidebarItem icon={TrendingUp} label={t('creator.analytics')} view="ANALYTICS" />
+                <SidebarItem icon={AlertCircle} label={t('creator.support')} view="SUPPORT" />
+                <SidebarItem icon={PieIcon} label={t('creator.statistics')} view="STATISTICS" />
+
+                <div className="px-3 mt-8 mb-2 text-xs font-bold text-stone-400 uppercase tracking-wider">{t('creator.settings')}</div>
+                <SidebarItem icon={User} label={t('creator.profileSettings')} view="SETTINGS" />
             </div>
 
             {!creator.isPremium && (
@@ -1167,9 +1177,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     >
                         <div className="relative z-10">
                             <div className="flex items-center gap-2 font-bold text-sm mb-1">
-                                <Sparkles size={14} className="text-yellow-300 fill-yellow-300" /> Upgrade to Pro
+                                <Sparkles size={14} className="text-yellow-300 fill-yellow-300" /> {t('creator.upgradeNow')}
                             </div>
-                            <p className="text-sm text-stone-400">Unlock detailed analytics & 0% fees.</p>
+                            <p className="text-sm text-stone-400">{t('creator.advancedAnalytics')}</p>
                         </div>
                         <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                     </button>
@@ -1219,7 +1229,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     <Search className="absolute left-3 top-2.5 text-stone-400" size={16} />
                     <input
                         type="text"
-                        placeholder="Search..."
+                        placeholder={t('common.search') + '...'}
                         className="pl-9 pr-4 py-2 bg-stone-100 border-none rounded-lg text-sm text-stone-600 focus:ring-2 focus:ring-stone-200 outline-none w-64 transition-all"
                     />
                 </div>
@@ -1237,12 +1247,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)}></div>
                             <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                                 <div className="px-4 py-3 border-b border-stone-50 bg-stone-50/50 flex justify-between items-center">
-                                    <h3 className="font-bold text-sm text-stone-900">Notifications</h3>
-                                    <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{notifications.length} Updates</span>
+                                    <h3 className="font-bold text-sm text-stone-900">{t('creator.notifications')}</h3>
+                                    <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{notifications.length} {t('creator.notifications')}</span>
                                 </div>
                                 <div className="max-h-[320px] overflow-y-auto">
                                     {notifications.length === 0 ? (
-                                        <div className="p-8 text-center text-stone-400 text-xs">No notifications yet.</div>
+                                        <div className="p-8 text-center text-stone-400 text-xs">{t('creator.noNotifications')}</div>
                                     ) : (
                                         notifications.map(notif => (
                                             <div
@@ -1274,8 +1284,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 </div>
 
                 <div className="h-6 w-px bg-stone-200 hidden sm:block"></div>
+                <LanguageSwitcher />
+                <div className="h-6 w-px bg-stone-200 hidden sm:block"></div>
                 <button onClick={onViewProfile} className="text-xs sm:text-sm font-medium text-stone-600 hover:text-stone-900 flex items-center gap-1 flex-shrink-0">
-                    <span className="hidden sm:inline">Public Page</span> <ExternalLink size={14} />
+                    <span className="hidden sm:inline">{t('common.view')}</span> <ExternalLink size={14} />
                 </button>
             </div>
         </header>
@@ -1288,7 +1300,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <div className="space-y-8 max-w-5xl mx-auto">
                     {/* Welcome Header - Editorial Style */}
                     <div className="pt-2">
-                        <p className="text-sm font-medium text-stone-400 mb-1">Welcome back,</p>
+                        <p className="text-sm font-medium text-stone-400 mb-1">{t('creator.overview')},</p>
                         <h1 className="text-2xl sm:text-3xl font-semibold text-stone-900 tracking-tight">{creator.displayName}</h1>
                     </div>
 
@@ -1298,41 +1310,41 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
                             <div className="flex items-center gap-2 mb-3">
                                 <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Coins size={14}/></div>
-                                <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Credits Earned</span>
+                                <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{t('creator.totalEarnings')}</span>
                             </div>
                             <div className="text-2xl font-bold text-stone-900 tracking-tight">{stats.totalEarnings.toLocaleString()}</div>
-                            <div className="text-[11px] text-emerald-600 font-medium mt-1.5">+12% this week</div>
+                            <div className="text-[11px] text-emerald-600 font-medium mt-1.5">{t('creator.thisWeek')}</div>
                         </div>
 
                         {/* Pending */}
                         <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
                             <div className="flex items-center gap-2 mb-3">
                                 <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Clock size={14}/></div>
-                                <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Pending</span>
+                                <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{t('common.pending')}</span>
                             </div>
                             <div className="text-2xl font-bold text-stone-900 tracking-tight">{stats.pendingCount}</div>
-                            <div className="text-[11px] text-stone-400 font-medium mt-1.5">Awaiting reply</div>
+                            <div className="text-[11px] text-stone-400 font-medium mt-1.5">{t('creator.pendingRequests')}</div>
                         </div>
 
                         {/* Response Rate */}
                         <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
                             <div className="flex items-center gap-2 mb-3">
                                 <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><CheckCircle2 size={14}/></div>
-                                <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Response Rate</span>
+                                <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{t('profile.response')}</span>
                             </div>
                             <div className="text-2xl font-bold text-stone-900 tracking-tight">{stats.responseRate}%</div>
                             {/* @ts-ignore */}
-                            <div className="text-[11px] text-stone-400 font-medium mt-1.5">Avg: {stats.avgResponseTime}</div>
+                            <div className="text-[11px] text-stone-400 font-medium mt-1.5">{t('creator.avg', { time: stats.avgResponseTime })}</div>
                         </div>
 
                         {/* Total Requests */}
                         <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
                             <div className="flex items-center gap-2 mb-3">
                                 <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><MessageSquare size={14}/></div>
-                                <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Total Requests</span>
+                                <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{t('creator.totalMessages')}</span>
                             </div>
                             <div className="text-2xl font-bold text-stone-900 tracking-tight">{incomingMessages.length.toLocaleString()}</div>
-                            <div className="text-[11px] text-stone-400 font-medium mt-1.5">Lifetime</div>
+                            <div className="text-[11px] text-stone-400 font-medium mt-1.5">{t('creator.lifetime')}</div>
                         </div>
                     </div>
                     {/* ... Charts ... */}
@@ -1340,7 +1352,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         <div className="bg-white p-6 rounded-2xl border border-stone-200/60 shadow-sm relative overflow-hidden h-96 flex flex-col">
                             <h3 className="font-bold text-stone-900 mb-6 flex items-center justify-between flex-shrink-0">
                                 <div className="flex items-center gap-2">
-                                    <span>Credit Trend</span>
+                                    <span>{t('creator.creditTrend')}</span>
                                     {trendTimeFrame === 'YEARLY' && (
                                         <div className="flex items-center gap-1 ml-2 bg-stone-50 rounded-lg p-0.5 border border-stone-100">
                                             <button onClick={() => handleTrendDateNavigate('PREV')} className="p-0.5 hover:bg-stone-200 rounded text-stone-400 hover:text-stone-600 transition-colors">
@@ -1355,9 +1367,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
                                 <div className="flex bg-stone-100 p-0.5 rounded-lg">
                                     {[
-                                        { label: 'Daily', value: 'DAILY' },
-                                        { label: 'Weekly', value: 'WEEKLY' },
-                                        { label: 'Monthly', value: 'YEARLY' }
+                                        { label: t('creator.daily'), value: 'DAILY' },
+                                        { label: t('creator.weekly'), value: 'WEEKLY' },
+                                        { label: t('creator.monthly'), value: 'YEARLY' }
                                     ].map((opt) => (
                                         <button
                                             key={opt.value}
@@ -1393,9 +1405,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <div className="w-10 h-10 bg-stone-100 rounded-full flex items-center justify-center mb-3 text-stone-500">
                                             <Lock size={20} />
                                         </div>
-                                        <h4 className="font-bold text-stone-900 mb-1">Unlock detailed trends</h4>
-                                        <p className="text-xs text-stone-500 mb-4">See your earnings growth and forecast with a Premium account.</p>
-                                        <Button size="sm" onClick={() => setShowPremiumModal(true)} className="w-full">Upgrade to View</Button>
+                                        <h4 className="font-bold text-stone-900 mb-1">{t('creator.creditTrend')}</h4>
+                                        <p className="text-xs text-stone-500 mb-4">{t('creator.advancedAnalytics')}</p>
+                                        <Button size="sm" onClick={() => setShowPremiumModal(true)} className="w-full">{t('creator.upgradeNow')}</Button>
                                     </div>
                                 </div>
                             )}
@@ -1409,7 +1421,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     return (
                                         <>
                                 <div className="flex justify-between items-center mb-4 pb-2 border-b border-stone-50 flex-shrink-0">
-                                    <div className="text-stone-400 text-xs font-bold uppercase tracking-wider">Recent Reviews</div>
+                                    <div className="text-stone-400 text-xs font-bold uppercase tracking-wider">{t('creator.recentReviews')}</div>
                                     <div className="flex items-center gap-2">
                                         {totalOverviewPages > 1 && (
                                             <div className="flex items-center bg-stone-50 rounded-lg p-0.5 border border-stone-100">
@@ -1434,7 +1446,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             onClick={() => handleNavigate('REVIEWS')}
                                             className="text-xs font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-50 px-2 py-1 rounded transition-colors"
                                         >
-                                            View All
+                                            {t('creator.viewAll')}
                                         </button>
                                     </div>
                                 </div>
@@ -1443,7 +1455,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     {displayedOverviewReviews.length === 0 ? (
                                         <div className="text-center py-6">
                                             <Star size={24} className="mx-auto text-stone-200 mb-2" />
-                                            <p className="text-xs text-stone-400">No reviews yet.</p>
+                                            <p className="text-xs text-stone-400">{t('creator.noReviewsYet')}</p>
                                         </div>
                                     ) : (
                                         displayedOverviewReviews.map(review => (
@@ -1459,7 +1471,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 </div>
                                                 <div className="bg-stone-50 p-2 rounded-lg">
                                                     <p className="text-[10px] text-stone-500 line-clamp-2 italic">
-                                                        "{review.reviewContent || "No written review"}"
+                                                        "{review.reviewContent || t('creator.noWrittenReview')}"
                                                     </p>
                                                 </div>
                                             </div>
@@ -1482,12 +1494,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                      <div className="flex flex-col gap-4">
                          <div>
                              <h2 className="text-xl sm:text-2xl font-bold text-stone-900">
-                                 {currentView === 'FINANCE' ? 'Finance & Credits' : 'Activity Statistics'}
+                                 {currentView === 'FINANCE' ? t('creator.financeCredits') : t('creator.activityStatistics')}
                              </h2>
                              <p className="text-stone-500 text-xs sm:text-sm">
                                  {currentView === 'FINANCE'
-                                    ? 'Manage your earnings, withdrawals, and transaction history.'
-                                    : 'Track your profile performance and engagement metrics.'}
+                                    ? t('creator.manageEarnings')
+                                    : t('creator.trackPerformance')}
                              </p>
                          </div>
 
@@ -1534,7 +1546,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
                                     <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                                         <div className="p-1 sm:p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Eye size={14}/></div>
-                                        <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Views</span>
+                                        <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{t('creator.views')}</span>
                                     </div>
                                     <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
                                         {detailedStats.reduce((acc, curr) => acc + curr.views, 0).toLocaleString()}
@@ -1543,7 +1555,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
                                     <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                                         <div className="p-1 sm:p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Heart size={14} className="fill-current"/></div>
-                                        <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Likes</span>
+                                        <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{t('creator.likes')}</span>
                                     </div>
                                     <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
                                         {detailedStats.reduce((acc, curr) => acc + curr.likes, 0).toLocaleString()}
@@ -1552,7 +1564,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
                                     <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                                         <div className="p-1 sm:p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Star size={14} className="fill-current"/></div>
-                                        <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Rating</span>
+                                        <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{t('creator.rating')}</span>
                                     </div>
                                     <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
                                         {(() => {
@@ -1565,7 +1577,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
                                     <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                                         <div className="p-1 sm:p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Clock size={14}/></div>
-                                        <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Response</span>
+                                        <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{t('profile.response')}</span>
                                     </div>
                                     <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
                                         {(() => {
@@ -1578,7 +1590,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
                                                     <span>{avg.toFixed(1)}h</span>
                                                     <span className="text-[9px] sm:text-[10px] font-medium text-stone-500 bg-stone-50 px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wide border border-stone-200 w-fit">
-                                                        {getResponseCategory(avg)}
+                                                        {getResponseCategory(avg, t)}
                                                     </span>
                                                 </div>
                                             );
@@ -1592,13 +1604,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="bg-white p-4 sm:p-6 rounded-2xl border border-stone-200/60">
                                     <h3 className="text-sm font-bold text-stone-900 mb-1 flex items-center gap-2">
                                         <Eye size={14} className="text-stone-400" />
-                                        Profile Views
+                                        {t('creator.profileViews')}
                                     </h3>
                                     <p className="text-xs text-stone-400 mb-4 sm:mb-5">{getStatsDateLabel()}</p>
 
                                     <div className="h-44 sm:h-52 w-full">
                                         {isLoadingStats ? (
-                                            <div className="h-full w-full flex items-center justify-center text-stone-400 text-sm">Loading...</div>
+                                            <div className="h-full w-full flex items-center justify-center text-stone-400 text-sm">{t('common.loading')}</div>
                                         ) : (
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <AreaChart data={detailedStats} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
@@ -1626,13 +1638,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="bg-white p-4 sm:p-6 rounded-2xl border border-stone-200/60">
                                     <h3 className="text-sm font-bold text-stone-900 mb-1 flex items-center gap-2">
                                         <Heart size={14} className="text-stone-400 fill-current" />
-                                        Likes
+                                        {t('creator.likes')}
                                     </h3>
                                     <p className="text-xs text-stone-400 mb-4 sm:mb-5">{getStatsDateLabel()}</p>
 
                                     <div className="h-44 sm:h-52 w-full">
                                         {isLoadingStats ? (
-                                            <div className="h-full w-full flex items-center justify-center text-stone-400 text-sm">Loading...</div>
+                                            <div className="h-full w-full flex items-center justify-center text-stone-400 text-sm">{t('common.loading')}</div>
                                         ) : (
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <BarChart data={detailedStats} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
@@ -1662,33 +1674,33 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
                                     <div className="flex items-center gap-2 mb-3">
                                         <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><TrendingUp size={14}/></div>
-                                        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Lifetime Revenue</span>
+                                        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{t('creator.lifetimeRevenue')}</span>
                                     </div>
                                     <div className="text-2xl font-bold text-stone-900 tracking-tight flex items-baseline gap-1">
                                         {stats.totalEarnings.toLocaleString()}
-                                        <span className="text-sm font-medium text-stone-400">credits</span>
+                                        <span className="text-sm font-medium text-stone-400">{t('common.credits').toLowerCase()}</span>
                                     </div>
-                                    <p className="text-[11px] text-emerald-600 mt-1.5 font-medium">Approx. ${(stats.totalEarnings / 100).toFixed(2)} USD</p>
+                                    <p className="text-[11px] text-emerald-600 mt-1.5 font-medium">{t('creator.approxUsd', { amount: (stats.totalEarnings / 100).toFixed(2) })}</p>
                                 </div>
 
                                 {/* 2. Current Credits Card */}
                                 <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
                                     <div className="flex items-center gap-2 mb-3">
                                         <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Wallet size={14}/></div>
-                                        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Available Balance</span>
+                                        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{t('creator.availableBalanceLabel')}</span>
                                     </div>
                                     <div className="text-2xl font-bold text-stone-900 tracking-tight flex items-baseline gap-1">
                                         {/* @ts-ignore */}
                                         {stats.availableBalance.toLocaleString()}
-                                        <span className="text-sm font-medium text-stone-400">credits</span>
+                                        <span className="text-sm font-medium text-stone-400">{t('common.credits').toLowerCase()}</span>
                                     </div>
-                                    <p className="text-[11px] text-emerald-600 mt-1.5 font-medium">Ready to payout</p>
+                                    <p className="text-[11px] text-emerald-600 mt-1.5 font-medium">{t('creator.readyToPayout')}</p>
                                 </div>
 
                                 {/* 3. Withdraw Action Card */}
                                 <div className="bg-white p-5 rounded-2xl border border-stone-200/60 flex flex-col justify-center hover:shadow-sm transition-all">
                                     <div className="text-center">
-                                        <p className="text-sm font-semibold text-stone-600 mb-4">Convert & Withdraw</p>
+                                        <p className="text-sm font-semibold text-stone-600 mb-4">{t('creator.convertWithdraw')}</p>
                                         <Button
                                             onClick={handleWithdraw}
                                             isLoading={isWithdrawing}
@@ -1699,10 +1711,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         >
                                             <CreditCard size={16} />
                                             {/* @ts-ignore */}
-                                            Withdraw ${(stats.availableBalance / 100).toFixed(2)}
+                                            {t('creator.withdrawAmount', { amount: (stats.availableBalance / 100).toFixed(2) })}
                                         </Button>
                                         <p className="text-[10px] text-stone-400 mt-3 text-center">
-                                            Transfers typically take 1-3 business days.
+                                            {t('creator.transferDays')}
                                         </p>
                                     </div>
                                 </div>
@@ -1715,11 +1727,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         {isStripeConnected ? <Check size={24} /> : <CreditCard size={24} />}
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-stone-900">Payout Method</h3>
+                                        <h3 className="font-bold text-stone-900">{t('creator.payoutMethod')}</h3>
                                         <p className="text-sm text-stone-500">
-                                            {isStripeConnected 
-                                                ? "Connected to Stripe (•••• 4242). Automatic payouts enabled." 
-                                                : "Link your bank account via Stripe to receive payouts."}
+                                            {isStripeConnected
+                                                ? t('creator.stripeConnectedDesc')
+                                                : t('creator.stripeLinkDesc')}
                                         </p>
                                     </div>
                                 </div>
@@ -1730,9 +1742,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     className={isStripeConnected ? "bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 shadow-none" : "bg-[#635BFF] hover:bg-[#5851E8] text-white shadow-md shadow-indigo-500/20"}
                                 >
                                     {isStripeConnected ? (
-                                        <span className="flex items-center gap-2"><Check size={16} /> Connected</span>
+                                        <span className="flex items-center gap-2"><Check size={16} /> {t('creator.connected')}</span>
                                     ) : (
-                                        "Connect Stripe"
+                                        t('creator.connectStripeBtn')
                                     )}
                                 </Button>
                             </div>
@@ -1745,18 +1757,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 return (
                             <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-3">
                                 <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
-                                     <h3 className="text-sm font-bold text-stone-900">Credit History</h3>
-                                     <Button variant="ghost" size="sm" className="text-xs"><ExternalLink size={14} className="mr-1"/> Export CSV</Button>
+                                     <h3 className="text-sm font-bold text-stone-900">{t('creator.creditHistory')}</h3>
+                                     <Button variant="ghost" size="sm" className="text-xs"><ExternalLink size={14} className="mr-1"/> {t('creator.exportCsv')}</Button>
                                 </div>
                                 <div className="hidden md:block overflow-x-auto">
                                    <table className="w-full text-left text-sm whitespace-nowrap">
                                        <thead className="bg-stone-50 text-stone-500 font-bold border-b border-stone-100 text-xs uppercase tracking-wider">
                                            <tr>
-                                               <th className="px-6 py-3">Date</th>
-                                               <th className="px-6 py-3">Source</th>
-                                               <th className="px-6 py-3">Type</th>
-                                               <th className="px-6 py-3">Status</th>
-                                               <th className="px-6 py-3 text-right">Amount (Credits)</th>
+                                               <th className="px-6 py-3">{t('creator.date')}</th>
+                                               <th className="px-6 py-3">{t('creator.source')}</th>
+                                               <th className="px-6 py-3">{t('creator.type')}</th>
+                                               <th className="px-6 py-3">{t('creator.status')}</th>
+                                               <th className="px-6 py-3 text-right">{t('fan.amountCredits')}</th>
                                            </tr>
                                        </thead>
                                        <tbody className="divide-y divide-stone-100">
@@ -1771,12 +1783,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                    <td className="px-6 py-4">
                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${isProduct ? 'bg-purple-50 text-purple-700 border-purple-100' : isTip ? 'bg-pink-50 text-pink-700 border-pink-100' : 'bg-stone-50 text-stone-700 border-stone-200'}`}>
                                                            {isProduct ? <ShoppingBag size={12}/> : isTip ? <Heart size={12}/> : <MessageSquare size={12}/>}
-                                                           {isProduct ? 'Product' : isTip ? 'Tip' : 'Message'}
+                                                           {isProduct ? t('creator.product') : isTip ? t('creator.tip') : t('creator.message')}
                                                        </span>
                                                    </td>
                                                    <td className="px-6 py-4">
                                                        <span className="text-emerald-600 font-bold text-xs flex items-center gap-1">
-                                                           <CheckCircle2 size={12} /> Settled
+                                                           <CheckCircle2 size={12} /> {t('creator.settled')}
                                                        </span>
                                                    </td>
                                                    <td className="px-6 py-4 text-right">
@@ -1786,7 +1798,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                );
                                            })}
                                            {displayedFinance.length === 0 && (
-                                               <tr><td colSpan={5} className="p-12 text-center text-stone-400">No transaction history available.</td></tr>
+                                               <tr><td colSpan={5} className="p-12 text-center text-stone-400">{t('creator.noTransactions')}</td></tr>
                                            )}
                                        </tbody>
                                    </table>
@@ -1809,19 +1821,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         <div className="text-xs text-stone-500 flex items-center gap-1">
                                                             <span>{new Date(msg.createdAt).toLocaleDateString()}</span>
                                                             <span>•</span>
-                                                            <span>{isProduct ? 'Product' : isTip ? 'Tip' : 'Message'}</span>
+                                                            <span>{isProduct ? t('creator.product') : isTip ? t('creator.tip') : t('creator.message')}</span>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
                                                     <div className="font-mono font-bold text-emerald-600">+{msg.amount}</div>
-                                                    <div className="text-[10px] text-stone-400">Credits</div>
+                                                    <div className="text-[10px] text-stone-400">{t('common.credits')}</div>
                                                 </div>
                                             </div>
                                         );
                                     })}
                                     {displayedFinance.length === 0 && (
-                                        <div className="p-8 text-center text-stone-400 text-sm">No transaction history available.</div>
+                                        <div className="p-8 text-center text-stone-400 text-sm">{t('creator.noTransactions')}</div>
                                     )}
                                 </div>
 
@@ -1835,7 +1847,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         >
                                             <ChevronLeft size={16} />
                                         </button>
-                                        <span className="text-xs font-bold text-stone-600">Page {financePage} of {totalPages}</span>
+                                        <span className="text-xs font-bold text-stone-600">{t('common.page', { current: financePage, total: totalPages })}</span>
                                         <button 
                                             onClick={() => setFinancePage(p => Math.min(totalPages, p + 1))}
                                             disabled={financePage === totalPages}
@@ -1859,17 +1871,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     {/* Header - Always visible */}
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-6 sm:mb-8">
                         <div>
-                            <h2 className="text-xl sm:text-2xl font-bold text-stone-900">Analytics Overview</h2>
-                            <p className="text-stone-500 text-xs sm:text-sm">Performance metrics for the last 30 days.</p>
+                            <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.analyticsOverview')}</h2>
+                            <p className="text-stone-500 text-xs sm:text-sm">{t('creator.performanceMetrics')}</p>
                         </div>
                         <div className="flex gap-2">
-                            <button className="px-3 py-1.5 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm hover:bg-stone-50">Export Report</button>
+                            <button className="px-3 py-1.5 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm hover:bg-stone-50">{t('creator.exportReport')}</button>
                         </div>
                     </div>
 
                     {/* Loading State for Premium Users */}
                     {creator.isPremium && isLoadingAnalytics && (
-                         <div className="h-96 flex items-center justify-center text-stone-400">Loading analytics...</div>
+                         <div className="h-96 flex items-center justify-center text-stone-400">{t('creator.loadingAnalytics')}</div>
                     )}
 
                     {/* Content (Visible if premium loaded OR if not premium (dummy)) */}
@@ -1883,15 +1895,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <Lock size={32} className="text-white" />
                                         </div>
                                         <div>
-                                            <h2 className="text-2xl font-black text-stone-900 mb-2">Unlock Pro Analytics</h2>
+                                            <h2 className="text-2xl font-black text-stone-900 mb-2">{t('creator.unlockProAnalytics')}</h2>
                                             <p className="text-stone-500 text-sm leading-relaxed">
-                                                See exactly where your traffic comes from and identify your highest converting products.
+                                                {t('creator.unlockProDesc')}
                                             </p>
                                         </div>
                                         <Button size="lg" onClick={() => setShowPremiumModal(true)} className="w-full bg-stone-900 hover:bg-stone-800 shadow-xl">
-                                            Upgrade to Pro
+                                            {t('creator.upgradeToPro')}
                                         </Button>
-                                        <p className="text-xs text-stone-400">30-day money-back guarantee.</p>
+                                        <p className="text-xs text-stone-400">{t('creator.moneyBackGuarantee')}</p>
                                     </div>
                                 </div>
                             )}
@@ -1904,7 +1916,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 hover:shadow-sm transition-all">
                                         <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                                             <div className="p-1 sm:p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Eye size={14}/></div>
-                                            <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Views</span>
+                                            <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{t('creator.views')}</span>
                                         </div>
                                         <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
                                             {analyticsData.funnel.find(f => f.name === 'Profile Views')?.count.toLocaleString() || 0}
@@ -1913,7 +1925,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 hover:shadow-sm transition-all">
                                         <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                                             <div className="p-1 sm:p-1.5 bg-stone-100 text-stone-400 rounded-lg"><MousePointerClick size={14}/></div>
-                                            <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Interactions</span>
+                                            <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{t('creator.interactions')}</span>
                                         </div>
                                         <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
                                             {analyticsData.funnel.find(f => f.name === 'Interactions')?.count.toLocaleString() || 0}
@@ -1923,13 +1935,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 const views = analyticsData.funnel.find(f => f.name === 'Profile Views')?.count || 0;
                                                 const interactions = analyticsData.funnel.find(f => f.name === 'Interactions')?.count || 0;
                                                 return views > 0 ? ((interactions / views) * 100).toFixed(1) : '0.0';
-                                            })()}% Engagement
+                                            })()}% {t('creator.interactions')}
                                         </div>
                                     </div>
                                     <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 hover:shadow-sm transition-all col-span-2 sm:col-span-1">
                                         <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                                             <div className="p-1 sm:p-1.5 bg-stone-100 text-stone-400 rounded-lg"><CheckCircle2 size={14}/></div>
-                                            <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Conversions</span>
+                                            <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{t('creator.conversions')}</span>
                                         </div>
                                         <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
                                             {analyticsData.funnel.find(f => f.name === 'Conversions')?.count.toLocaleString() || 0}
@@ -1939,7 +1951,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 const views = analyticsData.funnel.find(f => f.name === 'Profile Views')?.count || 0;
                                                 const conversions = analyticsData.funnel.find(f => f.name === 'Conversions')?.count || 0;
                                                 return views > 0 ? ((conversions / views) * 100).toFixed(1) : '0.0';
-                                            })()}% Conversion Rate
+                                            })()}% {t('creator.conversions')}
                                         </div>
                                     </div>
                                 </div>
@@ -1948,9 +1960,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     {/* Traffic Sources */}
                                     <div className="bg-white p-4 sm:p-6 rounded-2xl border border-stone-200/60">
                                         <h3 className="text-sm font-bold text-stone-900 mb-1 flex items-center gap-2">
-                                            <PieIcon size={14} className="text-stone-400" /> Where visitors find you
+                                            <PieIcon size={14} className="text-stone-400" /> {t('creator.whereVisitors')}
                                         </h3>
-                                        <p className="text-xs text-stone-400 mb-4 sm:mb-5">Top sources driving traffic to your page</p>
+                                        <p className="text-xs text-stone-400 mb-4 sm:mb-5">{t('creator.topSourcesDriving')}</p>
                                         <div className="space-y-3.5">
                                             {analyticsData.trafficSources.map((source) => (
                                                 <div key={source.name}>
@@ -1975,9 +1987,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     {/* Conversion Funnel */}
                                     <div className="bg-white p-4 sm:p-6 rounded-2xl border border-stone-200/60">
                                         <h3 className="text-sm font-bold text-stone-900 mb-1 flex items-center gap-2">
-                                            <TrendingUp size={14} className="text-stone-400" /> Conversion Funnel
+                                            <TrendingUp size={14} className="text-stone-400" /> {t('creator.conversionFunnel')}
                                         </h3>
-                                        <p className="text-xs text-stone-400 mb-4 sm:mb-5">Visitor journey breakdown</p>
+                                        <p className="text-xs text-stone-400 mb-4 sm:mb-5">{t('creator.visitorJourney')}</p>
                                         <div className="space-y-5">
                                             {analyticsData.funnel.map((step, index) => {
                                                 const maxVal = analyticsData.funnel[0].count || 1;
@@ -2008,9 +2020,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 {/* Audience Split */}
                                 <div className="bg-white p-4 sm:p-6 rounded-2xl border border-stone-200/60">
                                     <h3 className="text-sm font-bold text-stone-900 mb-1 flex items-center gap-2">
-                                        <Users size={14} className="text-stone-400" /> Audience
+                                        <Users size={14} className="text-stone-400" /> {t('creator.audience')}
                                     </h3>
-                                    <p className="text-xs text-stone-400 mb-4 sm:mb-5">New vs returning visitors</p>
+                                    <p className="text-xs text-stone-400 mb-4 sm:mb-5">{t('creator.newVsReturning')}</p>
                                     <div className="flex items-center gap-6">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-3">
@@ -2021,12 +2033,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <div className="flex justify-between text-xs">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-2 h-2 rounded-full bg-stone-700" />
-                                                    <span className="text-stone-600">New visitors</span>
+                                                    <span className="text-stone-600">{t('creator.newVisitorsLabel')}</span>
                                                     <span className="font-bold text-stone-900">{analyticsData.audienceType.new}%</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-2 h-2 rounded-full bg-stone-200" />
-                                                    <span className="text-stone-600">Returning</span>
+                                                    <span className="text-stone-600">{t('creator.returningLabel')}</span>
                                                     <span className="font-bold text-stone-900">{analyticsData.audienceType.returning}%</span>
                                                 </div>
                                             </div>
@@ -2038,18 +2050,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="bg-white border border-stone-200/60 rounded-2xl shadow-sm overflow-hidden">
                                     <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-stone-100 flex items-center gap-2">
                                         <Star size={16} className="text-yellow-500" />
-                                        <h3 className="text-sm font-bold text-stone-900">Top Performing Content</h3>
+                                        <h3 className="text-sm font-bold text-stone-900">{t('creator.topPerformingContent')}</h3>
                                     </div>
                                     {/* Desktop Table */}
                                     <div className="hidden sm:block overflow-x-auto">
                                         <table className="w-full text-left text-sm">
                                             <thead className="bg-stone-50 text-stone-500 font-bold border-b border-stone-100 text-xs uppercase tracking-wider">
                                                 <tr>
-                                                    <th className="px-6 py-3">Asset</th>
-                                                    <th className="px-6 py-3">Type</th>
-                                                    <th className="px-6 py-3 text-right">Clicks</th>
-                                                    <th className="px-6 py-3 text-right">CTR</th>
-                                                    <th className="px-6 py-3 text-right">Revenue</th>
+                                                    <th className="px-6 py-3">{t('creator.asset')}</th>
+                                                    <th className="px-6 py-3">{t('creator.type')}</th>
+                                                    <th className="px-6 py-3 text-right">{t('creator.clicks')}</th>
+                                                    <th className="px-6 py-3 text-right">{t('creator.ctr')}</th>
+                                                    <th className="px-6 py-3 text-right">{t('creator.revenue')}</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-stone-100">
@@ -2081,14 +2093,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 <div className="flex-1 min-w-0">
                                                     <div className="font-bold text-stone-800 text-sm truncate">{asset.title}</div>
                                                     <div className="text-[10px] text-stone-400 flex items-center gap-2 mt-0.5">
-                                                        <span>{asset.clicks.toLocaleString()} clicks</span>
+                                                        <span>{asset.clicks.toLocaleString()} {t('creator.clicks').toLowerCase()}</span>
                                                         <span>·</span>
-                                                        <span>{asset.ctr} CTR</span>
+                                                        <span>{asset.ctr} {t('creator.ctr')}</span>
                                                     </div>
                                                 </div>
                                                 <div className="text-right flex-shrink-0">
                                                     <div className="font-mono font-bold text-emerald-600 text-sm">{asset.revenue > 0 ? asset.revenue : '-'}</div>
-                                                    <div className="text-[10px] text-stone-400">credits</div>
+                                                    <div className="text-[10px] text-stone-400">{t('common.credits').toLowerCase()}</div>
                                                 </div>
                                             </div>
                                         ))}
@@ -2105,7 +2117,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     {/* List Column */}
                     <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col bg-white ${selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
                         <div className="p-4 border-b border-stone-100 flex flex-col gap-3">
-                            <span className="font-semibold text-stone-900">Message Filters</span>
+                            <span className="font-semibold text-stone-900">{t('creator.messageFilters')}</span>
                             <div className="flex flex-wrap gap-1 bg-stone-100/60 p-1 rounded-lg">
                                 {(['ALL', 'PENDING', 'REPLIED', 'REJECTED'] as const).map(f => (
                                     <button
@@ -2120,9 +2132,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         </div>
                         <div className="flex-1 overflow-y-auto">
                             {isLoading ? (
-                                <div className="p-8 text-center text-sm text-stone-400">Loading...</div>
+                                <div className="p-8 text-center text-sm text-stone-400">{t('common.loading')}</div>
                             ) : filteredGroups.length === 0 ? (
-                                <div className="p-8 text-center text-sm text-stone-400">No messages found.</div>
+                                <div className="p-8 text-center text-sm text-stone-400">{t('creator.noMessagesFound')}</div>
                             ) : (
                                 filteredGroups.map(group => {
                                     const isActive = selectedSenderEmail === group.senderEmail;
@@ -2196,7 +2208,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mb-4">
                                     <Users size={32} className="text-stone-300" />
                                 </div>
-                                <p className="text-sm font-medium">Select a message to view details</p>
+                                <p className="text-sm font-medium">{t('creator.selectMessage')}</p>
                             </div>
                         ) : (
                              <div className="h-full flex flex-col bg-[#FAF9F6] relative overflow-hidden">
@@ -2232,7 +2244,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     <Check size={14} className="text-white stroke-[3px]" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-bold">Credits Collected</p>
+                                                    <p className="text-sm font-bold">{t('creator.creditsCollected')}</p>
                                                 </div>
                                             </div>
                                             <div className="relative z-10 w-px h-4 bg-white/20"></div>
@@ -2258,7 +2270,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         onClick={(e) => handleReject(e)}
                                                         disabled={isRejecting}
                                                         className="p-1 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                                                        title="Reject & Refund"
+                                                        title={t('creator.rejectRefund')}
                                                     >
                                                         <Ban size={14} />
                                                     </button>
@@ -2280,18 +2292,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         )}
                                         {activeMessage.status === 'REPLIED' && (
                                             <div className="text-[10px] sm:text-xs font-bold text-emerald-600 bg-emerald-50 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1 border border-emerald-100 whitespace-nowrap">
-                                                <CheckCircle2 size={12} /> Completed
+                                                <CheckCircle2 size={12} /> {t('creator.completed')}
                                             </div>
                                         )}
                                         {(activeMessage.status === 'EXPIRED' || activeMessage.status === 'CANCELLED') && (
                                             <div className="text-[10px] sm:text-xs font-bold text-stone-500 bg-stone-100 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-stone-200 whitespace-nowrap">
-                                                Refunded
+                                                {t('creator.refunded')}
                                             </div>
                                         )}
                                         <button
                                             onClick={() => leaveChatroom(activeMessage.senderEmail)}
                                             className="p-1.5 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                            title="Leave conversation"
+                                            title={t('creator.leaveConversationTitle')}
                                         >
                                             <LogOut size={16} />
                                         </button>
@@ -2313,7 +2325,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 {msgIndex > 0 && (
                                                     <div className="flex items-center gap-3 mb-4 -mt-1">
                                                         <div className="flex-1 h-px bg-stone-200/60"></div>
-                                                        <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">New request</span>
+                                                        <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">{t('creator.newRequest')}</span>
                                                         <div className="flex-1 h-px bg-stone-200/60"></div>
                                                     </div>
                                                 )}
@@ -2344,9 +2356,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 <span className="font-semibold text-sm text-stone-900">{msg.senderName}</span>
                                                                 <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
                                                                     <User size={10} className="fill-current" />
-                                                                    <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
+                                                                    <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.fan')}</span>
                                                                 </div>
-                                                                <span className="text-xs font-medium text-stone-400">• {getRelativeTime(firstChat.timestamp)}</span>
+                                                                <span className="text-xs font-medium text-stone-400">• {getRelativeTime(firstChat.timestamp, t)}</span>
                                                             </div>
                                                         </div>
 
@@ -2456,15 +2468,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                         {isCreator ? (
                                                                             <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
                                                                                 <CheckCircle2 size={10} className="fill-current" />
-                                                                                <span className="text-[9px] font-semibold uppercase tracking-wide">Creator</span>
+                                                                                <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.creator')}</span>
                                                                             </div>
                                                                         ) : (
                                                                             <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
                                                                                 <User size={10} className="fill-current" />
-                                                                                <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
+                                                                                <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.fan')}</span>
                                                                             </div>
                                                                         )}
-                                                                        <span className="text-xs font-medium text-stone-400">• {getRelativeTime(chat.timestamp)}</span>
+                                                                        <span className="text-xs font-medium text-stone-400">• {getRelativeTime(chat.timestamp, t)}</span>
                                                                     </div>
                                                                 </div>
 
@@ -2504,8 +2516,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                                 <input type="file" ref={editFileInputRef} className="hidden" onChange={handleEditFileChange} />
                                                                             </div>
                                                                             <div className="flex items-center gap-2">
-                                                                                <button onClick={() => { setEditingChatId(null); setEditContent(''); setEditAttachment(undefined); }} className="text-xs text-stone-400 hover:text-stone-600 px-3 py-1.5 rounded-lg transition-colors">Cancel</button>
-                                                                                <button onClick={() => handleEditChat(chat.id, msg.id)} disabled={isUploadingEditAttachment} className="text-xs text-white bg-stone-900 hover:bg-stone-800 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50">Save</button>
+                                                                                <button onClick={() => { setEditingChatId(null); setEditContent(''); setEditAttachment(undefined); }} className="text-xs text-stone-400 hover:text-stone-600 px-3 py-1.5 rounded-lg transition-colors">{t('common.cancel')}</button>
+                                                                                <button onClick={() => handleEditChat(chat.id, msg.id)} disabled={isUploadingEditAttachment} className="text-xs text-white bg-stone-900 hover:bg-stone-800 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50">{t('common.save')}</button>
                                                                             </div>
                                                                         </div>
                                                                     </div>
