@@ -1215,7 +1215,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       <main className="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden relative">
         
         {/* Top Header */}
-        <header className="h-14 sm:h-16 bg-white border-b border-stone-200 flex items-center justify-between px-3 sm:px-6 shrink-0 overflow-x-hidden">
+        <header className="h-14 sm:h-16 bg-white border-b border-stone-200 flex items-center justify-between px-3 sm:px-6 shrink-0 overflow-x-hidden relative z-40">
             <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                 <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 flex-shrink-0">
                     <Menu size={20} />

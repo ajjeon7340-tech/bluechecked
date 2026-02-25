@@ -870,7 +870,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                 </div>
             )}
             {/* Header */}
-            <header className="h-16 bg-white border-b border-stone-200 flex items-center justify-between px-6 shrink-0 z-20">
+            <header className="h-16 bg-white border-b border-stone-200 flex items-center justify-between px-6 shrink-0 relative z-40">
                 <div className="flex items-center gap-4">
                     <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500">
                         <Menu size={20} />
