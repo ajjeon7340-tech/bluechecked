@@ -125,12 +125,12 @@ export const Coins = ({ className, size = 24, ...props }: any) => (
 
 export const DiemLogo = ({ className, size = 24, ...props }: any) => {
   const width = size;
-  const height = size * (346 / 314);
+  const height = size * (105 / 314);
   return (
     <svg
       width={width}
       height={height}
-      viewBox="0 0 314 346"
+      viewBox="0 95 314 105"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
