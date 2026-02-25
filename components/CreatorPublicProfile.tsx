@@ -463,7 +463,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         {!currentUser && (
                             <button
                               onClick={() => setIsCustomizeMode(!isCustomizeMode)}
-                              className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 border ${isCustomizeMode ? 'bg-stone-900 border-stone-900 text-white' : 'bg-transparent border-stone-200 text-stone-400 hover:border-stone-400'}`}
+                              className={`hidden sm:flex px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all items-center gap-1 border ${isCustomizeMode ? 'bg-stone-900 border-stone-900 text-white' : 'bg-transparent border-stone-200 text-stone-400 hover:border-stone-400'}`}
                             >
                               {isCustomizeMode ? <CheckCircle2 size={10} /> : null}
                               {isCustomizeMode ? t('common.editing') : t('common.edit')}
