@@ -370,21 +370,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           ? `${window.location.origin}/${creator.handle.replace('@', '')}`
           : window.location.href;
 
-      if (navigator.share) {
-          try {
-              await navigator.share({
-                  title: creator.displayName,
-                  text: creator.bio,
-                  url: shareUrl,
-              });
-              logAnalyticsEvent(creator.id, 'CLICK', { type: 'SHARE' });
-          } catch (error) {
-              console.log('Error sharing', error);
-          }
-      } else {
-          navigator.clipboard.writeText(shareUrl);
-          alert(t('profile.linkCopied'));
-      }
+      navigator.clipboard.writeText(shareUrl);
+      alert(t('profile.linkCopied'));
+      logAnalyticsEvent(creator.id, 'CLICK', { type: 'SHARE' });
   };
 
   // Helper to get platform icon
@@ -446,7 +434,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           {/* 1. PROFILE INFO & STATS */}
           <div className="w-full">
              <div className="bg-white rounded-2xl border border-stone-200/60 relative transition-all">
-                <div className="px-6 pt-6 flex justify-between items-center">
+                <div className="px-4 pt-4 flex justify-between items-center">
                     <div
                       onClick={onCreateOwn}
                       className="flex items-center gap-2.5 cursor-pointer hover:opacity-70 transition-opacity pl-1"
@@ -483,10 +471,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         )}
                     </div>
                 </div>
-                <div className="p-6 sm:p-8 relative z-10">
-                    <div className="flex flex-col items-center text-center gap-5">
+                <div className="p-4 sm:p-6 relative z-10">
+                    <div className="flex flex-col items-center text-center gap-3">
                         {/* Instagram Notes style: Avatar with thought bubble overlaid */}
-                        <div className={`flex flex-col items-center flex-shrink-0 relative ${!isCustomizeMode && creator.bio ? 'mt-14 sm:mt-16' : ''}`}>
+                        <div className={`flex flex-col items-center flex-shrink-0 relative ${!isCustomizeMode && creator.bio ? 'mt-10 sm:mt-12' : ''}`}>
                         {/* Avatar container - bubble overlaps onto avatar */}
                         <div className="relative">
                         {/* Thought bubble overlapping top of avatar */}
