@@ -5,6 +5,7 @@ import { CurrentUser, Message, CreatorProfile } from '../types';
 import { Button } from './Button';
 import { DiemLogo, CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download, Smile, Verified } from './Icons';
 import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createCheckoutSession, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl } from '../services/realBackend';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface Props {
   currentUser: CurrentUser | null;
@@ -919,6 +920,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             <Coins size={14} className="text-stone-500" />
                             {currentUser?.credits || 0} {t('common.credits')}
                         </button>
+                        <div className="hidden sm:block h-6 w-px bg-stone-200"></div>
+                        <LanguageSwitcher />
+
                         <div className="relative">
                             <button 
                                 onClick={handleToggleNotifications}
