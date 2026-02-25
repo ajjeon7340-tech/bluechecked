@@ -485,20 +485,26 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                 </div>
                 <div className="p-6 sm:p-8 relative z-10">
                     <div className="flex flex-col items-center text-center gap-5">
-                        {/* Speech Bubble + Avatar + Stats */}
-                        <div className="flex flex-col items-center gap-0 flex-shrink-0 relative">
-                        {/* Thought bubble above avatar */}
+                        {/* Instagram Notes style: Avatar with speech bubble */}
+                        <div className={`flex flex-col items-center flex-shrink-0 relative ${!isCustomizeMode && creator.bio ? 'mt-16 sm:mt-20' : ''}`}>
+                        {/* Avatar container - bubble is positioned relative to this */}
+                        <div className="relative">
+                        {/* Notes-style bubble overlapping top of avatar */}
                         {!isCustomizeMode && creator.bio && (
-                            <div className="relative mb-1">
-                                {/* Main bubble */}
-                                <div className="bg-white border border-stone-300/70 rounded-2xl px-5 py-3">
-                                    <p className="text-xs sm:text-sm text-stone-700 leading-relaxed font-medium text-center max-w-[220px]">
+                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 -translate-y-full z-30" style={{ width: 'max-content', maxWidth: '220px' }}>
+                                <div className="bg-white rounded-[20px] px-4 py-2.5 shadow-md border border-stone-200/60">
+                                    <p className="text-xs sm:text-sm text-stone-800 leading-snug font-medium text-center">
                                         {creator.bio}
                                     </p>
                                 </div>
-                                {/* Single thought dot */}
-                                <div className="flex justify-center mt-1">
-                                    <div className="w-2.5 h-2.5 bg-white border border-stone-300/70 rounded-full"></div>
+                                {/* Tail - small triangle pointing down */}
+                                <div className="flex justify-center -mt-px">
+                                    <svg width="16" height="8" viewBox="0 0 16 8" className="drop-shadow-sm">
+                                        <path d="M0 0L8 8L16 0" fill="white" />
+                                        <path d="M0 0L8 8L16 0" fill="none" stroke="rgba(214,211,209,0.6)" strokeWidth="1" strokeLinejoin="round" />
+                                        {/* Cover the top border line */}
+                                        <rect x="0" y="0" width="16" height="1" fill="white" />
+                                    </svg>
                                 </div>
                             </div>
                         )}
@@ -528,6 +534,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                 </div>
                             )}
                         </div>
+                        </div>{/* close relative avatar container */}
 
                         {/* Likes & Rating (Moved below avatar) */}
                         {!isCustomizeMode && (
