@@ -165,7 +165,7 @@ function App() {
                     setIsLoading(false);
                 }
             } else {
-                window.history.replaceState({ page: 'LANDING' }, '', '');
+                window.history.replaceState({ page: 'LANDING' }, '', '/');
                 setIsLoading(false);
             }
         } catch (err: any) {
@@ -174,7 +174,7 @@ function App() {
             } else if (err.code === 'ROLE_MISMATCH') {
                 alert(err.message);
                 await signOut();
-                window.history.replaceState({ page: 'LANDING' }, '', '');
+                window.history.replaceState({ page: 'LANDING' }, '', '/');
                 setCurrentPage('LANDING');
             } else {
                 // Handle generic errors (e.g. Network, DB) by showing the Error UI
