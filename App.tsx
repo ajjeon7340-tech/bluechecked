@@ -268,9 +268,13 @@ function App() {
   const handleCreatorSelect = async (creatorId: string) => {
     try {
       setIsLoading(true);
-      await loadCreatorData(creatorId, false);
-      // We don't update URL here to avoid overwriting if we are in a specific flow, but we could.
-      window.history.pushState({ page: 'PROFILE', creatorId }, '', ''); 
+      const profile = await loadCreatorData(creatorId, false);
+      if (profile) {
+          const handle = profile.handle.replace('@', '');
+          window.history.pushState({ page: 'PROFILE', creatorId }, '', `/${handle}`);
+      } else {
+          window.history.pushState({ page: 'PROFILE', creatorId }, '', '');
+      }
       setCurrentPage('PROFILE');
       setIsLoading(false);
     } catch (e) {
