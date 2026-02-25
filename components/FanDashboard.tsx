@@ -77,6 +77,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
   const [exploreQuery, setExploreQuery] = useState('');
+  const [inboxFilter, setInboxFilter] = useState<'ALL' | 'PENDING' | 'REPLIED' | 'REJECTED'>('ALL');
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [deletedNotificationIds, setDeletedNotificationIds] = useState<string[]>(() => {
@@ -327,9 +328,15 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       return conversationGroups.filter(g => {
           const leftAt = leftChatrooms[g.creatorId];
           if (leftAt && new Date(g.latestMessage.createdAt).getTime() < leftAt) return false;
+          
+          const status = g.latestMessage.status;
+          if (inboxFilter === 'PENDING' && status !== 'PENDING') return false;
+          if (inboxFilter === 'REPLIED' && status !== 'REPLIED') return false;
+          if (inboxFilter === 'REJECTED' && status !== 'EXPIRED' && status !== 'CANCELLED') return false;
+
           return g.creatorName.toLowerCase().includes(searchQuery.toLowerCase());
       });
-  }, [conversationGroups, searchQuery, leftChatrooms]);
+  }, [conversationGroups, searchQuery, leftChatrooms, inboxFilter]);
 
   const filteredCreators = useMemo(() => {
     const list = featuredCreators.filter(c => 
@@ -1469,7 +1476,20 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                       {/* Conversation List */}
                       <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
                          <div className="px-6 py-4 border-b border-stone-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-                             <h3 className="text-sm font-bold text-stone-900">{t('fan.messageFilters')}</h3>
+                             <div className="flex flex-col gap-2 w-full sm:w-auto">
+                                 <h3 className="text-sm font-bold text-stone-900">{t('fan.messageFilters')}</h3>
+                                 <div className="flex flex-wrap gap-1 bg-stone-100/60 p-1 rounded-lg">
+                                    {(['ALL', 'PENDING', 'REPLIED', 'REJECTED'] as const).map(f => (
+                                        <button
+                                            key={f}
+                                            onClick={() => setInboxFilter(f)}
+                                            className={`px-3 py-1.5 text-[10px] font-semibold rounded transition-all whitespace-nowrap ${inboxFilter === f ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+                                        >
+                                            {f}
+                                        </button>
+                                    ))}
+                                </div>
+                             </div>
                              {/* Search Input - More Prominent */}
                              <div className="relative w-full sm:w-auto group">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-stone-600 transition-colors" size={16} />
