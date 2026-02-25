@@ -490,16 +490,17 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         <div className="flex flex-col items-center gap-0 flex-shrink-0 relative">
                         {/* Thought bubble above avatar */}
                         {!isCustomizeMode && creator.bio && (
-                            <div className="relative mb-3">
-                                {/* Main cloud bubble */}
-                                <div className="bg-white border border-stone-200 rounded-[2rem] px-5 py-3 shadow-sm">
-                                    <p className="text-xs sm:text-sm text-stone-600 leading-relaxed font-medium text-center max-w-[240px]">
+                            <div className="relative mb-1">
+                                {/* Main bubble */}
+                                <div className="bg-white border border-stone-300/70 rounded-2xl px-5 py-3">
+                                    <p className="text-xs sm:text-sm text-stone-700 leading-relaxed font-medium text-center max-w-[220px]">
                                         {creator.bio}
                                     </p>
                                 </div>
-                                {/* Thought trail dots */}
-                                <div className="absolute -bottom-2.5 left-1/2 translate-x-1 w-3 h-3 bg-white border border-stone-200 rounded-full shadow-sm"></div>
-                                <div className="absolute -bottom-5 left-1/2 translate-x-2.5 w-2 h-2 bg-white border border-stone-200 rounded-full shadow-sm"></div>
+                                {/* Single thought dot */}
+                                <div className="flex justify-center mt-1">
+                                    <div className="w-2.5 h-2.5 bg-white border border-stone-300/70 rounded-full"></div>
+                                </div>
                             </div>
                         )}
                         <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full p-1 overflow-hidden border border-stone-100 shadow-sm bg-white group">
