@@ -429,12 +429,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
         )}
 
       {/* Main Layout - Single Column / Vertical Stack */}
-      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-6 flex flex-col gap-5 items-center">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-4 flex flex-col gap-5 items-center">
 
           {/* 1. PROFILE INFO & STATS */}
           <div className="w-full">
              <div className="bg-white rounded-2xl border border-stone-200/60 relative transition-all">
-                <div className="px-4 pt-4 flex justify-between items-center">
+                <div className="px-4 pt-3 flex justify-between items-center">
                     <div
                       onClick={onCreateOwn}
                       className="flex items-center gap-2.5 cursor-pointer hover:opacity-70 transition-opacity pl-1"
@@ -474,7 +474,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                 <div className="p-4 sm:p-6 relative z-10">
                     <div className="flex flex-col items-center text-center gap-3">
                         {/* Instagram Notes style: Avatar with thought bubble overlaid */}
-                        <div className={`flex flex-col items-center flex-shrink-0 relative ${!isCustomizeMode && creator.bio ? 'mt-10 sm:mt-12' : ''}`}>
+                        <div className={`flex flex-col items-center flex-shrink-0 relative ${!isCustomizeMode && creator.bio ? 'mt-8 sm:mt-10' : ''}`}>
                         {/* Avatar container - bubble overlaps onto avatar */}
                         <div className="relative">
                         {/* Thought bubble overlapping top of avatar */}
