@@ -590,9 +590,14 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                     </div>
                                 ) : (
                                     <>
-                                        <h1 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight leading-tight mb-2">
+                                        <h1 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight leading-tight mb-1">
                                             {creator.displayName}
                                         </h1>
+                                        {creator.handle && creator.handle !== '@user' && (
+                                            <p className="text-sm font-medium text-stone-500 mb-4">
+                                                {creator.handle}
+                                            </p>
+                                        )}
                                         
 
                                         {platforms.length > 0 && (
