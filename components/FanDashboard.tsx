@@ -862,7 +862,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         </aside>
 
         {/* 2. MAIN CONTENT */}
-        <main className="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden relative">
+        <main className="flex-1 md:ml-64 flex flex-col h-screen relative">
             {/* Demo Banner */}
             {!isBackendConfigured() && (
                 <div className="bg-stone-800 text-white text-[10px] font-semibold px-4 py-1 text-center z-50">
