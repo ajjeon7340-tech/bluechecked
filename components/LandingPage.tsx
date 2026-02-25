@@ -99,7 +99,6 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
       <nav className="max-w-6xl mx-auto px-6 py-8 flex items-center justify-between">
         <div className="flex items-center gap-2.5 cursor-pointer select-none" onClick={() => window.location.reload()}>
           <DiemLogo size={80} className="text-stone-800" />
-          <span className="font-semibold text-lg text-stone-800 tracking-tight">diem</span>
         </div>
         <div className="flex items-center gap-4">
           <LanguageSwitcher />
@@ -474,7 +473,6 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-2">
               <DiemLogo size={64} className="text-stone-800" />
-              <span className="font-semibold text-stone-800">diem</span>
             </div>
 
             <div className="flex items-center gap-8 text-sm text-stone-500">

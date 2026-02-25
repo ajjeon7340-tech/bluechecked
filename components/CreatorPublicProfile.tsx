@@ -452,7 +452,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       className="flex items-center gap-2.5 cursor-pointer hover:opacity-70 transition-opacity pl-1"
                     >
                       <DiemLogo size={72} className="text-stone-800" />
-                      <span className="font-semibold tracking-tight text-sm text-stone-800">diem</span>
                     </div>
 
                     <div className="flex items-center gap-2">
