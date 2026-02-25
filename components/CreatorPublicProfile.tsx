@@ -577,9 +577,16 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                             {creator.displayName}
                                         </h1>
                                         
-                                        <p className="text-sm text-stone-600 leading-relaxed font-medium max-w-md mx-auto mb-4">
-                                            {creator.bio}
-                                        </p>
+                                        {creator.bio && (
+                                            <div className="relative max-w-md mx-auto mb-4">
+                                                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-stone-100 border-l border-t border-stone-200/80 rotate-45"></div>
+                                                <div className="relative bg-stone-100 border border-stone-200/80 rounded-2xl px-5 py-3.5">
+                                                    <p className="text-sm text-stone-600 leading-relaxed font-medium text-center">
+                                                        {creator.bio}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {platforms.length > 0 && (
                                             <div className="flex items-center justify-center gap-3">
