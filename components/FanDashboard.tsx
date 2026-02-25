@@ -62,7 +62,16 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   
   // Navigation State
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [currentView, setCurrentView] = useState<'OVERVIEW' | 'EXPLORE' | 'SETTINGS' | 'PURCHASED' | 'HISTORY' | 'SUPPORT' | 'NOTIFICATIONS'>('OVERVIEW');
+  const [currentView, setCurrentView] = useState<'OVERVIEW' | 'EXPLORE' | 'SETTINGS' | 'PURCHASED' | 'HISTORY' | 'SUPPORT' | 'NOTIFICATIONS'>(() => {
+      const path = window.location.pathname;
+      if (path.startsWith('/dashboard/')) {
+          const view = path.split('/')[2].toUpperCase();
+          if (['EXPLORE', 'SETTINGS', 'PURCHASED', 'HISTORY', 'SUPPORT', 'NOTIFICATIONS'].includes(view)) {
+              return view as any;
+          }
+      }
+      return 'OVERVIEW';
+  });
 
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -163,6 +172,22 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+      const handlePopState = () => {
+          const path = window.location.pathname;
+          if (path === '/dashboard' || path === '/dashboard/') {
+              setCurrentView('OVERVIEW');
+          } else if (path.startsWith('/dashboard/')) {
+              const view = path.split('/')[2].toUpperCase();
+              if (['EXPLORE', 'SETTINGS', 'PURCHASED', 'HISTORY', 'SUPPORT', 'NOTIFICATIONS'].includes(view)) {
+                  setCurrentView(view as any);
+              }
+          }
+      };
+      window.addEventListener('popstate', handlePopState);
+      return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   useEffect(() => {
     loadMessages();
@@ -405,6 +430,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       }
       
       return { label: t('fan.notYetRead'), color: 'text-stone-400', icon: Clock };
+  };
+
+  const handleNavigate = (view: typeof currentView) => {
+      const path = view === 'OVERVIEW' ? '/dashboard' : `/dashboard/${view.toLowerCase()}`;
+      window.history.pushState({ page: 'FAN_DASHBOARD' }, '', path);
+      setCurrentView(view);
+      setSelectedCreatorId(null);
+      setIsSidebarOpen(false);
   };
 
   // Derived state for UI logic
@@ -762,8 +795,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           if (onClick) {
               onClick();
           } else if (view) {
-              setCurrentView(view); 
-              setSelectedCreatorId(null); 
+              handleNavigate(view);
           }
           setIsSidebarOpen(false); 
       }}
@@ -820,7 +852,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
             <div className="p-4 h-full flex flex-col">
                 {/* Brand */}
                 <div 
-                    onClick={() => { setCurrentView('OVERVIEW'); setSelectedCreatorId(null); }}
+                    onClick={() => handleNavigate('OVERVIEW')}
                     className="flex items-center gap-2 px-3 py-4 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
                 >
                     <DiemLogo size={80} className="text-stone-900" />

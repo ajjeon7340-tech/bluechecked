@@ -92,7 +92,16 @@ const DUMMY_PRO_DATA: ProAnalyticsData = {
 
 export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogout, onViewProfile, onRefreshData }) => {
   const { t } = useTranslation();
-  const [currentView, setCurrentView] = useState<DashboardView>('OVERVIEW');
+  const [currentView, setCurrentView] = useState<DashboardView>(() => {
+      const path = window.location.pathname;
+      if (path.startsWith('/dashboard/')) {
+          const view = path.split('/')[2].toUpperCase();
+          if (['INBOX', 'FINANCE', 'ANALYTICS', 'STATISTICS', 'SETTINGS', 'NOTIFICATIONS', 'REVIEWS', 'SUPPORT'].includes(view)) {
+              return view as DashboardView;
+          }
+      }
+      return 'OVERVIEW';
+  });
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [selectedSenderEmail, setSelectedSenderEmail] = useState<string | null>(null);
@@ -285,6 +294,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           if (editFileInputRef.current) editFileInputRef.current.value = '';
       }
   };
+
+  useEffect(() => {
+      const handlePopState = () => {
+          const path = window.location.pathname;
+          if (path === '/dashboard' || path === '/dashboard/') {
+              setCurrentView('OVERVIEW');
+          } else if (path.startsWith('/dashboard/')) {
+              const view = path.split('/')[2].toUpperCase();
+              if (['INBOX', 'FINANCE', 'ANALYTICS', 'STATISTICS', 'SETTINGS', 'NOTIFICATIONS', 'REVIEWS', 'SUPPORT'].includes(view)) {
+                  setCurrentView(view as DashboardView);
+              }
+          }
+      };
+      window.addEventListener('popstate', handlePopState);
+      return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   useEffect(() => {
       localStorage.setItem('bluechecked_creator_deleted_notifications', JSON.stringify(deletedNotificationIds));
@@ -828,6 +853,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     } else if (view === 'REVIEWS') {
         setReviewsPage(1);
     }
+    
+    const path = view === 'OVERVIEW' ? '/dashboard' : `/dashboard/${view.toLowerCase()}`;
+    window.history.pushState({ page: 'DASHBOARD' }, '', path);
+
     setCurrentView(view);
     setSelectedSenderEmail(null);
     setIsSidebarOpen(false);

@@ -118,7 +118,9 @@ function App() {
             // 1. Check URL for Creator Handle (e.g. diem.ee/alexcode)
             const path = window.location.pathname;
             const potentialHandle = path.substring(1); // remove leading /
-            const isSystemRoute = ['login', 'dashboard', 'setup', 'reset-password'].includes(potentialHandle.toLowerCase());
+            const isSystemRoute = ['login', 'dashboard', 'setup', 'reset-password'].some(route => 
+                potentialHandle.toLowerCase() === route || potentialHandle.toLowerCase().startsWith(route + '/')
+            );
 
             if (potentialHandle && !isSystemRoute && path !== '/') {
                 try {
@@ -156,13 +158,17 @@ function App() {
                         window.history.replaceState({ page: 'SETUP_PROFILE' }, '', '');
                     } else {
                         setCurrentPage('DASHBOARD');
-                        window.history.replaceState({ page: 'DASHBOARD' }, '', '');
+                        if (!window.location.pathname.startsWith('/dashboard')) {
+                            window.history.replaceState({ page: 'DASHBOARD' }, '', '/dashboard');
+                        }
                     }
                     setIsLoading(false);
                 } else {
                     // Fan Dashboard
                     setCurrentPage('FAN_DASHBOARD');
-                    window.history.replaceState({ page: 'FAN_DASHBOARD' }, '', '');
+                    if (!window.location.pathname.startsWith('/dashboard')) {
+                        window.history.replaceState({ page: 'FAN_DASHBOARD' }, '', '/dashboard');
+                    }
                     setIsLoading(false);
                 }
             } else {
