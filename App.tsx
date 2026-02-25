@@ -367,7 +367,7 @@ function App() {
           currentUser={currentUser}
           onMessageSent={() => {
             setRefreshTrigger(p => p + 1);
-            loadCreatorData(); // Refresh credits after sending
+            loadCreatorData(creator.id); // Refresh credits after sending
           }} 
           onCreateOwn={async () => {
             if (currentUser) {
