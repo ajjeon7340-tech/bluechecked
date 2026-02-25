@@ -1146,7 +1146,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 onClick={() => handleNavigate('OVERVIEW')}
                 className="flex items-center gap-2 px-3 py-4 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
             >
-                <DiemLogo size={28} className="text-stone-900" />
+                <DiemLogo size={80} className="text-stone-900" />
                 <span className="font-bold text-stone-900 tracking-tight">DIEM</span>
                 {creator.isPremium && (
                    <span className="bg-yellow-100 text-yellow-700 text-[9px] font-bold px-1.5 py-0.5 rounded border border-yellow-200 ml-1">PRO</span>
