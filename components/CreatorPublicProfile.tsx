@@ -497,14 +497,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         {creator.bio}
                                     </p>
                                 </div>
-                                {/* Tail - small triangle pointing down */}
-                                <div className="flex justify-center -mt-px">
-                                    <svg width="16" height="8" viewBox="0 0 16 8" className="drop-shadow-sm">
-                                        <path d="M0 0L8 8L16 0" fill="white" />
-                                        <path d="M0 0L8 8L16 0" fill="none" stroke="rgba(214,211,209,0.6)" strokeWidth="1" strokeLinejoin="round" />
-                                        {/* Cover the top border line */}
-                                        <rect x="0" y="0" width="16" height="1" fill="white" />
-                                    </svg>
+                                {/* Thought bubble dots trailing down */}
+                                <div className="flex flex-col items-center mt-1.5 gap-1">
+                                    <div className="w-3 h-3 bg-white rounded-full shadow-md border border-stone-200/60"></div>
+                                    <div className="w-2 h-2 bg-white rounded-full shadow-md border border-stone-200/60"></div>
                                 </div>
                             </div>
                         )}
