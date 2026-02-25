@@ -458,7 +458,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
           onClick={onBack}
           className="mb-8 flex justify-center items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity"
         >
-          <DiemLogo size={80} className="text-stone-800" />
+          <DiemLogo size={36} className="text-stone-800" />
           <span className="font-semibold text-lg tracking-tight text-stone-800">diem</span>
         </div>
 
