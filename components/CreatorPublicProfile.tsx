@@ -497,10 +497,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         {creator.bio}
                                     </p>
                                 </div>
-                                {/* Thought bubble dots trailing down onto avatar */}
-                                <div className="flex flex-col items-center mt-1 gap-0.5">
-                                    <div className="w-2.5 h-2.5 bg-white rounded-full shadow-md border border-stone-200/60"></div>
-                                    <div className="w-1.5 h-1.5 bg-white rounded-full shadow-md border border-stone-200/60"></div>
+                                {/* Thought bubble dots trailing from left toward center */}
+                                <div className="relative h-5 mt-0.5">
+                                    <div className="absolute left-3 top-0 w-2.5 h-2.5 bg-white rounded-full shadow-md border border-stone-200/60"></div>
+                                    <div className="absolute left-6 top-2.5 w-1.5 h-1.5 bg-white rounded-full shadow-md border border-stone-200/60"></div>
                                 </div>
                             </div>
                         )}
