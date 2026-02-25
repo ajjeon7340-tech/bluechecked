@@ -283,6 +283,8 @@ export const sendMessage = async (creatorId: string, name: string, email: string
         // Note: In real backend, this is handled transactionally. Here we update local state.
     }
 
+    const attachmentUrl = attachments && attachments.length > 0 ? attachments[0].url : undefined;
+
     const newMessage: Message = {
         id: `m${Date.now()}`,
         creatorId: creatorId,
@@ -298,7 +300,7 @@ export const sendMessage = async (creatorId: string, name: string, email: string
         isRead: (isProductPurchase || isTip),
         replyAt: (isProductPurchase || isTip) ? new Date().toISOString() : undefined,
         conversation: [
-            { id: `c${Date.now()}`, role: 'FAN', content, timestamp: new Date().toISOString() }
+            { id: `c${Date.now()}`, role: 'FAN', content, timestamp: new Date().toISOString(), attachmentUrl }
         ]
     };
     messages = [newMessage, ...messages];
