@@ -474,7 +474,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                 <div className="p-4 sm:p-6 relative z-10">
                     <div className="flex flex-col items-center text-center gap-3">
                         {/* Instagram Notes style: Avatar with thought bubble overlaid */}
-                        <div className={`flex flex-col items-center flex-shrink-0 relative ${!isCustomizeMode && creator.bio ? 'mt-8 sm:mt-10' : ''}`}>
+                        <div className={`flex flex-col items-center flex-shrink-0 relative`}>
                         {/* Avatar container - bubble overlaps onto avatar */}
                         <div className="relative">
                         {/* Thought bubble overlapping top of avatar */}
