@@ -85,12 +85,13 @@ function App() {
         }
         setCurrentPage(state.page);
       } else {
-        // Fallback if state is missing (e.g. initial entry popped)
-        if (user) {
-             setCurrentPage(user.role === 'CREATOR' ? 'DASHBOARD' : 'FAN_DASHBOARD');
-        } else {
-             setCurrentPage('LANDING');
-        }
+        // No state means we've hit the edge of app history.
+        // Instead of leaving the app, push back to the appropriate home page.
+        const homePage = user
+          ? (user.role === 'CREATOR' ? 'DASHBOARD' : 'FAN_DASHBOARD')
+          : 'LANDING';
+        window.history.pushState({ page: homePage }, '', homePage === 'LANDING' ? '/' : '/dashboard');
+        setCurrentPage(homePage);
       }
     };
 
