@@ -332,6 +332,11 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                                 placeholder="@username"
                                 className="w-full border border-stone-200 rounded-xl p-3 focus:ring-2 focus:ring-stone-500 outline-none transition-all" 
                             />
+                            {handle && (
+                                <p className="text-[10px] text-stone-400 mt-1 ml-1">
+                                    Your public page: <span className="font-mono text-stone-600">{window.location.host}/{handle.replace('@', '')}</span>
+                                </p>
+                            )}
                         </div>
                         <div className="bg-stone-50 p-5 rounded-2xl border border-stone-100 space-y-4">
                             <h3 className="text-sm font-bold text-stone-900 uppercase tracking-wide flex items-center gap-2">

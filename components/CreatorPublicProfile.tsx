@@ -366,19 +366,23 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   };
 
   const handleShare = async () => {
+      const shareUrl = creator.handle && creator.handle !== '@user'
+          ? `${window.location.origin}/${creator.handle.replace('@', '')}`
+          : window.location.href;
+
       if (navigator.share) {
           try {
               await navigator.share({
                   title: creator.displayName,
                   text: creator.bio,
-                  url: window.location.href,
+                  url: shareUrl,
               });
               logAnalyticsEvent(creator.id, 'CLICK', { type: 'SHARE' });
           } catch (error) {
               console.log('Error sharing', error);
           }
       } else {
-          navigator.clipboard.writeText(window.location.href);
+          navigator.clipboard.writeText(shareUrl);
           alert(t('profile.linkCopied'));
       }
   };

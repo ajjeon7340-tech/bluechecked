@@ -2812,6 +2812,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     onChange={e => setEditedCreator({...editedCreator, handle: e.target.value})}
                                     className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none"
                                 />
+                                <p className="text-[10px] text-stone-400 mt-1">
+                                    Your public page: <span className="font-mono text-stone-600">{window.location.host}/{editedCreator.handle?.replace('@', '')}</span>
+                                </p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-stone-700 mb-1">Bio</label>
