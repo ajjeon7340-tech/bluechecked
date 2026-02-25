@@ -98,7 +98,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
       {/* Navigation - Minimal & Warm */}
       <nav className="max-w-6xl mx-auto px-6 py-8 flex items-center justify-between">
         <div className="flex items-center gap-2.5 cursor-pointer select-none" onClick={() => window.location.reload()}>
-          <DiemLogo size={36} className="text-stone-800" />
+          <DiemLogo size={48} className="text-stone-800" />
         </div>
         <div className="flex items-center gap-4">
           <LanguageSwitcher />

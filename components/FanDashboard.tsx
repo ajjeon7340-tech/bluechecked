@@ -856,7 +856,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                     onClick={() => handleNavigate('OVERVIEW')}
                     className="flex items-center gap-2 px-3 py-4 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
                 >
-                    <DiemLogo size={36} className="text-stone-900" />
+                    <DiemLogo size={48} className="text-stone-900" />
                 </div>
 
                 {/* Nav Links */}
