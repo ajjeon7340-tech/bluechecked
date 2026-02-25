@@ -434,12 +434,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           {/* 1. PROFILE INFO & STATS */}
           <div className="w-full">
              <div className="bg-white rounded-2xl border border-stone-200/60 relative transition-all">
-                <div className="px-4 py-2 flex justify-between items-center">
+                <div className="px-4 py-1 flex justify-between items-center">
                     <div
                       onClick={onCreateOwn}
-                      className="flex items-center gap-2.5 cursor-pointer hover:opacity-70 transition-opacity pl-1"
+                      className="flex items-center cursor-pointer hover:opacity-70 transition-opacity"
                     >
-                      <DiemLogo size={70} className="text-stone-800" />
+                      <DiemLogo size={50} className="text-stone-800" />
                     </div>
 
                     <div className="flex items-center gap-2">
