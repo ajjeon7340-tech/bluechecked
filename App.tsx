@@ -270,7 +270,9 @@ function App() {
       setIsLoading(true);
       const profile = await loadCreatorData(creatorId, false);
       if (profile) {
-          const handle = profile.handle.replace('@', '');
+          const handle = (profile.handle && profile.handle !== '@user') 
+              ? profile.handle.replace('@', '') 
+              : profile.displayName;
           window.history.pushState({ page: 'PROFILE', creatorId }, '', `/${handle}`);
       } else {
           window.history.pushState({ page: 'PROFILE', creatorId }, '', '');
@@ -314,7 +316,9 @@ function App() {
           }}
           onDemoClick={() => {
             if (creator) {
-                const handle = creator.handle.replace('@', '');
+                const handle = (creator.handle && creator.handle !== '@user') 
+                    ? creator.handle.replace('@', '') 
+                    : creator.displayName;
                 window.history.pushState({ page: 'PROFILE', creatorId: creator.id }, '', `/${handle}`);
                 setCurrentPage('PROFILE');
             }
@@ -405,7 +409,9 @@ function App() {
             setCurrentPage('LANDING');
           }}
           onViewProfile={() => {
-              const handle = creator.handle.replace('@', '');
+              const handle = (creator.handle && creator.handle !== '@user') 
+                  ? creator.handle.replace('@', '') 
+                  : creator.displayName;
               window.history.pushState({ page: 'PROFILE', creatorId: creator.id }, '', `/${handle}`);
               setCurrentPage('PROFILE');
           }}

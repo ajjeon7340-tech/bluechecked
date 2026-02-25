@@ -662,18 +662,31 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
 export const getCreatorProfileByHandle = async (handle: string): Promise<CreatorProfile> => {
     if (!isConfigured) return MockBackend.getCreatorProfile();
 
+    const decodedHandle = decodeURIComponent(handle);
     // Handle potential @ prefix
-    const cleanHandle = handle.startsWith('@') ? handle : handle;
-    const handleWithAt = handle.startsWith('@') ? handle : `@${handle}`;
+    const cleanHandle = decodedHandle.startsWith('@') ? decodedHandle : decodedHandle;
+    const handleWithAt = decodedHandle.startsWith('@') ? decodedHandle : `@${decodedHandle}`;
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('role', 'CREATOR')
         .or(`handle.eq.${cleanHandle},handle.eq.${handleWithAt}`)
         .maybeSingle();
 
-    if (error) {
+    if (!data) {
+         // Fallback: Search by display name
+         const { data: nameData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('role', 'CREATOR')
+            .ilike('display_name', cleanHandle)
+            .maybeSingle();
+         
+         if (nameData) data = nameData;
+    }
+
+    if (error && !data) {
         console.error("Supabase Error:", error);
         throw new Error(`Database Error: ${error.message}`);
     }
