@@ -1,18 +1,16 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 import { CreatorPublicProfile } from './components/CreatorPublicProfile';
 import { CreatorDashboard } from './components/CreatorDashboard';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { FanDashboard } from './components/FanDashboard';
-import { getCreatorProfile, checkAndSyncSession, completeOAuthSignup, signOut, subscribeToAuthChanges } from './services/realBackend';
+import { getCreatorProfile, getCreatorProfileByHandle, checkAndSyncSession, completeOAuthSignup, signOut, subscribeToAuthChanges } from './services/realBackend';
 import { CreatorProfile, CurrentUser, UserRole } from './types';
 
 type PageState = 'LANDING' | 'LOGIN' | 'DASHBOARD' | 'PROFILE' | 'FAN_DASHBOARD' | 'SETUP_PROFILE';
 
 function App() {
-  const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState<PageState>('LANDING');
   const [creator, setCreator] = useState<CreatorProfile | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -116,6 +114,28 @@ function App() {
     // Check for existing session
     const initSession = async () => {
         try {
+            // 1. Check URL for Creator Handle (e.g. diem.ee/alexcode)
+            const path = window.location.pathname;
+            const potentialHandle = path.substring(1); // remove leading /
+            const isSystemRoute = ['login', 'dashboard', 'setup', 'reset-password'].includes(potentialHandle.toLowerCase());
+
+            if (potentialHandle && !isSystemRoute && path !== '/') {
+                try {
+                    const profile = await getCreatorProfileByHandle(potentialHandle);
+                    setCreator(profile);
+                    setCurrentPage('PROFILE');
+                    
+                    // Also sync session in background
+                    const user = await checkAndSyncSession();
+                    if (user) setCurrentUser(user);
+                    
+                    setIsLoading(false);
+                    return;
+                } catch (e) {
+                    console.log("Not a creator handle, checking session...");
+                }
+            }
+
             const user = await checkAndSyncSession();
             if (user) {
                 setCurrentUser(user);
@@ -186,21 +206,21 @@ function App() {
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl">⚠️</span>
         </div>
-        <h2 className="text-xl font-bold text-stone-900">{t('common.connectionError')}</h2>
+        <h2 className="text-xl font-bold text-stone-900">Connection Error</h2>
         <p className="text-stone-600">{error}</p>
         <div className="bg-stone-50 p-4 rounded-2xl text-sm text-stone-500 text-left border border-stone-100">
-            <p className="font-bold mb-1">{t('common.troubleshooting')}</p>
+            <p className="font-bold mb-1">Troubleshooting:</p>
             <ul className="list-disc pl-4 space-y-1">
-                <li>{t('common.checkInternet')}</li>
-                <li>{t('common.ensureSupabase')}</li>
-                <li>{t('common.runSeed')}</li>
+                <li>Check your internet connection</li>
+                <li>Ensure Supabase project is active</li>
+                <li>Run the database seed script in Supabase SQL Editor</li>
             </ul>
         </div>
         <button
           onClick={() => loadCreatorData()}
           className="px-6 py-3 bg-stone-900 text-white rounded-full font-medium hover:bg-stone-800 transition-colors shadow-lg shadow-stone-900/20"
         >
-          {t('common.retry')}
+          Retry Connection
         </button>
       </div>
     </div>
@@ -210,7 +230,7 @@ function App() {
     <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9] text-stone-400">
       <div className="flex flex-col items-center gap-2">
         <div className="animate-spin h-6 w-6 border-2 border-stone-800 border-t-transparent rounded-full"></div>
-        <span className="text-sm font-medium">{t('common.loadingDiem')}</span>
+        <span className="text-sm font-medium">Loading Bluechecked...</span>
       </div>
     </div>
   );
@@ -249,7 +269,8 @@ function App() {
     try {
       setIsLoading(true);
       await loadCreatorData(creatorId, false);
-      window.history.pushState({ page: 'PROFILE', creatorId }, '', '');
+      // We don't update URL here to avoid overwriting if we are in a specific flow, but we could.
+      window.history.pushState({ page: 'PROFILE', creatorId }, '', ''); 
       setCurrentPage('PROFILE');
       setIsLoading(false);
     } catch (e) {
@@ -265,7 +286,7 @@ function App() {
           setShowSignUpConfirm(false);
       } catch (e) {
           console.error(e);
-          alert(t('common.failedCreateAccount'));
+          alert("Failed to create account.");
           await handleCancelSignUp();
       } finally {
           setIsLoading(false);
@@ -284,15 +305,16 @@ function App() {
       {currentPage === 'LANDING' && (
         <LandingPage
           onLoginClick={() => {
-              window.history.pushState({ page: 'LOGIN' }, '', '');
+              window.history.pushState({ page: 'LOGIN' }, '', '/login');
               setCurrentPage('LOGIN');
           }}
           onDemoClick={() => {
             if (creator) {
-                window.history.pushState({ page: 'PROFILE', creatorId: creator.id }, '', '');
+                const handle = creator.handle.replace('@', '');
+                window.history.pushState({ page: 'PROFILE', creatorId: creator.id }, '', `/${handle}`);
                 setCurrentPage('PROFILE');
             }
-            else alert(t('common.noCreatorsFound'));
+            else alert("No creators found. Please sign up as a creator first!");
           }}
         />
       )}
@@ -304,7 +326,7 @@ function App() {
           currentUser={currentUser}
           onBack={() => {
               setIsPasswordRecovery(false);
-              window.history.pushState({ page: 'LANDING' }, '', '');
+              window.history.pushState({ page: 'LANDING' }, '', '/');
               setCurrentPage('LANDING');
           }}
         />
@@ -318,7 +340,7 @@ function App() {
           onBack={async () => {
               await signOut();
               setCurrentUser(null);
-              window.history.pushState({ page: 'LANDING' }, '', '');
+              window.history.pushState({ page: 'LANDING' }, '', '/');
               setCurrentPage('LANDING');
           }}
         />
@@ -337,29 +359,29 @@ function App() {
               if (currentUser.role === 'CREATOR') {
                 setIsLoading(true);
                 await loadCreatorData(currentUser.id);
-                window.history.pushState({ page: 'DASHBOARD' }, '', '');
+                window.history.pushState({ page: 'DASHBOARD' }, '', '/dashboard');
                 setCurrentPage('DASHBOARD');
               } else {
-                window.history.pushState({ page: 'FAN_DASHBOARD' }, '', '');
+                window.history.pushState({ page: 'FAN_DASHBOARD' }, '', '/dashboard');
                 setCurrentPage('FAN_DASHBOARD');
               }
             } else {
-              window.history.pushState({ page: 'LANDING' }, '', '');
+              window.history.pushState({ page: 'LANDING' }, '', '/');
               setCurrentPage('LANDING');
             }
           }}
           onLoginRequest={() => {
-              window.history.pushState({ page: 'LOGIN' }, '', '');
+              window.history.pushState({ page: 'LOGIN' }, '', '/login');
               setCurrentPage('LOGIN');
           }}
           onNavigateToDashboard={async () => {
             if (currentUser?.role === 'CREATOR') {
               setIsLoading(true);
               await loadCreatorData(currentUser.id);
-              window.history.pushState({ page: 'DASHBOARD' }, '', '');
+              window.history.pushState({ page: 'DASHBOARD' }, '', '/dashboard');
               setCurrentPage('DASHBOARD');
             } else {
-              window.history.pushState({ page: 'FAN_DASHBOARD' }, '', '');
+              window.history.pushState({ page: 'FAN_DASHBOARD' }, '', '/dashboard');
               setCurrentPage('FAN_DASHBOARD');
             }
           }}
@@ -375,11 +397,12 @@ function App() {
           onLogout={() => {
             setCurrentUser(null);
             localStorage.removeItem('bluechecked_current_user'); // Ensure session clear
-            window.history.pushState({ page: 'LANDING' }, '', '');
+            window.history.pushState({ page: 'LANDING' }, '', '/');
             setCurrentPage('LANDING');
           }}
           onViewProfile={() => {
-              window.history.pushState({ page: 'PROFILE', creatorId: creator.id }, '', '');
+              const handle = creator.handle.replace('@', '');
+              window.history.pushState({ page: 'PROFILE', creatorId: creator.id }, '', `/${handle}`);
               setCurrentPage('PROFILE');
           }}
           onRefreshData={() => loadCreatorData(creator?.id)}
@@ -393,7 +416,7 @@ function App() {
             onLogout={() => {
               setCurrentUser(null);
               localStorage.removeItem('bluechecked_current_user'); // Ensure session clear
-              window.history.pushState({ page: 'LANDING' }, '', '');
+              window.history.pushState({ page: 'LANDING' }, '', '/');
               setCurrentPage('LANDING');
             }}
             onBrowseCreators={handleCreatorSelect}
@@ -404,14 +427,14 @@ function App() {
       {showSignUpConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-in fade-in">
             <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center border border-stone-100">
-                <h3 className="text-xl font-bold text-stone-900 mb-2">{t('common.createAccount')}</h3>
+                <h3 className="text-xl font-bold text-stone-900 mb-2">Create Account?</h3>
                 <p className="text-stone-500 mb-6">
-                    {t('common.createAccountDesc')}
+                    We couldn't find an account linked to this email. Please select your account type to continue.
                 </p>
                 <div className="flex flex-col gap-3">
-                    <button onClick={() => handleConfirmSignUp('CREATOR')} className="w-full px-4 py-3 bg-stone-900 text-white rounded-xl font-bold hover:bg-stone-800 transition-colors shadow-lg shadow-stone-900/20">{t('common.createCreatorAccount')}</button>
-                    <button onClick={() => handleConfirmSignUp('FAN')} className="w-full px-4 py-3 bg-amber-600 text-white rounded-xl font-bold hover:bg-amber-700 transition-colors shadow-lg shadow-amber-500/20">{t('common.createFanAccount')}</button>
-                    <button onClick={handleCancelSignUp} className="w-full px-4 py-2 text-sm font-bold text-stone-400 hover:text-stone-600 transition-colors mt-2">{t('common.cancel')}</button>
+                    <button onClick={() => handleConfirmSignUp('CREATOR')} className="w-full px-4 py-3 bg-stone-900 text-white rounded-xl font-bold hover:bg-stone-800 transition-colors shadow-lg shadow-stone-900/20">Create Creator Account</button>
+                    <button onClick={() => handleConfirmSignUp('FAN')} className="w-full px-4 py-3 bg-amber-600 text-white rounded-xl font-bold hover:bg-amber-700 transition-colors shadow-lg shadow-amber-500/20">Create Fan Account</button>
+                    <button onClick={handleCancelSignUp} className="w-full px-4 py-2 text-sm font-bold text-stone-400 hover:text-stone-600 transition-colors mt-2">Cancel</button>
                 </div>
             </div>
         </div>

@@ -534,37 +534,8 @@ export const completeOAuthSignup = async (roleOverride?: UserRole): Promise<Curr
     return user;
 };
 
-// --- PROFILES ---
-
-export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProfile> => {
-    if (!isConfigured) {
-        console.log("%c[Backend] Using Mock Data (Supabase not configured)", "background: #f59e0b; color: black; padding: 2px 4px; border-radius: 2px; font-weight: bold;");
-        return MockBackend.getCreatorProfile(creatorId);
-    }
-
-    let query = supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'CREATOR');
-
-    if (creatorId) {
-        query = query.eq('id', creatorId);
-    } else {
-        query = query.limit(1);
-    }
-
-    const { data, error } = await query.maybeSingle();
-
-    if (error) {
-        console.error("Supabase Error:", error);
-        throw new Error(`Database Error: ${error.message}`);
-    }
-
-    if (!data) {
-        throw new Error("No creator profile found. Please run the Seed Script in Supabase.");
-    }
-
-    // Calculate Real Stats from Messages
+// --- HELPER: ENRICH PROFILE WITH STATS ---
+const enrichCreatorProfile = async (data: any): Promise<CreatorProfile> => {
     let responseTimeAvg = 'N/A';
     let replyRate = '100%';
     let totalRequests = 0;
@@ -653,6 +624,63 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
         platforms: data.platforms || [],
         isPremium: data.is_premium || false
     };
+};
+
+// --- PROFILES ---
+
+export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProfile> => {
+    if (!isConfigured) {
+        console.log("%c[Backend] Using Mock Data (Supabase not configured)", "background: #f59e0b; color: black; padding: 2px 4px; border-radius: 2px; font-weight: bold;");
+        return MockBackend.getCreatorProfile(creatorId);
+    }
+
+    let query = supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'CREATOR');
+
+    if (creatorId) {
+        query = query.eq('id', creatorId);
+    } else {
+        query = query.limit(1);
+    }
+
+    const { data, error } = await query.maybeSingle();
+
+    if (error) {
+        console.error("Supabase Error:", error);
+        throw new Error(`Database Error: ${error.message}`);
+    }
+
+    if (!data) {
+        throw new Error("No creator profile found. Please run the Seed Script in Supabase.");
+    }
+
+    return enrichCreatorProfile(data);
+};
+
+export const getCreatorProfileByHandle = async (handle: string): Promise<CreatorProfile> => {
+    if (!isConfigured) return MockBackend.getCreatorProfile();
+
+    // Handle potential @ prefix
+    const cleanHandle = handle.startsWith('@') ? handle : handle;
+    const handleWithAt = handle.startsWith('@') ? handle : `@${handle}`;
+
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'CREATOR')
+        .or(`handle.eq.${cleanHandle},handle.eq.${handleWithAt}`)
+        .maybeSingle();
+
+    if (error) {
+        console.error("Supabase Error:", error);
+        throw new Error(`Database Error: ${error.message}`);
+    }
+
+    if (!data) throw new Error("Creator not found");
+
+    return enrichCreatorProfile(data);
 };
 
 export const getCreatorProfileFast = async (creatorId?: string): Promise<CreatorProfile> => {
