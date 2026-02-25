@@ -488,16 +488,18 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                     <div className="flex flex-col items-center text-center gap-5">
                         {/* Speech Bubble + Avatar + Stats */}
                         <div className="flex flex-col items-center gap-0 flex-shrink-0 relative">
-                        {/* Speech bubble above avatar */}
+                        {/* Thought bubble above avatar */}
                         {!isCustomizeMode && creator.bio && (
-                            <div className="relative mb-2">
-                                <div className="bg-white border border-stone-200 rounded-2xl px-4 py-2.5 shadow-sm">
+                            <div className="relative mb-3">
+                                {/* Main cloud bubble */}
+                                <div className="bg-white border border-stone-200 rounded-[2rem] px-5 py-3 shadow-sm">
                                     <p className="text-xs sm:text-sm text-stone-600 leading-relaxed font-medium text-center max-w-[240px]">
                                         {creator.bio}
                                     </p>
                                 </div>
-                                {/* Tail pointing down */}
-                                <div className="absolute -bottom-[7px] left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-white border-r border-b border-stone-200 rotate-45"></div>
+                                {/* Thought trail dots */}
+                                <div className="absolute -bottom-2.5 left-1/2 translate-x-1 w-3 h-3 bg-white border border-stone-200 rounded-full shadow-sm"></div>
+                                <div className="absolute -bottom-5 left-1/2 translate-x-2.5 w-2 h-2 bg-white border border-stone-200 rounded-full shadow-sm"></div>
                             </div>
                         )}
                         <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full p-1 overflow-hidden border border-stone-100 shadow-sm bg-white group">
