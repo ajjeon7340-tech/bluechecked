@@ -486,8 +486,20 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                 </div>
                 <div className="p-6 sm:p-8 relative z-10">
                     <div className="flex flex-col items-center text-center gap-5">
-                        {/* Avatar + Stats */}
-                        <div className="flex flex-col items-center gap-3 flex-shrink-0 relative">
+                        {/* Speech Bubble + Avatar + Stats */}
+                        <div className="flex flex-col items-center gap-0 flex-shrink-0 relative">
+                        {/* Speech bubble above avatar */}
+                        {!isCustomizeMode && creator.bio && (
+                            <div className="relative mb-2">
+                                <div className="bg-white border border-stone-200 rounded-2xl px-4 py-2.5 shadow-sm">
+                                    <p className="text-xs sm:text-sm text-stone-600 leading-relaxed font-medium text-center max-w-[240px]">
+                                        {creator.bio}
+                                    </p>
+                                </div>
+                                {/* Tail pointing down */}
+                                <div className="absolute -bottom-[7px] left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-white border-r border-b border-stone-200 rotate-45"></div>
+                            </div>
+                        )}
                         <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full p-1 overflow-hidden border border-stone-100 shadow-sm bg-white group">
                            {!imgError && (editedCreator.avatarUrl || DEFAULT_AVATAR) ? (
                                <img 
@@ -577,16 +589,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                             {creator.displayName}
                                         </h1>
                                         
-                                        {creator.bio && (
-                                            <div className="relative max-w-md mx-auto mb-4">
-                                                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-stone-100 border-l border-t border-stone-200/80 rotate-45"></div>
-                                                <div className="relative bg-stone-100 border border-stone-200/80 rounded-2xl px-5 py-3.5">
-                                                    <p className="text-sm text-stone-600 leading-relaxed font-medium text-center">
-                                                        {creator.bio}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        )}
 
                                         {platforms.length > 0 && (
                                             <div className="flex items-center justify-center gap-3">
