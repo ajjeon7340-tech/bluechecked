@@ -909,7 +909,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                 </div>
             )}
             {/* Header */}
-            <header className="h-16 bg-white border-b border-stone-200 flex items-center justify-between px-6 shrink-0 relative z-40">
+            <header className="h-16 bg-white border-b border-stone-200 flex items-center justify-center shrink-0 relative z-40">
+                <div className="flex items-center justify-between w-full max-w-5xl px-3 sm:px-6">
                 <div className="flex items-center gap-4">
                     <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500">
                         <Menu size={20} />
@@ -981,6 +982,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </div>
                     </div>
                 )}
+                </div>
             </header>
 
             {/* Content Area */}
@@ -1475,15 +1477,15 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                    <div className="p-6 max-w-5xl mx-auto space-y-8 animate-in fade-in">
                       {/* Conversation List */}
                       <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
-                         <div className="px-6 py-4 border-b border-stone-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-                             <div className="flex flex-col gap-2 w-full sm:w-auto">
-                                 <h3 className="text-sm font-bold text-stone-900">{t('fan.messageFilters')}</h3>
+                         <div className="p-4 border-b border-stone-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                             <div className="flex flex-col gap-3 w-full sm:w-auto">
+                                 <span className="font-semibold text-stone-900">{t('fan.messageFilters')}</span>
                                  <div className="flex flex-wrap gap-1 bg-stone-100/60 p-1 rounded-lg">
                                     {(['ALL', 'PENDING', 'REPLIED', 'REJECTED'] as const).map(f => (
                                         <button
                                             key={f}
                                             onClick={() => setInboxFilter(f)}
-                                            className={`px-3 py-1.5 text-[10px] font-semibold rounded transition-all whitespace-nowrap ${inboxFilter === f ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+                                            className={`flex-1 px-2 py-1.5 text-[10px] font-semibold rounded transition-all whitespace-nowrap ${inboxFilter === f ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
                                         >
                                             {f}
                                         </button>

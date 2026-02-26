@@ -1243,7 +1243,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       <main className="flex-1 md:ml-64 flex flex-col h-screen relative">
         
         {/* Top Header */}
-        <header className="h-14 sm:h-16 bg-white border-b border-stone-200 flex items-center justify-between px-3 sm:px-6 shrink-0 relative z-40">
+        <header className="h-14 sm:h-16 bg-white border-b border-stone-200 flex items-center justify-center shrink-0 relative z-40">
+            <div className="flex items-center justify-between w-full max-w-5xl px-3 sm:px-6">
             <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                 <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 flex-shrink-0">
                     <Menu size={20} />
@@ -1314,9 +1315,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <div className="h-6 w-px bg-stone-200 hidden sm:block"></div>
                 <LanguageSwitcher />
                 <div className="h-6 w-px bg-stone-200 hidden sm:block"></div>
-                <button onClick={onViewProfile} className="text-xs sm:text-sm font-medium text-stone-600 hover:text-stone-900 flex items-center gap-1 flex-shrink-0">
-                    <span className="hidden sm:inline">{t('common.view')}</span> <ExternalLink size={14} />
+                <button onClick={onViewProfile} className="text-sm font-medium text-stone-600 hover:text-stone-900 flex items-center gap-1.5 flex-shrink-0 px-2 py-1.5 rounded-lg hover:bg-stone-50 transition-colors">
+                    <span className="hidden sm:inline">{t('common.view')}</span> <ExternalLink size={16} />
                 </button>
+            </div>
             </div>
         </header>
 
@@ -1328,7 +1330,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <div className="space-y-8 max-w-5xl mx-auto">
                     {/* Welcome Header - Editorial Style */}
                     <div className="pt-2">
-                        <p className="text-sm font-medium text-stone-400 mb-1">{t('creator.overview')},</p>
+                        <p className="text-sm font-medium text-stone-400 mb-1">{t('creator.overview')}</p>
                         <h1 className="text-2xl sm:text-3xl font-semibold text-stone-900 tracking-tight">{creator.displayName}</h1>
                     </div>
 
@@ -2348,7 +2350,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         const [firstChat, ...restChats] = sortedConversation;
 
                                         return (
-                                            <div key={msg.id} className="px-3 sm:px-4 py-3 relative">
+                                            <div key={msg.id} className="px-3 sm:px-4 py-2 relative">
                                                 {/* Session Divider */}
                                                 {msgIndex > 0 && (
                                                     <div className="flex items-center gap-3 mb-4 -mt-1">
@@ -2390,11 +2392,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             </div>
                                                         </div>
 
-                                                        <div className="bg-white p-5 sm:p-6 rounded-2xl rounded-tl-lg border border-stone-200/60">
+                                                        <div className="bg-white p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
 
                                             {/* Content */}
                                             <div>
-                                                <p className="text-sm text-stone-700 leading-relaxed">{firstChat.content}</p>
+                                                <p className="text-xs sm:text-sm text-stone-700 leading-relaxed">{firstChat.content}</p>
 
                                                 {/* Attachment */}
                                                 {msg.attachmentUrl && (
@@ -2508,7 +2510,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     </div>
                                                                 </div>
 
-                                                            <div className={`${isCreator ? 'bg-stone-50' : 'bg-white'} p-5 sm:p-6 rounded-2xl rounded-tl-lg border border-stone-200/60`}>
+                                                            <div className={`${isCreator ? 'bg-stone-50' : 'bg-white'} p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60`}>
                                                                 {/* Content */}
                                                                 {editingChatId === chat.id ? (
                                                                     <div className="space-y-3">
@@ -2551,7 +2553,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     </div>
                                                                 ) : (
                                                                     <>
-                                                                        <p className="text-sm text-stone-700 leading-relaxed">{chat.content}</p>
+                                                                        <p className="text-xs sm:text-sm text-stone-700 leading-relaxed">{chat.content}</p>
                                                                         {chat.isEdited && <span className="text-[10px] text-stone-400 mt-1 block">edited</span>}
                                                                     </>
                                                                 )}
@@ -2880,7 +2882,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div>
                                     <label className="block text-sm font-medium text-stone-700 mb-1">Price (Credits)</label>
                                     <div className="relative">
-                                        <span className="absolute left-3 top-2 text-stone-500"><Coins size={14}/></span>
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500"><Coins size={14}/></span>
                                         <input 
                                             type="number" 
                                             value={editedCreator.pricePerMessage}
@@ -3155,7 +3157,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         )}
                                         {(newLinkType === 'DIGITAL_PRODUCT' || newLinkType === 'SUPPORT') && (
                                             <div className="relative">
-                                                <span className="absolute left-3 top-2 text-stone-500 text-sm"><Coins size={14}/></span>
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 text-sm"><Coins size={14}/></span>
                                                 <input 
                                                     type="number" 
                                                     placeholder={newLinkType === 'SUPPORT' ? "Default Tip (Credits)" : "Price (Credits)"}
