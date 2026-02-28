@@ -69,6 +69,13 @@ const getRelativeTime = (dateString: string, t?: (key: string, opts?: any) => st
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 };
 
+const isImage = (url: string) => {
+    if (!url) return false;
+    if (url.startsWith('data:image')) return true;
+    const ext = url.split('.').pop()?.split('?')[0].toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext || '');
+};
+
 const DUMMY_PRO_DATA: ProAnalyticsData = {
     trafficSources: [
         { name: 'Google Search', value: 35, color: '#4285F4' },
@@ -2402,12 +2409,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 {/* Attachment */}
                                                 {msg.attachmentUrl && (
                                                     <div className="mt-3 rounded-lg overflow-hidden border border-stone-200 w-fit max-w-full">
-                                                        {msg.attachmentUrl.toLowerCase().endsWith('.pdf') ? (
-                                                            <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
+                                                        {!isImage(msg.attachmentUrl) ? (
+                                                            <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" download="attachment" className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
                                                                 <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
                                                                 <div className="flex-1 min-w-0">
-                                                                    <p className="text-sm font-medium text-stone-700 truncate">{msg.attachmentUrl.split('/').pop() || 'Document.pdf'}</p>
-                                                                    <p className="text-xs text-stone-400">PDF Document</p>
+                                                                    <p className="text-sm font-medium text-stone-700 truncate">{msg.attachmentUrl.startsWith('data:') ? 'Attached File' : (msg.attachmentUrl.split('/').pop() || 'Document')}</p>
+                                                                    <p className="text-xs text-stone-400">Document</p>
                                                                 </div>
                                                                 <Download size={16} className="text-stone-400 flex-shrink-0" />
                                                             </a>
@@ -2562,12 +2569,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 {/* Attachment (shown when NOT editing) */}
                                                                 {editingChatId !== chat.id && chat.attachmentUrl && (
                                                                     <div className="mt-3 rounded-lg overflow-hidden border border-stone-200 w-fit max-w-full">
-                                                                        {chat.attachmentUrl.toLowerCase().endsWith('.pdf') ? (
-                                                                            <a href={chat.attachmentUrl} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
+                                                                        {!isImage(chat.attachmentUrl) ? (
+                                                                            <a href={chat.attachmentUrl} target="_blank" rel="noopener noreferrer" download="attachment" className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
                                                                                 <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
                                                                                 <div className="flex-1 min-w-0">
-                                                                                    <p className="text-sm font-medium text-stone-700 truncate">{chat.attachmentUrl.split('/').pop() || 'Document.pdf'}</p>
-                                                                                    <p className="text-xs text-stone-400">PDF Document</p>
+                                                                                    <p className="text-sm font-medium text-stone-700 truncate">{chat.attachmentUrl.startsWith('data:') ? 'Attached File' : (chat.attachmentUrl.split('/').pop() || 'Document')}</p>
+                                                                                    <p className="text-xs text-stone-400">Document</p>
                                                                                 </div>
                                                                                 <Download size={16} className="text-stone-400 flex-shrink-0" />
                                                                             </a>
