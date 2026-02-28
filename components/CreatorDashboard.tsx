@@ -1319,11 +1319,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             {/* ... (Overview View) ... */}
             {currentView === 'OVERVIEW' && (
                 <div className="space-y-8 max-w-5xl mx-auto">
-                    <TopNav />
                     {/* Welcome Header - Editorial Style */}
-                    <div className="pt-2">
-                        <p className="text-sm font-medium text-stone-400 mb-1">{t('creator.overview')}</p>
-                        <h1 className="text-2xl sm:text-3xl font-semibold text-stone-900 tracking-tight">{creator.displayName}</h1>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-stone-400 mb-1">{t('creator.overview')}</p>
+                            <h1 className="text-2xl sm:text-3xl font-semibold text-stone-900 tracking-tight">{creator.displayName}</h1>
+                        </div>
+                        <TopNav />
                     </div>
 
                     {/* Stats Grid */}
@@ -2142,9 +2144,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <div className="h-full flex bg-[#FAF9F6] animate-in fade-in overflow-x-hidden">
                     {/* List Column */}
                     <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col bg-white ${selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
-                        <div className="px-4 pt-4"><TopNav className="mb-2" /></div>
                         <div className="p-4 border-b border-stone-100 flex flex-col gap-3">
-                            <span className="font-semibold text-stone-900">{t('creator.messageFilters')}</span>
+                            <div className="flex items-center justify-between">
+                                <span className="font-semibold text-stone-900">{t('creator.messageFilters')}</span>
+                                <TopNav />
+                            </div>
                             <div className="flex flex-wrap gap-1 bg-stone-100/60 p-1 rounded-lg">
                                 {(['ALL', 'PENDING', 'REPLIED', 'REJECTED'] as const).map(f => (
                                     <button
