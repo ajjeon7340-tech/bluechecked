@@ -1512,18 +1512,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
              {/* --- VIEW: FINANCE OR STATISTICS --- */}
             {(currentView === 'FINANCE' || currentView === 'STATISTICS') && (
                 <div className="max-w-6xl mx-auto animate-in fade-in space-y-6 sm:space-y-8 overflow-x-hidden">
-                     <TopNav />
                      {/* Header Controls */}
                      <div className="flex flex-col gap-4">
-                         <div>
-                             <h2 className="text-xl sm:text-2xl font-bold text-stone-900">
-                                 {currentView === 'FINANCE' ? t('creator.financeCredits') : t('creator.activityStatistics')}
-                             </h2>
-                             <p className="text-stone-500 text-xs sm:text-sm">
-                                 {currentView === 'FINANCE'
-                                    ? t('creator.manageEarnings')
-                                    : t('creator.trackPerformance')}
-                             </p>
+                         <div className="flex items-center justify-between">
+                             <div>
+                                 <h2 className="text-xl sm:text-2xl font-bold text-stone-900">
+                                     {currentView === 'FINANCE' ? t('creator.financeCredits') : t('creator.activityStatistics')}
+                                 </h2>
+                                 <p className="text-stone-500 text-xs sm:text-sm">
+                                     {currentView === 'FINANCE'
+                                        ? t('creator.manageEarnings')
+                                        : t('creator.trackPerformance')}
+                                 </p>
+                             </div>
+                             <TopNav />
                          </div>
 
                          {currentView === 'STATISTICS' && (
@@ -1891,15 +1893,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             {/* --- VIEW: ANALYTICS (Pro Feature) --- */}
             {currentView === 'ANALYTICS' && (
                 <div className="max-w-6xl mx-auto animate-in fade-in relative min-h-[80vh] overflow-x-hidden">
-                    <TopNav />
                     {/* Header - Always visible */}
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-6 sm:mb-8">
                         <div>
                             <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.analyticsOverview')}</h2>
                             <p className="text-stone-500 text-xs sm:text-sm">{t('creator.performanceMetrics')}</p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-3">
                             <button className="px-3 py-1.5 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm hover:bg-stone-50">{t('creator.exportReport')}</button>
+                            <TopNav />
                         </div>
                     </div>
 
@@ -2743,7 +2745,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             {/* --- VIEW: SETTINGS (Profile) --- */}
             {currentView === 'SETTINGS' && (
                 <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2">
-                    <TopNav />
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.profileSettings')}</h2>
+                        <TopNav />
+                    </div>
                     {/* ... (Existing Settings Code) ... */}
                     {/* Magical Success Message */}
                     {showSaveSuccess && (
@@ -3182,8 +3187,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
             {/* --- VIEW: NOTIFICATIONS --- */}
             {currentView === 'NOTIFICATIONS' && (
-                <div className="p-6 max-w-3xl mx-auto animate-in fade-in">
-                    <TopNav />
+                <div className="p-6 max-w-3xl mx-auto animate-in fade-in space-y-6">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.notifications')}</h2>
+                        <TopNav />
+                    </div>
                     {(() => {
                         const totalPages = Math.ceil(notifications.length / ITEMS_PER_PAGE);
                         const displayedNotifications = notifications.slice((notificationPage - 1) * ITEMS_PER_PAGE, notificationPage * ITEMS_PER_PAGE);
@@ -3256,8 +3264,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
             {/* --- VIEW: REVIEWS --- */}
             {currentView === 'REVIEWS' && (
-                <div className="p-6 max-w-5xl mx-auto animate-in fade-in">
-                    <TopNav />
+                <div className="p-6 max-w-5xl mx-auto animate-in fade-in space-y-6">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.reviews')}</h2>
+                        <TopNav />
+                    </div>
                     {(() => {
                         const totalPages = Math.ceil(reviews.length / ITEMS_PER_PAGE);
                         const displayedReviews = reviews.slice((reviewsPage - 1) * ITEMS_PER_PAGE, reviewsPage * ITEMS_PER_PAGE);
@@ -3321,8 +3332,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
             {/* --- VIEW: SUPPORT --- */}
             {currentView === 'SUPPORT' && (
-                <div className="p-6 max-w-2xl mx-auto animate-in fade-in flex flex-col items-center justify-center min-h-[500px]">
-                     <div className="w-full"><TopNav /></div>
+                <div className="p-6 max-w-2xl mx-auto animate-in fade-in flex flex-col items-center min-h-[500px] gap-6">
+                     <div className="w-full flex items-center justify-between">
+                         <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.support')}</h2>
+                         <TopNav />
+                     </div>
                      <div className="bg-white p-8 rounded-3xl border border-stone-200 shadow-xl shadow-stone-200/50 text-center space-y-6 max-w-md w-full relative overflow-hidden">
                          {/* Decorative Background */}
                          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-stone-400 via-stone-600 to-stone-800"></div>
