@@ -473,6 +473,8 @@ const en = {
     stripeLinkDesc: 'Link your bank account via Stripe to receive payouts.',
     connected: 'Connected',
     connectStripeBtn: 'Connect Stripe',
+    disconnect: 'Disconnect',
+    disconnectStripeConfirm: 'Are you sure you want to disconnect your Stripe account? You will not be able to receive payouts until you reconnect.',
     creditHistory: 'Credit History',
     exportCsv: 'Export CSV',
     source: 'Source',

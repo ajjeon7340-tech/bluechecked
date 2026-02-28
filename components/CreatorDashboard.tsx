@@ -1762,18 +1762,31 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </p>
                                     </div>
                                 </div>
-                                <Button 
-                                    onClick={handleConnectStripe} 
-                                    isLoading={isConnectingStripe}
-                                    disabled={isStripeConnected}
-                                    className={isStripeConnected ? "bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 shadow-none" : "bg-[#635BFF] hover:bg-[#5851E8] text-white shadow-md shadow-indigo-500/20"}
-                                >
-                                    {isStripeConnected ? (
-                                        <span className="flex items-center gap-2"><Check size={16} /> {t('creator.connected')}</span>
-                                    ) : (
-                                        t('creator.connectStripeBtn')
-                                    )}
-                                </Button>
+                                {isStripeConnected ? (
+                                    <div className="flex items-center gap-2">
+                                        <span className="flex items-center gap-2 bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded-lg text-sm font-semibold">
+                                            <Check size={16} /> {t('creator.connected')}
+                                        </span>
+                                        <button
+                                            onClick={() => {
+                                                if (window.confirm(t('creator.disconnectStripeConfirm'))) {
+                                                    setIsStripeConnected(false);
+                                                }
+                                            }}
+                                            className="text-xs font-medium text-stone-400 hover:text-red-500 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors"
+                                        >
+                                            {t('creator.disconnect')}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <Button
+                                        onClick={handleConnectStripe}
+                                        isLoading={isConnectingStripe}
+                                        className="bg-[#635BFF] hover:bg-[#5851E8] text-white shadow-md shadow-indigo-500/20"
+                                    >
+                                        {t('creator.connectStripeBtn')}
+                                    </Button>
+                                )}
                             </div>
 
                             {/* --- TRANSACTION HISTORY TABLE --- */}
