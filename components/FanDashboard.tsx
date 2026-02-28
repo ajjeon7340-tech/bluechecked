@@ -1700,7 +1700,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                         {/* Messages - Threads Style */}
                         <div className="flex-1 overflow-y-auto bg-white" ref={scrollRef}>
-                          <div className="max-w-2xl">
+                          <div className="max-w-md mx-auto">
                              {threadMessages.map((msg, msgIndex) => {
                                 const isPending = msg.status === 'PENDING';
                                 const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
@@ -1870,7 +1870,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             <span className="text-xs font-medium text-stone-400">• {getRelativeTime(chat.timestamp, t)}</span>
                                                         </div>
                                                     </div>
-                                                    <div className={`${isCreator ? 'bg-stone-50' : 'bg-white'} p-5 sm:p-6 rounded-2xl rounded-tl-lg border border-stone-200/60`}>
+                                <div className={`${isCreator ? 'bg-stone-50' : 'bg-white'} p-4 rounded-2xl rounded-tl-lg border border-stone-200/60`}>
                                                         {/* Content */}
                                                         <p className="text-sm text-stone-700 leading-relaxed">{chat.content}</p>
                                                         {chat.isEdited && <span className="text-[10px] text-stone-400 mt-1 block">edited</span>}

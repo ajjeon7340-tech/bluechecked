@@ -2341,7 +2341,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
 
                                 <div className="flex-1 overflow-y-auto bg-white" ref={scrollRef}>
-                                    <div className="max-w-2xl">
+                                    <div className="max-w-md mx-auto">
                                     {threadMessages.map((msg, msgIndex) => {
                                         const isPending = msg.status === 'PENDING';
                                         const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
