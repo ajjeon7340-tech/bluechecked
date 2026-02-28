@@ -1948,9 +1948,9 @@ export const getStripeConnectionStatus = async (): Promise<boolean> => {
     try {
         const data = await callStripeConnect({ action: 'check-status' });
         return data.connected === true;
-    } catch {
-        // Fall back to mock status if Edge Function fails
-        return MockBackend.getStripeConnectionStatus();
+    } catch (e: any) {
+        console.warn('Stripe check-status failed:', e.message);
+        return false;
     }
 };
 
