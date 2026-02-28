@@ -1165,7 +1165,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const analyticsData = creator.isPremium ? proData : DUMMY_PRO_DATA;
 
   const TopNav = ({ className = "" }: { className?: string }) => (
-    <div className={`flex items-center justify-end gap-3 mb-6 ${className}`}>
+    <div className={`flex items-center gap-1.5 sm:gap-2.5 mt-0.5 ${className}`}>
         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 mr-auto p-2 -ml-2">
             <Menu size={24} />
         </button>
@@ -1173,10 +1173,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
         <div className="relative">
             <button
                 onClick={handleToggleNotifications}
-                className="relative text-stone-400 hover:text-stone-600 transition-colors p-2 rounded-full hover:bg-stone-100"
+                className="relative text-stone-400 hover:text-stone-600 transition-colors p-1.5 rounded-lg hover:bg-stone-100"
             >
-                <Bell size={20} />
-                {notifications.filter(n => n.time.getTime() > lastReadTime).length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
+                <Bell size={18} />
+                {notifications.filter(n => n.time.getTime() > lastReadTime).length > 0 && <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full border border-white"></span>}
             </button>
 
             {showNotifications && (
@@ -1222,8 +1222,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
         <LanguageSwitcher />
         
-        <button onClick={onViewProfile} className="text-sm font-medium text-stone-600 hover:text-stone-900 flex items-center gap-1.5 flex-shrink-0 px-3 py-2 rounded-full bg-white border border-stone-200 shadow-sm hover:bg-stone-50 transition-all">
-            <span className="hidden sm:inline">{t('common.view')}</span> <ExternalLink size={16} />
+        <button onClick={onViewProfile} className="text-xs font-medium text-stone-500 hover:text-stone-900 flex items-center gap-1.5 flex-shrink-0 px-2.5 py-1.5 rounded-lg hover:bg-stone-100 transition-colors">
+            <span className="hidden sm:inline">{t('common.view')}</span> <ExternalLink size={14} />
         </button>
     </div>
   );

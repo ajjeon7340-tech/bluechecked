@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-const APP_URL = Deno.env.get('APP_URL') || 'https://bluechecked.me'
+const APP_URL = Deno.env.get('APP_URL') || 'https://www.diem.ee/dashboard/finance'
 
 // Withdrawal constants
 const PLATFORM_FEE_RATE = 0.10   // 10% platform fee
