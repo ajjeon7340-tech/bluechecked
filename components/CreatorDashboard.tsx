@@ -2392,7 +2392,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             </div>
                                                         </div>
 
-                                                        <div className="bg-white p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60 w-fit max-w-full">
+                                                        <div className="bg-white p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
 
                                             {/* Content */}
                                             <div>
@@ -2510,7 +2510,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     </div>
                                                                 </div>
 
-                                                            <div className={`${isCreator ? 'bg-stone-50' : 'bg-white'} p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60 w-fit max-w-full`}>
+                                                            <div className={`${isCreator ? 'bg-stone-50' : 'bg-white'} p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60`}>
                                                                 {/* Content */}
                                                                 {editingChatId === chat.id ? (
                                                                     <div className="space-y-3">
