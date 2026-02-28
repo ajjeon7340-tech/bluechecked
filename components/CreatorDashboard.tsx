@@ -1164,6 +1164,70 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Use real data if premium, otherwise use dummy data for blurred preview
   const analyticsData = creator.isPremium ? proData : DUMMY_PRO_DATA;
 
+  const TopNav = ({ className = "" }: { className?: string }) => (
+    <div className={`flex items-center justify-end gap-3 mb-6 ${className}`}>
+        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 mr-auto p-2 -ml-2">
+            <Menu size={24} />
+        </button>
+
+        <div className="relative">
+            <button
+                onClick={handleToggleNotifications}
+                className="relative text-stone-400 hover:text-stone-600 transition-colors p-2 rounded-full hover:bg-stone-100"
+            >
+                <Bell size={20} />
+                {notifications.filter(n => n.time.getTime() > lastReadTime).length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
+            </button>
+
+            {showNotifications && (
+                <>
+                    <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)}></div>
+                    <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="px-4 py-3 border-b border-stone-50 bg-stone-50/50 flex justify-between items-center">
+                            <h3 className="font-bold text-sm text-stone-900">{t('creator.notifications')}</h3>
+                            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{notifications.length} {t('creator.notifications')}</span>
+                        </div>
+                        <div className="max-h-[320px] overflow-y-auto">
+                            {notifications.length === 0 ? (
+                                <div className="p-8 text-center text-stone-400 text-xs">{t('creator.noNotifications')}</div>
+                            ) : (
+                                notifications.map(notif => (
+                                    <div
+                                        key={notif.id}
+                                        onClick={() => handleNotificationClick(notif)}
+                                        className="px-4 py-3 hover:bg-stone-50 transition-colors flex gap-3 border-b border-stone-50 last:border-0 group relative pr-8 cursor-pointer"
+                                    >
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
+                                            <notif.icon size={14} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-xs text-stone-600 leading-snug mb-1 font-medium">{notif.text}</p>
+                                            <p className="text-[10px] text-stone-400">{notif.time.toLocaleDateString()} • {notif.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                                        </div>
+                                        <button
+                                            onClick={(e) => handleDeleteNotification(e, notif.id)}
+                                            className="absolute top-3 right-3 text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            title="Dismiss"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+
+        <LanguageSwitcher />
+        
+        <button onClick={onViewProfile} className="text-sm font-medium text-stone-600 hover:text-stone-900 flex items-center gap-1.5 flex-shrink-0 px-3 py-2 rounded-full bg-white border border-stone-200 shadow-sm hover:bg-stone-50 transition-all">
+            <span className="hidden sm:inline">{t('common.view')}</span> <ExternalLink size={16} />
+        </button>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex font-sans text-stone-900 overflow-hidden">
       {/* Mobile Sidebar Overlay - Fixes menu close bug */}
@@ -1249,92 +1313,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       {/* 2. MAIN CONTENT AREA */}
       <main className="flex-1 md:ml-64 flex flex-col h-screen relative">
         
-        {/* Top Header */}
-        <header className="h-14 sm:h-16 bg-white border-b border-stone-200 flex items-center justify-center shrink-0 relative z-40">
-            <div className="flex items-center justify-between w-full max-w-5xl px-3 sm:px-6">
-            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 flex-shrink-0">
-                    <Menu size={20} />
-                </button>
-                <h2 className="font-semibold text-stone-800 text-sm sm:text-base truncate">
-                    {currentView.charAt(0) + currentView.slice(1).toLowerCase()}
-                </h2>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-                <div className="relative hidden sm:block">
-                    <Search className="absolute left-3 top-2.5 text-stone-400" size={16} />
-                    <input
-                        type="text"
-                        placeholder={t('common.search') + '...'}
-                        className="pl-9 pr-4 py-2 bg-stone-100 border-none rounded-lg text-sm text-stone-600 focus:ring-2 focus:ring-stone-200 outline-none w-64 transition-all"
-                    />
-                </div>
-                <div className="relative">
-                    <button
-                        onClick={handleToggleNotifications}
-                        className="relative text-stone-400 hover:text-stone-600 transition-colors p-2 rounded-full hover:bg-stone-100"
-                    >
-                        <Bell size={20} />
-                        {notifications.filter(n => n.time.getTime() > lastReadTime).length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
-                    </button>
-
-                    {showNotifications && (
-                        <>
-                            <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)}></div>
-                            <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                <div className="px-4 py-3 border-b border-stone-50 bg-stone-50/50 flex justify-between items-center">
-                                    <h3 className="font-bold text-sm text-stone-900">{t('creator.notifications')}</h3>
-                                    <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{notifications.length} {t('creator.notifications')}</span>
-                                </div>
-                                <div className="max-h-[320px] overflow-y-auto">
-                                    {notifications.length === 0 ? (
-                                        <div className="p-8 text-center text-stone-400 text-xs">{t('creator.noNotifications')}</div>
-                                    ) : (
-                                        notifications.map(notif => (
-                                            <div
-                                                key={notif.id}
-                                                onClick={() => handleNotificationClick(notif)}
-                                                className="px-4 py-3 hover:bg-stone-50 transition-colors flex gap-3 border-b border-stone-50 last:border-0 group relative pr-8 cursor-pointer"
-                                            >
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
-                                                    <notif.icon size={14} />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-xs text-stone-600 leading-snug mb-1 font-medium">{notif.text}</p>
-                                                    <p className="text-[10px] text-stone-400">{notif.time.toLocaleDateString()} • {notif.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                                                </div>
-                                                <button
-                                                    onClick={(e) => handleDeleteNotification(e, notif.id)}
-                                                    className="absolute top-3 right-3 text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    title="Dismiss"
-                                                >
-                                                    <X size={14} />
-                                                </button>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </div>
-
-                <div className="h-6 w-px bg-stone-200 hidden sm:block"></div>
-                <LanguageSwitcher />
-                <div className="h-6 w-px bg-stone-200 hidden sm:block"></div>
-                <button onClick={onViewProfile} className="text-sm font-medium text-stone-600 hover:text-stone-900 flex items-center gap-1.5 flex-shrink-0 px-2 py-1.5 rounded-lg hover:bg-stone-50 transition-colors">
-                    <span className="hidden sm:inline">{t('common.view')}</span> <ExternalLink size={16} />
-                </button>
-            </div>
-            </div>
-        </header>
-
         {/* Scrollable Content */}
         <div className={`flex-1 overflow-auto ${currentView === 'INBOX' ? 'p-0' : 'p-6'} relative`}>
             
             {/* ... (Overview View) ... */}
             {currentView === 'OVERVIEW' && (
                 <div className="space-y-8 max-w-5xl mx-auto">
+                    <TopNav />
                     {/* Welcome Header - Editorial Style */}
                     <div className="pt-2">
                         <p className="text-sm font-medium text-stone-400 mb-1">{t('creator.overview')}</p>
@@ -1527,6 +1512,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
              {/* --- VIEW: FINANCE OR STATISTICS --- */}
             {(currentView === 'FINANCE' || currentView === 'STATISTICS') && (
                 <div className="max-w-6xl mx-auto animate-in fade-in space-y-6 sm:space-y-8 overflow-x-hidden">
+                     <TopNav />
                      {/* Header Controls */}
                      <div className="flex flex-col gap-4">
                          <div>
@@ -1905,6 +1891,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             {/* --- VIEW: ANALYTICS (Pro Feature) --- */}
             {currentView === 'ANALYTICS' && (
                 <div className="max-w-6xl mx-auto animate-in fade-in relative min-h-[80vh] overflow-x-hidden">
+                    <TopNav />
                     {/* Header - Always visible */}
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-6 sm:mb-8">
                         <div>
@@ -2150,9 +2137,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             )}
 
             {currentView === 'INBOX' && (
-                <div className="h-[calc(100vh-64px)] flex bg-[#FAF9F6] animate-in fade-in overflow-x-hidden">
+                <div className="h-full flex bg-[#FAF9F6] animate-in fade-in overflow-x-hidden">
                     {/* List Column */}
                     <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col bg-white ${selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
+                        <div className="px-4 pt-4"><TopNav className="mb-2" /></div>
                         <div className="p-4 border-b border-stone-100 flex flex-col gap-3">
                             <span className="font-semibold text-stone-900">{t('creator.messageFilters')}</span>
                             <div className="flex flex-wrap gap-1 bg-stone-100/60 p-1 rounded-lg">
@@ -2755,6 +2743,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             {/* --- VIEW: SETTINGS (Profile) --- */}
             {currentView === 'SETTINGS' && (
                 <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                    <TopNav />
                     {/* ... (Existing Settings Code) ... */}
                     {/* Magical Success Message */}
                     {showSaveSuccess && (
@@ -3194,6 +3183,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             {/* --- VIEW: NOTIFICATIONS --- */}
             {currentView === 'NOTIFICATIONS' && (
                 <div className="p-6 max-w-3xl mx-auto animate-in fade-in">
+                    <TopNav />
                     {(() => {
                         const totalPages = Math.ceil(notifications.length / ITEMS_PER_PAGE);
                         const displayedNotifications = notifications.slice((notificationPage - 1) * ITEMS_PER_PAGE, notificationPage * ITEMS_PER_PAGE);
@@ -3267,6 +3257,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             {/* --- VIEW: REVIEWS --- */}
             {currentView === 'REVIEWS' && (
                 <div className="p-6 max-w-5xl mx-auto animate-in fade-in">
+                    <TopNav />
                     {(() => {
                         const totalPages = Math.ceil(reviews.length / ITEMS_PER_PAGE);
                         const displayedReviews = reviews.slice((reviewsPage - 1) * ITEMS_PER_PAGE, reviewsPage * ITEMS_PER_PAGE);
@@ -3331,6 +3322,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             {/* --- VIEW: SUPPORT --- */}
             {currentView === 'SUPPORT' && (
                 <div className="p-6 max-w-2xl mx-auto animate-in fade-in flex items-center justify-center min-h-[500px]">
+                     <div className="w-full"><TopNav /></div>
                      <div className="bg-white p-8 rounded-3xl border border-stone-200 shadow-xl shadow-stone-200/50 text-center space-y-6 max-w-md w-full relative overflow-hidden">
                          {/* Decorative Background */}
                          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-stone-400 via-stone-600 to-stone-800"></div>
