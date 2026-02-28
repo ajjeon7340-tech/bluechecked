@@ -831,7 +831,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   );
 
   const TopNav = ({ className = "" }: { className?: string }) => (
-    <div className={`flex items-center justify-end gap-3 mb-6 ${className}`}>
+    <div className={`flex items-center justify-end gap-3 ${className}`}>
         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 mr-auto p-2 -ml-2">
             <Menu size={24} />
         </button>
@@ -1472,10 +1472,10 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                 {/* --- VIEW: OVERVIEW (List) --- */}
                 {currentView === 'OVERVIEW' && !selectedCreatorId && (
-                   <div className="p-6 max-w-5xl mx-auto space-y-8 animate-in fade-in">
-                      <TopNav />
-                      <div className="pt-2">
+                   <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in">
+                      <div className="flex items-center justify-between">
                           <h1 className="text-2xl font-bold text-stone-900">{t('fan.conversations')}</h1>
+                          <TopNav className="mb-0" />
                       </div>
                       {/* Conversation List */}
                       <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
