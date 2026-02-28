@@ -830,6 +830,75 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       </div>
   );
 
+  const TopNav = ({ className = "" }: { className?: string }) => (
+    <div className={`flex items-center justify-end gap-3 mb-6 ${className}`}>
+        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 mr-auto p-2 -ml-2">
+            <Menu size={24} />
+        </button>
+
+        <button 
+            onClick={() => setShowTopUpModal(true)}
+            className="hidden sm:flex items-center gap-2 bg-stone-100 hover:bg-stone-200 transition-colors px-3 py-1.5 rounded-full text-xs font-bold text-stone-600 cursor-pointer"
+        >
+            <Coins size={14} className="text-stone-500" />
+            {currentUser?.credits || 0} {t('common.credits')}
+        </button>
+        
+        <div className="hidden sm:block h-6 w-px bg-stone-200"></div>
+        <LanguageSwitcher />
+
+        <div className="relative">
+            <button 
+                onClick={handleToggleNotifications}
+                className="relative text-stone-400 hover:text-stone-600 transition-colors p-2 rounded-full hover:bg-stone-100"
+            >
+                <Bell size={20} />
+                {notifications.filter(n => n.time.getTime() > lastReadTime).length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
+            </button>
+
+            {showNotifications && (
+                <>
+                    <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)}></div>
+                    <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="px-4 py-3 border-b border-stone-50 bg-stone-50/50 flex justify-between items-center">
+                            <h3 className="font-bold text-sm text-stone-900">{t('creator.notifications')}</h3>
+                            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{t('fan.updates', { count: notifications.length })}</span>
+                        </div>
+                        <div className="max-h-[320px] overflow-y-auto">
+                            {notifications.length === 0 ? (
+                                <div className="p-8 text-center text-stone-400 text-xs">{t('fan.noNotifications')}</div>
+                            ) : (
+                                notifications.map(notif => (
+                                    <div 
+                                        key={notif.id} 
+                                        onClick={() => handleNotificationClick(notif)}
+                                        className="px-4 py-3 hover:bg-stone-50 transition-colors flex gap-3 border-b border-stone-50 last:border-0 group relative pr-8 cursor-pointer"
+                                    >
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
+                                            <notif.icon size={14} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-xs text-stone-600 leading-snug mb-1 font-medium">{notif.text}</p>
+                                            <p className="text-[10px] text-stone-400">{notif.time.toLocaleDateString()} • {notif.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                                        </div>
+                                        <button 
+                                            onClick={(e) => handleDeleteNotification(e, notif.id)}
+                                            className="absolute top-3 right-3 text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            title="Dismiss"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex font-sans text-stone-900 overflow-hidden">
         {/* Inject Animation Styles Globally for the Component */}
@@ -908,89 +977,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                     {t('fan.demoMode')}
                 </div>
             )}
-            {/* Header */}
-            <header className="h-16 bg-white border-b border-stone-200 flex items-center justify-center shrink-0 relative z-40">
-                <div className="flex items-center justify-between w-full max-w-5xl px-3 sm:px-6">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500">
-                        <Menu size={20} />
-                    </button>
-                    <h2 className="font-semibold text-stone-800">
-                        {getPageTitle()}
-                    </h2>
-                </div>
-                {!selectedCreatorId && (
-                     <div className="flex items-center gap-4">
-                        <button 
-                            onClick={() => setShowTopUpModal(true)}
-                            className="hidden sm:flex items-center gap-2 bg-stone-100 hover:bg-stone-200 transition-colors px-3 py-1.5 rounded-full text-xs font-bold text-stone-600 cursor-pointer"
-                        >
-                            <Coins size={14} className="text-stone-500" />
-                            {currentUser?.credits || 0} {t('common.credits')}
-                        </button>
-                        <div className="hidden sm:block h-6 w-px bg-stone-200"></div>
-                        <LanguageSwitcher />
-
-                        <div className="relative">
-                            <button 
-                                onClick={handleToggleNotifications}
-                                className="relative text-stone-400 hover:text-stone-600 transition-colors p-2 rounded-full hover:bg-stone-100"
-                            >
-                                <Bell size={20} />
-                                {notifications.filter(n => n.time.getTime() > lastReadTime).length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
-                            </button>
-
-                            {showNotifications && (
-                                <>
-                                    <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)}></div>
-                                    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                        <div className="px-4 py-3 border-b border-stone-50 bg-stone-50/50 flex justify-between items-center">
-                                            <h3 className="font-bold text-sm text-stone-900">{t('creator.notifications')}</h3>
-                                            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{t('fan.updates', { count: notifications.length })}</span>
-                                        </div>
-                                        <div className="max-h-[320px] overflow-y-auto">
-                                            {notifications.length === 0 ? (
-                                                <div className="p-8 text-center text-stone-400 text-xs">{t('fan.noNotifications')}</div>
-                                            ) : (
-                                                notifications.map(notif => (
-                                                    <div 
-                                                        key={notif.id} 
-                                                        onClick={() => handleNotificationClick(notif)}
-                                                        className="px-4 py-3 hover:bg-stone-50 transition-colors flex gap-3 border-b border-stone-50 last:border-0 group relative pr-8 cursor-pointer"
-                                                    >
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
-                                                            <notif.icon size={14} />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-stone-600 leading-snug mb-1 font-medium">{notif.text}</p>
-                                                            <p className="text-[10px] text-stone-400">{notif.time.toLocaleDateString()} • {notif.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                                                        </div>
-                                                        <button 
-                                                            onClick={(e) => handleDeleteNotification(e, notif.id)}
-                                                            className="absolute top-3 right-3 text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                            title="Dismiss"
-                                                        >
-                                                            <X size={14} />
-                                                        </button>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                )}
-                </div>
-            </header>
 
             {/* Content Area */}
-            <div className="flex-1 overflow-auto relative bg-[#FAF9F6]">
+            <div className={`flex-1 overflow-auto relative bg-[#FAF9F6] ${currentView === 'OVERVIEW' && !selectedCreatorId ? 'p-0' : ''}`}>
                 
                 {/* --- VIEW: PURCHASED (BETA) --- */}
                 {currentView === 'PURCHASED' && (
                     <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in">
+                        <TopNav />
                         <div className="bg-stone-900 text-white p-8 rounded-2xl relative overflow-hidden mb-8">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                             <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -1107,6 +1101,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                 {/* --- VIEW: EXPLORE CREATORS --- */}
                 {currentView === 'EXPLORE' && (
                     <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in">
+                        <TopNav />
                         
                         {/* Header Section */}
                         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
@@ -1247,6 +1242,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                 {/* --- VIEW: HISTORY --- */}
                 {currentView === 'HISTORY' && (
                     <div className="p-4 md:p-6 max-w-5xl mx-auto animate-in fade-in h-full flex flex-col">
+                        <TopNav />
                         <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
                              <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between shrink-0">
                                  <h3 className="text-sm font-bold text-stone-900">{t('fan.transactionHistory')}</h3>
@@ -1359,7 +1355,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                 {/* --- VIEW: SUPPORT --- */}
                 {currentView === 'SUPPORT' && (
-                    <div className="p-6 max-w-2xl mx-auto animate-in fade-in flex items-center justify-center min-h-[500px]">
+                    <div className="p-6 max-w-2xl mx-auto animate-in fade-in flex flex-col items-center justify-center min-h-[500px]">
+                         <div className="w-full"><TopNav /></div>
                          <div className="bg-white p-8 rounded-3xl border border-stone-200 shadow-xl shadow-stone-200/50 text-center space-y-6 max-w-md w-full relative overflow-hidden">
                              {/* Decorative Background */}
                              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-stone-500 via-stone-700 to-stone-900"></div>
@@ -1396,6 +1393,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                 {/* --- VIEW: SETTINGS --- */}
                 {currentView === 'SETTINGS' && (
                     <div className="max-w-2xl mx-auto p-6 space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                        <TopNav />
                         {showSaveSuccess && (
                             <div className="fixed bottom-8 right-8 z-[60] max-w-sm animate-in slide-in-from-bottom-4">
                                 <div className="bg-stone-900 text-white rounded-lg px-4 py-3 shadow-lg flex items-center gap-3">
@@ -1475,6 +1473,10 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                 {/* --- VIEW: OVERVIEW (List) --- */}
                 {currentView === 'OVERVIEW' && !selectedCreatorId && (
                    <div className="p-6 max-w-5xl mx-auto space-y-8 animate-in fade-in">
+                      <TopNav />
+                      <div className="pt-2">
+                          <h1 className="text-2xl font-bold text-stone-900">{t('fan.conversations')}</h1>
+                      </div>
                       {/* Conversation List */}
                       <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
                          <div className="p-4 border-b border-stone-100 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -2143,6 +2145,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                 {/* --- VIEW: NOTIFICATIONS --- */}
                 {currentView === 'NOTIFICATIONS' && (
                     <div className="p-6 max-w-3xl mx-auto animate-in fade-in">
+                        <TopNav />
                         {(() => {
                             const totalPages = Math.ceil(notifications.length / ITEMS_PER_PAGE);
                             const displayedNotifications = notifications.slice((notificationPage - 1) * ITEMS_PER_PAGE, notificationPage * ITEMS_PER_PAGE);
