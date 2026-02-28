@@ -1383,7 +1383,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                              <div className="pt-6 border-t border-stone-100">
                                  <p className="text-xs text-stone-400">
-                                     {t('fan.directEmail').split('support@diem.com')[0]}<a href="#" className="text-stone-900 font-semibold hover:underline">support@diem.com</a>
+                                     {t('fan.directEmail').split('support@diem')[0]}<a href="mailto:support@diem.ee" className="text-stone-900 font-semibold hover:underline">support@diem.ee</a>
                                  </p>
                              </div>
                          </div>

@@ -3321,7 +3321,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
             {/* --- VIEW: SUPPORT --- */}
             {currentView === 'SUPPORT' && (
-                <div className="p-6 max-w-2xl mx-auto animate-in fade-in flex items-center justify-center min-h-[500px]">
+                <div className="p-6 max-w-2xl mx-auto animate-in fade-in flex flex-col items-center justify-center min-h-[500px]">
                      <div className="w-full"><TopNav /></div>
                      <div className="bg-white p-8 rounded-3xl border border-stone-200 shadow-xl shadow-stone-200/50 text-center space-y-6 max-w-md w-full relative overflow-hidden">
                          {/* Decorative Background */}
@@ -3345,6 +3345,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                              <Button fullWidth variant="secondary" className="h-12 rounded-xl flex items-center justify-center gap-2 bg-stone-50 hover:bg-stone-100 border border-stone-200">
                                 <FileText size={18}/> Creator Guide
                              </Button>
+                         </div>
+
+                         <div className="pt-6 border-t border-stone-100">
+                             <p className="text-xs text-stone-400">
+                                 Or email us directly at <a href="mailto:support@diem.ee" className="text-stone-900 font-semibold hover:underline">support@diem.ee</a>
+                             </p>
                          </div>
                      </div>
                 </div>
