@@ -90,21 +90,17 @@ Deno.serve(async (req) => {
     // Create Stripe Checkout Session with 2 line items + automatic tax
     const params: Record<string, string> = {
       mode: 'payment',
-      billing_address_collection: 'required',
-      'automatic_tax[enabled]': 'true',
       // Line Item 1: Credits
       'line_items[0][price_data][currency]': 'usd',
       'line_items[0][price_data][product_data][name]': `${credits} Credits`,
       'line_items[0][price_data][product_data][description]': `Top up ${credits} credits to your account`,
       'line_items[0][price_data][unit_amount]': baseCents.toString(),
-      'line_items[0][price_data][tax_behavior]': 'exclusive',
       'line_items[0][quantity]': '1',
       // Line Item 2: Service Fee
       'line_items[1][price_data][currency]': 'usd',
       'line_items[1][price_data][product_data][name]': 'Processing Fee',
       'line_items[1][price_data][product_data][description]': 'Payment processing fee',
       'line_items[1][price_data][unit_amount]': feeCents.toString(),
-      'line_items[1][price_data][tax_behavior]': 'exclusive',
       'line_items[1][quantity]': '1',
       // Metadata for webhook
       'metadata[user_id]': user.id,

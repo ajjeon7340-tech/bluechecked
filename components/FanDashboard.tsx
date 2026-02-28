@@ -2219,7 +2219,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         {showTopUpModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto">
                 <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl relative animate-in zoom-in-95 duration-300 my-auto max-h-[90vh] overflow-y-auto">
-                    <button onClick={() => { setShowTopUpModal(false); setStripeClientSecret(null); }} className="absolute top-4 right-4 p-2 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-500 z-10 transition-colors"><X size={18}/></button>
+                    <button onClick={() => setShowTopUpModal(false)} className="absolute top-4 right-4 p-2 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-500 z-10 transition-colors"><X size={18}/></button>
 
                     <div className="p-8">
                         <div className="text-center mb-6">
