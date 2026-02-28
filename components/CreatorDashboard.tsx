@@ -2154,14 +2154,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             )}
 
             {currentView === 'INBOX' && (
-                <div className="h-full flex bg-[#FAF9F6] animate-in fade-in overflow-x-hidden">
+                <div className="h-full flex flex-col bg-[#FAF9F6] animate-in fade-in overflow-x-hidden">
+                    {/* Header Row */}
+                    <div className="flex items-center justify-between px-4 sm:px-6 py-4 shrink-0">
+                        <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.inbox')}</h2>
+                        <TopNav />
+                    </div>
+                    <div className="flex flex-1 min-h-0">
                     {/* List Column */}
                     <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col bg-white ${selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
                         <div className="p-4 border-b border-stone-100 flex flex-col gap-3">
-                            <div className="flex items-center justify-between">
-                                <span className="font-semibold text-stone-900">{t('creator.messageFilters')}</span>
-                                <TopNav />
-                            </div>
+                            <span className="font-semibold text-stone-900">{t('creator.messageFilters')}</span>
                             <div className="flex flex-wrap gap-1 bg-stone-100/60 p-1 rounded-lg">
                                 {(['ALL', 'PENDING', 'REPLIED', 'REJECTED'] as const).map(f => (
                                     <button
@@ -2756,6 +2759,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                              </div>
                         )}
                     </div>
+                </div>
                 </div>
             )}
 
