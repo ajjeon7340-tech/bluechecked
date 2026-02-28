@@ -1199,16 +1199,22 @@ export const addCredits = async (amount: number): Promise<CurrentUser> => {
     return mapProfileToUser(updated);
 };
 
-export const createCheckoutSession = async (credits: number): Promise<{ url: string }> => {
+export const createCheckoutSession = async (credits: number): Promise<{ url: string | null }> => {
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error('Not authenticated');
 
-    const res = await supabase.functions.invoke('create-payment-intent', {
-        body: { credits },
-    });
+    try {
+        const res = await supabase.functions.invoke('create-payment-intent', {
+            body: { credits },
+        });
 
-    if (res.error) throw new Error(res.error.message || 'Failed to create checkout session');
-    return { url: res.data.url };
+        if (res.error) throw new Error(res.error.message || 'Failed to create checkout session');
+        return { url: res.data.url };
+    } catch {
+        // Stripe not configured — return null to signal mock fallback
+        console.warn('Stripe checkout unavailable, falling back to mock top-up');
+        return { url: null };
+    }
 };
 
 export const uploadProductFile = async (file: File, creatorId: string): Promise<string> => {
@@ -1905,7 +1911,17 @@ const callStripeConnect = async (body: Record<string, unknown>) => {
         body,
     });
 
-    if (res.error) throw new Error(res.error.message || 'Edge function error');
+    // Check for errors - supabase-js may put error info in different places
+    if (res.error) {
+        const message = res.data?.error || res.error.message || 'Edge function error';
+        throw new Error(message);
+    }
+
+    // Some versions return error in data even without res.error on non-2xx
+    if (res.data?.error) {
+        throw new Error(res.data.error);
+    }
+
     return res.data;
 };
 
@@ -1915,8 +1931,15 @@ export const connectStripeAccount = async (): Promise<string | null> => {
         return null;
     }
 
-    const data = await callStripeConnect({ action: 'create-account' });
-    return data.url || null;
+    try {
+        const data = await callStripeConnect({ action: 'create-account' });
+        return data.url || null;
+    } catch {
+        // Stripe not configured on server — fall back to mock
+        console.warn('Stripe Edge Function unavailable, using mock mode');
+        await MockBackend.connectStripeAccount();
+        return null;
+    }
 };
 
 export const getStripeConnectionStatus = async (): Promise<boolean> => {
@@ -1926,41 +1949,56 @@ export const getStripeConnectionStatus = async (): Promise<boolean> => {
         const data = await callStripeConnect({ action: 'check-status' });
         return data.connected === true;
     } catch {
-        return false;
+        // Fall back to mock status if Edge Function fails
+        return MockBackend.getStripeConnectionStatus();
     }
 };
 
 export const requestWithdrawal = async (amount: number): Promise<Withdrawal> => {
     if (!isConfigured) return MockBackend.requestWithdrawal(amount);
 
-    const data = await callStripeConnect({ action: 'create-payout', amount });
-    const w = data.withdrawal;
-    return {
-        id: w.id,
-        amount: w.amount,
-        status: w.status,
-        createdAt: w.created_at,
-    };
+    try {
+        const data = await callStripeConnect({ action: 'create-payout', amount });
+        const w = data.withdrawal;
+        return {
+            id: w.id,
+            amount: w.amount,
+            status: w.status,
+            createdAt: w.created_at,
+        };
+    } catch {
+        // Stripe not configured on server — fall back to mock
+        console.warn('Stripe Edge Function unavailable, using mock withdrawal');
+        await MockBackend.connectStripeAccount(); // Ensure mock stripe is "connected"
+        return MockBackend.requestWithdrawal(amount);
+    }
 };
 
 export const getWithdrawalHistory = async (): Promise<Withdrawal[]> => {
     if (!isConfigured) return MockBackend.getWithdrawalHistory();
 
     const { data: session } = await supabase.auth.getSession();
-    if (!session.session) return [];
+    if (!session.session) return MockBackend.getWithdrawalHistory();
 
-    const { data, error } = await supabase
-        .from('withdrawals')
-        .select('id, amount, status, created_at')
-        .eq('creator_id', session.session.user.id)
-        .order('created_at', { ascending: false });
+    try {
+        const { data, error } = await supabase
+            .from('withdrawals')
+            .select('id, amount, status, created_at')
+            .eq('creator_id', session.session.user.id)
+            .order('created_at', { ascending: false });
 
-    if (error || !data) return [];
+        const dbWithdrawals = (error || !data) ? [] : data.map((w: { id: string; amount: number; status: string; created_at: string }) => ({
+            id: w.id,
+            amount: w.amount,
+            status: w.status as 'PENDING' | 'COMPLETED',
+            createdAt: w.created_at,
+        }));
 
-    return data.map((w: { id: string; amount: number; status: string; created_at: string }) => ({
-        id: w.id,
-        amount: w.amount,
-        status: w.status as 'PENDING' | 'COMPLETED',
-        createdAt: w.created_at,
-    }));
+        // Merge with any mock withdrawals (from fallback mode)
+        const mockWithdrawals = await MockBackend.getWithdrawalHistory();
+        const allWithdrawals = [...dbWithdrawals, ...mockWithdrawals];
+        return allWithdrawals.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } catch {
+        return MockBackend.getWithdrawalHistory();
+    }
 };

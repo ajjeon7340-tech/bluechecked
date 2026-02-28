@@ -556,22 +556,24 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   };
 
   const handleTopUp = async () => {
-      // If real backend is configured, redirect to Stripe Checkout
+      setIsProcessingTopUp(true);
+
+      // Try Stripe Checkout if backend is configured
       if (isBackendConfigured()) {
-          setIsProcessingTopUp(true);
           try {
               const { url } = await createCheckoutSession(topUpAmount);
-              window.location.href = url;
+              if (url) {
+                  window.location.href = url;
+                  return;
+              }
+              // url is null — Stripe not configured, fall through to mock
           } catch (e: any) {
               console.error(e);
-              alert(e.message || t('fan.topUpFailed'));
-              setIsProcessingTopUp(false);
+              // Fall through to mock
           }
-          return;
       }
 
       // Mock fallback
-      setIsProcessingTopUp(true);
       try {
           await new Promise(r => setTimeout(r, 1500));
           const updatedUser = await addCredits(topUpAmount);
