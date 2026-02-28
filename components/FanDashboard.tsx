@@ -1473,16 +1473,15 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                 {/* --- VIEW: OVERVIEW (List) --- */}
                 {currentView === 'OVERVIEW' && !selectedCreatorId && (
                    <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in">
-                      <div className="flex items-center justify-between">
-                          <h1 className="text-2xl font-bold text-stone-900">{t('fan.conversations')}</h1>
-                          <TopNav className="mb-0" />
-                      </div>
                       {/* Conversation List */}
                       <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
-                         <div className="p-4 border-b border-stone-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-                             <div className="flex flex-col gap-3 w-full sm:w-auto">
+                         <div className="p-4 border-b border-stone-100 flex flex-col gap-3">
+                             <div className="flex items-center justify-between">
                                  <span className="font-semibold text-stone-900">{t('fan.messageFilters')}</span>
-                                 <div className="flex flex-wrap gap-1 bg-stone-100/60 p-1 rounded-lg">
+                                 <TopNav />
+                             </div>
+                             <div className="flex flex-col sm:flex-row items-center gap-3">
+                                 <div className="flex flex-wrap gap-1 bg-stone-100/60 p-1 rounded-lg w-full sm:w-auto">
                                     {(['ALL', 'PENDING', 'REPLIED', 'REJECTED'] as const).map(f => (
                                         <button
                                             key={f}
@@ -1493,17 +1492,17 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         </button>
                                     ))}
                                 </div>
-                             </div>
-                             {/* Search Input - More Prominent */}
-                             <div className="relative w-full sm:w-auto group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-stone-600 transition-colors" size={16} />
-                                <input 
-                                    type="text" 
-                                    placeholder={t('fan.searchMessages')}
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full sm:w-72 pl-10 pr-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:ring-1 focus:ring-stone-400 focus:bg-white outline-none transition-all shadow-sm"
-                                />
+                                {/* Search Input */}
+                                <div className="relative w-full sm:w-auto sm:ml-auto group">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-stone-600 transition-colors" size={16} />
+                                    <input
+                                        type="text"
+                                        placeholder={t('fan.searchMessages')}
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full sm:w-64 pl-10 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:ring-1 focus:ring-stone-400 focus:bg-white outline-none transition-all"
+                                    />
+                                </div>
                              </div>
                          </div>
 
