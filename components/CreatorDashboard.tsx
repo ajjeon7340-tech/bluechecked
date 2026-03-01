@@ -2745,16 +2745,32 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     </div>
                                                 )}
                                                 {msg.status === 'EXPIRED' && (
-                                                    <div className="flex justify-center py-4 mt-4">
-                                                        <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm border border-red-100 flex items-center gap-2">
-                                                            <AlertCircle size={16} /> Deadline missed. Refund issued.
+                                                    <div className="mt-5 mx-auto max-w-[280px]">
+                                                        <div className="bg-gradient-to-br from-red-50 to-orange-50 border border-red-200/60 rounded-xl p-3 shadow-sm">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="bg-red-500 p-1 rounded-full">
+                                                                        <AlertCircle size={10} className="text-white stroke-[3px]" />
+                                                                    </div>
+                                                                    <span className="text-xs font-semibold text-red-700">Deadline Missed</span>
+                                                                </div>
+                                                                <span className="text-xs font-semibold text-red-500">{t('creator.refunded')}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 )}
                                                 {msg.status === 'CANCELLED' && (
-                                                    <div className="flex justify-center py-4 mt-4">
-                                                        <div className="bg-stone-100 text-stone-600 px-4 py-2 rounded-lg text-sm border border-stone-200 flex items-center gap-2">
-                                                            <Ban size={16} /> Request rejected & refunded.
+                                                    <div className="mt-5 mx-auto max-w-[280px]">
+                                                        <div className="bg-gradient-to-br from-stone-50 to-stone-100 border border-stone-200/60 rounded-xl p-3 shadow-sm">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="bg-stone-500 p-1 rounded-full">
+                                                                        <Ban size={10} className="text-white stroke-[3px]" />
+                                                                    </div>
+                                                                    <span className="text-xs font-semibold text-stone-700">Rejected</span>
+                                                                </div>
+                                                                <span className="text-xs font-semibold text-stone-500">{t('creator.refunded')}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 )}

@@ -1924,6 +1924,36 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 </div>
                                             </div>
                                         )}
+                                        {msg.status === 'EXPIRED' && (
+                                            <div className="mt-5 mx-auto max-w-[280px]">
+                                                <div className="bg-gradient-to-br from-red-50 to-orange-50 border border-red-200/60 rounded-xl p-3 shadow-sm">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="bg-red-500 p-1 rounded-full">
+                                                                <AlertCircle size={10} className="text-white stroke-[3px]" />
+                                                            </div>
+                                                            <span className="text-xs font-semibold text-red-700">Deadline Missed</span>
+                                                        </div>
+                                                        <span className="text-xs font-semibold text-red-500">{t('common.refunded')}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {msg.status === 'CANCELLED' && (
+                                            <div className="mt-5 mx-auto max-w-[280px]">
+                                                <div className="bg-gradient-to-br from-stone-50 to-stone-100 border border-stone-200/60 rounded-xl p-3 shadow-sm">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="bg-stone-500 p-1 rounded-full">
+                                                                <Ban size={10} className="text-white stroke-[3px]" />
+                                                            </div>
+                                                            <span className="text-xs font-semibold text-stone-700">Rejected</span>
+                                                        </div>
+                                                        <span className="text-xs font-semibold text-stone-500">{t('common.refunded')}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
