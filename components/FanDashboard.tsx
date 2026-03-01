@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CurrentUser, Message, CreatorProfile } from '../types';
 import { Button } from './Button';
-import { DiemLogo, CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download, Smile, Verified } from './Icons';
+import { DiemLogo, CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download, Smile, Verified, ChevronUp } from './Icons';
 import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createCheckoutSession, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl } from '../services/realBackend';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
@@ -132,6 +132,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const [historyPage, setHistoryPage] = useState(1);
   const [notificationPage, setNotificationPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
+  const CHAT_MESSAGES_PER_PAGE = 10;
+  const [chatMessagePage, setChatMessagePage] = useState(1);
 
   useEffect(() => {
       localStorage.setItem('bluechecked_deleted_notifications', JSON.stringify(deletedNotificationIds));
@@ -455,7 +457,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   }, [latestMessage]);
 
   const handleOpenChat = (creatorId: string) => {
-      setSelectedCreatorId(creatorId); 
+      setSelectedCreatorId(creatorId);
+      setChatMessagePage(1);
       setShowFollowUpInput(false);
       setFollowUpText('');
       setCustomAppreciationMode(false);
@@ -1704,7 +1707,19 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         {/* Messages - Threads Style */}
                         <div className="flex-1 overflow-y-auto bg-white" ref={scrollRef}>
                           <div className="max-w-md mx-auto">
-                             {threadMessages.map((msg, msgIndex) => {
+                             {/* Load Earlier Messages */}
+                             {threadMessages.length > chatMessagePage * CHAT_MESSAGES_PER_PAGE && (
+                                 <div className="flex justify-center py-3">
+                                     <button
+                                         onClick={() => setChatMessagePage(p => p + 1)}
+                                         className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-stone-500 hover:text-stone-700 bg-stone-50 hover:bg-stone-100 rounded-full border border-stone-200 transition-colors"
+                                     >
+                                         <ChevronUp size={14} />
+                                         {t('fan.loadEarlierMessages') || 'Load earlier messages'}
+                                     </button>
+                                 </div>
+                             )}
+                             {threadMessages.slice(-(chatMessagePage * CHAT_MESSAGES_PER_PAGE)).map((msg, msgIndex) => {
                                 const isPending = msg.status === 'PENDING';
                                 const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
 

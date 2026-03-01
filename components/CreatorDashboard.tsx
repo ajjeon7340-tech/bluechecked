@@ -11,7 +11,7 @@ import {
   Home, BarChart3, Wallet, Users, Bell, Search, Menu, ChevronDown, Ban, Check,
   Heart, Star, Eye, TrendingUp, MessageSquare, ArrowRight, Lock, 
   InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Download, ShoppingBag, FileText, PieChart as PieIcon, LayoutGrid, MonitorPlay, Link as LinkIcon, Calendar, ChevronRight, Coins, CreditCard
-  , MousePointerClick, GripVertical, Smile, Pencil
+  , MousePointerClick, GripVertical, Smile, Pencil, ChevronUp
 } from './Icons';
 import { Button } from './Button';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid, PieChart, Pie, Cell, Legend, ComposedChart, Line } from 'recharts';
@@ -204,6 +204,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [overviewReviewsPage, setOverviewReviewsPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
   const OVERVIEW_REVIEWS_PER_PAGE = 5;
+  const CHAT_MESSAGES_PER_PAGE = 10;
+  const [chatMessagePage, setChatMessagePage] = useState(1);
 
   // Left Chatrooms (hidden, not deleted from DB) - stores timestamp of when left
   const [leftChatrooms, setLeftChatrooms] = useState<Record<string, number>>(() => {
@@ -712,6 +714,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const handleOpenChat = async (senderEmail: string) => {
     setSelectedSenderEmail(senderEmail);
+    setChatMessagePage(1);
 
     // Mark all unread from this sender as read
     const unread = incomingMessages.filter(m => {
@@ -2359,7 +2362,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                 <div className="flex-1 overflow-y-auto bg-white" ref={scrollRef}>
                                     <div className="max-w-lg mx-auto">
-                                    {threadMessages.map((msg, msgIndex) => {
+                                    {/* Load Earlier Messages */}
+                                    {threadMessages.length > chatMessagePage * CHAT_MESSAGES_PER_PAGE && (
+                                        <div className="flex justify-center py-3">
+                                            <button
+                                                onClick={() => setChatMessagePage(p => p + 1)}
+                                                className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-stone-500 hover:text-stone-700 bg-stone-50 hover:bg-stone-100 rounded-full border border-stone-200 transition-colors"
+                                            >
+                                                <ChevronUp size={14} />
+                                                {t('creator.loadEarlierMessages') || 'Load earlier messages'}
+                                            </button>
+                                        </div>
+                                    )}
+                                    {threadMessages.slice(-(chatMessagePage * CHAT_MESSAGES_PER_PAGE)).map((msg, msgIndex) => {
                                         const isPending = msg.status === 'PENDING';
                                         const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
 

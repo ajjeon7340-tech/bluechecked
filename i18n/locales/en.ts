@@ -529,6 +529,7 @@ const en = {
     send: 'Send',
     rejectRefund: 'Reject & Refund',
     leaveConversationTitle: 'Leave conversation',
+    loadEarlierMessages: 'Load earlier messages',
     dismiss: 'Dismiss',
     completed: 'Completed',
     refunded: 'Refunded',
@@ -690,6 +691,7 @@ const en = {
     requestRejected: 'Request to {{name}} was rejected.',
     productPurchased: 'You purchased {{product}}',
     leaveConversation: 'Leave this conversation? It will be hidden from your inbox but not deleted.',
+    loadEarlierMessages: 'Load earlier messages',
   },
 };
 

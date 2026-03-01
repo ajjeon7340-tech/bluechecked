@@ -240,7 +240,12 @@ Deno.serve(async (req) => {
           .update({ credits: (profile.credits || 0) })  // Restore original balance
           .eq('id', user.id)
 
-        return errorResponse(`Transfer failed: ${stripeErr.message || 'Stripe error'}`)
+        let errorMessage = stripeErr.message || 'Stripe error'
+        if (errorMessage.includes('insufficient available funds')) {
+          errorMessage = "Stripe Sandbox Error: Your Platform Balance is empty. Go to Stripe Dashboard > Balances > 'Add to balance' to add test funds."
+        }
+
+        return errorResponse(`Transfer failed: ${errorMessage}`)
       }
 
       // Step 3: Record withdrawal in DB
