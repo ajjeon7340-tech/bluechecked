@@ -2427,9 +2427,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             >
                                                 <ChevronLeft size={16} className="text-stone-600" />
                                             </button>
-                                            <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">
-                                                {t('creator.sessionOf', { current: effectiveSessionIndex + 1, total: threadMessages.length }) || `Session ${effectiveSessionIndex + 1} of ${threadMessages.length}`}
-                                            </span>
+                                            <div className="flex flex-col items-center">
+                                                <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">
+                                                    {t('creator.sessionOf', { current: effectiveSessionIndex + 1, total: threadMessages.length }) || `Session ${effectiveSessionIndex + 1} of ${threadMessages.length}`}
+                                                </span>
+                                                <span className="text-[9px] text-stone-400">
+                                                    {getRelativeTime(threadMessages[effectiveSessionIndex]?.createdAt || threadMessages[effectiveSessionIndex]?.conversation?.[0]?.timestamp, t)}
+                                                </span>
+                                            </div>
                                             <button
                                                 onClick={() => setChatSessionIndex(effectiveSessionIndex + 1)}
                                                 disabled={effectiveSessionIndex >= threadMessages.length - 1}
@@ -2479,7 +2484,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     <User size={10} className="fill-current" />
                                                                     <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.fan')}</span>
                                                                 </div>
-                                                                <span className="text-xs font-medium text-stone-400">• {getRelativeTime(firstChat.timestamp, t)}</span>
+                                                                <span className="text-xs font-medium text-stone-400">• {new Date(firstChat.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
                                                             </div>
                                                         </div>
 
@@ -2564,11 +2569,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             )}
                                                             <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
                                                                 {isCreator ? (
-                                                                    creator.avatarUrl ? (
-                                                                        <img src={creator.avatarUrl} alt={creator.displayName} className="w-full h-full object-cover" />
-                                                                    ) : (
-                                                                        <div className="w-full h-full bg-stone-100 flex items-center justify-center"><Verified size={22} /></div>
-                                                                    )
+                                                                    <div className="w-full h-full bg-stone-100 flex items-center justify-center"><Verified size={22} /></div>
                                                                 ) : (
                                                                     msg.senderAvatarUrl ? (
                                                                         <img src={msg.senderAvatarUrl} alt={msg.senderName} className="w-full h-full object-cover" />
@@ -2587,8 +2588,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                             {isCreator ? (creator.displayName || 'You') : msg.senderName}
                                                                         </span>
                                                                         {isCreator ? (
-                                                                            <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
-                                                                                <CheckCircle2 size={10} className="fill-current" />
+                                                                            <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full overflow-visible">
+                                                                                <Verified size={12} />
                                                                                 <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.creator')}</span>
                                                                             </div>
                                                                         ) : (
@@ -2597,7 +2598,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                                 <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.fan')}</span>
                                                                             </div>
                                                                         )}
-                                                                        <span className="text-xs font-medium text-stone-400">• {getRelativeTime(chat.timestamp, t)}</span>
+                                                                        <span className="text-xs font-medium text-stone-400">• {new Date(chat.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
                                                                     </div>
                                                                 </div>
 

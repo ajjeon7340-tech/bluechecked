@@ -57,8 +57,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const [supportAmount, setSupportAmount] = useState(100);
   const [supportMessage, setSupportMessage] = useState('');
 
-  // Customization State
-  const [isCustomizeMode, setIsCustomizeMode] = useState(false);
+  // Customization State (disabled — editing done from dashboard)
+  const isCustomizeMode = false;
   const [editedCreator, setEditedCreator] = useState(creator);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   
@@ -475,15 +475,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                           </button>
                         )}
 
-                        {currentUser && currentUser.role === 'CREATOR' && (
-                            <button
-                              onClick={() => setIsCustomizeMode(!isCustomizeMode)}
-                              className={`hidden sm:flex px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all items-center gap-1 border ${isCustomizeMode ? 'bg-stone-900 border-stone-900 text-white' : 'bg-transparent border-stone-200 text-stone-400 hover:border-stone-400'}`}
-                            >
-                              {isCustomizeMode ? <CheckCircle2 size={10} /> : null}
-                              {isCustomizeMode ? t('common.editing') : t('common.edit')}
-                            </button>
-                        )}
                     </div>
                 </div>
                 <div className="px-4 pt-1 pb-4 sm:px-6 sm:pb-6 relative z-10">

@@ -1649,9 +1649,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                      >
                                          <ChevronLeft size={16} className="text-stone-600" />
                                      </button>
-                                     <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">
-                                         {t('fan.sessionOf', { current: effectiveSessionIndex + 1, total: threadMessages.length }) || `Session ${effectiveSessionIndex + 1} of ${threadMessages.length}`}
-                                     </span>
+                                     <div className="flex flex-col items-center">
+                                         <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">
+                                             {t('fan.sessionOf', { current: effectiveSessionIndex + 1, total: threadMessages.length }) || `Session ${effectiveSessionIndex + 1} of ${threadMessages.length}`}
+                                         </span>
+                                         <span className="text-[9px] text-stone-400">
+                                             {getRelativeTime(threadMessages[effectiveSessionIndex]?.createdAt || threadMessages[effectiveSessionIndex]?.conversation?.[0]?.timestamp, t)}
+                                         </span>
+                                     </div>
                                      <button
                                          onClick={() => setChatSessionIndex(effectiveSessionIndex + 1)}
                                          disabled={effectiveSessionIndex >= threadMessages.length - 1}
@@ -1701,7 +1706,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             <User size={10} className="fill-current" />
                                                             <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
                                                         </div>
-                                                        <span className="text-xs font-medium text-stone-400">• {getRelativeTime(firstChat.timestamp, t)}</span>
+                                                        <span className="text-xs font-medium text-stone-400">• {new Date(firstChat.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
                                                     </div>
                                                 </div>
 
@@ -1820,7 +1825,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                                         <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
                                                                     </div>
                                                                 )}
-                                                            <span className="text-xs font-medium text-stone-400">• {getRelativeTime(chat.timestamp, t)}</span>
+                                                            <span className="text-xs font-medium text-stone-400">• {new Date(chat.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
                                                         </div>
                                                     </div>
                                 <div className={`${isCreator ? 'bg-stone-50' : 'bg-white'} p-4 rounded-2xl rounded-tl-lg border border-stone-200/60`}>
