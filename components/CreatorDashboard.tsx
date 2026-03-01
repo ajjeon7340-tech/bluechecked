@@ -2417,8 +2417,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
 
                                 <div className="flex-1 overflow-y-auto bg-white" ref={scrollRef}>
-                                    <div className="max-w-lg md:max-w-2xl mx-auto">
-                                    {/* Session Pagination */}
+                                    {/* Session Pagination - full width */}
                                     {threadMessages.length > 1 && (
                                         <div className="flex items-center justify-between px-4 py-2 bg-stone-50 border-b border-stone-100 sticky top-0 z-30">
                                             <button
@@ -2440,6 +2439,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             </button>
                                         </div>
                                     )}
+                                    <div className="max-w-lg mx-auto">
                                     {threadMessages.slice(effectiveSessionIndex, effectiveSessionIndex + 1).map((msg) => {
                                         const isPending = msg.status === 'PENDING';
                                         const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
@@ -2730,7 +2730,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                                 {/* Status indicator */}
                                                 {msg.status === 'REPLIED' && (
-                                                    <div className="mt-5 mx-auto max-w-[280px] md:max-w-[340px]">
+                                                    <div className="mt-5 mx-auto max-w-[260px]">
                                                         <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/60 rounded-xl p-3 shadow-sm">
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-2">
@@ -2745,7 +2745,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     </div>
                                                 )}
                                                 {msg.status === 'EXPIRED' && (
-                                                    <div className="mt-5 mx-auto max-w-[280px] md:max-w-[340px]">
+                                                    <div className="mt-5 mx-auto max-w-[260px]">
                                                         <div className="bg-gradient-to-br from-red-50 to-orange-50 border border-red-200/60 rounded-xl p-3 shadow-sm">
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-2">
@@ -2760,7 +2760,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     </div>
                                                 )}
                                                 {msg.status === 'CANCELLED' && (
-                                                    <div className="mt-5 mx-auto max-w-[280px] md:max-w-[340px]">
+                                                    <div className="mt-5 mx-auto max-w-[260px]">
                                                         <div className="bg-gradient-to-br from-stone-50 to-stone-100 border border-stone-200/60 rounded-xl p-3 shadow-sm">
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-2">
