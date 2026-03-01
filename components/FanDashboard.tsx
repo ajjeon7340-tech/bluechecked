@@ -172,6 +172,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const [topUpAmount, setTopUpAmount] = useState(1000);
   const [isProcessingTopUp, setIsProcessingTopUp] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [creditPurchases, setCreditPurchases] = useState<{ id: string; amount: number; date: string }[]>(() => {
+      try { return JSON.parse(localStorage.getItem('diem_credit_purchases') || '[]'); } catch { return []; }
+  });
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -220,6 +223,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       const url = new URL(window.location.href);
       url.searchParams.delete('checkout');
       window.history.replaceState({}, '', url.toString());
+      const pendingAmount = parseInt(localStorage.getItem('diem_pending_purchase_amount') || '0');
+      if (pendingAmount > 0) {
+        recordCreditPurchase(pendingAmount);
+        localStorage.removeItem('diem_pending_purchase_amount');
+      }
       setTimeout(async () => {
         try {
           const updatedUser = await addCredits(0);
@@ -562,6 +570,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       }
   };
 
+  const recordCreditPurchase = (amount: number) => {
+      const purchase = { id: `cp-${Date.now()}`, amount, date: new Date().toISOString() };
+      const updated = [purchase, ...creditPurchases];
+      setCreditPurchases(updated);
+      localStorage.setItem('diem_credit_purchases', JSON.stringify(updated));
+  };
+
   const handleTopUp = async () => {
       setIsProcessingTopUp(true);
 
@@ -570,6 +585,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           try {
               const { url } = await createCheckoutSession(topUpAmount);
               if (url) {
+                  localStorage.setItem('diem_pending_purchase_amount', String(topUpAmount));
                   window.location.href = url;
                   return;
               }
@@ -585,6 +601,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           await new Promise(r => setTimeout(r, 1500));
           const updatedUser = await addCredits(topUpAmount);
           if (onUpdateUser) onUpdateUser(updatedUser);
+          recordCreditPurchase(topUpAmount);
           setShowTopUpModal(false);
       } catch (e) {
           console.error(e);
@@ -1271,11 +1288,44 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-stone-100">
-                                        {messages.map(msg => {
+                                        {[
+                                            ...messages.map(msg => ({ kind: 'msg' as const, msg, date: new Date(msg.createdAt).getTime() })),
+                                            ...creditPurchases.map(cp => ({ kind: 'purchase' as const, cp, date: new Date(cp.date).getTime() })),
+                                        ].sort((a, b) => b.date - a.date).map(item => {
+                                            if (item.kind === 'purchase') {
+                                                const cp = item.cp;
+                                                return (
+                                                    <tr key={cp.id} className="hover:bg-stone-50 transition-colors">
+                                                        <td className="px-6 py-4 text-stone-500 font-mono text-xs">{new Date(cp.date).toLocaleDateString()}</td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 border border-emerald-200">
+                                                                    <CreditCard size={14} />
+                                                                </div>
+                                                                <span className="font-bold text-stone-900 text-sm">Diem</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className="text-sm text-stone-600">Credit Purchase</span>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                                                <CheckCircle2 size={12} /> {t('common.completed')}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right">
+                                                            <span className="font-mono font-bold flex items-center justify-end gap-1 text-emerald-600">
+                                                                <Coins size={14} /> +{cp.amount}
+                                                            </span>
+                                                            <span className="text-[10px] text-stone-400 block mt-0.5">credits purchased</span>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            }
+                                            const msg = item.msg;
                                             const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
                                             const isProduct = msg.content.startsWith('Purchased Product:');
                                             const isTip = msg.content.startsWith('Fan Tip:');
-
                                             return (
                                                 <tr key={msg.id} className="hover:bg-stone-50 transition-colors group">
                                                     <td className="px-6 py-4 text-stone-500 font-mono text-xs">{new Date(msg.createdAt).toLocaleDateString()}</td>
@@ -1324,9 +1374,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         )}
                                                     </td>
                                                 </tr>
-                                            )
+                                            );
                                         })}
-                                        {messages.length === 0 && (
+                                        {messages.length === 0 && creditPurchases.length === 0 && (
                                             <tr><td colSpan={5} className="p-12 text-center text-stone-400">{t('fan.noTransactions')}</td></tr>
                                         )}
                                     </tbody>
@@ -1335,11 +1385,37 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                              {/* Mobile List View — scrollable, fits in viewport */}
                              <div className="md:hidden flex-1 overflow-y-auto divide-y divide-stone-100">
-                                {messages.map(msg => {
+                                {[
+                                    ...messages.map(msg => ({ kind: 'msg' as const, msg, date: new Date(msg.createdAt).getTime() })),
+                                    ...creditPurchases.map(cp => ({ kind: 'purchase' as const, cp, date: new Date(cp.date).getTime() })),
+                                ].sort((a, b) => b.date - a.date).map(item => {
+                                    if (item.kind === 'purchase') {
+                                        const cp = item.cp;
+                                        return (
+                                            <div key={cp.id} className="px-4 py-3 flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 border border-emerald-200 shrink-0">
+                                                    <CreditCard size={18} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="font-bold text-stone-900 text-sm">Diem</span>
+                                                        <span className="font-mono font-bold text-sm shrink-0 ml-2 text-emerald-600">+{cp.amount}</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between mt-0.5">
+                                                        <span className="text-xs text-stone-500">Credit Purchase</span>
+                                                        <span className="text-xs text-stone-400">{new Date(cp.date).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <div className="mt-1">
+                                                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">{t('common.completed')}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                    const msg = item.msg;
                                     const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
                                     const isProduct = msg.content.startsWith('Purchased Product:');
                                     const isTip = msg.content.startsWith('Fan Tip:');
-
                                     return (
                                         <div key={msg.id} className="px-4 py-3 flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200 shrink-0 overflow-hidden">
@@ -1367,7 +1443,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         </div>
                                     );
                                 })}
-                                {messages.length === 0 && <div className="p-8 text-center text-stone-400 text-sm">{t('fan.noTransactions')}</div>}
+                                {messages.length === 0 && creditPurchases.length === 0 && <div className="p-8 text-center text-stone-400 text-sm">{t('fan.noTransactions')}</div>}
                              </div>
                         </div>
                     </div>
