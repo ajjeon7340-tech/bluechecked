@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { CreatorProfile, CurrentUser, AffiliateLink, Product } from '../types';
 import { DiemLogo, CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share, Image as ImageIcon } from './Icons';
 import { Button } from './Button';
-import { sendMessage, updateCreatorProfile, addCredits, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus, getSecureDownloadUrl, logAnalyticsEvent } from '../services/realBackend';
+import { sendMessage, updateCreatorProfile, addCredits, createCheckoutSession, isBackendConfigured, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus, getSecureDownloadUrl, logAnalyticsEvent } from '../services/realBackend';
 
 interface Props {
   creator: CreatorProfile;
@@ -138,13 +138,28 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
   const handleTopUp = async () => {
       setIsSubmitting(true);
+
+      // Try Stripe Checkout if backend is configured
+      if (isBackendConfigured()) {
+          try {
+              const { url } = await createCheckoutSession(topUpAmount);
+              if (url) {
+                  window.location.href = url;
+                  return;
+              }
+          } catch (e: any) {
+              console.error(e);
+              // Fall through to mock
+          }
+      }
+
+      // Mock fallback
       try {
           await new Promise(r => setTimeout(r, 1500));
           await addCredits(topUpAmount);
-          await onRefreshData(); // Wait for parent to update currentUser balance
-          
+          await onRefreshData();
+
           setIsSubmitting(false);
-          // Return to previous flow
           if (selectedProductLink) {
               setStep('product_payment');
           } else if (step === 'support_payment' || step === 'support_confirm') {
@@ -965,7 +980,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
-                          {[500, 1000, 2000, 5000].map(amt => (
+                          {[500, 1000, 2500, 5000].map(amt => (
                               <button 
                                 key={amt}
                                 onClick={() => setTopUpAmount(amt)}

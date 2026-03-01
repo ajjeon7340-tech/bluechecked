@@ -1652,7 +1652,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                           <div className="max-w-md mx-auto">
                              {/* Session Pagination */}
                              {threadMessages.length > 1 && (
-                                 <div className="flex items-center justify-between px-4 py-2 bg-stone-50/80 border-b border-stone-100 sticky top-0 z-10">
+                                 <div className="flex items-center justify-between px-4 py-2 bg-stone-50 border-b border-stone-100 sticky top-0 z-30">
                                      <button
                                          onClick={() => setChatSessionIndex(effectiveSessionIndex - 1)}
                                          disabled={effectiveSessionIndex <= 0}

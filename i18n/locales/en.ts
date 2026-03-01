@@ -412,8 +412,13 @@ const en = {
     // Notifications
     notificationsTitle: 'Notifications',
     clearAll: 'Clear All',
+    clearOld: 'Clear 3+ Days Old',
     noNotifications: 'No notifications yet.',
     clearAllConfirm: 'Are you sure you want to clear all notifications?',
+    clearOldConfirm: 'Delete {{count}} notifications older than 3 days?',
+    noOldNotifications: 'No notifications older than 3 days.',
+    withdrawal: 'Withdrawal',
+    pending: 'Pending',
     newRequestFrom: 'New request from {{name}}',
     purchasedProduct: '{{name}} purchased {{product}}',
     sentAppreciation: '{{name}} sent appreciation: "{{text}}"',

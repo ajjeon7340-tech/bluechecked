@@ -404,10 +404,21 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           }
       });
 
+      // 5. Withdrawals
+      withdrawals.forEach(w => {
+          list.push({
+              id: `withdraw-${w.id}`,
+              icon: Wallet,
+              text: `Withdrawal of ${w.amount.toLocaleString()} credits ($${(w.amount * 0.01 * 0.9).toFixed(2)}) — ${w.status === 'COMPLETED' ? 'completed' : 'pending'}`,
+              time: new Date(w.createdAt),
+              color: 'bg-blue-100 text-blue-600',
+          });
+      });
+
       return list
         .filter(n => !deletedNotificationIds.includes(n.id))
         .sort((a, b) => b.time.getTime() - a.time.getTime());
-  }, [messages, creator.id, deletedNotificationIds]);
+  }, [messages, creator.id, deletedNotificationIds, withdrawals]);
 
   // Ensure pagination stays valid when items are deleted
   useEffect(() => {
@@ -422,11 +433,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       setDeletedNotificationIds(prev => [...prev, id]);
   };
 
-  const handleClearAllNotifications = () => {
-      if (notifications.length === 0) return;
-      if (window.confirm(t('creator.clearAllConfirm'))) {
-          const allIds = notifications.map(n => n.id);
-          setDeletedNotificationIds(prev => [...prev, ...allIds]);
+  const handleClearOldNotifications = () => {
+      const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
+      const oldNotifs = notifications.filter(n => n.time.getTime() < threeDaysAgo);
+      if (oldNotifs.length === 0) {
+          alert(t('creator.noOldNotifications') || 'No notifications older than 3 days.');
+          return;
+      }
+      if (window.confirm(t('creator.clearOldConfirm') || `Delete ${oldNotifs.length} notifications older than 3 days?`)) {
+          const oldIds = oldNotifs.map(n => n.id);
+          setDeletedNotificationIds(prev => [...prev, ...oldIds]);
       }
   };
 
@@ -1799,9 +1815,33 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                             {/* --- TRANSACTION HISTORY TABLE --- */}
                             {(() => {
-                                const financeMessages = messages.filter(m => m.status === 'REPLIED');
-                                const totalPages = Math.ceil(financeMessages.length / ITEMS_PER_PAGE);
-                                const displayedFinance = financeMessages.slice((financePage - 1) * ITEMS_PER_PAGE, financePage * ITEMS_PER_PAGE);
+                                // Merge messages and withdrawals into a unified transaction list
+                                type Transaction = { id: string; date: Date; source: string; type: 'message' | 'product' | 'tip' | 'withdrawal'; status: string; amount: number; isWithdrawal: boolean };
+                                const txns: Transaction[] = messages
+                                    .filter(m => m.status === 'REPLIED')
+                                    .map(msg => ({
+                                        id: msg.id,
+                                        date: new Date(msg.createdAt),
+                                        source: msg.senderName,
+                                        type: (msg.content.startsWith('Purchased Product:') ? 'product' : msg.content.startsWith('Fan Tip:') ? 'tip' : 'message') as Transaction['type'],
+                                        status: 'SETTLED',
+                                        amount: msg.amount,
+                                        isWithdrawal: false,
+                                    }));
+                                withdrawals.forEach(w => {
+                                    txns.push({
+                                        id: `w-${w.id}`,
+                                        date: new Date(w.createdAt),
+                                        source: 'Withdrawal',
+                                        type: 'withdrawal',
+                                        status: w.status,
+                                        amount: w.amount,
+                                        isWithdrawal: true,
+                                    });
+                                });
+                                txns.sort((a, b) => b.date.getTime() - a.date.getTime());
+                                const totalPages = Math.ceil(txns.length / ITEMS_PER_PAGE);
+                                const displayedFinance = txns.slice((financePage - 1) * ITEMS_PER_PAGE, financePage * ITEMS_PER_PAGE);
                                 return (
                             <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-3">
                                 <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
@@ -1820,31 +1860,39 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                            </tr>
                                        </thead>
                                        <tbody className="divide-y divide-stone-100">
-                                           {displayedFinance.map(msg => {
-                                               const isProduct = msg.content.startsWith('Purchased Product:');
-                                               const isTip = msg.content.startsWith('Fan Tip:');
-                                               
-                                               return (
-                                               <tr key={msg.id} className="hover:bg-stone-50 transition-colors">
-                                                   <td className="px-6 py-4 text-stone-500 font-mono text-xs">{new Date(msg.createdAt).toLocaleDateString()}</td>
-                                                   <td className="px-6 py-4 font-medium text-stone-900">{msg.senderName}</td>
+                                           {displayedFinance.map(txn => (
+                                               <tr key={txn.id} className="hover:bg-stone-50 transition-colors">
+                                                   <td className="px-6 py-4 text-stone-500 font-mono text-xs">{txn.date.toLocaleDateString()}</td>
+                                                   <td className="px-6 py-4 font-medium text-stone-900">{txn.source}</td>
                                                    <td className="px-6 py-4">
-                                                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${isProduct ? 'bg-purple-50 text-purple-700 border-purple-100' : isTip ? 'bg-pink-50 text-pink-700 border-pink-100' : 'bg-stone-50 text-stone-700 border-stone-200'}`}>
-                                                           {isProduct ? <ShoppingBag size={12}/> : isTip ? <Heart size={12}/> : <MessageSquare size={12}/>}
-                                                           {isProduct ? t('creator.product') : isTip ? t('creator.tip') : t('creator.message')}
+                                                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${
+                                                           txn.type === 'product' ? 'bg-purple-50 text-purple-700 border-purple-100' :
+                                                           txn.type === 'tip' ? 'bg-pink-50 text-pink-700 border-pink-100' :
+                                                           txn.type === 'withdrawal' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                           'bg-stone-50 text-stone-700 border-stone-200'
+                                                       }`}>
+                                                           {txn.type === 'product' ? <ShoppingBag size={12}/> : txn.type === 'tip' ? <Heart size={12}/> : txn.type === 'withdrawal' ? <Wallet size={12}/> : <MessageSquare size={12}/>}
+                                                           {txn.type === 'product' ? t('creator.product') : txn.type === 'tip' ? t('creator.tip') : txn.type === 'withdrawal' ? t('creator.withdrawal') || 'Withdrawal' : t('creator.message')}
                                                        </span>
                                                    </td>
                                                    <td className="px-6 py-4">
-                                                       <span className="text-emerald-600 font-bold text-xs flex items-center gap-1">
-                                                           <CheckCircle2 size={12} /> {t('creator.settled')}
-                                                       </span>
+                                                       {txn.isWithdrawal ? (
+                                                           <span className={`font-bold text-xs flex items-center gap-1 ${txn.status === 'COMPLETED' ? 'text-blue-600' : 'text-amber-600'}`}>
+                                                               {txn.status === 'COMPLETED' ? <CheckCircle2 size={12} /> : <Clock size={12} />} {txn.status === 'COMPLETED' ? t('creator.completed') : t('creator.pending') || 'Pending'}
+                                                           </span>
+                                                       ) : (
+                                                           <span className="text-emerald-600 font-bold text-xs flex items-center gap-1">
+                                                               <CheckCircle2 size={12} /> {t('creator.settled')}
+                                                           </span>
+                                                       )}
                                                    </td>
                                                    <td className="px-6 py-4 text-right">
-                                                       <span className="font-mono font-bold text-emerald-600">+{msg.amount}</span>
+                                                       <span className={`font-mono font-bold ${txn.isWithdrawal ? 'text-red-500' : 'text-emerald-600'}`}>
+                                                           {txn.isWithdrawal ? '-' : '+'}{txn.amount}
+                                                       </span>
                                                    </td>
                                                </tr>
-                                               );
-                                           })}
+                                           ))}
                                            {displayedFinance.length === 0 && (
                                                <tr><td colSpan={5} className="p-12 text-center text-stone-400">{t('creator.noTransactions')}</td></tr>
                                            )}
@@ -1854,32 +1902,32 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 
                                 {/* Mobile List View */}
                                 <div className="md:hidden divide-y divide-stone-100">
-                                    {displayedFinance.map(msg => {
-                                        const isProduct = msg.content.startsWith('Purchased Product:');
-                                        const isTip = msg.content.startsWith('Fan Tip:');
-                                        
-                                        return (
-                                            <div key={msg.id} className="p-4 flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isProduct ? 'bg-purple-100 text-purple-600' : isTip ? 'bg-pink-100 text-pink-600' : 'bg-stone-100 text-stone-600'}`}>
-                                                        {isProduct ? <ShoppingBag size={18}/> : isTip ? <Heart size={18}/> : <MessageSquare size={18}/>}
-                                                    </div>
-                                                    <div>
-                                                        <div className="font-bold text-stone-900 text-sm">{msg.senderName}</div>
-                                                        <div className="text-xs text-stone-500 flex items-center gap-1">
-                                                            <span>{new Date(msg.createdAt).toLocaleDateString()}</span>
-                                                            <span>•</span>
-                                                            <span>{isProduct ? t('creator.product') : isTip ? t('creator.tip') : t('creator.message')}</span>
-                                                        </div>
-                                                    </div>
+                                    {displayedFinance.map(txn => (
+                                        <div key={txn.id} className="p-4 flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                                    txn.type === 'product' ? 'bg-purple-100 text-purple-600' :
+                                                    txn.type === 'tip' ? 'bg-pink-100 text-pink-600' :
+                                                    txn.type === 'withdrawal' ? 'bg-blue-100 text-blue-600' :
+                                                    'bg-stone-100 text-stone-600'
+                                                }`}>
+                                                    {txn.type === 'product' ? <ShoppingBag size={18}/> : txn.type === 'tip' ? <Heart size={18}/> : txn.type === 'withdrawal' ? <Wallet size={18}/> : <MessageSquare size={18}/>}
                                                 </div>
-                                                <div className="text-right">
-                                                    <div className="font-mono font-bold text-emerald-600">+{msg.amount}</div>
-                                                    <div className="text-[10px] text-stone-400">{t('common.credits')}</div>
+                                                <div>
+                                                    <div className="font-bold text-stone-900 text-sm">{txn.source}</div>
+                                                    <div className="text-xs text-stone-500 flex items-center gap-1">
+                                                        <span>{txn.date.toLocaleDateString()}</span>
+                                                        <span>•</span>
+                                                        <span>{txn.type === 'product' ? t('creator.product') : txn.type === 'tip' ? t('creator.tip') : txn.type === 'withdrawal' ? t('creator.withdrawal') || 'Withdrawal' : t('creator.message')}</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        );
-                                    })}
+                                            <div className="text-right">
+                                                <div className={`font-mono font-bold ${txn.isWithdrawal ? 'text-red-500' : 'text-emerald-600'}`}>{txn.isWithdrawal ? '-' : '+'}{txn.amount}</div>
+                                                <div className="text-[10px] text-stone-400">{t('common.credits')}</div>
+                                            </div>
+                                        </div>
+                                    ))}
                                     {displayedFinance.length === 0 && (
                                         <div className="p-8 text-center text-stone-400 text-sm">{t('creator.noTransactions')}</div>
                                     )}
@@ -2369,7 +2417,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     <div className="max-w-lg mx-auto">
                                     {/* Session Pagination */}
                                     {threadMessages.length > 1 && (
-                                        <div className="flex items-center justify-between px-4 py-2 bg-stone-50/80 border-b border-stone-100 sticky top-0 z-10">
+                                        <div className="flex items-center justify-between px-4 py-2 bg-stone-50 border-b border-stone-100 sticky top-0 z-30">
                                             <button
                                                 onClick={() => setChatSessionIndex(effectiveSessionIndex - 1)}
                                                 disabled={effectiveSessionIndex <= 0}
@@ -3245,11 +3293,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             <div className="flex items-center gap-3">
                                 <span className="text-xs text-stone-500">{notifications.length} items</span>
                                 {notifications.length > 0 && (
-                                    <button 
-                                        onClick={handleClearAllNotifications}
+                                    <button
+                                        onClick={handleClearOldNotifications}
                                         className="text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors flex items-center gap-1"
                                     >
-                                        <Trash size={12} /> Clear All
+                                        <Trash size={12} /> {t('creator.clearOld') || 'Clear 3+ Days Old'}
                                     </button>
                                 )}
                             </div>
