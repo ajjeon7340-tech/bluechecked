@@ -1926,6 +1926,7 @@ const callStripeConnect = async (body: Record<string, unknown>) => {
 
 export const connectStripeAccount = async (): Promise<string | null> => {
     if (!isConfigured) {
+        console.log("[Stripe] Backend not configured, using mock mode (returning null URL)");
         await MockBackend.connectStripeAccount();
         return null;
     }
