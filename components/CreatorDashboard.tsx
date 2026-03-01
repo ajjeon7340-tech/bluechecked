@@ -11,7 +11,7 @@ import {
   Home, BarChart3, Wallet, Users, Bell, Search, Menu, ChevronDown, Ban, Check,
   Heart, Star, Eye, TrendingUp, MessageSquare, ArrowRight, Lock, 
   InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Download, ShoppingBag, FileText, PieChart as PieIcon, LayoutGrid, MonitorPlay, Link as LinkIcon, Calendar, ChevronRight, Coins, CreditCard
-  , MousePointerClick, GripVertical, Smile, Pencil
+  , MousePointerClick, GripVertical, Smile, Pencil, RefreshCw
 } from './Icons';
 import { Button } from './Button';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid, PieChart, Pie, Cell, Legend, ComposedChart, Line } from 'recharts';
@@ -1740,12 +1740,21 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Wallet size={14}/></div>
                                         <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{t('creator.availableBalanceLabel')}</span>
                                     </div>
-                                    <div className="text-2xl font-bold text-stone-900 tracking-tight flex items-baseline gap-1">
-                                        {/* @ts-ignore */}
-                                        {stats.availableBalance.toLocaleString()}
-                                        <span className="text-sm font-medium text-stone-400">{t('common.credits').toLowerCase()}</span>
-                                    </div>
-                                    <p className="text-[11px] text-emerald-600 mt-1.5 font-medium">{t('creator.readyToPayout')}</p>
+                                    {isLoading ? (
+                                        <div className="flex items-center gap-2 text-stone-400">
+                                            <RefreshCw size={16} className="animate-spin" />
+                                            <span className="text-sm font-medium">{t('creator.calculatingBalance') || 'Calculating...'}</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="text-2xl font-bold text-stone-900 tracking-tight flex items-baseline gap-1">
+                                                {/* @ts-ignore */}
+                                                {stats.availableBalance.toLocaleString()}
+                                                <span className="text-sm font-medium text-stone-400">{t('common.credits').toLowerCase()}</span>
+                                            </div>
+                                            <p className="text-[11px] text-emerald-600 mt-1.5 font-medium">{t('creator.readyToPayout')}</p>
+                                        </>
+                                    )}
                                 </div>
 
                                 {/* 3. Withdraw Action Card */}
@@ -1756,13 +1765,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             onClick={handleWithdraw}
                                             isLoading={isWithdrawing}
                                             // @ts-ignore
-                                            disabled={stats.availableBalance === 0}
+                                            disabled={isLoading || stats.availableBalance === 0}
                                             fullWidth
                                             className="bg-stone-900 text-white hover:bg-stone-800 h-12 shadow-md flex items-center justify-center gap-2"
                                         >
                                             <CreditCard size={16} />
-                                            {/* @ts-ignore */}
-                                            {t('creator.withdrawAmount', { amount: (stats.availableBalance / 100).toFixed(2) })}
+                                            {isLoading
+                                                ? (t('creator.loadingBalance') || 'Loading...')
+                                                // @ts-ignore
+                                                : t('creator.withdrawAmount', { amount: (stats.availableBalance / 100).toFixed(2) })
+                                            }
                                         </Button>
                                         <p className="text-[10px] text-stone-400 mt-3 text-center">
                                             {t('creator.transferDays')}
