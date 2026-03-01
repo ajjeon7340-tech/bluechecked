@@ -1800,7 +1800,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             msg.creatorAvatarUrl ? (
                                                                 <img src={msg.creatorAvatarUrl} alt={msg.creatorName} className="w-full h-full object-cover" />
                                                             ) : (
-                                                                <div className="w-full h-full bg-stone-200 flex items-center justify-center"><User size={16} className="text-stone-500" /></div>
+                                                                <div className="w-full h-full bg-stone-100 flex items-center justify-center"><Verified size={22} /></div>
                                                             )
                                                         ) : (
                                                             currentUser?.avatarUrl ? (
@@ -1896,8 +1896,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         {msg.creatorAvatarUrl ? (
                                                             <img src={msg.creatorAvatarUrl} alt={msg.creatorName} className="w-full h-full object-cover opacity-30" />
                                                         ) : (
-                                                            <div className="w-full h-full bg-stone-50 flex items-center justify-center">
-                                                                <User size={16} className="text-stone-300" />
+                                                            <div className="w-full h-full bg-stone-50 flex items-center justify-center opacity-30">
+                                                                <Verified size={22} />
                                                             </div>
                                                         )}
                                                     </div>

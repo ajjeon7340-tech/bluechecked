@@ -11,7 +11,7 @@ import {
   Home, BarChart3, Wallet, Users, Bell, Search, Menu, ChevronDown, Ban, Check,
   Heart, Star, Eye, TrendingUp, MessageSquare, ArrowRight, Lock, 
   InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Download, ShoppingBag, FileText, PieChart as PieIcon, LayoutGrid, MonitorPlay, Link as LinkIcon, Calendar, ChevronRight, Coins, CreditCard
-  , MousePointerClick, GripVertical, Smile, Pencil, RefreshCw
+  , MousePointerClick, GripVertical, Smile, Pencil, RefreshCw, Verified
 } from './Icons';
 import { Button } from './Button';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid, PieChart, Pie, Cell, Legend, ComposedChart, Line } from 'recharts';
@@ -2567,7 +2567,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     creator.avatarUrl ? (
                                                                         <img src={creator.avatarUrl} alt={creator.displayName} className="w-full h-full object-cover" />
                                                                     ) : (
-                                                                        <div className="w-full h-full bg-stone-200 flex items-center justify-center"><User size={16} className="text-stone-500" /></div>
+                                                                        <div className="w-full h-full bg-stone-100 flex items-center justify-center"><Verified size={22} /></div>
                                                                     )
                                                                 ) : (
                                                                     msg.senderAvatarUrl ? (
