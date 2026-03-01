@@ -1310,9 +1310,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         )}
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
-                                                        <span className={`font-mono font-bold flex items-center justify-end gap-1 ${isRefunded ? 'text-stone-400 line-through' : 'text-stone-900'}`}>
-                                                            <Coins size={14} /> {msg.amount}
+                                                        <span className={`font-mono font-bold flex items-center justify-end gap-1 ${isRefunded ? 'text-stone-400 line-through' : msg.status === 'REPLIED' ? 'text-red-500' : 'text-stone-900'}`}>
+                                                            <Coins size={14} /> {msg.status === 'REPLIED' ? `-${msg.amount}` : msg.amount}
                                                         </span>
+                                                        {msg.status === 'REPLIED' && (
+                                                            <span className="text-[10px] text-stone-400 block mt-0.5">credits used</span>
+                                                        )}
+                                                        {msg.status === 'PENDING' && (
+                                                            <span className="text-[10px] text-amber-500 block mt-0.5">held in escrow</span>
+                                                        )}
+                                                        {isRefunded && (
+                                                            <span className="text-[10px] text-stone-400 block mt-0.5">credits returned</span>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             )
@@ -1339,8 +1348,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between">
                                                     <span className="font-bold text-stone-900 text-sm truncate">{msg.creatorName || 'Creator'}</span>
-                                                    <span className={`font-mono font-bold text-sm shrink-0 ml-2 ${isRefunded ? 'text-stone-400 line-through' : 'text-stone-900'}`}>
-                                                        {msg.amount}
+                                                    <span className={`font-mono font-bold text-sm shrink-0 ml-2 ${isRefunded ? 'text-stone-400 line-through' : msg.status === 'REPLIED' ? 'text-red-500' : 'text-stone-900'}`}>
+                                                        {msg.status === 'REPLIED' ? `-${msg.amount}` : msg.amount}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center justify-between mt-0.5">

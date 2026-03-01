@@ -2514,11 +2514,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             </div>
 
                                             {/* Action Row */}
-                                            <div className="flex items-center gap-0 mt-4 -ml-2">
+                                            <div className="flex items-center gap-1 mt-2 -ml-1">
                                                 <div className="relative">
-                                                    <button 
+                                                    <button
                                                         onClick={() => setActiveReactionPicker(activeReactionPicker === firstChat.id ? null : firstChat.id)}
-                                                        className="p-2 text-stone-400 hover:text-stone-600 transition-colors relative group"
+                                                        className="p-1.5 text-stone-400 hover:text-stone-600 transition-colors relative group"
                                                     >
                                                         {messageReactions[firstChat.id] ? (
                                                             <span className="text-lg animate-in zoom-in">{messageReactions[firstChat.id]}</span>
@@ -2538,16 +2538,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center gap-1.5 text-stone-400 ml-auto text-xs">
-                                                    <Coins size={12} className="text-stone-400" />
-                                                    <span>{msg.amount}</span>
-                                                    {isPending && (
-                                                        <>
-                                                            <span className="mx-1">·</span>
-                                                            <span className="text-stone-500">{getTimeLeft(msg.expiresAt).text}</span>
-                                                        </>
-                                                    )}
-                                                </div>
+                                                {messageReactions[firstChat.id] && (
+                                                    <span className="text-[10px] text-stone-400">{creator.displayName || 'You'}</span>
+                                                )}
                                             </div>
                                                         </div>
                                                     </div>
@@ -2669,11 +2662,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 )}
 
                                                                 {/* Action Row */}
-                                                                <div className="flex items-center gap-0 mt-4 -ml-2">
+                                                                <div className="flex items-center gap-1 mt-2 -ml-1">
                                                                 <div className="relative">
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => setActiveReactionPicker(activeReactionPicker === chat.id ? null : chat.id)}
-                                                                        className="p-2 text-stone-400 hover:text-stone-600 transition-colors relative group"
+                                                                        className="p-1.5 text-stone-400 hover:text-stone-600 transition-colors relative group"
                                                                     >
                                                                         {messageReactions[chat.id] ? (
                                                                             <span className="text-lg animate-in zoom-in">{messageReactions[chat.id]}</span>
@@ -2693,7 +2686,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                         </div>
                                                                     )}
                                                                 </div>
-                                                                {isCreator && editingChatId !== chat.id && (
+                                                                {messageReactions[chat.id] && (
+                                                                    <span className="text-[10px] text-stone-400">{creator.displayName || 'You'}</span>
+                                                                )}
+                                                                {isCreator && editingChatId !== chat.id && msg.status !== 'REPLIED' && (
                                                                     <button
                                                                         onClick={() => { setEditingChatId(chat.id); setEditContent(chat.content); setEditAttachment(chat.attachmentUrl || null); }}
                                                                         className="ml-auto p-2 text-stone-300 hover:text-stone-500 transition-colors"
