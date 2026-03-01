@@ -415,8 +415,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           });
       });
 
+      const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
       return list
         .filter(n => !deletedNotificationIds.includes(n.id))
+        .filter(n => n.time.getTime() >= threeDaysAgo)
         .sort((a, b) => b.time.getTime() - a.time.getTime());
   }, [messages, creator.id, deletedNotificationIds, withdrawals]);
 
@@ -433,16 +435,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       setDeletedNotificationIds(prev => [...prev, id]);
   };
 
-  const handleClearOldNotifications = () => {
-      const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
-      const oldNotifs = notifications.filter(n => n.time.getTime() < threeDaysAgo);
-      if (oldNotifs.length === 0) {
-          alert(t('creator.noOldNotifications') || 'No notifications older than 3 days.');
-          return;
-      }
-      if (window.confirm(t('creator.clearOldConfirm') || `Delete ${oldNotifs.length} notifications older than 3 days?`)) {
-          const oldIds = oldNotifs.map(n => n.id);
-          setDeletedNotificationIds(prev => [...prev, ...oldIds]);
+  const handleClearAllNotifications = () => {
+      if (notifications.length === 0) return;
+      if (window.confirm(t('creator.clearAllConfirm'))) {
+          const allIds = notifications.map(n => n.id);
+          setDeletedNotificationIds(prev => [...prev, ...allIds]);
       }
   };
 
@@ -3306,10 +3303,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <span className="text-xs text-stone-500">{notifications.length} items</span>
                                 {notifications.length > 0 && (
                                     <button
-                                        onClick={handleClearOldNotifications}
+                                        onClick={handleClearAllNotifications}
                                         className="text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors flex items-center gap-1"
                                     >
-                                        <Trash size={12} /> {t('creator.clearOld') || 'Clear 3+ Days Old'}
+                                        <Trash size={12} /> {t('creator.clearAll')}
                                     </button>
                                 )}
                             </div>

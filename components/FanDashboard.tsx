@@ -742,8 +742,10 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           }
       });
 
+      const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
       return list
         .filter(n => !deletedNotificationIds.includes(n.id))
+        .filter(n => n.time.getTime() >= threeDaysAgo)
         .sort((a, b) => b.time.getTime() - a.time.getTime());
   }, [messages, deletedNotificationIds]);
 
