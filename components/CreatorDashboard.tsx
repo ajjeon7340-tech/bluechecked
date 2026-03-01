@@ -2728,7 +2728,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     </div>
                                                 )}
 
-                                                {/* Collected indicator */}
+                                                {/* Status indicator */}
                                                 {msg.status === 'REPLIED' && (
                                                     <div className="mt-5 mx-auto max-w-[280px]">
                                                         <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/60 rounded-xl p-3 shadow-sm">
@@ -2744,24 +2744,23 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         </div>
                                                     </div>
                                                 )}
+                                                {msg.status === 'EXPIRED' && (
+                                                    <div className="flex justify-center py-4 mt-4">
+                                                        <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm border border-red-100 flex items-center gap-2">
+                                                            <AlertCircle size={16} /> Deadline missed. Refund issued.
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {msg.status === 'CANCELLED' && (
+                                                    <div className="flex justify-center py-4 mt-4">
+                                                        <div className="bg-stone-100 text-stone-600 px-4 py-2 rounded-lg text-sm border border-stone-200 flex items-center gap-2">
+                                                            <Ban size={16} /> Request rejected & refunded.
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })}
-
-                                    {activeMessage.status === 'EXPIRED' && (
-                                        <div className="flex justify-center py-4 mt-4">
-                                            <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm border border-red-100 flex items-center gap-2">
-                                                <AlertCircle size={16} /> Deadline missed. Refund issued.
-                                            </div>
-                                        </div>
-                                    )}
-                                    {activeMessage.status === 'CANCELLED' && (
-                                        <div className="flex justify-center py-4 mt-4">
-                                            <div className="bg-stone-100 text-stone-600 px-4 py-2 rounded-lg text-sm border border-stone-200 flex items-center gap-2">
-                                                <Ban size={16} /> Request rejected & refunded.
-                                            </div>
-                                        </div>
-                                    )}
                                     <div className="h-4"></div>
                                     </div>
                                 </div>
