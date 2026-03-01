@@ -1493,17 +1493,6 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                       {/* List Column */}
                       <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col bg-white ${selectedCreatorId ? 'hidden md:flex' : 'flex'}`}>
                          <div className="p-3 border-b border-stone-100">
-                             <div className="flex flex-wrap gap-1 bg-stone-100/60 p-1 rounded-lg">
-                                    {(['ALL', 'PENDING', 'REPLIED', 'REJECTED'] as const).map(f => (
-                                        <button
-                                            key={f}
-                                            onClick={() => setInboxFilter(f)}
-                                            className={`flex-1 px-2 py-1.5 text-[10px] font-semibold rounded transition-all whitespace-nowrap ${inboxFilter === f ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
-                                        >
-                                            {f}
-                                        </button>
-                                    ))}
-                             </div>
                              {/* Search Input */}
                              <div className="relative group">
                                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-stone-600 transition-colors" size={16} />

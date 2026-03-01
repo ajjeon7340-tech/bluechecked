@@ -475,7 +475,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                           </button>
                         )}
 
-                        {!currentUser && (
+                        {currentUser && currentUser.role === 'CREATOR' && (
                             <button
                               onClick={() => setIsCustomizeMode(!isCustomizeMode)}
                               className={`hidden sm:flex px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all items-center gap-1 border ${isCustomizeMode ? 'bg-stone-900 border-stone-900 text-white' : 'bg-transparent border-stone-200 text-stone-400 hover:border-stone-400'}`}
@@ -758,9 +758,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 onClick={() => logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'LINK', id: link.id, title: link.title, url: link.url })}
-                                                className={`block w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-sm relative overflow-hidden ${link.isPromoted ? 'bg-white border-stone-200/60 hover:border-stone-300' : 'bg-white border-stone-200/60 hover:border-stone-300'}`}
+                                                className={`block w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-stone-50 to-stone-100/50 border-stone-300 ring-1 ring-stone-200/50 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300'}`}
                                             >
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : (link.isPromoted ? 'bg-stone-50 text-stone-500' : 'bg-stone-50 text-stone-500')}`}>
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : (link.isPromoted ? 'bg-stone-900 text-white' : 'bg-stone-50 text-stone-500')}`}>
                                                     {hasThumbnail ? (
                                                         <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
                                                     ) : link.isPromoted ? (
