@@ -1210,10 +1210,9 @@ export const createCheckoutSession = async (credits: number): Promise<{ url: str
 
         if (res.error) throw new Error(res.error.message || 'Failed to create checkout session');
         return { url: res.data.url };
-    } catch {
-        // Stripe not configured — return null to signal mock fallback
-        console.warn('Stripe checkout unavailable, falling back to mock top-up');
-        return { url: null };
+    } catch (e) {
+        console.error('Create Checkout Session Error:', e);
+        throw e;
     }
 };
 
@@ -1934,11 +1933,9 @@ export const connectStripeAccount = async (): Promise<string | null> => {
     try {
         const data = await callStripeConnect({ action: 'create-account' });
         return data.url || null;
-    } catch {
-        // Stripe not configured on server — fall back to mock
-        console.warn('Stripe Edge Function unavailable, using mock mode');
-        await MockBackend.connectStripeAccount();
-        return null;
+    } catch (e) {
+        console.error('Stripe Connect Error:', e);
+        throw e;
     }
 };
 
@@ -1957,21 +1954,14 @@ export const getStripeConnectionStatus = async (): Promise<boolean> => {
 export const requestWithdrawal = async (amount: number): Promise<Withdrawal> => {
     if (!isConfigured) return MockBackend.requestWithdrawal(amount);
 
-    try {
-        const data = await callStripeConnect({ action: 'create-payout', amount });
-        const w = data.withdrawal;
-        return {
-            id: w.id,
-            amount: w.amount,
-            status: w.status,
-            createdAt: w.created_at,
-        };
-    } catch {
-        // Stripe not configured on server — fall back to mock
-        console.warn('Stripe Edge Function unavailable, using mock withdrawal');
-        await MockBackend.connectStripeAccount(); // Ensure mock stripe is "connected"
-        return MockBackend.requestWithdrawal(amount);
-    }
+    const data = await callStripeConnect({ action: 'create-payout', amount });
+    const w = data.withdrawal;
+    return {
+        id: w.id,
+        amount: w.amount,
+        status: w.status,
+        createdAt: w.created_at,
+    };
 };
 
 export const getWithdrawalHistory = async (): Promise<Withdrawal[]> => {

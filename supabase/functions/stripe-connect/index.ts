@@ -167,7 +167,20 @@ Deno.serve(async (req) => {
         .maybeSingle()
 
       if (!stripeAccount?.stripe_account_id || !stripeAccount.onboarded) {
+        console.error('Stripe check failed:', { hasAccount: !!stripeAccount?.stripe_account_id, onboarded: stripeAccount?.onboarded })
         return errorResponse('Stripe account not connected or not fully onboarded')
+      }
+
+      // Verify the Stripe account is actually ready for payouts
+      try {
+        const account = await stripeRequest(`/accounts/${stripeAccount.stripe_account_id}`)
+        if (!account.payouts_enabled) {
+          console.error('Stripe account payouts not enabled:', account.id)
+          return errorResponse('Stripe account onboarding incomplete. Please complete verification in Stripe.')
+        }
+      } catch (verifyErr) {
+        console.error('Failed to verify Stripe account:', verifyErr)
+        return errorResponse(`Failed to verify Stripe account: ${verifyErr.message}`)
       }
 
       // Check user's credit balance
@@ -182,7 +195,7 @@ Deno.serve(async (req) => {
       }
 
       if ((profile.credits || 0) < amount) {
-        return errorResponse('Insufficient credit balance')
+        return errorResponse(`Insufficient credit balance (have: ${profile.credits || 0}, need: ${amount})`)
       }
 
       // Calculate fees
@@ -193,6 +206,20 @@ Deno.serve(async (req) => {
 
       if (netCents <= 0) {
         return errorResponse('Amount too small after fees')
+      }
+
+      // Check Stripe Platform Balance to ensure funds are available
+      try {
+        const balance = await stripeRequest('/balance')
+        const usdBalance = balance.available.find((b: any) => b.currency === 'usd')
+        const availableCents = usdBalance ? usdBalance.amount : 0
+        
+        if (availableCents < netCents) {
+          console.error(`Insufficient Stripe funds. Available: ${availableCents}, Needed: ${netCents}`)
+          return errorResponse('Payout temporarily unavailable due to pending funds. Please try again later.')
+        }
+      } catch (err) {
+        console.error('Failed to check Stripe balance:', err)
       }
 
       // Step 1: Deduct credits from DB first (optimistic)
