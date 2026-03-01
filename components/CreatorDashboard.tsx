@@ -2223,8 +2223,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     <div className="flex flex-1 min-h-0">
                     {/* List Column */}
                     <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col bg-white ${selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
-                        <div className="p-4 border-b border-stone-100 flex flex-col gap-3">
-                            <span className="font-semibold text-stone-900">{t('creator.messageFilters')}</span>
+                        <div className="p-3 border-b border-stone-100">
                             <div className="flex flex-wrap gap-1 bg-stone-100/60 p-1 rounded-lg">
                                 {(['ALL', 'PENDING', 'REPLIED', 'REJECTED'] as const).map(f => (
                                     <button
@@ -2731,13 +2730,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                                 {/* Collected indicator */}
                                                 {msg.status === 'REPLIED' && (
-                                                    <div className="flex items-center gap-3 mt-4 pt-2">
-                                                        <div className="flex-1 h-px bg-emerald-100"></div>
-                                                        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600 uppercase tracking-wider">
-                                                            <CheckCircle2 size={12} />
-                                                            <span>Collected {msg.amount} credits</span>
+                                                    <div className="mt-5 mx-auto max-w-[280px]">
+                                                        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/60 rounded-xl p-3 shadow-sm">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="bg-emerald-500 p-1 rounded-full">
+                                                                        <Check size={10} className="text-white stroke-[3px]" />
+                                                                    </div>
+                                                                    <span className="text-xs font-semibold text-emerald-700">{t('creator.creditsCollected')}</span>
+                                                                </div>
+                                                                <span className="text-sm font-bold text-emerald-600 font-mono">+{msg.amount}</span>
+                                                            </div>
                                                         </div>
-                                                        <div className="flex-1 h-px bg-emerald-100"></div>
                                                     </div>
                                                 )}
                                             </div>
