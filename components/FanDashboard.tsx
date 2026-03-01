@@ -1479,18 +1479,20 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                     </div>
                 )}
 
-                {/* --- VIEW: OVERVIEW (List) --- */}
-                {currentView === 'OVERVIEW' && !selectedCreatorId && (
-                   <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in">
-                      {/* Conversation List */}
-                      <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
+                {/* --- VIEW: OVERVIEW (Two-column Inbox) --- */}
+                {currentView === 'OVERVIEW' && (
+                   <div className="h-full flex flex-col bg-[#FAF9F6] animate-in fade-in overflow-x-hidden">
+                      {/* Header Row */}
+                      <div className="flex items-center justify-between px-4 sm:px-6 py-4 shrink-0">
+                          <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('fan.inbox')}</h2>
+                          <TopNav />
+                      </div>
+                      <div className="flex flex-1 min-h-0">
+                      {/* List Column */}
+                      <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col bg-white ${selectedCreatorId ? 'hidden md:flex' : 'flex'}`}>
                          <div className="p-4 border-b border-stone-100 flex flex-col gap-3">
-                             <div className="flex items-center justify-between">
-                                 <span className="font-semibold text-stone-900">{t('fan.messageFilters')}</span>
-                                 <TopNav />
-                             </div>
-                             <div className="flex flex-col sm:flex-row items-center gap-3">
-                                 <div className="flex flex-wrap gap-1 bg-stone-100/60 p-1 rounded-lg w-full sm:w-auto">
+                             <span className="font-semibold text-stone-900">{t('fan.messageFilters')}</span>
+                             <div className="flex flex-wrap gap-1 bg-stone-100/60 p-1 rounded-lg">
                                     {(['ALL', 'PENDING', 'REPLIED', 'REJECTED'] as const).map(f => (
                                         <button
                                             key={f}
@@ -1500,160 +1502,97 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             {f}
                                         </button>
                                     ))}
-                                </div>
-                                {/* Search Input */}
-                                <div className="relative w-full sm:w-auto sm:ml-auto group">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-stone-600 transition-colors" size={16} />
-                                    <input
-                                        type="text"
-                                        placeholder={t('fan.searchMessages')}
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full sm:w-64 pl-10 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:ring-1 focus:ring-stone-400 focus:bg-white outline-none transition-all"
-                                    />
-                                </div>
+                             </div>
+                             {/* Search Input */}
+                             <div className="relative group">
+                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-stone-600 transition-colors" size={16} />
+                                 <input
+                                     type="text"
+                                     placeholder={t('fan.searchMessages')}
+                                     value={searchQuery}
+                                     onChange={(e) => setSearchQuery(e.target.value)}
+                                     className="w-full pl-10 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:ring-1 focus:ring-stone-400 focus:bg-white outline-none transition-all"
+                                 />
                              </div>
                          </div>
-
-                         {isLoading ? (
-                            <div className="text-center py-12 text-sm text-stone-400">{t('fan.loadingRequests')}</div>
-                         ) : filteredGroups.length === 0 ? (
-                            <div className="text-center py-16">
-                                <MessageSquare size={32} className="mx-auto text-stone-300 mb-3" />
-                                <h3 className="text-sm font-bold text-stone-900 mb-1">
-                                    {searchQuery ? t('fan.noConversations') : t('fan.noMessagesYet')}
-                                </h3>
-                                <p className="text-xs text-stone-500 mb-6">
-                                    {searchQuery ? t('fan.tryDifferentSearch') : t('fan.findExpert')}
-                                </p>
-                                {!searchQuery && (
-                                    <Button onClick={() => setCurrentView('EXPLORE')} className="rounded-full shadow-lg shadow-stone-200">
-                                        {t('fan.exploreCreators')}
-                                    </Button>
-                                )}
-                            </div>
-                         ) : (
-                            <>
-                            {/* Desktop Table */}
-                            <div className="hidden md:block overflow-x-auto">
-                                <table className="w-full text-left border-collapse min-w-[600px]">
-                                    <thead>
-                                        <tr className="bg-stone-50/50 border-b border-stone-100">
-                                            <th className="px-6 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-wider">{t('fan.expert')}</th>
-                                            <th className="px-6 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-wider">{t('fan.latestStatus')}</th>
-                                            <th className="px-6 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-wider text-right">{t('fan.sessions')}</th>
-                                            <th className="px-6 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-wider text-right">{t('fan.lastActive')}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filteredGroups.map(group => {
-                                            const latestMsg = group.latestMessage;
-                                            const timeLeft = getTimeLeft(latestMsg.expiresAt);
-                                            return (
-                                                <tr key={group.creatorId} onClick={() => handleOpenChat(group.creatorId)} className="group cursor-pointer hover:bg-stone-50 transition-colors border-b border-stone-50 last:border-0">
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200 overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
-                                                                {group.creatorAvatarUrl ? (
-                                                                    <img src={group.creatorAvatarUrl} className="w-full h-full object-cover" alt={group.creatorName} />
-                                                                ) : (
-                                                                    <User size={20} />
-                                                                )}
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-sm font-bold text-stone-900">{group.creatorName}</span>
-                                                                <span className="text-[10px] text-stone-500">{t('fan.viewConversation')}</span>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        {latestMsg.status === 'PENDING' ? (
-                                                            <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${timeLeft.bg} ${timeLeft.color} border-current/20 flex items-center gap-1 w-fit`}>
-                                                                <Clock size={10} /> Pending Reply
-                                                            </span>
-                                                        ) : latestMsg.status === 'REPLIED' ? (
-                                                            <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center gap-1 w-fit">
-                                                                <CheckCircle2 size={10} /> Replied
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-stone-100 text-stone-500 border border-stone-200 w-fit">Refunded</span>
-                                                        )}
-                                                        <p className="text-[10px] text-stone-400 mt-1 truncate max-w-[150px]">
-                                                            {latestMsg.conversation[latestMsg.conversation.length - 1]?.content || latestMsg.content}
-                                                        </p>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <span className="text-xs font-mono font-bold text-stone-700 bg-stone-100 px-2 py-1 rounded-md">{group.messageCount}</span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <span className="text-xs text-stone-500">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
-                                                    </td>
-                                                </tr>
-                                            )
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                            {/* Mobile Cards */}
-                            <div className="md:hidden divide-y divide-stone-100">
-                                {filteredGroups.map(group => {
+                         <div className="flex-1 overflow-y-auto">
+                            {isLoading ? (
+                                <div className="p-8 text-center text-sm text-stone-400">{t('fan.loadingRequests')}</div>
+                            ) : filteredGroups.length === 0 ? (
+                                <div className="p-8 text-center">
+                                    <MessageSquare size={24} className="mx-auto text-stone-300 mb-2" />
+                                    <h3 className="text-sm font-bold text-stone-900 mb-1">
+                                        {searchQuery ? t('fan.noConversations') : t('fan.noMessagesYet')}
+                                    </h3>
+                                    <p className="text-xs text-stone-500 mb-4">
+                                        {searchQuery ? t('fan.tryDifferentSearch') : t('fan.findExpert')}
+                                    </p>
+                                    {!searchQuery && (
+                                        <Button onClick={() => setCurrentView('EXPLORE')} size="sm" className="rounded-full">
+                                            {t('fan.exploreCreators')}
+                                        </Button>
+                                    )}
+                                </div>
+                            ) : (
+                                filteredGroups.map(group => {
+                                    const isActive = selectedCreatorId === group.creatorId;
                                     const latestMsg = group.latestMessage;
                                     const timeLeft = getTimeLeft(latestMsg.expiresAt);
                                     return (
-                                        <div key={group.creatorId} onClick={() => handleOpenChat(group.creatorId)} className="p-4 active:bg-stone-50 cursor-pointer">
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200 overflow-hidden shadow-sm">
+                                        <div
+                                            key={group.creatorId}
+                                            onClick={() => handleOpenChat(group.creatorId)}
+                                            className={`p-4 border-b border-stone-100/80 cursor-pointer hover:bg-stone-50/50 transition-colors ${isActive ? 'bg-stone-50/70 border-l-2 border-l-stone-900' : 'border-l-2 border-l-transparent'}`}
+                                        >
+                                            <div className="flex items-center gap-3 mb-1">
+                                                <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200 overflow-hidden flex-shrink-0">
                                                     {group.creatorAvatarUrl ? (
                                                         <img src={group.creatorAvatarUrl} className="w-full h-full object-cover" alt={group.creatorName} />
                                                     ) : (
-                                                        <User size={20} />
+                                                        <User size={16} />
                                                     )}
                                                 </div>
-                                                <div className="flex-1">
+                                                <div className="flex-1 min-w-0">
                                                     <div className="flex justify-between items-start">
-                                                        <span className="text-sm font-bold text-stone-900">{group.creatorName}</span>
-                                                        <span className="text-[10px] text-stone-400 font-mono">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
-                                                    </div>
-                                                    <div className="mt-1">
-                                                        {latestMsg.status === 'PENDING' ? (
-                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${timeLeft.bg} ${timeLeft.color} border-current/20 flex items-center gap-1 w-fit`}>
-                                                                <Clock size={10} /> Pending Reply
-                                                            </span>
-                                                        ) : latestMsg.status === 'REPLIED' ? (
-                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center gap-1 w-fit">
-                                                                <CheckCircle2 size={10} /> Replied
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-100 text-stone-500 border border-stone-200 w-fit">Refunded</span>
-                                                        )}
+                                                        <span className="text-sm font-semibold text-stone-900">{group.creatorName}</span>
+                                                        <span className="text-xs text-stone-400">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <p className="text-xs text-stone-600 line-clamp-2 mb-3 bg-stone-50 p-2.5 rounded-lg border border-stone-100 italic">
-                                                "{latestMsg.conversation[latestMsg.conversation.length - 1]?.content || latestMsg.content}"
-                                            </p>
-                                            <div className="flex justify-between items-center mt-2">
-                                                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{group.messageCount} Sessions</span>
-                                                <div className="text-xs font-bold text-stone-700 flex items-center gap-1">View <ChevronRight size={14} /></div>
+                                            <p className="text-xs text-stone-500 line-clamp-2 mb-2 ml-11">{latestMsg.conversation[latestMsg.conversation.length - 1]?.content || latestMsg.content}</p>
+                                            <div className="flex items-center justify-between ml-11">
+                                                {latestMsg.status === 'PENDING' ? (
+                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${timeLeft.bg} ${timeLeft.color}`}>{timeLeft.text}</span>
+                                                ) : latestMsg.status === 'REPLIED' ? (
+                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">REPLIED</span>
+                                                ) : (
+                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">{latestMsg.status === 'EXPIRED' ? 'EXPIRED' : 'REJECTED'}</span>
+                                                )}
+                                                <span className="text-xs font-mono font-medium text-stone-700 flex items-center gap-1"><Coins size={10}/> {group.messageCount}</span>
                                             </div>
                                         </div>
                                     )
-                                })}
-                            </div>
-                            </>
-                         )}
+                                })
+                            )}
+                         </div>
                       </div>
-                   </div>
-                )}
 
-                {/* --- VIEW: CHAT (Sub-view of Overview) --- */}
-                {selectedCreatorId && (
-                     <div className="h-full flex flex-col bg-[#F0EEEA] animate-in slide-in-from-right-4 relative overflow-x-hidden">
+                      {/* Detail Column */}
+                      <div className={`flex-1 flex flex-col bg-[#FAF9F6] ${!selectedCreatorId ? 'hidden md:flex' : 'flex'}`}>
+                        {!selectedCreatorId ? (
+                            <div className="flex-1 flex flex-col items-center justify-center text-stone-400">
+                                <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mb-4">
+                                    <MessageSquare size={32} className="text-stone-300" />
+                                </div>
+                                <p className="text-sm font-medium">{t('fan.selectConversation') || 'Select a conversation'}</p>
+                            </div>
+                        ) : (
+                     <div className="h-full flex flex-col bg-[#FAF9F6] relative overflow-hidden">
                         {/* Celebration Overlay */}
                         {showReadCelebration && (
                             <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
                                 {sprinkles.map((s) => (
-                                    <div 
+                                    <div
                                         key={s.id}
                                         className="absolute animate-sprinkle"
                                         style={{
@@ -1675,7 +1614,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         {/* Internal Chat Header */}
                         <div className="bg-white px-4 py-3 border-b border-stone-200 flex items-center justify-between shadow-sm flex-shrink-0 z-20 relative">
                             <div className="flex items-center gap-3">
-                                <button onClick={() => setSelectedCreatorId(null)} className="p-2 -ml-2 text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-full transition-colors">
+                                <button onClick={() => setSelectedCreatorId(null)} className="md:hidden p-2 -ml-2 text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-full transition-colors">
                                     <ChevronLeft size={20} />
                                 </button>
                                 <div>
@@ -2162,6 +2101,10 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             )}
                         </div>
                      </div>
+                        )}
+                      </div>
+                      </div>
+                   </div>
                 )}
 
                 {/* --- VIEW: NOTIFICATIONS --- */}

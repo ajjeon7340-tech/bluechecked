@@ -611,6 +611,8 @@ const en = {
     diemRequest: 'Diem Request',
     noTransactions: 'No transactions found.',
     // Overview / Conversations
+    inbox: 'Inbox',
+    selectConversation: 'Select a conversation',
     messageFilters: 'Message Filters',
     searchMessages: 'Search messages...',
     loadingRequests: 'Loading requests...',
