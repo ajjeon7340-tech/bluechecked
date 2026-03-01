@@ -209,20 +209,6 @@ Deno.serve(async (req) => {
         return errorResponse('Amount too small after fees')
       }
 
-      // Check Stripe Platform Balance to ensure funds are available
-      try {
-        const balance = await stripeRequest('/balance')
-        const usdBalance = balance.available.find((b: any) => b.currency === 'usd')
-        const availableCents = usdBalance ? usdBalance.amount : 0
-        
-        if (availableCents < netCents) {
-          console.error(`Insufficient Stripe funds. Available: ${availableCents}, Needed: ${netCents}`)
-          return errorResponse('Payout temporarily unavailable due to pending funds. Please try again later.')
-        }
-      } catch (err) {
-        console.error('Failed to check Stripe balance:', err)
-      }
-
       // Step 1: Deduct credits from DB first (optimistic)
       const { error: deductError } = await adminClient
         .from('profiles')
