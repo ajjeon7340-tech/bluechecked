@@ -2514,11 +2514,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             </div>
 
                                             {/* Action Row */}
-                                            <div className="flex items-center gap-1 mt-2 -ml-1">
+                                            <div className="flex items-center gap-1 mt-1 -ml-1 -mb-1.5">
                                                 <div className="relative">
                                                     <button
                                                         onClick={() => setActiveReactionPicker(activeReactionPicker === firstChat.id ? null : firstChat.id)}
-                                                        className="p-1.5 text-stone-400 hover:text-stone-600 transition-colors relative group"
+                                                        className="p-1 text-stone-400 hover:text-stone-600 transition-colors relative group"
                                                     >
                                                         {messageReactions[firstChat.id] ? (
                                                             <span className="text-lg animate-in zoom-in">{messageReactions[firstChat.id]}</span>
@@ -2562,7 +2562,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             )}
                                                             <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
                                                                 {isCreator ? (
-                                                                    <div className="w-full h-full bg-stone-100 flex items-center justify-center"><Verified size={22} /></div>
+                                                                    creator.avatarUrl ? (
+                                                                        <img src={creator.avatarUrl} alt={creator.displayName} className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <div className="w-full h-full bg-stone-100 flex items-center justify-center"><Verified size={22} /></div>
+                                                                    )
                                                                 ) : (
                                                                     msg.senderAvatarUrl ? (
                                                                         <img src={msg.senderAvatarUrl} alt={msg.senderName} className="w-full h-full object-cover" />
@@ -2662,11 +2666,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 )}
 
                                                                 {/* Action Row */}
-                                                                <div className="flex items-center gap-1 mt-2 -ml-1">
+                                                                <div className="flex items-center gap-1 mt-1 -ml-1 -mb-1.5">
                                                                 <div className="relative">
                                                                     <button
                                                                         onClick={() => setActiveReactionPicker(activeReactionPicker === chat.id ? null : chat.id)}
-                                                                        className="p-1.5 text-stone-400 hover:text-stone-600 transition-colors relative group"
+                                                                        className="p-1 text-stone-400 hover:text-stone-600 transition-colors relative group"
                                                                     >
                                                                         {messageReactions[chat.id] ? (
                                                                             <span className="text-lg animate-in zoom-in">{messageReactions[chat.id]}</span>
