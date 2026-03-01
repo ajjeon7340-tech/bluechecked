@@ -11,7 +11,7 @@ import {
   Home, BarChart3, Wallet, Users, Bell, Search, Menu, ChevronDown, Ban, Check,
   Heart, Star, Eye, TrendingUp, MessageSquare, ArrowRight, Lock, 
   InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Download, ShoppingBag, FileText, PieChart as PieIcon, LayoutGrid, MonitorPlay, Link as LinkIcon, Calendar, ChevronRight, Coins, CreditCard
-  , MousePointerClick, GripVertical, Smile, Pencil, ChevronUp
+  , MousePointerClick, GripVertical, Smile, Pencil
 } from './Icons';
 import { Button } from './Button';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid, PieChart, Pie, Cell, Legend, ComposedChart, Line } from 'recharts';
@@ -204,8 +204,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [overviewReviewsPage, setOverviewReviewsPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
   const OVERVIEW_REVIEWS_PER_PAGE = 5;
-  const CHAT_MESSAGES_PER_PAGE = 10;
-  const [chatMessagePage, setChatMessagePage] = useState(1);
+  const [chatSessionIndex, setChatSessionIndex] = useState(0);
 
   // Left Chatrooms (hidden, not deleted from DB) - stores timestamp of when left
   const [leftChatrooms, setLeftChatrooms] = useState<Record<string, number>>(() => {
@@ -714,7 +713,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const handleOpenChat = async (senderEmail: string) => {
     setSelectedSenderEmail(senderEmail);
-    setChatMessagePage(1);
+    setChatSessionIndex(Infinity); // Will be clamped to latest
 
     // Mark all unread from this sender as read
     const unread = incomingMessages.filter(m => {
@@ -745,6 +744,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           .filter(m => !leftAt || new Date(m.createdAt).getTime() >= leftAt)
           .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }, [incomingMessages, selectedSenderEmail, leftChatrooms]);
+
+  // Clamp session index to valid range (defaults to latest)
+  const effectiveSessionIndex = useMemo(() => {
+      if (threadMessages.length === 0) return 0;
+      return Math.min(chatSessionIndex, threadMessages.length - 1);
+  }, [chatSessionIndex, threadMessages.length]);
 
   // Determine the "Active" message for the reply input (Latest Pending, or just latest)
   const activeMessage = useMemo(() => {
@@ -2362,19 +2367,29 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                 <div className="flex-1 overflow-y-auto bg-white" ref={scrollRef}>
                                     <div className="max-w-lg mx-auto">
-                                    {/* Load Earlier Messages */}
-                                    {threadMessages.length > chatMessagePage * CHAT_MESSAGES_PER_PAGE && (
-                                        <div className="flex justify-center py-3">
+                                    {/* Session Pagination */}
+                                    {threadMessages.length > 1 && (
+                                        <div className="flex items-center justify-between px-4 py-2 bg-stone-50/80 border-b border-stone-100 sticky top-0 z-10">
                                             <button
-                                                onClick={() => setChatMessagePage(p => p + 1)}
-                                                className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-stone-500 hover:text-stone-700 bg-stone-50 hover:bg-stone-100 rounded-full border border-stone-200 transition-colors"
+                                                onClick={() => setChatSessionIndex(effectiveSessionIndex - 1)}
+                                                disabled={effectiveSessionIndex <= 0}
+                                                className="p-1.5 rounded-full hover:bg-stone-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                             >
-                                                <ChevronUp size={14} />
-                                                {t('creator.loadEarlierMessages') || 'Load earlier messages'}
+                                                <ChevronLeft size={16} className="text-stone-600" />
+                                            </button>
+                                            <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">
+                                                {t('creator.sessionOf', { current: effectiveSessionIndex + 1, total: threadMessages.length }) || `Session ${effectiveSessionIndex + 1} of ${threadMessages.length}`}
+                                            </span>
+                                            <button
+                                                onClick={() => setChatSessionIndex(effectiveSessionIndex + 1)}
+                                                disabled={effectiveSessionIndex >= threadMessages.length - 1}
+                                                className="p-1.5 rounded-full hover:bg-stone-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                            >
+                                                <ChevronRight size={16} className="text-stone-600" />
                                             </button>
                                         </div>
                                     )}
-                                    {threadMessages.slice(-(chatMessagePage * CHAT_MESSAGES_PER_PAGE)).map((msg, msgIndex) => {
+                                    {threadMessages.slice(effectiveSessionIndex, effectiveSessionIndex + 1).map((msg) => {
                                         const isPending = msg.status === 'PENDING';
                                         const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
 
@@ -2384,14 +2399,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                         return (
                                             <div key={msg.id} className="px-3 sm:px-4 py-2 relative">
-                                                {/* Session Divider */}
-                                                {msgIndex > 0 && (
-                                                    <div className="flex items-center gap-3 mb-4 -mt-1">
-                                                        <div className="flex-1 h-px bg-stone-200/60"></div>
-                                                        <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">{t('creator.newRequest')}</span>
-                                                        <div className="flex-1 h-px bg-stone-200/60"></div>
-                                                    </div>
-                                                )}
                                                 {/* 1. First Message (The Request) */}
                                                 {firstChat && (
                                                 <div className="flex relative z-10">
