@@ -513,28 +513,23 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const loadData = async (silent = false) => {
     if (!silent) setIsLoading(true);
+
+    // Fetch messages first (critical for inbox), then everything else in parallel
     const msgs = await getMessages();
     setMessages(msgs);
-
-    // Load Stripe Status & Withdrawals
-    const stripeStatus = await getStripeConnectionStatus();
-    setIsStripeConnected(stripeStatus);
-    const withdrawalHistory = await getWithdrawalHistory();
-    setWithdrawals(withdrawalHistory);
-
-    // Initial load for trend data
-    if (trendData.length === 0) {
-        const data = await getFinancialStatistics(trendTimeFrame, trendDate);
-        setTrendData(data);
-    }
-
-    // If we have a selected message, update it with fresh data
-    // If we have a selected sender, refresh their thread implicitly by updating 'messages'
-    if (selectedSenderEmail) {
-        // We don't need to manually update selectedMessage here as we will derive activeMessage from the thread
-        // But we keep selectedMessage sync for safety if used elsewhere
-    }
     if (!silent) setIsLoading(false);
+
+    // Load Stripe, withdrawals, and trend data in parallel (non-blocking)
+    const promises: Promise<void>[] = [
+        getStripeConnectionStatus().then(status => setIsStripeConnected(status)),
+        getWithdrawalHistory().then(history => setWithdrawals(history)),
+    ];
+    if (trendData.length === 0) {
+        promises.push(
+            getFinancialStatistics(trendTimeFrame, trendDate).then(data => setTrendData(data))
+        );
+    }
+    await Promise.all(promises);
   };
 
   const loadTrendData = async () => {

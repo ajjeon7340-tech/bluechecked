@@ -792,19 +792,21 @@ export const getMessages = async (): Promise<Message[]> => {
         .lt('expires_at', now)
         .or(`sender_id.eq.${session.session.user.id},creator_id.eq.${session.session.user.id}`);
 
-    if (expiredMessages && expiredMessages.length > 0) {
-        for (const msg of expiredMessages) {
-            // 1. Refund the sender
+    // Process expired messages in parallel, and fetch main messages concurrently
+    const expirationPromise = (expiredMessages && expiredMessages.length > 0)
+        ? Promise.all(expiredMessages.map(async (msg) => {
             const { data: sender } = await supabase.from('profiles').select('credits').eq('id', msg.sender_id).single();
             if (sender) {
                 await supabase.from('profiles').update({ credits: sender.credits + msg.amount }).eq('id', msg.sender_id);
             }
-            // 2. Mark as expired
             await supabase.from('messages').update({ status: 'EXPIRED' }).eq('id', msg.id);
-        }
-    }
+        }))
+        : Promise.resolve();
 
-    const { data, error } = await supabase
+    // Fetch messages in parallel with expiration processing
+    const [, { data, error }] = await Promise.all([
+        expirationPromise,
+        supabase
         .from('messages')
         .select(`
             *,
@@ -813,7 +815,8 @@ export const getMessages = async (): Promise<Message[]> => {
             chat_lines(*)
         `)
         .or(`sender_id.eq.${session.session.user.id},creator_id.eq.${session.session.user.id}`)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }),
+    ]);
 
     if (error) {
         console.error("Error fetching messages:", error);
