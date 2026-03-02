@@ -994,13 +994,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         {/* Mobile Sidebar Overlay */}
         {isSidebarOpen && (
           <div 
-            className="fixed inset-0 bg-stone-900/50 z-20 md:hidden backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-stone-900/50 z-30 md:hidden backdrop-blur-sm transition-opacity"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
 
         {/* 1. SIDEBAR */}
-        <aside className={`fixed inset-y-0 left-0 w-64 bg-[#F5F3EE] border-r border-stone-200 transform transition-transform duration-300 z-30 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+        <aside className={`fixed inset-y-0 left-0 w-64 bg-[#F5F3EE] border-r border-stone-200 transform transition-transform duration-300 z-40 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
             <div className="p-4 h-full flex flex-col">
                 {/* Brand */}
                 <div 
@@ -1908,11 +1908,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         <p className="text-xs sm:text-sm text-stone-700 leading-relaxed break-words">{firstChat.content}</p>
 
                                                         {/* Attachment */}
-                                                        {msg.attachmentUrl && (
-                                                            <div className="mt-3 flex gap-2 overflow-x-auto">
-                                                                {msg.attachmentUrl.split('|||').map((url: string, ai: number) => (
-                                                                    <div key={ai} className="rounded-lg overflow-hidden border border-stone-200 flex-shrink-0">
-                                                                        {!isImage(url) ? (
+                                                        {msg.attachmentUrl && (() => {
+                                                            const allUrls = msg.attachmentUrl.split('|||');
+                                                            const imgUrls = allUrls.filter((u: string) => isImage(u));
+                                                            const fileUrls = allUrls.filter((u: string) => !isImage(u));
+                                                            return (
+                                                                <div className="mt-3 space-y-2">
+                                                                    {fileUrls.map((url: string, ai: number) => (
+                                                                        <div key={`f${ai}`} className="rounded-lg overflow-hidden border border-stone-200">
                                                                             <a href={url} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
                                                                                 <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
                                                                                 <div className="flex-1 min-w-0">
@@ -1921,13 +1924,20 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                                                 </div>
                                                                                 <Download size={16} className="text-stone-400 flex-shrink-0" />
                                                                             </a>
-                                                                        ) : (
-                                                                            <img src={url} onClick={() => setEnlargedImage(url)} className="max-w-[180px] max-h-[160px] rounded-lg object-contain cursor-pointer hover:opacity-90 transition-opacity" alt={`attachment ${ai + 1}`} />
-                                                                        )}
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
+                                                                        </div>
+                                                                    ))}
+                                                                    {imgUrls.length > 0 && (
+                                                                        <div className={imgUrls.length === 1 ? '' : 'grid grid-cols-2 gap-1.5'}>
+                                                                            {imgUrls.map((url: string, ai: number) => (
+                                                                                <div key={`i${ai}`} className="rounded-lg overflow-hidden border border-stone-200">
+                                                                                    <img src={url} onClick={() => setEnlargedImage(url)} className={`block object-cover cursor-pointer hover:opacity-90 transition-opacity ${imgUrls.length === 1 ? 'max-h-[240px] w-auto max-w-[260px]' : 'w-full h-[140px]'}`} alt={`attachment ${ai + 1}`} />
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })()}
                                                     </div>
 
                                                     {/* Action Row */}
@@ -2031,11 +2041,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         <p className="text-xs sm:text-sm text-stone-700 leading-relaxed break-words">{chat.content}</p>
                                                         {chat.isEdited && <span className="text-[10px] text-stone-400 mt-1 block">edited</span>}
 
-                                                        {chat.attachmentUrl && (
-                                                            <div className="mt-3 flex gap-2 overflow-x-auto">
-                                                                {chat.attachmentUrl.split('|||').map((url: string, ai: number) => (
-                                                                    <div key={ai} className="rounded-lg overflow-hidden border border-stone-200 flex-shrink-0">
-                                                                        {!isImage(url) ? (
+                                                        {chat.attachmentUrl && (() => {
+                                                            const allUrls = chat.attachmentUrl.split('|||');
+                                                            const imgUrls = allUrls.filter((u: string) => isImage(u));
+                                                            const fileUrls = allUrls.filter((u: string) => !isImage(u));
+                                                            return (
+                                                                <div className="mt-3 space-y-2">
+                                                                    {fileUrls.map((url: string, ai: number) => (
+                                                                        <div key={`f${ai}`} className="rounded-lg overflow-hidden border border-stone-200">
                                                                             <a href={url} target="_blank" rel="noopener noreferrer" download="attachment" className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
                                                                                 <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
                                                                                 <div className="flex-1 min-w-0">
@@ -2044,13 +2057,20 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                                                 </div>
                                                                                 <Download size={16} className="text-stone-400 flex-shrink-0" />
                                                                             </a>
-                                                                        ) : (
-                                                                            <img src={url} onClick={() => setEnlargedImage(url)} className="max-w-[180px] max-h-[160px] rounded-lg object-contain cursor-pointer hover:opacity-90 transition-opacity" alt={`attachment ${ai + 1}`} />
-                                                                        )}
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
+                                                                        </div>
+                                                                    ))}
+                                                                    {imgUrls.length > 0 && (
+                                                                        <div className={imgUrls.length === 1 ? '' : 'grid grid-cols-2 gap-1.5'}>
+                                                                            {imgUrls.map((url: string, ai: number) => (
+                                                                                <div key={`i${ai}`} className="rounded-lg overflow-hidden border border-stone-200">
+                                                                                    <img src={url} onClick={() => setEnlargedImage(url)} className={`block object-cover cursor-pointer hover:opacity-90 transition-opacity ${imgUrls.length === 1 ? 'max-h-[240px] w-auto max-w-[260px]' : 'w-full h-[140px]'}`} alt={`attachment ${ai + 1}`} />
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })()}
 
                                                         {/* Action Row */}
                                                         <div className="flex items-center gap-1 mt-1 -ml-1 -mb-1.5">

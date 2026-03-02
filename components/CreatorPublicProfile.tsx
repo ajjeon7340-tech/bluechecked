@@ -717,9 +717,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         isSupport ? (
                                             <button
                                                 onClick={() => handleSupportClick(link.price)}
-                                                className="w-full text-left bg-white p-3 sm:p-4 rounded-2xl border border-stone-200/60 flex items-center gap-3 sm:gap-4 group cursor-pointer hover:border-stone-300 transition-all hover:shadow-sm relative overflow-hidden"
+                                                className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-pink-50 to-rose-50/50 border-pink-300 ring-1 ring-pink-200/50 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300 hover:shadow-sm'}`}
                                             >
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : 'bg-stone-50 text-stone-500'} flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform`}>
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : link.isPromoted ? 'bg-pink-500 text-white' : 'bg-stone-50 text-stone-500'}`}>
                                                     {hasThumbnail ? (
                                                         <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
                                                     ) : (
@@ -731,18 +731,18 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 </div>
                                                 <div className="flex-1 relative z-10 min-w-0 text-left">
                                                     <h4 className="font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
-                                                    <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">{t('profile.sendTip')}</p>
+                                                    <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">{link.isPromoted ? t('common.recommended') : t('profile.sendTip')}</p>
                                                 </div>
-                                                <div className="bg-stone-900 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold hover:bg-stone-800 transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
+                                                <div className={`px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap ${link.isPromoted ? 'bg-pink-500 text-white hover:bg-pink-600' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
                                                     <Heart size={12} /> {t('profile.tip')}
                                                 </div>
                                             </button>
                                         ) : isProduct ? (
                                             <button
                                                 onClick={() => handleProductClick(link)}
-                                                className="w-full text-left bg-white p-3 sm:p-4 rounded-2xl border border-stone-200/60 flex items-center gap-3 sm:gap-4 group cursor-pointer hover:border-stone-300 transition-all hover:shadow-sm relative overflow-hidden"
+                                                className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-purple-50 to-violet-50/50 border-purple-300 ring-1 ring-purple-200/50 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300 hover:shadow-sm'}`}
                                             >
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : 'bg-stone-50 text-stone-500'} flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform`}>
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : link.isPromoted ? 'bg-purple-600 text-white' : 'bg-stone-50 text-stone-500'}`}>
                                                     {hasThumbnail ? (
                                                         <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
                                                     ) : (
@@ -754,9 +754,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 </div>
                                                 <div className="flex-1 relative z-10 min-w-0 text-left">
                                                     <h4 className="font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
-                                                    <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">{t('profile.digitalDownload')}</p>
+                                                    <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">{link.isPromoted ? t('common.recommended') : t('profile.digitalDownload')}</p>
                                                 </div>
-                                                <div className="bg-stone-900 text-white px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold hover:bg-stone-800 transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
+                                                <div className={`px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap ${link.isPromoted ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
                                                     <Coins size={12} /> {link.price}
                                                 </div>
                                             </button>
