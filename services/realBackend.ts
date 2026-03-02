@@ -892,15 +892,11 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
          }
     }
 
-    // Handle Attachments
-    // Use the first attachment as the primary one for the DB column
-    const primaryAttachmentUrl = attachments && attachments.length > 0 ? attachments[0].url : undefined;
-    
-    // Append additional attachments to content
+    // Handle Attachments — join all URLs with ||| into one column
+    const combinedAttachmentUrl = attachments && attachments.length > 0
+        ? attachments.map(att => att.url).join('|||')
+        : undefined;
     let finalContent = content;
-    if (attachments && attachments.length > 1) {
-        finalContent += '\n\n' + attachments.slice(1).map(att => `Attachment: ${att.name}`).join('\n');
-    }
 
     // B. Create Message
     const { data: message, error: msgError } = await supabase
@@ -911,7 +907,7 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
             content: finalContent,
             amount: amount,
             status: (isProductPurchase || isTip) ? 'REPLIED' : 'PENDING',
-            attachment_url: primaryAttachmentUrl,
+            attachment_url: combinedAttachmentUrl,
             expires_at: new Date(Date.now() + (responseWindow * 3600000)).toISOString(),
             reply_at: (isProductPurchase || isTip) ? new Date().toISOString() : null,
             is_read: (isProductPurchase || isTip) // Mark as read if product purchase or tip

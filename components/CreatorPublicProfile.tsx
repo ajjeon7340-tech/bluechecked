@@ -485,7 +485,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         <div className="relative">
                         {/* Thought bubble overlapping top of avatar */}
                         {!isCustomizeMode && creator.bio && (
-                            <div className="absolute bottom-[65%] sm:bottom-[60%] left-1/2 -translate-x-1/2 z-30" style={{ width: 'max-content', maxWidth: '220px' }}>
+                            <div className="absolute bottom-[75%] sm:bottom-[70%] left-1/2 -translate-x-1/2 z-30" style={{ width: 'max-content', maxWidth: '220px' }}>
                                 <div className="bg-white rounded-[20px] px-4 py-2.5 shadow-lg border border-stone-200/60">
                                     <p className="text-xs sm:text-sm text-stone-800 leading-snug font-medium text-center">
                                         {creator.bio}

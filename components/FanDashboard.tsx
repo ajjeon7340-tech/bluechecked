@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { CurrentUser, Message, CreatorProfile } from '../types';
 import { Button } from './Button';
 import { DiemLogo, CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download, Smile, Verified } from './Icons';
-import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createCheckoutSession, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl } from '../services/realBackend';
+import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createCheckoutSession, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl, uploadProductFile } from '../services/realBackend';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface Props {
@@ -25,6 +25,13 @@ const getResponseTimeTooltip = (status: string, t?: (key: string) => string) => 
     if (status === 'Very Fast') return 'Typically replies in under 4 hours';
     if (status === 'Fast') return 'Typically replies within 24 hours';
     return 'Replies within the guaranteed response window';
+};
+
+const isImage = (url: string) => {
+    if (!url) return false;
+    if (url.startsWith('data:image')) return true;
+    const ext = url.split('.').pop()?.split('?')[0].toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext || '');
 };
 
 // Instagram/Threads style relative time
@@ -144,6 +151,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const [isSendingFollowUp, setIsSendingFollowUp] = useState(false);
   const [showFollowUpInput, setShowFollowUpInput] = useState(false);
   const [followUpText, setFollowUpText] = useState('');
+  const [followUpAttachments, setFollowUpAttachments] = useState<string[]>([]);
+  const [isUploadingFollowUpAttachment, setIsUploadingFollowUpAttachment] = useState(false);
+  const followUpFileInputRef = useRef<HTMLInputElement>(null);
   const [reviewText, setReviewText] = useState('');
 
   // Rating & Appreciation
@@ -502,14 +512,40 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
     }
   };
 
+  const handleFollowUpFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files || []);
+      if (!files.length || !latestMessage) return;
+      const remaining = 3 - followUpAttachments.length;
+      const toUpload = files.slice(0, remaining);
+      if (toUpload.length === 0) return;
+      setIsUploadingFollowUpAttachment(true);
+      try {
+          const urls = await Promise.all(toUpload.map(f => uploadProductFile(f, latestMessage.creatorId || '')));
+          setFollowUpAttachments(prev => [...prev, ...urls]);
+      } catch (error) {
+          console.error('Follow-up attachment upload failed:', error);
+      } finally {
+          setIsUploadingFollowUpAttachment(false);
+          if (followUpFileInputRef.current) followUpFileInputRef.current.value = '';
+      }
+  };
+
   const handleSendFollowUp = async () => {
       if (!latestMessage || !followUpText.trim()) return;
       setIsSendingFollowUp(true);
       try {
-          await sendMessage(latestMessage.creatorId || '', latestMessage.senderName, latestMessage.senderEmail, followUpText, latestMessage.amount, undefined);
+          const attachments = followUpAttachments.length > 0
+              ? followUpAttachments.map(url => ({
+                  url,
+                  type: (isImage(url) ? 'IMAGE' : 'FILE') as 'IMAGE' | 'FILE',
+                  name: url.split('/').pop()?.split('?')[0] || 'file'
+              }))
+              : undefined;
+          await sendMessage(latestMessage.creatorId || '', latestMessage.senderName, latestMessage.senderEmail, followUpText, latestMessage.amount, attachments);
           await loadMessages(true);
           setShowFollowUpInput(false);
           setFollowUpText('');
+          setFollowUpAttachments([]);
           setToastMessage(t('fan.followUpSent'));
           setTimeout(() => setToastMessage(null), 3000);
           // Refresh user balance if updated
@@ -1641,7 +1677,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 ) : latestMsg.status === 'REPLIED' ? (
                                                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">REPLIED</span>
                                                 ) : (
-                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">{latestMsg.status === 'EXPIRED' ? 'EXPIRED' : 'REJECTED'}</span>
+                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">{latestMsg.status === 'EXPIRED' ? 'EXPIRED' : 'CANCELLED'}</span>
                                                 )}
                                                 <span className="text-xs font-mono font-medium text-stone-700 flex items-center gap-1"><Coins size={10}/> {group.messageCount}</span>
                                             </div>
@@ -1738,9 +1774,16 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                          <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">
                                              {t('fan.sessionOf', { current: effectiveSessionIndex + 1, total: threadMessages.length }) || `Session ${effectiveSessionIndex + 1} of ${threadMessages.length}`}
                                          </span>
-                                         <span className="text-[9px] text-stone-400">
-                                             {getRelativeTime(threadMessages[effectiveSessionIndex]?.createdAt || threadMessages[effectiveSessionIndex]?.conversation?.[0]?.timestamp, t)}
-                                         </span>
+                                         {(() => {
+                                             const ts = threadMessages[effectiveSessionIndex]?.createdAt || threadMessages[effectiveSessionIndex]?.conversation?.[0]?.timestamp;
+                                             if (!ts) return null;
+                                             const diff = Date.now() - new Date(ts).getTime();
+                                             const mins = Math.floor(diff / 60000);
+                                             const hrs = Math.floor(mins / 60);
+                                             const days = Math.floor(hrs / 24);
+                                             const elapsed = days > 0 ? `${days}d ${hrs % 24}h ago` : hrs > 0 ? `${hrs}h ${mins % 60}m ago` : `${mins}m ago`;
+                                             return <span className="text-[9px] text-stone-400">{new Date(ts).toLocaleDateString([], { month: 'short', day: 'numeric' })} · {elapsed}</span>;
+                                         })()}
                                      </div>
                                      <button
                                          onClick={() => setChatSessionIndex(effectiveSessionIndex + 1)}
@@ -1803,19 +1846,23 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                                                         {/* Attachment */}
                                                         {msg.attachmentUrl && (
-                                                            <div className="mt-3 rounded-lg overflow-hidden border border-stone-200 w-fit max-w-full">
-                                                                {msg.attachmentUrl.toLowerCase().endsWith('.pdf') ? (
-                                                                    <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
-                                                                        <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
-                                                                        <div className="flex-1 min-w-0">
-                                                                            <p className="text-sm font-medium text-stone-700 truncate">{msg.attachmentUrl.split('/').pop() || 'Document.pdf'}</p>
-                                                                            <p className="text-xs text-stone-400">PDF Document</p>
-                                                                        </div>
-                                                                        <Download size={16} className="text-stone-400 flex-shrink-0" />
-                                                                    </a>
-                                                                ) : (
-                                                                    <img src={msg.attachmentUrl} className="max-w-full sm:max-w-[280px] max-h-[240px] rounded-lg object-contain" alt="attachment" />
-                                                                )}
+                                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                                {msg.attachmentUrl.split('|||').map((url: string, ai: number) => (
+                                                                    <div key={ai} className="rounded-lg overflow-hidden border border-stone-200 w-fit">
+                                                                        {!isImage(url) ? (
+                                                                            <a href={url} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
+                                                                                <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
+                                                                                <div className="flex-1 min-w-0">
+                                                                                    <p className="text-sm font-medium text-stone-700 truncate">{url.split('/').pop() || 'Document'}</p>
+                                                                                    <p className="text-xs text-stone-400">Document</p>
+                                                                                </div>
+                                                                                <Download size={16} className="text-stone-400 flex-shrink-0" />
+                                                                            </a>
+                                                                        ) : (
+                                                                            <img src={url} className="max-w-[180px] max-h-[160px] rounded-lg object-contain" alt={`attachment ${ai + 1}`} />
+                                                                        )}
+                                                                    </div>
+                                                                ))}
                                                             </div>
                                                         )}
                                                     </div>
@@ -1919,19 +1966,23 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         {chat.isEdited && <span className="text-[10px] text-stone-400 mt-1 block">edited</span>}
 
                                                         {chat.attachmentUrl && (
-                                                            <div className="mt-3 rounded-lg overflow-hidden border border-stone-200 w-fit max-w-full">
-                                                                {getFileType(chat.attachmentUrl) !== 'IMAGE' ? (
-                                                                    <a href={chat.attachmentUrl} target="_blank" rel="noopener noreferrer" download="attachment" className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
-                                                                        <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
-                                                                        <div className="flex-1 min-w-0">
-                                                                            <p className="text-sm font-medium text-stone-700 truncate">{chat.attachmentUrl.startsWith('data:') ? 'Attached File' : (chat.attachmentUrl.split('/').pop() || 'Document')}</p>
-                                                                            <p className="text-xs text-stone-400">Document</p>
-                                                                        </div>
-                                                                        <Download size={16} className="text-stone-400 flex-shrink-0" />
-                                                                    </a>
-                                                                ) : (
-                                                                    <img src={chat.attachmentUrl} className="max-w-full sm:max-w-[280px] max-h-[240px] rounded-lg object-contain" alt="attachment" />
-                                                                )}
+                                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                                {chat.attachmentUrl.split('|||').map((url: string, ai: number) => (
+                                                                    <div key={ai} className="rounded-lg overflow-hidden border border-stone-200 w-fit">
+                                                                        {!isImage(url) ? (
+                                                                            <a href={url} target="_blank" rel="noopener noreferrer" download="attachment" className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
+                                                                                <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
+                                                                                <div className="flex-1 min-w-0">
+                                                                                    <p className="text-sm font-medium text-stone-700 truncate">{url.startsWith('data:') ? 'Attached File' : (url.split('/').pop() || 'Document')}</p>
+                                                                                    <p className="text-xs text-stone-400">Document</p>
+                                                                                </div>
+                                                                                <Download size={16} className="text-stone-400 flex-shrink-0" />
+                                                                            </a>
+                                                                        ) : (
+                                                                            <img src={url} className="max-w-[180px] max-h-[160px] rounded-lg object-contain" alt={`attachment ${ai + 1}`} />
+                                                                        )}
+                                                                    </div>
+                                                                ))}
                                                             </div>
                                                         )}
 
@@ -2026,7 +2077,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             <div className="bg-stone-500 p-1 rounded-full">
                                                                 <Ban size={10} className="text-white stroke-[3px]" />
                                                             </div>
-                                                            <span className="text-xs font-semibold text-stone-700">Rejected</span>
+                                                            <span className="text-xs font-semibold text-stone-700">Cancelled</span>
                                                         </div>
                                                         <span className="text-xs font-semibold text-stone-500">{t('common.refunded')}</span>
                                                     </div>
@@ -2179,15 +2230,20 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                      ) : (
                                          <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-lg relative animate-in slide-in-from-bottom-2">
                                              <button 
-                                                onClick={() => { setShowFollowUpInput(false); setCustomAppreciationMode(false); }}
+                                                onClick={() => { setShowFollowUpInput(false); setCustomAppreciationMode(false); setFollowUpAttachments([]); }}
                                                 className="absolute top-2 right-2 p-1 text-stone-300 hover:text-stone-500 rounded-full hover:bg-stone-50"
                                              >
                                                  <X size={16} />
                                              </button>
                                              
-                                             <h4 className="font-bold text-stone-900 text-sm mb-3">
+                                             <h4 className="font-bold text-stone-900 text-sm mb-1">
                                                  {showFollowUpInput ? 'Send Follow-up Request' : 'Send Appreciation'}
                                              </h4>
+                                             {showFollowUpInput && (
+                                                 <p className="text-[11px] text-stone-400 mb-3 flex items-center gap-1">
+                                                     <Camera size={10} /> You can attach up to 3 photos
+                                                 </p>
+                                             )}
                                              
                                              <textarea 
                                                 value={showFollowUpInput ? followUpText : customAppreciationText}
@@ -2197,9 +2253,47 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                              />
 
                                              {showFollowUpInput && (
+                                                 <>
+                                                 {followUpAttachments.length > 0 && (
+                                                     <div className="flex flex-wrap gap-2 mb-2">
+                                                         {followUpAttachments.map((att, i) => (
+                                                             <div key={i} className="flex items-center gap-2 bg-stone-50 p-1.5 rounded-lg border border-stone-200">
+                                                                 {isImage(att) ? (
+                                                                     <img src={att} className="w-10 h-10 rounded object-cover" alt="" />
+                                                                 ) : (
+                                                                     <Paperclip size={14} className="text-stone-400" />
+                                                                 )}
+                                                                 <button onClick={() => setFollowUpAttachments(prev => prev.filter((_, idx) => idx !== i))} className="text-stone-400 hover:text-stone-600">
+                                                                     <X size={12} />
+                                                                 </button>
+                                                             </div>
+                                                         ))}
+                                                         {followUpAttachments.length < 3 && (
+                                                             <span className="text-[10px] text-stone-400 self-end">{followUpAttachments.length}/3</span>
+                                                         )}
+                                                     </div>
+                                                 )}
+
                                                  <div className="flex justify-between items-center mb-3 text-xs text-stone-500 px-1">
                                                      <span className="flex items-center gap-1">Price: <b><Coins size={10} className="inline mb-0.5"/> {latestMessage.amount}</b></span>
+                                                     <button
+                                                         onClick={() => followUpFileInputRef.current?.click()}
+                                                         disabled={followUpAttachments.length >= 3 || isUploadingFollowUpAttachment}
+                                                         className="flex items-center gap-1 text-stone-400 hover:text-stone-600 disabled:opacity-40"
+                                                     >
+                                                         {isUploadingFollowUpAttachment ? <RefreshCw size={14} className="animate-spin" /> : <Camera size={14} />}
+                                                         <span className="text-[11px]">Attach</span>
+                                                     </button>
+                                                     <input
+                                                         ref={followUpFileInputRef}
+                                                         type="file"
+                                                         accept="image/*"
+                                                         multiple
+                                                         className="hidden"
+                                                         onChange={handleFollowUpFileChange}
+                                                     />
                                                  </div>
+                                                 </>
                                              )}
 
                                              <Button 

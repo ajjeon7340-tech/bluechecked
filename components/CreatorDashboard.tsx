@@ -145,7 +145,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [replyText, setReplyText] = useState('');
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [isSendingReply, setIsSendingReply] = useState(false);
-  const [replyAttachment, setReplyAttachment] = useState<string | null>(null);
+  const [replyAttachments, setReplyAttachments] = useState<string[]>([]);
   const [isUploadingReplyAttachment, setIsUploadingReplyAttachment] = useState(false);
   const replyFileInputRef = useRef<HTMLInputElement>(null);
   const [isRejecting, setIsRejecting] = useState(false);
@@ -783,18 +783,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   };
 
   const handleReplyFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      const remaining = 3 - replyAttachments.length;
+      const toUpload = files.slice(0, remaining);
+      if (toUpload.length === 0) return;
 
       setIsUploadingReplyAttachment(true);
       try {
-          const url = await uploadProductFile(file, creator.id);
-          setReplyAttachment(url);
+          const urls = await Promise.all(toUpload.map(f => uploadProductFile(f, creator.id)));
+          setReplyAttachments(prev => [...prev, ...urls]);
       } catch (error) {
           console.error("Upload failed", error);
           alert(t('creator.failedSaveProfile'));
       } finally {
           setIsUploadingReplyAttachment(false);
+          if (replyFileInputRef.current) replyFileInputRef.current.value = '';
       }
   };
 
@@ -808,27 +812,27 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     }
 
     const hasText = replyText.trim().length > 0;
-    const hasAttachment = !!replyAttachment;
+    const hasAttachment = replyAttachments.length > 0;
     // CRITICAL FIX: Exclude auto-replies when checking for creator participation
     const hasManualReply = activeMessage.conversation.some(m => m.role === 'CREATOR' && !m.id.endsWith('-auto'));
 
-    // Validation: 
+    // Validation:
     // 1. If sending a partial reply (not complete), must have text or attachment.
-    if (!isComplete && !hasText && !hasAttachment) return; 
-    
+    if (!isComplete && !hasText && !hasAttachment) return;
+
     // 2. If completing, must have EITHER (text OR attachment) OR a previous MANUAL reply history.
     if (isComplete && !hasText && !hasAttachment && !hasManualReply) return;
 
     setIsSendingReply(true);
-    
+
     try {
         await new Promise(r => setTimeout(r, 800)); // Simulate delay
-        
-        // The backend now handles empty replyText by skipping message creation but updating status
-        await replyToMessage(activeMessage.id, replyText, isComplete, replyAttachment);
-        await loadData(true); 
+
+        const combinedAttachment = replyAttachments.length > 0 ? replyAttachments.join('|||') : null;
+        await replyToMessage(activeMessage.id, replyText, isComplete, combinedAttachment);
+        await loadData(true);
         setReplyText('');
-        setReplyAttachment(null);
+        setReplyAttachments([]);
 
         if (isComplete) {
             setCollectedAmount(activeMessage.amount);
@@ -2274,7 +2278,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 ) : latestMsg.status === 'REPLIED' ? (
                                                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">REPLIED</span>
                                                 ) : (
-                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">{latestMsg.status === 'EXPIRED' ? 'EXPIRED' : 'REJECTED'}</span>
+                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">{latestMsg.status === 'EXPIRED' ? 'EXPIRED' : 'CANCELLED'}</span>
                                                 )}
                                                 <span className="text-xs font-mono font-medium text-stone-700 flex items-center gap-1"><Coins size={10}/> {group.messageCount}</span>
                                             </div>
@@ -2431,9 +2435,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">
                                                     {t('creator.sessionOf', { current: effectiveSessionIndex + 1, total: threadMessages.length }) || `Session ${effectiveSessionIndex + 1} of ${threadMessages.length}`}
                                                 </span>
-                                                <span className="text-[9px] text-stone-400">
-                                                    {getRelativeTime(threadMessages[effectiveSessionIndex]?.createdAt || threadMessages[effectiveSessionIndex]?.conversation?.[0]?.timestamp, t)}
-                                                </span>
+                                                {(() => {
+                                                    const ts = threadMessages[effectiveSessionIndex]?.createdAt || threadMessages[effectiveSessionIndex]?.conversation?.[0]?.timestamp;
+                                                    if (!ts) return null;
+                                                    const diff = Date.now() - new Date(ts).getTime();
+                                                    const mins = Math.floor(diff / 60000);
+                                                    const hrs = Math.floor(mins / 60);
+                                                    const days = Math.floor(hrs / 24);
+                                                    const elapsed = days > 0 ? `${days}d ${hrs % 24}h ago` : hrs > 0 ? `${hrs}h ${mins % 60}m ago` : `${mins}m ago`;
+                                                    return <span className="text-[9px] text-stone-400">{new Date(ts).toLocaleDateString([], { month: 'short', day: 'numeric' })} · {elapsed}</span>;
+                                                })()}
                                             </div>
                                             <button
                                                 onClick={() => setChatSessionIndex(effectiveSessionIndex + 1)}
@@ -2494,21 +2505,25 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <div>
                                                 <p className="text-xs sm:text-sm text-stone-700 leading-relaxed">{firstChat.content}</p>
 
-                                                {/* Attachment */}
+                                                {/* Attachments */}
                                                 {msg.attachmentUrl && (
-                                                    <div className="mt-3 rounded-lg overflow-hidden border border-stone-200 w-fit max-w-full">
-                                                        {!isImage(msg.attachmentUrl) ? (
-                                                            <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" download="attachment" className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
-                                                                <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <p className="text-sm font-medium text-stone-700 truncate">{msg.attachmentUrl.startsWith('data:') ? 'Attached File' : (msg.attachmentUrl.split('/').pop() || 'Document')}</p>
-                                                                    <p className="text-xs text-stone-400">Document</p>
-                                                                </div>
-                                                                <Download size={16} className="text-stone-400 flex-shrink-0" />
-                                                            </a>
-                                                        ) : (
-                                                            <img src={msg.attachmentUrl} className="max-w-full sm:max-w-[280px] max-h-[240px] rounded-lg object-contain" alt="attachment" />
-                                                        )}
+                                                    <div className="mt-3 flex flex-wrap gap-2">
+                                                        {msg.attachmentUrl.split('|||').map((url: string, ai: number) => (
+                                                            <div key={ai} className="rounded-lg overflow-hidden border border-stone-200 w-fit">
+                                                                {!isImage(url) ? (
+                                                                    <a href={url} target="_blank" rel="noopener noreferrer" download="attachment" className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
+                                                                        <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <p className="text-sm font-medium text-stone-700 truncate">{url.startsWith('data:') ? 'Attached File' : (url.split('/').pop() || 'Document')}</p>
+                                                                            <p className="text-xs text-stone-400">Document</p>
+                                                                        </div>
+                                                                        <Download size={16} className="text-stone-400 flex-shrink-0" />
+                                                                    </a>
+                                                                ) : (
+                                                                    <img src={url} className="max-w-[180px] max-h-[160px] rounded-lg object-contain" alt={`attachment ${ai + 1}`} />
+                                                                )}
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 )}
                                                             </div>
@@ -2647,21 +2662,25 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     </>
                                                                 )}
 
-                                                                {/* Attachment (shown when NOT editing) */}
+                                                                {/* Attachments (shown when NOT editing) */}
                                                                 {editingChatId !== chat.id && chat.attachmentUrl && (
-                                                                    <div className="mt-3 rounded-lg overflow-hidden border border-stone-200 w-fit max-w-full">
-                                                                        {!isImage(chat.attachmentUrl) ? (
-                                                                            <a href={chat.attachmentUrl} target="_blank" rel="noopener noreferrer" download="attachment" className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
-                                                                                <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
-                                                                                <div className="flex-1 min-w-0">
-                                                                                    <p className="text-sm font-medium text-stone-700 truncate">{chat.attachmentUrl.startsWith('data:') ? 'Attached File' : (chat.attachmentUrl.split('/').pop() || 'Document')}</p>
-                                                                                    <p className="text-xs text-stone-400">Document</p>
-                                                                                </div>
-                                                                                <Download size={16} className="text-stone-400 flex-shrink-0" />
-                                                                            </a>
-                                                                        ) : (
-                                                                            <img src={chat.attachmentUrl} className="max-w-full sm:max-w-[280px] max-h-[240px] rounded-lg object-contain" alt="attachment" />
-                                                                        )}
+                                                                    <div className="mt-3 flex flex-wrap gap-2">
+                                                                        {chat.attachmentUrl.split('|||').map((url: string, ai: number) => (
+                                                                            <div key={ai} className="rounded-lg overflow-hidden border border-stone-200 w-fit">
+                                                                                {!isImage(url) ? (
+                                                                                    <a href={url} target="_blank" rel="noopener noreferrer" download="attachment" className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
+                                                                                        <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
+                                                                                        <div className="flex-1 min-w-0">
+                                                                                            <p className="text-sm font-medium text-stone-700 truncate">{url.startsWith('data:') ? 'Attached File' : (url.split('/').pop() || 'Document')}</p>
+                                                                                            <p className="text-xs text-stone-400">Document</p>
+                                                                                        </div>
+                                                                                        <Download size={16} className="text-stone-400 flex-shrink-0" />
+                                                                                    </a>
+                                                                                ) : (
+                                                                                    <img src={url} className="max-w-[180px] max-h-[160px] rounded-lg object-contain" alt={`attachment ${ai + 1}`} />
+                                                                                )}
+                                                                            </div>
+                                                                        ))}
                                                                     </div>
                                                                 )}
 
@@ -2768,7 +2787,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     <div className="bg-stone-500 p-1 rounded-full">
                                                                         <Ban size={10} className="text-white stroke-[3px]" />
                                                                     </div>
-                                                                    <span className="text-xs font-semibold text-stone-700">Rejected</span>
+                                                                    <span className="text-xs font-semibold text-stone-700">Cancelled</span>
                                                                 </div>
                                                                 <span className="text-xs font-semibold text-stone-500">{t('creator.refunded')}</span>
                                                             </div>
@@ -2793,7 +2812,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             </div>
                                             <button
                                                 onClick={() => handleSendReply(true)}
-                                                disabled={((!replyText.trim() && !replyAttachment) && !hasManualCreatorReply) || isSendingReply || isRejecting}
+                                                disabled={((!replyText.trim() && replyAttachments.length === 0) && !hasManualCreatorReply) || isSendingReply || isRejecting}
                                                 className="h-7 px-3 rounded-full bg-stone-900 text-white hover:bg-stone-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 font-semibold text-xs group"
                                                 title="Complete & Collect"
                                             >
@@ -2803,15 +2822,25 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </div>
 
                                         <div className="relative">
-                                            {replyAttachment && (
-                                                <div className="mb-2 mx-3 flex items-center gap-2 bg-stone-50 p-2 rounded-lg border border-stone-200 w-fit animate-in zoom-in duration-200">
-                                                    <div className="w-8 h-8 bg-white rounded flex items-center justify-center text-stone-500 border border-stone-100">
-                                                        <Paperclip size={14} />
-                                                    </div>
-                                                    <span className="text-xs text-stone-600 max-w-[150px] truncate">Attachment Ready</span>
-                                                    <button onClick={() => setReplyAttachment(null)} className="text-stone-400 hover:text-red-500 p-1 hover:bg-stone-100 rounded transition-colors">
-                                                        <X size={12} />
-                                                    </button>
+                                            {replyAttachments.length > 0 && (
+                                                <div className="mb-2 mx-3 flex flex-wrap gap-2">
+                                                    {replyAttachments.map((att, i) => (
+                                                        <div key={i} className="flex items-center gap-2 bg-stone-50 p-1.5 rounded-lg border border-stone-200 animate-in zoom-in duration-200">
+                                                            {isImage(att) ? (
+                                                                <img src={att} className="w-10 h-10 rounded object-cover" alt={`attachment ${i + 1}`} />
+                                                            ) : (
+                                                                <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-stone-500 border border-stone-100">
+                                                                    <Paperclip size={14} />
+                                                                </div>
+                                                            )}
+                                                            <button onClick={() => setReplyAttachments(prev => prev.filter((_, idx) => idx !== i))} className="text-stone-400 hover:text-red-500 p-1 hover:bg-stone-100 rounded transition-colors">
+                                                                <X size={12} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                    {replyAttachments.length < 3 && (
+                                                        <span className="text-[10px] text-stone-400 self-center">{replyAttachments.length}/3</span>
+                                                    )}
                                                 </div>
                                             )}
                                             <textarea 
@@ -2830,17 +2859,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <div className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 flex items-center gap-1.5 sm:gap-3">
                                                 <button
                                                     onClick={() => replyFileInputRef.current?.click()}
-                                                    disabled={isUploadingReplyAttachment}
-                                                    className="p-1.5 sm:p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-colors"
-                                                    title="Attach file"
+                                                    disabled={isUploadingReplyAttachment || replyAttachments.length >= 3}
+                                                    className="p-1.5 sm:p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-colors disabled:opacity-30"
+                                                    title={replyAttachments.length >= 3 ? 'Max 3 photos' : 'Attach photos (max 3)'}
                                                 >
                                                     {isUploadingReplyAttachment ? <div className="w-4 h-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" /> : <Paperclip size={16} />}
                                                 </button>
-                                                <input type="file" ref={replyFileInputRef} className="hidden" onChange={handleReplyFileChange} />
+                                                <input type="file" ref={replyFileInputRef} className="hidden" accept="image/*" multiple onChange={handleReplyFileChange} />
 
                                                 <button
                                                     onClick={() => handleSendReply(false)}
-                                                    disabled={(!replyText.trim() && !replyAttachment) || isSendingReply || isRejecting}
+                                                    disabled={(!replyText.trim() && replyAttachments.length === 0) || isSendingReply || isRejecting}
                                                     className="h-8 sm:h-10 px-3 sm:px-4 rounded-full bg-stone-600 text-white hover:bg-stone-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 sm:gap-2 font-semibold text-[11px] sm:text-xs"
                                                     title="Send reply (Keep Pending)"
                                                 >
