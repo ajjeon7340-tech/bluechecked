@@ -1341,7 +1341,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       <main className="flex-1 md:ml-64 flex flex-col h-screen relative">
         
         {/* Scrollable Content */}
-        <div className={`flex-1 overflow-auto ${currentView === 'INBOX' ? 'p-0' : 'p-6'} relative`}>
+        <div className={`flex-1 ${currentView === 'INBOX' ? 'overflow-hidden p-0' : 'overflow-auto p-6'} relative`}>
             
             {/* ... (Overview View) ... */}
             {currentView === 'OVERVIEW' && (
@@ -2476,7 +2476,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             </button>
                                         </div>
                                     )}
-                                    <div className="pt-3 max-w-lg mx-auto">
+                                    <div className="pt-3 max-w-lg mx-auto px-1">
                                     {threadMessages.slice(effectiveSessionIndex, effectiveSessionIndex + 1).map((msg) => {
                                         const isPending = msg.status === 'PENDING';
                                         const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
@@ -2524,7 +2524,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                             {/* Content */}
                                             <div>
-                                                <p className="text-xs sm:text-sm text-stone-700 leading-relaxed">{firstChat.content}</p>
+                                                <p className="text-xs sm:text-sm text-stone-700 leading-relaxed break-words">{firstChat.content}</p>
 
                                                 {/* Attachments */}
                                                 {msg.attachmentUrl && (
@@ -2678,7 +2678,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     </div>
                                                                 ) : (
                                                                     <>
-                                                                        <p className="text-xs sm:text-sm text-stone-700 leading-relaxed">{chat.content}</p>
+                                                                        <p className="text-xs sm:text-sm text-stone-700 leading-relaxed break-words">{chat.content}</p>
                                                                         {chat.isEdited && <span className="text-[10px] text-stone-400 mt-1 block">edited</span>}
                                                                     </>
                                                                 )}

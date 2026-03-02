@@ -1052,7 +1052,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
             )}
 
             {/* Content Area */}
-            <div className={`flex-1 overflow-auto relative bg-[#FAF9F6] ${currentView === 'OVERVIEW' && !selectedCreatorId ? 'p-0' : ''}`}>
+            <div className={`flex-1 relative bg-[#FAF9F6] ${currentView === 'OVERVIEW' ? 'overflow-hidden' : 'overflow-auto'} ${currentView === 'OVERVIEW' && !selectedCreatorId ? 'p-0' : ''}`}>
                 
                 {/* --- VIEW: PURCHASED (BETA) --- */}
                 {currentView === 'PURCHASED' && (
@@ -1803,7 +1803,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                      </button>
                                  </div>
                              )}
-                          <div className="pt-3 max-w-md mx-auto">
+                          <div className="pt-3 max-w-md mx-auto px-1">
                              {threadMessages.slice(effectiveSessionIndex, effectiveSessionIndex + 1).map((msg) => {
                                 const isPending = msg.status === 'PENDING';
                                 const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
@@ -1851,7 +1851,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                                                     {/* Content */}
                                                     <div>
-                                                        <p className="text-xs sm:text-sm text-stone-700 leading-relaxed">{firstChat.content}</p>
+                                                        <p className="text-xs sm:text-sm text-stone-700 leading-relaxed break-words">{firstChat.content}</p>
 
                                                         {/* Attachment */}
                                                         {msg.attachmentUrl && (
@@ -1974,7 +1974,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     </div>
                                 <div className={`${isCreator ? 'bg-stone-50' : 'bg-white'} p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60`}>
                                                         {/* Content */}
-                                                        <p className="text-xs sm:text-sm text-stone-700 leading-relaxed">{chat.content}</p>
+                                                        <p className="text-xs sm:text-sm text-stone-700 leading-relaxed break-words">{chat.content}</p>
                                                         {chat.isEdited && <span className="text-[10px] text-stone-400 mt-1 block">edited</span>}
 
                                                         {chat.attachmentUrl && (
