@@ -414,6 +414,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   }, [featuredCreators, selectedCreatorId]);
 
   const [showReadCelebration, setShowReadCelebration] = useState(false);
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const [showReadBanner, setShowReadBanner] = useState(false);
   const [celebratedMessageIds, setCelebratedMessageIds] = useState<Set<string>>(new Set());
 
@@ -546,7 +547,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                   name: url.split('/').pop()?.split('?')[0] || 'file'
               }))
               : undefined;
-          await sendMessage(latestMessage.creatorId || '', latestMessage.senderName, latestMessage.senderEmail, followUpText, latestMessage.amount, attachments);
+          const followUpPrice = currentCreator?.pricePerMessage ?? latestMessage.amount;
+          await sendMessage(latestMessage.creatorId || '', latestMessage.senderName, latestMessage.senderEmail, followUpText, followUpPrice, attachments);
           await loadMessages(true);
           setShowFollowUpInput(false);
           setFollowUpText('');
@@ -555,7 +557,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           setTimeout(() => setToastMessage(null), 3000);
           // Refresh user balance if updated
           if (onUpdateUser && currentUser) {
-              onUpdateUser({ ...currentUser, credits: currentUser.credits - latestMessage.amount });
+              onUpdateUser({ ...currentUser, credits: currentUser.credits - followUpPrice });
           }
       } catch (e: any) {
           if (e.message.includes("Insufficient")) {
@@ -1821,7 +1823,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 {(restChats.length > 0 || isPending) && (
                                                     <div className="absolute left-[17px] top-11 -bottom-1 w-0.5 bg-stone-200"></div>
                                                 )}
-                                                <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
+                                                <div className={`w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ${currentUser?.avatarUrl ? 'cursor-pointer' : ''}`} onClick={() => currentUser?.avatarUrl && setEnlargedImage(currentUser.avatarUrl)}>
                                                     {currentUser?.avatarUrl ? (
                                                         <img src={currentUser.avatarUrl} alt="You" className="w-full h-full object-cover" />
                                                     ) : (
@@ -1853,9 +1855,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                                                         {/* Attachment */}
                                                         {msg.attachmentUrl && (
-                                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                            <div className="mt-3 flex gap-2 overflow-x-auto">
                                                                 {msg.attachmentUrl.split('|||').map((url: string, ai: number) => (
-                                                                    <div key={ai} className="rounded-lg overflow-hidden border border-stone-200 w-fit">
+                                                                    <div key={ai} className="rounded-lg overflow-hidden border border-stone-200 flex-shrink-0">
                                                                         {!isImage(url) ? (
                                                                             <a href={url} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
                                                                                 <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
@@ -1866,7 +1868,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                                                 <Download size={16} className="text-stone-400 flex-shrink-0" />
                                                                             </a>
                                                                         ) : (
-                                                                            <img src={url} className="max-w-[180px] max-h-[160px] rounded-lg object-contain" alt={`attachment ${ai + 1}`} />
+                                                                            <img src={url} onClick={() => setEnlargedImage(url)} className="max-w-[180px] max-h-[160px] rounded-lg object-contain cursor-pointer hover:opacity-90 transition-opacity" alt={`attachment ${ai + 1}`} />
                                                                         )}
                                                                     </div>
                                                                 ))}
@@ -1931,7 +1933,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     {showLine && (
                                                         <div className="absolute left-[17px] top-11 -bottom-1 w-0.5 bg-stone-200"></div>
                                                     )}
-                                                    <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
+                                                    <div className={`w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ${(isCreator ? msg.creatorAvatarUrl : currentUser?.avatarUrl) ? 'cursor-pointer' : ''}`} onClick={() => { const url = isCreator ? msg.creatorAvatarUrl : currentUser?.avatarUrl; if (url) setEnlargedImage(url); }}>
                                                         {isCreator ? (
                                                             msg.creatorAvatarUrl ? (
                                                                 <img src={msg.creatorAvatarUrl} alt={msg.creatorName} className="w-full h-full object-cover" />
@@ -1976,9 +1978,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         {chat.isEdited && <span className="text-[10px] text-stone-400 mt-1 block">edited</span>}
 
                                                         {chat.attachmentUrl && (
-                                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                            <div className="mt-3 flex gap-2 overflow-x-auto">
                                                                 {chat.attachmentUrl.split('|||').map((url: string, ai: number) => (
-                                                                    <div key={ai} className="rounded-lg overflow-hidden border border-stone-200 w-fit">
+                                                                    <div key={ai} className="rounded-lg overflow-hidden border border-stone-200 flex-shrink-0">
                                                                         {!isImage(url) ? (
                                                                             <a href={url} target="_blank" rel="noopener noreferrer" download="attachment" className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
                                                                                 <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
@@ -1989,7 +1991,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                                                 <Download size={16} className="text-stone-400 flex-shrink-0" />
                                                                             </a>
                                                                         ) : (
-                                                                            <img src={url} className="max-w-[180px] max-h-[160px] rounded-lg object-contain" alt={`attachment ${ai + 1}`} />
+                                                                            <img src={url} onClick={() => setEnlargedImage(url)} className="max-w-[180px] max-h-[160px] rounded-lg object-contain cursor-pointer hover:opacity-90 transition-opacity" alt={`attachment ${ai + 1}`} />
                                                                         )}
                                                                     </div>
                                                                 ))}
@@ -2288,7 +2290,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                  )}
 
                                                  <div className="flex justify-between items-center mb-3 text-xs text-stone-500 px-1">
-                                                     <span className="flex items-center gap-1">Price: <b><Coins size={10} className="inline mb-0.5"/> {latestMessage.amount}</b></span>
+                                                     <span className="flex items-center gap-1">Price: <b><Coins size={10} className="inline mb-0.5"/> {currentCreator?.pricePerMessage ?? latestMessage.amount}</b></span>
                                                      <button
                                                          onClick={() => followUpFileInputRef.current?.click()}
                                                          disabled={followUpAttachments.length >= 3 || isUploadingFollowUpAttachment}
@@ -2487,6 +2489,15 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                 </div>
             </div>
         )}
+      {/* Image Lightbox */}
+      {enlargedImage && (
+          <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setEnlargedImage(null)}>
+              <button className="absolute top-4 right-4 p-2 text-white/70 hover:text-white bg-black/40 rounded-full transition-colors" onClick={() => setEnlargedImage(null)}>
+                  <X size={24} />
+              </button>
+              <img src={enlargedImage} className="max-w-full max-h-full object-contain rounded-lg" alt="Enlarged" onClick={e => e.stopPropagation()} />
+          </div>
+      )}
     </div>
   );
 };

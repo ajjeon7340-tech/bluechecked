@@ -151,6 +151,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [isRejecting, setIsRejecting] = useState(false);
   const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null);
   const [showCollectAnimation, setShowCollectAnimation] = useState(false);
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const [showReadCelebration, setShowReadCelebration] = useState(false);
   const [collectedAmount, setCollectedAmount] = useState(0);
 
@@ -2495,7 +2496,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         {(restChats.length > 0 || isPending) && (
                                                             <div className="absolute left-[17px] top-11 -bottom-1 w-0.5 bg-stone-200"></div>
                                                         )}
-                                                        <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
+                                                        <div className={`w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ${msg.senderAvatarUrl ? 'cursor-pointer' : ''}`} onClick={() => msg.senderAvatarUrl && setEnlargedImage(msg.senderAvatarUrl)}>
                                                             {msg.senderAvatarUrl ? (
                                                                 <img src={msg.senderAvatarUrl} alt={msg.senderName} className="w-full h-full object-cover" />
                                                             ) : (
@@ -2527,9 +2528,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                                 {/* Attachments */}
                                                 {msg.attachmentUrl && (
-                                                    <div className="mt-3 flex flex-wrap gap-2">
+                                                    <div className="mt-3 flex gap-2 overflow-x-auto">
                                                         {msg.attachmentUrl.split('|||').map((url: string, ai: number) => (
-                                                            <div key={ai} className="rounded-lg overflow-hidden border border-stone-200 w-fit">
+                                                            <div key={ai} className="rounded-lg overflow-hidden border border-stone-200 flex-shrink-0">
                                                                 {!isImage(url) ? (
                                                                     <a href={url} target="_blank" rel="noopener noreferrer" download="attachment" className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
                                                                         <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
@@ -2540,7 +2541,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                         <Download size={16} className="text-stone-400 flex-shrink-0" />
                                                                     </a>
                                                                 ) : (
-                                                                    <img src={url} className="max-w-[180px] max-h-[160px] rounded-lg object-contain" alt={`attachment ${ai + 1}`} />
+                                                                    <img src={url} onClick={() => setEnlargedImage(url)} className="max-w-[180px] max-h-[160px] rounded-lg object-contain cursor-pointer hover:opacity-90 transition-opacity" alt={`attachment ${ai + 1}`} />
                                                                 )}
                                                             </div>
                                                         ))}
@@ -2595,7 +2596,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             {showLine && (
                                                                 <div className="absolute left-[17px] top-11 -bottom-1 w-0.5 bg-stone-200"></div>
                                                             )}
-                                                            <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
+                                                            <div className={`w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ${(isCreator ? creator.avatarUrl : msg.senderAvatarUrl) ? 'cursor-pointer' : ''}`} onClick={() => { const url = isCreator ? creator.avatarUrl : msg.senderAvatarUrl; if (url) setEnlargedImage(url); }}>
                                                                 {isCreator ? (
                                                                     creator.avatarUrl ? (
                                                                         <img src={creator.avatarUrl} alt={creator.displayName} className="w-full h-full object-cover" />
@@ -2684,9 +2685,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                                                 {/* Attachments (shown when NOT editing) */}
                                                                 {editingChatId !== chat.id && chat.attachmentUrl && (
-                                                                    <div className="mt-3 flex flex-wrap gap-2">
+                                                                    <div className="mt-3 flex gap-2 overflow-x-auto">
                                                                         {chat.attachmentUrl.split('|||').map((url: string, ai: number) => (
-                                                                            <div key={ai} className="rounded-lg overflow-hidden border border-stone-200 w-fit">
+                                                                            <div key={ai} className="rounded-lg overflow-hidden border border-stone-200 flex-shrink-0">
                                                                                 {!isImage(url) ? (
                                                                                     <a href={url} target="_blank" rel="noopener noreferrer" download="attachment" className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
                                                                                         <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
@@ -2697,7 +2698,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                                         <Download size={16} className="text-stone-400 flex-shrink-0" />
                                                                                     </a>
                                                                                 ) : (
-                                                                                    <img src={url} className="max-w-[180px] max-h-[160px] rounded-lg object-contain" alt={`attachment ${ai + 1}`} />
+                                                                                    <img src={url} onClick={() => setEnlargedImage(url)} className="max-w-[180px] max-h-[160px] rounded-lg object-contain cursor-pointer hover:opacity-90 transition-opacity" alt={`attachment ${ai + 1}`} />
                                                                                 )}
                                                                             </div>
                                                                         ))}
@@ -3579,6 +3580,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 </div>
             </div>
         </div>
+      )}
+      {/* Image Lightbox */}
+      {enlargedImage && (
+          <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setEnlargedImage(null)}>
+              <button className="absolute top-4 right-4 p-2 text-white/70 hover:text-white bg-black/40 rounded-full transition-colors" onClick={() => setEnlargedImage(null)}>
+                  <X size={24} />
+              </button>
+              <img src={enlargedImage} className="max-w-full max-h-full object-contain rounded-lg" alt="Enlarged" onClick={e => e.stopPropagation()} />
+          </div>
       )}
     </div>
   );
