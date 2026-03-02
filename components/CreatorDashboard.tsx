@@ -1191,11 +1191,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Use real data if premium, otherwise use dummy data for blurred preview
   const analyticsData = creator.isPremium ? proData : DUMMY_PRO_DATA;
 
-  const TopNav = ({ className = "" }: { className?: string }) => (
+  const TopNav = ({ className = "", hideBurger = false }: { className?: string; hideBurger?: boolean }) => (
     <div className={`flex items-center gap-1.5 sm:gap-2.5 mt-0.5 ${className}`}>
-        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 mr-auto p-2 -ml-2">
-            <Menu size={24} />
-        </button>
+        {!hideBurger && (
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 mr-auto p-2 -ml-2">
+                <Menu size={24} />
+            </button>
+        )}
 
         <div className="relative">
             <button
@@ -2225,13 +2227,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             )}
 
             {currentView === 'INBOX' && (
-                <div className="h-full flex flex-col bg-[#FAF9F6] animate-in fade-in overflow-x-hidden">
+                <div className="h-full flex flex-col bg-[#FAF9F6] animate-in fade-in">
                     {/* Header Row */}
                     <div className="flex items-center justify-between px-4 sm:px-6 py-4 shrink-0">
-                        <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.inbox')}</h2>
-                        <TopNav />
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0">
+                                <Menu size={24} />
+                            </button>
+                            <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.inbox')}</h2>
+                        </div>
+                        <TopNav hideBurger />
                     </div>
-                    <div className="flex flex-1 min-h-0">
+                    <div className="flex flex-1 min-h-0 overflow-x-hidden">
                     {/* List Column */}
                     <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col bg-white ${selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
                         <div className="p-3 border-b border-stone-100">

@@ -903,11 +903,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       </div>
   );
 
-  const TopNav = ({ className = "" }: { className?: string }) => (
+  const TopNav = ({ className = "", hideBurger = false }: { className?: string; hideBurger?: boolean }) => (
     <div className={`flex items-center justify-end gap-3 ${className}`}>
-        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 mr-auto p-2 -ml-2">
-            <Menu size={24} />
-        </button>
+        {!hideBurger && (
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 mr-auto p-2 -ml-2">
+                <Menu size={24} />
+            </button>
+        )}
 
         <button 
             onClick={() => setShowTopUpModal(true)}
@@ -1056,9 +1058,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                 
                 {/* --- VIEW: PURCHASED (BETA) --- */}
                 {currentView === 'PURCHASED' && (
-                    <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in">
-                        <TopNav />
-                        <div className="bg-stone-900 text-white p-8 rounded-2xl relative overflow-hidden mb-8">
+                    <div className="animate-in fade-in">
+                        <div className="flex items-center justify-between px-4 sm:px-6 py-4">
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0">
+                                    <Menu size={24} />
+                                </button>
+                                <h2 className="text-xl font-bold text-stone-900">{t('fan.purchased')}</h2>
+                            </div>
+                            <TopNav hideBurger />
+                        </div>
+                        <div className="px-4 sm:px-6 pb-6 space-y-6 max-w-5xl mx-auto">
+                        <div className="bg-stone-900 text-white p-5 sm:p-8 rounded-2xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                             <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div>
@@ -1168,14 +1179,22 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             </div>
                         )}
 
+                        </div>
                     </div>
                 )}
-                
+
                 {/* --- VIEW: EXPLORE CREATORS --- */}
                 {currentView === 'EXPLORE' && (
-                    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in">
-                        <TopNav />
-                        
+                    <div className="animate-in fade-in">
+                        <div className="flex items-center justify-between px-4 sm:px-6 py-4">
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0">
+                                    <Menu size={24} />
+                                </button>
+                            </div>
+                            <TopNav hideBurger />
+                        </div>
+                        <div className="px-4 sm:px-6 pb-6 space-y-6 max-w-7xl mx-auto">
                         {/* Header Section */}
                         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                             <div>
@@ -1309,16 +1328,25 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 <p className="text-sm">{t('fan.trySearching')}</p>
                             </div>
                         )}
+                        </div>
                     </div>
                 )}
 
                 {/* --- VIEW: HISTORY --- */}
                 {currentView === 'HISTORY' && (
-                    <div className="p-4 md:p-6 max-w-5xl mx-auto animate-in fade-in h-full flex flex-col">
-                        <TopNav />
-                        <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
-                             <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between shrink-0">
-                                 <h3 className="text-sm font-bold text-stone-900">{t('fan.transactionHistory')}</h3>
+                    <div className="max-w-5xl mx-auto animate-in fade-in h-full flex flex-col">
+                        <div className="flex items-center justify-between px-4 sm:px-6 py-4 shrink-0">
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0">
+                                    <Menu size={24} />
+                                </button>
+                                <h2 className="text-xl font-bold text-stone-900">{t('fan.transactionHistory')}</h2>
+                            </div>
+                            <TopNav hideBurger />
+                        </div>
+                        <div className="flex-1 min-h-0 px-4 sm:px-6 pb-4 sm:pb-6">
+                        <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden flex flex-col h-full">
+                             <div className="px-4 sm:px-6 py-4 border-b border-stone-100 flex items-center justify-end shrink-0">
                                  <Button variant="ghost" size="sm" className="text-xs"><ExternalLink size={14} className="mr-1"/> {t('fan.exportCSV')}</Button>
                              </div>
                              <div className="hidden md:block overflow-x-auto">
@@ -1491,13 +1519,23 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 {messages.length === 0 && creditPurchases.length === 0 && <div className="p-8 text-center text-stone-400 text-sm">{t('fan.noTransactions')}</div>}
                              </div>
                         </div>
+                        </div>
                     </div>
                 )}
 
                 {/* --- VIEW: SUPPORT --- */}
                 {currentView === 'SUPPORT' && (
-                    <div className="p-6 max-w-2xl mx-auto animate-in fade-in flex flex-col items-center justify-center min-h-[500px]">
-                         <div className="w-full"><TopNav /></div>
+                    <div className="max-w-2xl mx-auto animate-in fade-in">
+                        <div className="flex items-center justify-between px-4 sm:px-6 py-4">
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0">
+                                    <Menu size={24} />
+                                </button>
+                                <h2 className="text-xl font-bold text-stone-900">{t('profile.support')}</h2>
+                            </div>
+                            <TopNav hideBurger />
+                        </div>
+                        <div className="px-4 sm:px-6 pb-6 flex flex-col items-center min-h-[400px] justify-center">
                          <div className="bg-white p-8 rounded-3xl border border-stone-200 shadow-xl shadow-stone-200/50 text-center space-y-6 max-w-md w-full relative overflow-hidden">
                              {/* Decorative Background */}
                              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-stone-500 via-stone-700 to-stone-900"></div>
@@ -1528,13 +1566,23 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                  </p>
                              </div>
                          </div>
+                        </div>
                     </div>
                 )}
 
                 {/* --- VIEW: SETTINGS --- */}
                 {currentView === 'SETTINGS' && (
-                    <div className="max-w-2xl mx-auto p-6 space-y-6 animate-in fade-in slide-in-from-bottom-2">
-                        <TopNav />
+                    <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-2">
+                        <div className="flex items-center justify-between px-4 sm:px-6 py-4">
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0">
+                                    <Menu size={24} />
+                                </button>
+                                <h2 className="text-xl font-bold text-stone-900">{t('fan.profile')}</h2>
+                            </div>
+                            <TopNav hideBurger />
+                        </div>
+                        <div className="px-4 sm:px-6 pb-6 space-y-6">
                         {showSaveSuccess && (
                             <div className="fixed bottom-8 right-8 z-[60] max-w-sm animate-in slide-in-from-bottom-4">
                                 <div className="bg-stone-900 text-white rounded-lg px-4 py-3 shadow-lg flex items-center gap-3">
@@ -1608,18 +1656,24 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 </div>
                             </div>
                         </div>
+                        </div>
                     </div>
                 )}
 
                 {/* --- VIEW: OVERVIEW (Two-column Inbox) --- */}
                 {currentView === 'OVERVIEW' && (
-                   <div className="h-full flex flex-col bg-[#FAF9F6] animate-in fade-in overflow-x-hidden">
+                   <div className="h-full flex flex-col bg-[#FAF9F6] animate-in fade-in">
                       {/* Header Row */}
                       <div className="flex items-center justify-between px-4 sm:px-6 py-4 shrink-0">
-                          <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('fan.inbox')}</h2>
-                          <TopNav />
+                          <div className="flex items-center gap-2">
+                              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0">
+                                  <Menu size={24} />
+                              </button>
+                              <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('fan.inbox')}</h2>
+                          </div>
+                          <TopNav hideBurger />
                       </div>
-                      <div className="flex flex-1 min-h-0">
+                      <div className="flex flex-1 min-h-0 overflow-x-hidden">
                       {/* List Column */}
                       <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col bg-white ${selectedCreatorId ? 'hidden md:flex' : 'flex'}`}>
                          <div className="p-3 border-b border-stone-100">
@@ -2333,8 +2387,17 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                 {/* --- VIEW: NOTIFICATIONS --- */}
                 {currentView === 'NOTIFICATIONS' && (
-                    <div className="p-6 max-w-3xl mx-auto animate-in fade-in">
-                        <TopNav />
+                    <div className="max-w-3xl mx-auto animate-in fade-in">
+                        <div className="flex items-center justify-between px-4 sm:px-6 py-4">
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0">
+                                    <Menu size={24} />
+                                </button>
+                                <h2 className="text-xl font-bold text-stone-900">{t('creator.notifications')}</h2>
+                            </div>
+                            <TopNav hideBurger />
+                        </div>
+                        <div className="px-4 sm:px-6 pb-6">
                         {(() => {
                             const totalPages = Math.ceil(notifications.length / ITEMS_PER_PAGE);
                             const displayedNotifications = notifications.slice((notificationPage - 1) * ITEMS_PER_PAGE, notificationPage * ITEMS_PER_PAGE);
@@ -2398,6 +2461,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </div>
                         );
                         })()}
+                        </div>
                     </div>
                 )}
             </div>
