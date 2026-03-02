@@ -246,7 +246,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   };
 
   // Chat Reaction State
-  const [messageReactions, setMessageReactions] = useState<Record<string, string>>({});
+  const [messageReactions, setMessageReactions] = useState<Record<string, string>>(() => {
+      try { return JSON.parse(localStorage.getItem('diem_creator_reactions') || '{}'); } catch { return {}; }
+  });
   const [activeReactionPicker, setActiveReactionPicker] = useState<string | null>(null);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
@@ -257,12 +259,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const handleReactionClick = (msgId: string, emoji: string) => {
       setMessageReactions(prev => {
           const current = prev[msgId];
+          let next: Record<string, string>;
           if (current === emoji) {
-              const next = { ...prev };
+              next = { ...prev };
               delete next[msgId];
-              return next;
+          } else {
+              next = { ...prev, [msgId]: emoji };
           }
-          return { ...prev, [msgId]: emoji };
+          localStorage.setItem('diem_creator_reactions', JSON.stringify(next));
+          return next;
       });
       setActiveReactionPicker(null);
   };

@@ -119,18 +119,23 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   };
 
   // Chat Reaction State
-  const [messageReactions, setMessageReactions] = useState<Record<string, string>>({});
+  const [messageReactions, setMessageReactions] = useState<Record<string, string>>(() => {
+      try { return JSON.parse(localStorage.getItem('diem_fan_reactions') || '{}'); } catch { return {}; }
+  });
   const [activeReactionPicker, setActiveReactionPicker] = useState<string | null>(null);
 
   const handleReactionClick = (msgId: string, emoji: string) => {
       setMessageReactions(prev => {
           const current = prev[msgId];
+          let next: Record<string, string>;
           if (current === emoji) {
-              const next = { ...prev };
+              next = { ...prev };
               delete next[msgId];
-              return next;
+          } else {
+              next = { ...prev, [msgId]: emoji };
           }
-          return { ...prev, [msgId]: emoji };
+          localStorage.setItem('diem_fan_reactions', JSON.stringify(next));
+          return next;
       });
       setActiveReactionPicker(null);
   };
@@ -1804,7 +1809,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 const [firstChat, ...restChats] = sortedConversation;
 
                                 return (
-                                    <div key={msg.id} className="px-3 sm:px-4 py-3 relative">
+                                    <div key={msg.id} className="px-3 sm:px-4 py-2 relative">
                                         {/* 1. First Message (The Request) */}
                                         {firstChat && (
                                         <div className="flex relative z-10">
@@ -1838,11 +1843,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     </div>
                                                 </div>
 
-                                                <div className="bg-white p-5 sm:p-6 rounded-2xl rounded-tl-lg border border-stone-200/60">
+                                                <div className="bg-white p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
 
                                                     {/* Content */}
                                                     <div>
-                                                        <p className="text-sm text-stone-700 leading-relaxed">{firstChat.content}</p>
+                                                        <p className="text-xs sm:text-sm text-stone-700 leading-relaxed">{firstChat.content}</p>
 
                                                         {/* Attachment */}
                                                         {msg.attachmentUrl && (
@@ -1868,11 +1873,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     </div>
 
                                                     {/* Action Row */}
-                                                    <div className="flex items-center gap-0 mt-4 -ml-2">
+                                                    <div className="flex items-center gap-1 mt-1 -ml-1 -mb-1.5">
                                                         <div className="relative">
-                                                            <button 
+                                                            <button
                                                                 onClick={() => setActiveReactionPicker(activeReactionPicker === firstChat.id ? null : firstChat.id)}
-                                                                className="p-2 text-stone-400 hover:text-stone-600 transition-colors relative group"
+                                                                className="p-1 text-stone-400 hover:text-stone-600 transition-colors relative group"
                                                             >
                                                                 {messageReactions[firstChat.id] ? (
                                                                     <span className="text-lg animate-in zoom-in">{messageReactions[firstChat.id]}</span>
@@ -1892,6 +1897,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                                 </div>
                                                             )}
                                                         </div>
+                                                        {messageReactions[firstChat.id] && (
+                                                            <span className="text-[10px] text-stone-400">{currentUser?.name || 'You'}</span>
+                                                        )}
                                                         <div className="flex items-center gap-1.5 text-stone-400 ml-auto text-xs">
                                                             <Coins size={12} className="text-stone-400" />
                                                             <span>{msg.amount}</span>
@@ -1960,9 +1968,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             <span className="text-xs font-medium text-stone-400">• {new Date(chat.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
                                                         </div>
                                                     </div>
-                                <div className={`${isCreator ? 'bg-stone-50' : 'bg-white'} p-4 rounded-2xl rounded-tl-lg border border-stone-200/60`}>
+                                <div className={`${isCreator ? 'bg-stone-50' : 'bg-white'} p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60`}>
                                                         {/* Content */}
-                                                        <p className="text-sm text-stone-700 leading-relaxed">{chat.content}</p>
+                                                        <p className="text-xs sm:text-sm text-stone-700 leading-relaxed">{chat.content}</p>
                                                         {chat.isEdited && <span className="text-[10px] text-stone-400 mt-1 block">edited</span>}
 
                                                         {chat.attachmentUrl && (
@@ -1987,11 +1995,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                         )}
 
                                                         {/* Action Row */}
-                                                        <div className="flex items-center gap-0 mt-4 -ml-2">
+                                                        <div className="flex items-center gap-1 mt-1 -ml-1 -mb-1.5">
                                                         <div className="relative">
-                                                            <button 
+                                                            <button
                                                                 onClick={() => setActiveReactionPicker(activeReactionPicker === chat.id ? null : chat.id)}
-                                                                className="p-2 text-stone-400 hover:text-stone-600 transition-colors relative group"
+                                                                className="p-1 text-stone-400 hover:text-stone-600 transition-colors relative group"
                                                             >
                                                                 {messageReactions[chat.id] ? (
                                                                     <span className="text-lg animate-in zoom-in">{messageReactions[chat.id]}</span>
@@ -2011,6 +2019,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                                 </div>
                                                             )}
                                                         </div>
+                                                        {messageReactions[chat.id] && (
+                                                            <span className="text-[10px] text-stone-400">{chat.role === 'FAN' ? (currentUser?.name || 'You') : (msg.creatorName || 'Creator')}</span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
