@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { CreatorProfile, CurrentUser, AffiliateLink, Product } from '../types';
 import { DiemLogo, CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share, Image as ImageIcon, TrendingUp } from './Icons';
 import { Button } from './Button';
-import { sendMessage, updateCreatorProfile, addCredits, createCheckoutSession, isBackendConfigured, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus, getSecureDownloadUrl, logAnalyticsEvent } from '../services/realBackend';
+import { sendMessage, updateCreatorProfile, addCredits, createCheckoutSession, isBackendConfigured, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus, getSecureDownloadUrl, logAnalyticsEvent, getCreatorTrendingStatus } from '../services/realBackend';
 
 interface Props {
   creator: CreatorProfile;
@@ -49,6 +49,15 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const photoInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  // Trending Status
+  const [isTrending, setIsTrending] = useState(false);
+
+  useEffect(() => {
+      getCreatorTrendingStatus(creator.id).then(result => {
+          setIsTrending(result.isTrending);
+      });
+  }, [creator.id]);
 
   // Product Purchase State
   const [selectedProductLink, setSelectedProductLink] = useState<AffiliateLink | null>(null);
@@ -636,10 +645,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                   <div className="flex-1 relative z-10 min-w-0 text-left">
                       <div className="flex items-center gap-2">
                           <h4 className="font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors">DIEM</h4>
-                          <span className="flex items-center gap-1 text-[10px] sm:text-xs text-blue-500 font-medium">
-                              <TrendingUp size={12} className="text-blue-500" />
-                              Trending
-                          </span>
+                          {isTrending && (
+                              <span className="flex items-center gap-1 text-[10px] sm:text-xs text-blue-500 font-medium">
+                                  <TrendingUp size={12} className="text-blue-500" />
+                                  Trending
+                              </span>
+                          )}
                       </div>
                       <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-stone-500 mt-0.5 font-medium truncate">
                           <MessageSquare size={12} className="text-emerald-500" />

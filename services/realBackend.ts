@@ -1392,6 +1392,31 @@ export const logAnalyticsEvent = async (creatorId: string, eventType: 'VIEW' | '
     }
 };
 
+export const getCreatorTrendingStatus = async (creatorId: string): Promise<{ isTrending: boolean; interactionCount: number }> => {
+    if (!isConfigured) {
+        // Mock: use profileViews as a rough proxy
+        return { isTrending: false, interactionCount: 0 };
+    }
+
+    const oneDayAgo = new Date();
+    oneDayAgo.setHours(oneDayAgo.getHours() - 24);
+
+    const { count, error } = await supabase
+        .from('analytics_events')
+        .select('id', { count: 'exact', head: true })
+        .eq('creator_id', creatorId)
+        .gte('created_at', oneDayAgo.toISOString());
+
+    if (error) {
+        console.warn('Failed to check trending status:', error);
+        return { isTrending: false, interactionCount: 0 };
+    }
+
+    const interactionCount = count || 0;
+    // Trending threshold: 5+ interactions in 24 hours
+    return { isTrending: interactionCount >= 5, interactionCount };
+};
+
 export const getProAnalytics = async (): Promise<ProAnalyticsData | null> => {
     if (!isConfigured) return MockBackend.getProAnalytics();
 
