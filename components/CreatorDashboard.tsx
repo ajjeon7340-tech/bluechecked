@@ -1144,9 +1144,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const getTimeLeft = (expiresAt: string) => {
     const diff = new Date(expiresAt).getTime() - Date.now();
     const hours = Math.floor(diff / (1000 * 60 * 60));
-    if (diff < 0) return { text: 'Expired', color: 'text-red-600', bg: 'bg-red-50' };
-    if (hours < 4) return { text: `${hours}h left`, color: 'text-stone-500', bg: 'bg-amber-50' };
-    return { text: `${hours}h left`, color: 'text-stone-500', bg: 'bg-stone-100' };
+    if (diff < 0) return { text: 'Expired', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', iconColor: 'text-red-500' };
+    if (hours < 4) return { text: `${hours}h left`, color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', iconColor: 'text-amber-500' };
+    if (hours < 12) return { text: `${hours}h left`, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', iconColor: 'text-orange-500' };
+    return { text: `${hours}h left`, color: 'text-stone-600', bg: 'bg-stone-100', border: 'border-stone-200', iconColor: 'text-stone-500' };
   };
 
   const filteredGroups = useMemo(() => conversationGroups.filter(group => {
@@ -2400,11 +2401,25 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     </div>
                                     
                                     <div className="flex items-center gap-2 flex-shrink-0">
-                                        {activeMessage.status === 'PENDING' && (
-                                            <div className="text-[10px] sm:text-xs font-medium text-stone-500 bg-stone-100 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1 border border-stone-200/60 whitespace-nowrap">
-                                                <Clock size={12} /> {getTimeLeft(activeMessage.expiresAt).text}
-                                            </div>
-                                        )}
+                                        {activeMessage.status === 'PENDING' && (() => {
+                                            const tl = getTimeLeft(activeMessage.expiresAt);
+                                            return (
+                                                <>
+                                                    <div className={`text-[10px] sm:text-xs font-semibold ${tl.color} ${tl.bg} px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1 border ${tl.border} whitespace-nowrap`}>
+                                                        <Clock size={12} className={tl.iconColor} /> {tl.text}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleSendReply(true)}
+                                                        disabled={((!replyText.trim() && replyAttachments.length === 0) && !hasManualCreatorReply) || isSendingReply || isRejecting}
+                                                        className="h-7 px-3 rounded-full bg-stone-900 text-white hover:bg-stone-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 font-semibold text-[10px] sm:text-xs group whitespace-nowrap"
+                                                        title="Complete & Collect"
+                                                    >
+                                                        <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
+                                                        <span>Collect {activeMessage.amount}</span>
+                                                    </button>
+                                                </>
+                                            );
+                                        })()}
                                         {activeMessage.status === 'REPLIED' && (
                                             <div className="text-[10px] sm:text-xs font-bold text-emerald-600 bg-emerald-50 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1 border border-emerald-100 whitespace-nowrap">
                                                 <CheckCircle2 size={12} /> {t('creator.completed')}
@@ -2460,7 +2475,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             </button>
                                         </div>
                                     )}
-                                    <div className="max-w-lg mx-auto">
+                                    <div className="pt-3 max-w-lg mx-auto">
                                     {threadMessages.slice(effectiveSessionIndex, effectiveSessionIndex + 1).map((msg) => {
                                         const isPending = msg.status === 'PENDING';
                                         const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
@@ -2809,21 +2824,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 {/* Reply Input Area */}
                                 {activeMessage.status === 'PENDING' && (
                                     <div className="p-3 sm:p-4 bg-white border-t border-stone-200/60 z-20">
-                                        <div className="flex justify-between items-center mb-3 gap-2">
-                                            <div className="flex items-center gap-2 text-xs text-stone-500 min-w-0">
-                                                <span className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded border border-green-100 font-medium whitespace-nowrap text-[10px] sm:text-xs">
-                                                    <Coins size={12} className="flex-shrink-0" /> <span className="hidden sm:inline">Payment held in </span>escrow
-                                                </span>
-                                            </div>
-                                            <button
-                                                onClick={() => handleSendReply(true)}
-                                                disabled={((!replyText.trim() && replyAttachments.length === 0) && !hasManualCreatorReply) || isSendingReply || isRejecting}
-                                                className="h-7 px-3 rounded-full bg-stone-900 text-white hover:bg-stone-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 font-semibold text-xs group"
-                                                title="Complete & Collect"
-                                            >
-                                                <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
-                                                <span className="whitespace-nowrap">Collect {activeMessage.amount}</span>
-                                            </button>
+                                        <div className="flex items-center mb-3 gap-2">
+                                            <span className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded border border-green-100 font-medium whitespace-nowrap text-[10px] sm:text-xs">
+                                                <Coins size={12} className="flex-shrink-0" /> <span className="hidden sm:inline">Payment held in </span>escrow
+                                            </span>
                                         </div>
 
                                         <div className="relative">

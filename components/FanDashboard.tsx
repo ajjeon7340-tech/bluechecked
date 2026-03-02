@@ -716,8 +716,10 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const getTimeLeft = (expiresAt: string) => {
     const diff = new Date(expiresAt).getTime() - Date.now();
     const hours = Math.floor(diff / (1000 * 60 * 60));
-    if (diff < 0) return { text: 'Expired', color: 'text-red-600', bg: 'bg-red-50' };
-    return { text: `${hours}h left`, color: 'text-stone-500', bg: 'bg-stone-100' };
+    if (diff < 0) return { text: 'Expired', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', iconColor: 'text-red-500' };
+    if (hours < 4) return { text: `${hours}h left`, color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', iconColor: 'text-amber-500' };
+    if (hours < 12) return { text: `${hours}h left`, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', iconColor: 'text-orange-500' };
+    return { text: `${hours}h left`, color: 'text-stone-600', bg: 'bg-stone-100', border: 'border-stone-200', iconColor: 'text-stone-500' };
   };
 
   const activeRequests = messages.filter(m => m.status === 'PENDING').length;
@@ -1799,7 +1801,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                      </button>
                                  </div>
                              )}
-                          <div className="max-w-md mx-auto">
+                          <div className="pt-3 max-w-md mx-auto">
                              {threadMessages.slice(effectiveSessionIndex, effectiveSessionIndex + 1).map((msg) => {
                                 const isPending = msg.status === 'PENDING';
                                 const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
@@ -1906,7 +1908,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             {isPending && (
                                                                 <>
                                                                     <span className="mx-1">·</span>
-                                                                    <span className="text-amber-600">{getTimeLeft(msg.expiresAt).text}</span>
+                                                                    <span className={getTimeLeft(msg.expiresAt).color}>{getTimeLeft(msg.expiresAt).text}</span>
                                                                 </>
                                                             )}
                                                         </div>
