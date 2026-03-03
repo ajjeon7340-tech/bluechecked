@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CreatorProfile, Message, DashboardStats, MonthlyStat, AffiliateLink, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
-import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, Withdrawal } from '../services/realBackend';
+import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, Withdrawal } from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { 
@@ -80,8 +80,8 @@ const DUMMY_PRO_DATA: ProAnalyticsData = {
     trafficSources: [
         { name: 'Google Search', value: 35, color: '#4285F4' },
         { name: 'Instagram', value: 28, color: '#E1306C' },
-        { name: 'YouTube', value: 20, color: '#FF0000' },
-        { name: 'X (Twitter)', value: 10, color: '#000000' },
+        { name: 'TikTok', value: 20, color: '#000000' },
+        { name: 'Twitter', value: 10, color: '#1DA1F2' },
         { name: 'Direct Link', value: 7, color: '#64748b' }
     ],
     funnel: [
@@ -90,9 +90,9 @@ const DUMMY_PRO_DATA: ProAnalyticsData = {
         { name: 'Conversions', count: 850, fill: '#4ADE80' }
     ],
     topAssets: [
-        { id: '1', title: 'Ultimate React Guide', type: 'PRODUCT', clicks: 2400, revenue: 12000, ctr: '12.5%' },
-        { id: '2', title: 'Discord Community', type: 'LINK', clicks: 1100, revenue: 0, ctr: '8.2%' },
-        { id: '3', title: '1:1 Coaching', type: 'PRODUCT', clicks: 450, revenue: 45000, ctr: '3.1%' },
+        { id: '1', title: 'Ultimate React Guide', type: 'PRODUCT', clicks: 2400, revenue: 12000, ctr: '15.6%' },
+        { id: '2', title: 'Discord Community', type: 'LINK', clicks: 1100, revenue: 0, ctr: '7.1%' },
+        { id: '3', title: '1:1 Coaching', type: 'PRODUCT', clicks: 450, revenue: 45000, ctr: '2.9%' },
     ],
     audienceType: { new: 62, returning: 38 }
 };
@@ -295,6 +295,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           setEditAttachment(undefined);
       } catch (err) {
           console.error('Failed to edit message:', err);
+      }
+  };
+
+  const handleDeleteChat = async (chatId: string, messageId: string) => {
+      try {
+          await deleteChatLine(chatId);
+          invalidateChatLinesCache(messageId);
+          setMessages(prev => prev.map(m => {
+              if (m.id !== messageId) return m;
+              return { ...m, conversation: m.conversation.filter(c => c.id !== chatId) };
+          }));
+          setEditingChatId(null);
+          setEditContent('');
+          setEditAttachment(undefined);
+      } catch (err) {
+          console.error('Failed to delete message:', err);
       }
   };
 
@@ -547,12 +563,21 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, conversation: fullConv } : m));
   };
 
-  // When a thread is selected, hydrate all its messages' conversations
+  // When a thread is selected, only hydrate the active message immediately (others hydrate on demand)
   useEffect(() => {
     if (!selectedSenderEmail) return;
     const threadMsgs = messages.filter(m => m.creatorId === creator.id && m.senderEmail === selectedSenderEmail);
-    threadMsgs.forEach(msg => { if (msg.conversation.length <= 1) hydrateConversation(msg); });
+    if (threadMsgs.length === 0) return;
+    const pending = [...threadMsgs].reverse().find(m => m.status === 'PENDING');
+    const target = pending || threadMsgs[threadMsgs.length - 1];
+    if (target.conversation.length <= 1) hydrateConversation(target);
   }, [selectedSenderEmail]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When navigating to a different session, hydrate it on demand
+  useEffect(() => {
+    const msg = threadMessages[effectiveSessionIndex];
+    if (msg && msg.conversation.length <= 1) hydrateConversation(msg);
+  }, [effectiveSessionIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadData = async (silent = false) => {
     if (!silent) setIsLoading(true);
@@ -1555,22 +1580,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     <div className="text-stone-400 text-xs font-bold uppercase tracking-wider">{t('creator.recentReviews')}</div>
                                     <div className="flex items-center gap-2">
                                         {totalOverviewPages > 1 && (
-                                            <div className="flex items-center bg-stone-50 rounded-lg p-0.5 border border-stone-100">
-                                                <button 
-                                                    onClick={() => setOverviewReviewsPage(p => Math.max(1, p - 1))}
-                                                    disabled={overviewReviewsPage === 1}
-                                                    className="p-1 hover:bg-white rounded-md text-stone-400 hover:text-stone-600 disabled:opacity-30 transition-all"
-                                                >
-                                                    <ChevronLeft size={12} />
-                                                </button>
-                                                <span className="text-[9px] font-bold text-stone-500 px-1.5 min-w-[20px] text-center">{overviewReviewsPage}/{totalOverviewPages}</span>
-                                                <button 
-                                                    onClick={() => setOverviewReviewsPage(p => Math.min(totalOverviewPages, p + 1))}
-                                                    disabled={overviewReviewsPage === totalOverviewPages}
-                                                    className="p-1 hover:bg-white rounded-md text-stone-400 hover:text-stone-600 disabled:opacity-30 transition-all"
-                                                >
-                                                    <ChevronRight size={12} />
-                                                </button>
+                                            <div className="flex items-center gap-0.5">
+                                                {Array.from({ length: totalOverviewPages }, (_, i) => i + 1).map(p => (
+                                                    <button
+                                                        key={p}
+                                                        onClick={() => setOverviewReviewsPage(p)}
+                                                        className={`w-5 h-5 text-[9px] font-bold rounded transition-all ${overviewReviewsPage === p ? 'bg-stone-800 text-white' : 'text-stone-400 hover:bg-stone-100'}`}
+                                                    >
+                                                        {p}
+                                                    </button>
+                                                ))}
                                             </div>
                                         )}
                                         <button 
@@ -2192,15 +2211,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             {analyticsData.funnel.map((step, index) => {
                                                 const maxVal = analyticsData.funnel[0].count || 1;
                                                 const percent = (step.count / maxVal) * 100;
-                                                const dropoff = index > 0 ? (((analyticsData.funnel[index - 1].count - step.count) / analyticsData.funnel[index - 1].count) * 100).toFixed(0) : null;
                                                 return (
                                                     <div key={step.name}>
                                                         <div className="flex justify-between items-baseline mb-1.5">
                                                             <span className="text-xs font-medium text-stone-600">{step.name}</span>
-                                                            <div className="flex items-center gap-2">
-                                                                {dropoff && <span className="text-[10px] text-stone-400">-{dropoff}%</span>}
-                                                                <span className="text-xs font-bold text-stone-900">{step.count.toLocaleString()}</span>
-                                                            </div>
+                                                            <span className="text-xs font-bold text-stone-900">{step.count.toLocaleString()}</span>
                                                         </div>
                                                         <div className="w-full bg-stone-100 rounded-full h-2 overflow-hidden">
                                                             <div
@@ -2342,13 +2357,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="flex gap-1 bg-stone-100/60 p-0.5 rounded-md">
                                     <button
                                         onClick={() => setInboxSortOrder('LATEST')}
-                                        className={`px-2 py-1 text-[10px] font-semibold rounded transition-all ${inboxSortOrder === 'LATEST' ? 'bg-stone-800 text-white shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+                                        className={`px-2 py-1 text-[10px] font-semibold rounded transition-all ${inboxSortOrder === 'LATEST' ? 'bg-stone-200 text-stone-700' : 'text-stone-400 hover:text-stone-600'}`}
                                     >
                                         Latest
                                     </button>
                                     <button
                                         onClick={() => setInboxSortOrder('COUNT')}
-                                        className={`px-2 py-1 text-[10px] font-semibold rounded transition-all flex items-center gap-0.5 ${inboxSortOrder === 'COUNT' ? 'bg-stone-800 text-white shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+                                        className={`px-2 py-1 text-[10px] font-semibold rounded transition-all flex items-center gap-0.5 ${inboxSortOrder === 'COUNT' ? 'bg-stone-200 text-stone-700' : 'text-stone-400 hover:text-stone-600'}`}
                                     >
                                         <Coins size={9} /> Sessions
                                     </button>
@@ -2705,7 +2720,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 {restChats.map((chat, idx) => {
                                                     const isCreator = chat.role === 'CREATOR';
                                                     const isLast = idx === restChats.length - 1;
-                                                    const showLine = !isLast || isPending;
+                                                    const showLine = !isLast;
 
                                                     return (
                                                     <div key={chat.id} className="flex mt-4 relative z-10">
@@ -2790,6 +2805,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                             </div>
                                                                             <div className="flex items-center gap-2">
                                                                                 <button onClick={() => { setEditingChatId(null); setEditContent(''); setEditAttachment(undefined); }} className="text-xs text-stone-400 hover:text-stone-600 px-3 py-1.5 rounded-lg transition-colors">{t('common.cancel')}</button>
+                                                                                <button onClick={() => handleDeleteChat(chat.id, msg.id)} className="text-xs text-red-400 hover:text-red-600 px-3 py-1.5 rounded-lg transition-colors">Delete</button>
                                                                                 <button onClick={() => handleEditChat(chat.id, msg.id)} disabled={isUploadingEditAttachment} className="text-xs text-white bg-stone-900 hover:bg-stone-800 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50">{t('common.save')}</button>
                                                                             </div>
                                                                         </div>

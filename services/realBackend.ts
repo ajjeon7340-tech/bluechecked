@@ -19,7 +19,7 @@ const MSG_CACHE_TTL = 60000; // 60 seconds (subscription handles real-time updat
 
 // Per-message chat_lines cache (longer TTL since chat content rarely changes)
 const _chatLinesCache = new Map<string, { lines: ChatMessage[]; ts: number }>();
-const CHAT_LINES_TTL = 30000; // 30 seconds
+const CHAT_LINES_TTL = 300000; // 5 minutes (invalidated on reply/edit)
 
 export const invalidateMsgCache = () => { _msgCache = null; _msgCacheRefreshing = false; };
 export const invalidateChatLinesCache = (messageId: string) => { _chatLinesCache.delete(messageId); };
@@ -1240,6 +1240,21 @@ export const editChatMessage = async (chatLineId: string, newContent: string, at
     }
 };
 
+export const deleteChatLine = async (chatLineId: string): Promise<void> => {
+    if (!isConfigured) return;
+
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) throw new Error("Not logged in");
+
+    const { error } = await supabase
+        .from('chat_lines')
+        .delete()
+        .eq('id', chatLineId)
+        .eq('sender_id', session.session.user.id);
+
+    if (error) throw error;
+};
+
 export const cancelMessage = async (messageId: string): Promise<void> => {
     if (!isConfigured) return MockBackend.cancelMessage(messageId);
     invalidateMsgCache();
@@ -1534,16 +1549,32 @@ export const getProAnalytics = async (): Promise<ProAnalyticsData | null> => {
         };
     }
 
-    // 1. Traffic Sources
+    // 1. Traffic Sources — normalize into 5 fixed categories
+    const normalizeSource = (raw: string): string => {
+        const s = (raw || '').toLowerCase();
+        if (s.includes('google') || s.includes('bing') || s.includes('search')) return 'Google Search';
+        if (s.includes('instagram')) return 'Instagram';
+        if (s.includes('tiktok')) return 'TikTok';
+        if (s.includes('twitter') || s.includes('x.com')) return 'Twitter';
+        return 'Direct Link';
+    };
+    const SOURCE_COLORS: Record<string, string> = {
+        'Google Search': '#4285F4',
+        'Instagram': '#E1306C',
+        'TikTok': '#000000',
+        'Twitter': '#1DA1F2',
+        'Direct Link': '#64748b',
+    };
+
     const views = events.filter(e => e.event_type === 'VIEW');
     const sources: Record<string, number> = {};
     views.forEach(v => {
-        const s = v.source || 'Direct Link';
+        const s = normalizeSource(v.source || '');
         sources[s] = (sources[s] || 0) + 1;
     });
 
     const trafficSources = Object.entries(sources)
-        .map(([name, value]) => ({ name, value, color: getColorForSource(name) }))
+        .map(([name, value]) => ({ name, value, color: SOURCE_COLORS[name] || '#64748b' }))
         .sort((a, b) => b.value - a.value)
         .slice(0, 5);
 
@@ -1580,8 +1611,9 @@ export const getProAnalytics = async (): Promise<ProAnalyticsData | null> => {
     // For MVP, we'll skip revenue attribution here or do a separate query if needed.
     // Assuming revenue is 0 for links.
 
+    const profileViews = views.length || 1;
     const topAssets = Object.entries(assetStats)
-        .map(([id, stat]) => ({ id, title: stat.title, type: stat.type, clicks: stat.clicks, revenue: stat.revenue, ctr: stat.clicks > 0 ? `${((stat.revenue > 0 ? 1 : 0) / stat.clicks * 100).toFixed(1)}%` : '0%' }))
+        .map(([id, stat]) => ({ id, title: stat.title, type: stat.type, clicks: stat.clicks, revenue: stat.revenue, ctr: stat.clicks > 0 ? `${(stat.clicks / profileViews * 100).toFixed(1)}%` : '0%' }))
         .sort((a, b) => b.clicks - a.clicks)
         .slice(0, 5);
 
