@@ -619,10 +619,11 @@ const enrichCreatorProfile = async (data: any): Promise<CreatorProfile> => {
         },
         customQuestions: [],
         tags: [],
-        links: data.links || [],
+        links: (data.links || []).filter((l: any) => l.id !== '__diem_config__'),
         products: data.products || [],
         platforms: data.platforms || [],
-        isPremium: data.is_premium || false
+        isPremium: data.is_premium || false,
+        isDiemHighlighted: (data.links || []).find((l: any) => l.id === '__diem_config__')?.isPromoted || false,
     };
 };
 
@@ -740,10 +741,11 @@ export const getCreatorProfileFast = async (creatorId?: string): Promise<Creator
         },
         customQuestions: [],
         tags: [],
-        links: data.links || [],
+        links: (data.links || []).filter((l: any) => l.id !== '__diem_config__'),
         products: data.products || [],
         platforms: data.platforms || [],
-        isPremium: data.is_premium || false
+        isPremium: data.is_premium || false,
+        isDiemHighlighted: (data.links || []).find((l: any) => l.id === '__diem_config__')?.isPromoted || false,
     };
 };
 
@@ -752,6 +754,11 @@ export const updateCreatorProfile = async (profile: CreatorProfile): Promise<Cre
 
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error("Not logged in");
+
+    const linksToSave = [
+        { id: '__diem_config__', title: '', url: '', isPromoted: profile.isDiemHighlighted || false },
+        ...(profile.links || []),
+    ];
 
     const { error } = await supabase
         .from('profiles')
@@ -765,7 +772,7 @@ export const updateCreatorProfile = async (profile: CreatorProfile): Promise<Cre
             avatar_url: profile.avatarUrl,
             response_window_hours: profile.responseWindowHours,
             platforms: profile.platforms,
-            links: profile.links,
+            links: linksToSave,
             products: profile.products,
             is_premium: profile.isPremium
         })

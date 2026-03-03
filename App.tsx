@@ -142,7 +142,23 @@ function App() {
             const user = await checkAndSyncSession();
             if (user) {
                 setCurrentUser(user);
-                
+
+                // If the user came from a creator's profile page, return them there
+                const returnToCreator = localStorage.getItem('bluechecked_return_to_creator');
+                if (returnToCreator) {
+                    localStorage.removeItem('bluechecked_return_to_creator');
+                    try {
+                        const profile = await getCreatorProfileByHandle(returnToCreator);
+                        setCreator(profile);
+                        window.history.replaceState({ page: 'PROFILE', creatorId: profile.id }, '', `/${returnToCreator}`);
+                        setCurrentPage('PROFILE');
+                        setIsLoading(false);
+                        return;
+                    } catch (e) {
+                        // Creator not found — fall through to normal navigation
+                    }
+                }
+
                 if (user.role === 'CREATOR') {
                     const profile = await loadCreatorData(user.id, false);
                     
@@ -243,10 +259,27 @@ function App() {
   );
 
   const navigateToDashboard = async (user: CurrentUser) => {
+      // If the user came from a creator's profile page, return them there
+      const returnToCreator = localStorage.getItem('bluechecked_return_to_creator');
+      if (returnToCreator) {
+          localStorage.removeItem('bluechecked_return_to_creator');
+          try {
+              setIsLoading(true);
+              const profile = await getCreatorProfileByHandle(returnToCreator);
+              setCreator(profile);
+              window.history.replaceState({ page: 'PROFILE', creatorId: profile.id }, '', `/${returnToCreator}`);
+              setCurrentPage('PROFILE');
+              setIsLoading(false);
+              return;
+          } catch (e) {
+              // Creator not found — fall through to normal navigation
+          }
+      }
+
       if (user.role === 'CREATOR') {
           setIsLoading(true);
           const profile = await loadCreatorData(user.id, false);
-          
+
           if (!profile) {
               setIsLoading(false);
               return;
@@ -386,6 +419,12 @@ function App() {
             }
           }}
           onLoginRequest={() => {
+              if (creator) {
+                  const handle = (creator.handle && creator.handle !== '@user')
+                      ? creator.handle.replace('@', '')
+                      : creator.displayName;
+                  localStorage.setItem('bluechecked_return_to_creator', handle);
+              }
               window.history.pushState({ page: 'LOGIN' }, '', '/login');
               setCurrentPage('LOGIN');
           }}

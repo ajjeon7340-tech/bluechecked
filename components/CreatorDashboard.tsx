@@ -3134,6 +3134,25 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <p className="text-[10px] text-stone-400 mt-2">These icons will appear on your public profile.</p>
                             </div>
                             
+                            {/* DIEM Request Highlight Toggle */}
+                            <div className="flex items-center justify-between p-4 bg-stone-50 rounded-2xl border border-stone-200">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${editedCreator.isDiemHighlighted ? 'bg-indigo-100 text-indigo-600' : 'bg-white text-stone-400 border border-stone-200'}`}>
+                                        <Sparkles size={16} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-stone-800">Highlight DIEM Request</p>
+                                        <p className="text-xs text-stone-400">Makes your request section stand out on your profile</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setEditedCreator({ ...editedCreator, isDiemHighlighted: !editedCreator.isDiemHighlighted })}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none flex-shrink-0 ${editedCreator.isDiemHighlighted ? 'bg-indigo-500' : 'bg-stone-200'}`}
+                                >
+                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${editedCreator.isDiemHighlighted ? 'translate-x-6' : 'translate-x-1'}`} />
+                                </button>
+                            </div>
+
                             {/* Featured Links Section - UPDATED with Digital Products */}
                             <div>
                                 <label className="block text-sm font-medium text-stone-700 mb-2">Featured Links & Products</label>

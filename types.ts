@@ -51,10 +51,11 @@ export interface CreatorProfile {
   links: AffiliateLink[];
   products: Product[]; 
   likesCount: number;
-  isPremium?: boolean; 
-  platforms?: (string | { id: string; url: string })[]; 
-  rankingTitle?: string; 
-  bannerGradient?: string; 
+  isPremium?: boolean;
+  isDiemHighlighted?: boolean;
+  platforms?: (string | { id: string; url: string })[];
+  rankingTitle?: string;
+  bannerGradient?: string;
   stats: {
     responseTimeAvg: string;
     replyRate: string;
