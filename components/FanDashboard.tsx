@@ -933,8 +933,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
             {showNotifications && (
                 <>
-                    <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)}></div>
-                    <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                    <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)}></div>
+                    <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                         <div className="px-4 py-3 border-b border-stone-50 bg-stone-50/50 flex justify-between items-center">
                             <h3 className="font-bold text-sm text-stone-900">{t('creator.notifications')}</h3>
                             <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{t('fan.updates', { count: notifications.length })}</span>

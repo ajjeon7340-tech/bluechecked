@@ -1210,8 +1210,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
             {showNotifications && (
                 <>
-                    <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)}></div>
-                    <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                    <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)}></div>
+                    <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                         <div className="px-4 py-3 border-b border-stone-50 bg-stone-50/50 flex justify-between items-center">
                             <h3 className="font-bold text-sm text-stone-900">{t('creator.notifications')}</h3>
                             <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{notifications.length} {t('creator.notifications')}</span>
@@ -1350,11 +1350,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <div className="space-y-8 max-w-5xl mx-auto">
                     {/* Welcome Header - Editorial Style */}
                     <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-stone-400 mb-1">{t('creator.overview')}</p>
-                            <h1 className="text-2xl sm:text-3xl font-semibold text-stone-900 tracking-tight">{creator.displayName}</h1>
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0"><Menu size={24} /></button>
+                            <div>
+                                <p className="text-sm font-medium text-stone-400 mb-1">{t('creator.overview')}</p>
+                                <h1 className="text-2xl sm:text-3xl font-semibold text-stone-900 tracking-tight">{creator.displayName}</h1>
+                            </div>
                         </div>
-                        <TopNav />
+                        <TopNav hideBurger />
                     </div>
 
                     {/* Stats Grid */}
@@ -1546,17 +1549,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                      {/* Header Controls */}
                      <div className="flex flex-col gap-4">
                          <div className="flex items-center justify-between">
-                             <div>
-                                 <h2 className="text-xl sm:text-2xl font-bold text-stone-900">
-                                     {currentView === 'FINANCE' ? t('creator.financeCredits') : t('creator.activityStatistics')}
-                                 </h2>
-                                 <p className="text-stone-500 text-xs sm:text-sm">
-                                     {currentView === 'FINANCE'
-                                        ? t('creator.manageEarnings')
-                                        : t('creator.trackPerformance')}
-                                 </p>
+                             <div className="flex items-center gap-2">
+                                 <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0"><Menu size={24} /></button>
+                                 <div>
+                                     <h2 className="text-xl sm:text-2xl font-bold text-stone-900">
+                                         {currentView === 'FINANCE' ? t('creator.financeCredits') : t('creator.activityStatistics')}
+                                     </h2>
+                                     <p className="text-stone-500 text-xs sm:text-sm">
+                                         {currentView === 'FINANCE'
+                                            ? t('creator.manageEarnings')
+                                            : t('creator.trackPerformance')}
+                                     </p>
+                                 </div>
                              </div>
-                             <TopNav />
+                             <TopNav hideBurger />
                          </div>
 
                          {currentView === 'STATISTICS' && (
@@ -1983,13 +1989,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <div className="max-w-6xl mx-auto animate-in fade-in relative min-h-[80vh] overflow-x-hidden">
                     {/* Header - Always visible */}
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-6 sm:mb-8">
-                        <div>
-                            <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.analyticsOverview')}</h2>
-                            <p className="text-stone-500 text-xs sm:text-sm">{t('creator.performanceMetrics')}</p>
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0"><Menu size={24} /></button>
+                            <div>
+                                <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.analyticsOverview')}</h2>
+                                <p className="text-stone-500 text-xs sm:text-sm">{t('creator.performanceMetrics')}</p>
+                            </div>
                         </div>
                         <div className="flex items-center gap-3">
                             <button className="px-3 py-1.5 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm hover:bg-stone-50">{t('creator.exportReport')}</button>
-                            <TopNav />
+                            <TopNav hideBurger />
                         </div>
                     </div>
 
@@ -2927,8 +2936,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             {currentView === 'SETTINGS' && (
                 <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.profileSettings')}</h2>
-                        <TopNav />
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0"><Menu size={24} /></button>
+                            <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.profileSettings')}</h2>
+                        </div>
+                        <TopNav hideBurger />
                     </div>
                     {/* ... (Existing Settings Code) ... */}
                     {/* Magical Success Message */}
@@ -3368,10 +3380,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
             {/* --- VIEW: NOTIFICATIONS --- */}
             {currentView === 'NOTIFICATIONS' && (
-                <div className="p-6 max-w-3xl mx-auto animate-in fade-in space-y-6">
+                <div className="max-w-3xl mx-auto animate-in fade-in space-y-6">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.notifications')}</h2>
-                        <TopNav />
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0"><Menu size={24} /></button>
+                            <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.notifications')}</h2>
+                        </div>
+                        <TopNav hideBurger />
                     </div>
                     {(() => {
                         const totalPages = Math.ceil(notifications.length / ITEMS_PER_PAGE);
@@ -3445,10 +3460,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
             {/* --- VIEW: REVIEWS --- */}
             {currentView === 'REVIEWS' && (
-                <div className="p-6 max-w-5xl mx-auto animate-in fade-in space-y-6">
+                <div className="max-w-5xl mx-auto animate-in fade-in space-y-6">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.reviews')}</h2>
-                        <TopNav />
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0"><Menu size={24} /></button>
+                            <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.reviews')}</h2>
+                        </div>
+                        <TopNav hideBurger />
                     </div>
                     {(() => {
                         const totalPages = Math.ceil(reviews.length / ITEMS_PER_PAGE);
@@ -3513,10 +3531,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
             {/* --- VIEW: SUPPORT --- */}
             {currentView === 'SUPPORT' && (
-                <div className="p-6 max-w-2xl mx-auto animate-in fade-in flex flex-col items-center min-h-[500px] gap-6">
+                <div className="max-w-2xl mx-auto animate-in fade-in flex flex-col items-center min-h-[500px] gap-6">
                      <div className="w-full flex items-center justify-between">
-                         <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.support')}</h2>
-                         <TopNav />
+                         <div className="flex items-center gap-2">
+                             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0"><Menu size={24} /></button>
+                             <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.support')}</h2>
+                         </div>
+                         <TopNav hideBurger />
                      </div>
                      <div className="bg-white p-8 rounded-3xl border border-stone-200 shadow-xl shadow-stone-200/50 text-center space-y-6 max-w-md w-full relative overflow-hidden">
                          {/* Decorative Background */}
