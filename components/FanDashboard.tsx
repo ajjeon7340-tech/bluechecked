@@ -287,11 +287,19 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
     if (lines.length === 0) return;
     const initialMsg = msg.conversation[0];
     const hasInitial = lines.some(
-      l => l.role === 'FAN' && l.content === initialMsg.content &&
-        Math.abs(new Date(l.timestamp).getTime() - new Date(initialMsg.timestamp).getTime()) < 5000
+      l => l.role === 'FAN' &&
+        (l.content?.trim() === initialMsg.content?.trim() ||
+          Math.abs(new Date(l.timestamp).getTime() - new Date(initialMsg.timestamp).getTime()) < 8000)
     );
-    const fullConv = hasInitial ? lines : [initialMsg, ...lines];
+    let fullConv = hasInitial ? lines : [initialMsg, ...lines];
     fullConv.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    // Deduplicate: same role+content (trimmed) within 5s
+    fullConv = fullConv.filter((c, i, arr) =>
+      i === arr.findIndex(x =>
+        x.role === c.role && x.content?.trim() === c.content?.trim() &&
+        Math.abs(new Date(x.timestamp).getTime() - new Date(c.timestamp).getTime()) < 5000
+      )
+    );
     setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, conversation: fullConv } : m));
   };
 

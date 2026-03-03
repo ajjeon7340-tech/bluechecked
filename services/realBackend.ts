@@ -14,13 +14,14 @@ export const isBackendConfigured = () => isConfigured;
 let _msgCache: Message[] | null = null;
 let _msgCacheTime = 0;
 let _msgCacheUserId = '';
-const MSG_CACHE_TTL = 8000; // 8 seconds
+let _msgCacheRefreshing = false;
+const MSG_CACHE_TTL = 60000; // 60 seconds (subscription handles real-time updates)
 
 // Per-message chat_lines cache (longer TTL since chat content rarely changes)
 const _chatLinesCache = new Map<string, { lines: ChatMessage[]; ts: number }>();
 const CHAT_LINES_TTL = 30000; // 30 seconds
 
-export const invalidateMsgCache = () => { _msgCache = null; };
+export const invalidateMsgCache = () => { _msgCache = null; _msgCacheRefreshing = false; };
 export const invalidateChatLinesCache = (messageId: string) => { _chatLinesCache.delete(messageId); };
 
 const getColorForSource = (source: string) => {
@@ -129,21 +130,20 @@ const mapDbMessageToAppMessage = (m: any, currentUserId: string): Message => {
         attachmentUrl: m.attachment_url
     };
 
-    const hasInitial = lines.some(l => 
-        l.role === 'FAN' && 
-        l.content === m.content && 
-        Math.abs(new Date(l.timestamp).getTime() - new Date(m.created_at).getTime()) < 5000
+    const hasInitial = lines.some(l =>
+        l.role === 'FAN' &&
+        (l.content?.trim() === m.content?.trim() ||
+          Math.abs(new Date(l.timestamp).getTime() - new Date(m.created_at).getTime()) < 8000)
     );
 
     conversation = hasInitial ? lines : [initialMsg, ...lines];
 
-    // 3. Sort & Deduplicate
+    // 3. Sort & Deduplicate (trimmed content, within 5s window)
     conversation.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-    
-    // Remove duplicates (same content/role within 2s)
-    conversation = conversation.filter((msg, index, self) => 
+    conversation = conversation.filter((msg, index, self) =>
         index === self.findIndex((t) => (
-            t.role === msg.role && t.content === msg.content && Math.abs(new Date(t.timestamp).getTime() - new Date(msg.timestamp).getTime()) < 2000
+            t.role === msg.role && t.content?.trim() === msg.content?.trim() &&
+            Math.abs(new Date(t.timestamp).getTime() - new Date(msg.timestamp).getTime()) < 5000
         ))
     );
 
@@ -801,24 +801,28 @@ export const updateCreatorProfile = async (profile: CreatorProfile): Promise<Cre
 export const getMessages = async (): Promise<Message[]> => {
     if (!isConfigured) return MockBackend.getMessages();
 
-    const { data: session } = await supabase.auth.getSession();
-    if (!session.session) return [];
+    const now = Date.now();
 
-    const userId = session.session.user.id;
-
-    // Return cache immediately if fresh, then refresh in background
-    if (_msgCache && _msgCacheUserId === userId && Date.now() - _msgCacheTime < MSG_CACHE_TTL) {
-        // Trigger background refresh (don't await)
-        fetchMessagesFromDb(userId).then(fresh => {
-            _msgCache = fresh;
-            _msgCacheTime = Date.now();
-        }).catch(() => {});
+    // Fast path: return cache immediately without auth round-trip, refresh in background (once)
+    if (_msgCache && _msgCacheUserId && now - _msgCacheTime < MSG_CACHE_TTL) {
+        if (!_msgCacheRefreshing) {
+            _msgCacheRefreshing = true;
+            fetchMessagesFromDb(_msgCacheUserId).then(fresh => {
+                _msgCache = fresh;
+                _msgCacheTime = Date.now();
+            }).catch(() => {}).finally(() => { _msgCacheRefreshing = false; });
+        }
         return _msgCache;
     }
 
+    // Cache miss: need auth to identify user
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) return [];
+    const userId = session.session.user.id;
+
     const fresh = await fetchMessagesFromDb(userId);
     _msgCache = fresh;
-    _msgCacheTime = Date.now();
+    _msgCacheTime = now;
     _msgCacheUserId = userId;
     return fresh;
 };
@@ -854,7 +858,7 @@ const fetchMessagesFromDb = async (userId: string): Promise<Message[]> => {
         `)
         .or(`sender_id.eq.${userId},creator_id.eq.${userId}`)
         .order('created_at', { ascending: false })
-        .limit(200);
+        .limit(100);
 
     if (error) {
         console.error("Error fetching messages:", error);

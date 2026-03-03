@@ -137,6 +137,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   // Inbox Filter
   const [inboxFilter, setInboxFilter] = useState<InboxFilter>('ALL');
+  const [inboxSortOrder, setInboxSortOrder] = useState<'LATEST' | 'COUNT'>('LATEST');
 
   // Withdrawal State
   const [isWithdrawing, setIsWithdrawing] = useState(false);
@@ -530,11 +531,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     if (lines.length === 0) return;
     const initialMsg = msg.conversation[0]; // always exists (built from parent row)
     const hasInitial = lines.some(
-      l => l.role === 'FAN' && l.content === initialMsg.content &&
-        Math.abs(new Date(l.timestamp).getTime() - new Date(initialMsg.timestamp).getTime()) < 5000
+      l => l.role === 'FAN' &&
+        (l.content?.trim() === initialMsg.content?.trim() ||
+          Math.abs(new Date(l.timestamp).getTime() - new Date(initialMsg.timestamp).getTime()) < 8000)
     );
-    const fullConv = hasInitial ? lines : [initialMsg, ...lines];
+    let fullConv = hasInitial ? lines : [initialMsg, ...lines];
     fullConv.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    // Deduplicate: same role+content (trimmed) within 5s
+    fullConv = fullConv.filter((c, i, arr) =>
+      i === arr.findIndex(x =>
+        x.role === c.role && x.content?.trim() === c.content?.trim() &&
+        Math.abs(new Date(x.timestamp).getTime() - new Date(c.timestamp).getTime()) < 5000
+      )
+    );
     setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, conversation: fullConv } : m));
   };
 
@@ -794,7 +803,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
         await Promise.all(unread.map(m => markMessageAsRead(m.id)));
     }
     setReplyText(''); // Reset reply input for fresh chat
-    setReplyAttachment(null);
+    setReplyAttachments([]);
     setConfirmRejectId(null);
     if (currentView !== 'INBOX') {
         setCurrentView('INBOX');
@@ -887,10 +896,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
         const combinedAttachment = replyAttachments.length > 0 ? replyAttachments.join('|||') : null;
         await replyToMessage(activeMessage.id, replyText, isComplete, combinedAttachment);
 
-        // Directly hydrate the open conversation — don't call loadData(true) here since
-        // the subscription will handle the background DB refresh (prevents double-hydration race)
+        // Kick off hydration immediately (fire-and-forget — subscription also does a background sync)
         invalidateChatLinesCache(activeMessage.id);
-        await hydrateConversation({ ...activeMessage, conversation: activeMessage.conversation.slice(0, 1) });
+        hydrateConversation({ ...activeMessage, conversation: activeMessage.conversation.slice(0, 1) });
 
         // Also update the message metadata optimistically (status/replyAt) so UI is consistent
         if (isComplete) {
@@ -1212,17 +1220,23 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     return { text: `${hours}h left`, color: 'text-stone-600', bg: 'bg-stone-100', border: 'border-stone-200', iconColor: 'text-stone-500' };
   };
 
-  const filteredGroups = useMemo(() => conversationGroups.filter(group => {
-      const leftAt = leftChatrooms[group.senderEmail];
-      if (leftAt && new Date(group.latestMessage.createdAt).getTime() < leftAt) return false;
-      const status = group.latestMessage.status;
+  const filteredGroups = useMemo(() => {
+      const filtered = conversationGroups.filter(group => {
+          const leftAt = leftChatrooms[group.senderEmail];
+          if (leftAt && new Date(group.latestMessage.createdAt).getTime() < leftAt) return false;
+          const status = group.latestMessage.status;
 
-      if (inboxFilter === 'ALL') return true;
-      if (inboxFilter === 'PENDING') return status === 'PENDING';
-      if (inboxFilter === 'REPLIED') return status === 'REPLIED';
-      if (inboxFilter === 'REJECTED') return status === 'EXPIRED' || status === 'CANCELLED';
-      return false;
-  }), [conversationGroups, inboxFilter, leftChatrooms]);
+          if (inboxFilter === 'ALL') return true;
+          if (inboxFilter === 'PENDING') return status === 'PENDING';
+          if (inboxFilter === 'REPLIED') return status === 'REPLIED';
+          if (inboxFilter === 'REJECTED') return status === 'EXPIRED' || status === 'CANCELLED';
+          return false;
+      });
+      if (inboxSortOrder === 'COUNT') {
+          return [...filtered].sort((a, b) => b.messageCount - a.messageCount);
+      }
+      return filtered;
+  }, [conversationGroups, inboxFilter, leftChatrooms, inboxSortOrder]);
 
   const hasManualCreatorReply = activeMessage 
     ? activeMessage.conversation.some(m => m.role === 'CREATOR' && !m.id.endsWith('-auto'))
@@ -2311,7 +2325,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     <div className="flex flex-1 min-h-0 overflow-x-hidden">
                     {/* List Column */}
                     <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col bg-white ${selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
-                        <div className="p-3 border-b border-stone-100">
+                        <div className="p-3 border-b border-stone-100 space-y-2">
                             <div className="flex flex-wrap gap-1 bg-stone-100/60 p-1 rounded-lg">
                                 {(['ALL', 'PENDING', 'REPLIED', 'REJECTED'] as const).map(f => (
                                     <button
@@ -2322,6 +2336,23 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         {f}
                                     </button>
                                 ))}
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] text-stone-400 font-medium">Sort:</span>
+                                <div className="flex gap-1 bg-stone-100/60 p-0.5 rounded-md">
+                                    <button
+                                        onClick={() => setInboxSortOrder('LATEST')}
+                                        className={`px-2 py-1 text-[10px] font-semibold rounded transition-all ${inboxSortOrder === 'LATEST' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+                                    >
+                                        Latest
+                                    </button>
+                                    <button
+                                        onClick={() => setInboxSortOrder('COUNT')}
+                                        className={`px-2 py-1 text-[10px] font-semibold rounded transition-all flex items-center gap-0.5 ${inboxSortOrder === 'COUNT' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+                                    >
+                                        <Coins size={9} /> Sessions
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div className="flex-1 overflow-y-auto">
