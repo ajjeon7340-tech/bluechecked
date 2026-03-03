@@ -113,6 +113,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [selectedSenderEmail, setSelectedSenderEmail] = useState<string | null>(null);
   const selectedSenderEmailRef = useRef<string | null>(null);
+  const subscriptionDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [historicalStats, setHistoricalStats] = useState<MonthlyStat[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
@@ -470,12 +471,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   useEffect(() => {
     loadData();
 
-    // Real-time Subscription
+    // Real-time Subscription (debounced to prevent duplicate rapid fires)
     if (currentUser) {
         const { unsubscribe } = subscribeToMessages(currentUser.id, () => {
-            loadData(true);
+            if (subscriptionDebounceRef.current) clearTimeout(subscriptionDebounceRef.current);
+            subscriptionDebounceRef.current = setTimeout(() => loadData(true), 300);
         });
-        return () => unsubscribe();
+        return () => { unsubscribe(); if (subscriptionDebounceRef.current) clearTimeout(subscriptionDebounceRef.current); };
     }
   }, [currentUser]);
 
@@ -549,14 +551,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     // Fetch message headers (chat_lines loaded lazily per conversation)
     const msgs = await getMessages();
 
-    // Merge: preserve already-hydrated conversations when status/replyAt unchanged
+    // Merge: preserve already-hydrated conversations from prev state (take fresh metadata from DB)
     setMessages(prev => {
       if (prev.length === 0) return msgs;
       const prevMap = new Map(prev.map(m => [m.id, m]));
       return msgs.map(m => {
         const prevMsg = prevMap.get(m.id);
-        if (prevMsg && prevMsg.conversation.length > 1 &&
-            prevMsg.status === m.status && prevMsg.replyAt === m.replyAt) {
+        if (prevMsg && prevMsg.conversation.length > 1) {
           return { ...m, conversation: prevMsg.conversation };
         }
         return m;
@@ -883,11 +884,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setIsSendingReply(true);
 
     try {
-        await new Promise(r => setTimeout(r, 800)); // Simulate delay
-
         const combinedAttachment = replyAttachments.length > 0 ? replyAttachments.join('|||') : null;
         await replyToMessage(activeMessage.id, replyText, isComplete, combinedAttachment);
-        await loadData(true);
+
+        // Directly hydrate the open conversation — don't call loadData(true) here since
+        // the subscription will handle the background DB refresh (prevents double-hydration race)
+        invalidateChatLinesCache(activeMessage.id);
+        await hydrateConversation({ ...activeMessage, conversation: activeMessage.conversation.slice(0, 1) });
+
+        // Also update the message metadata optimistically (status/replyAt) so UI is consistent
+        if (isComplete) {
+            const replyAt = new Date().toISOString();
+            setMessages(prev => prev.map(m => m.id === activeMessage.id ? { ...m, status: 'REPLIED', replyAt } : m));
+        }
+
         setReplyText('');
         setReplyAttachments([]);
 

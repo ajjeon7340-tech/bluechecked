@@ -67,6 +67,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
   const selectedCreatorIdRef = useRef<string | null>(null);
+  const subscriptionDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [productFilter, setProductFilter] = useState<'ALL' | 'DOCUMENT' | 'IMAGE' | 'VIDEO'>('ALL');
   
   // Navigation State
@@ -223,12 +224,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         });
     }
 
-    // Real-time Subscription
+    // Real-time Subscription (debounced to prevent duplicate rapid fires)
     if (currentUser) {
         const { unsubscribe } = subscribeToMessages(currentUser.id, () => {
-            loadMessages(true);
+            if (subscriptionDebounceRef.current) clearTimeout(subscriptionDebounceRef.current);
+            subscriptionDebounceRef.current = setTimeout(() => loadMessages(true), 300);
         });
-        return () => unsubscribe();
+        return () => { unsubscribe(); if (subscriptionDebounceRef.current) clearTimeout(subscriptionDebounceRef.current); };
     }
   }, [currentUser]);
 
@@ -310,14 +312,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
     myMessages.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     const freshMessages = myMessages.length > 0 ? myMessages : allMessages.slice(0, 2);
 
-    // Merge: preserve already-hydrated conversations when status/replyAt unchanged
+    // Merge: preserve already-hydrated conversations from prev state (take fresh metadata from DB)
     setMessages(prev => {
       if (prev.length === 0) return freshMessages;
       const prevMap = new Map(prev.map(m => [m.id, m]));
       return freshMessages.map(m => {
         const prevMsg = prevMap.get(m.id);
-        if (prevMsg && prevMsg.conversation.length > 1 &&
-            prevMsg.status === m.status && prevMsg.replyAt === m.replyAt) {
+        if (prevMsg && prevMsg.conversation.length > 1) {
           return { ...m, conversation: prevMsg.conversation };
         }
         return m;
@@ -599,7 +600,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
               : undefined;
           const followUpPrice = currentCreator?.pricePerMessage ?? latestMessage.amount;
           await sendMessage(latestMessage.creatorId || '', latestMessage.senderName, latestMessage.senderEmail, followUpText, followUpPrice, attachments);
-          await loadMessages(true);
+          // Subscription will refresh message list via debounced loadMessages(true)
           setShowFollowUpInput(false);
           setFollowUpText('');
           setFollowUpAttachments([]);

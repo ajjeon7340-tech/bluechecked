@@ -1109,27 +1109,25 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
             }
         }
 
-        // Touch the message to trigger realtime updates for listeners (Fan Dashboard)
-        // Also set is_read to false so the recipient (Fan) sees it as unread
-        await supabase.from('messages').update({ 
+        // Touch message to trigger realtime + mark unread (merged with status update below if isComplete)
+        if (!isComplete) {
+            await supabase.from('messages').update({ is_read: false, updated_at: new Date().toISOString() }).eq('id', messageId);
+        }
+    }
+
+    // 2. Status update for complete replies (single update fires subscription once)
+    if (isComplete) {
+        const { error: msgError } = await supabase.from('messages').update({
+            status: 'REPLIED',
+            reply_at: new Date().toISOString(),
             is_read: false,
             updated_at: new Date().toISOString()
         }).eq('id', messageId);
+        if (msgError) throw msgError;
     }
 
-    // 2. Update Status if Complete
+    // 3. Credit transfer for complete replies
     if (isComplete) {
-        // In a real app, use RPC to atomically transfer held credits to Creator's balance here
-        // For now, just update status
-        const { error: msgError } = await supabase
-            .from('messages')
-            .update({ 
-                status: 'REPLIED', 
-                reply_at: new Date().toISOString() 
-            })
-            .eq('id', messageId);
-            
-        if (msgError) throw msgError;
         
         // Add credits to creator
         const { data: creator } = await supabase.from('profiles').select('credits').eq('id', session.session.user.id).single();
