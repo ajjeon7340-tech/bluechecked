@@ -2342,13 +2342,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="flex gap-1 bg-stone-100/60 p-0.5 rounded-md">
                                     <button
                                         onClick={() => setInboxSortOrder('LATEST')}
-                                        className={`px-2 py-1 text-[10px] font-semibold rounded transition-all ${inboxSortOrder === 'LATEST' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+                                        className={`px-2 py-1 text-[10px] font-semibold rounded transition-all ${inboxSortOrder === 'LATEST' ? 'bg-stone-800 text-white shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
                                     >
                                         Latest
                                     </button>
                                     <button
                                         onClick={() => setInboxSortOrder('COUNT')}
-                                        className={`px-2 py-1 text-[10px] font-semibold rounded transition-all flex items-center gap-0.5 ${inboxSortOrder === 'COUNT' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+                                        className={`px-2 py-1 text-[10px] font-semibold rounded transition-all flex items-center gap-0.5 ${inboxSortOrder === 'COUNT' ? 'bg-stone-800 text-white shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
                                     >
                                         <Coins size={9} /> Sessions
                                     </button>
