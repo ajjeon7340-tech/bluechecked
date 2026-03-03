@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CreatorProfile, Message, DashboardStats, MonthlyStat, AffiliateLink, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
-import { getMessages, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, Withdrawal } from '../services/realBackend';
+import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, Withdrawal } from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { 
@@ -112,6 +112,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [selectedSenderEmail, setSelectedSenderEmail] = useState<string | null>(null);
+  const selectedSenderEmailRef = useRef<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [historicalStats, setHistoricalStats] = useState<MonthlyStat[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
@@ -277,6 +278,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       if (!editContent.trim() && !editAttachment) return;
       try {
           await editChatMessage(chatId, editContent.trim(), editAttachment);
+          invalidateChatLinesCache(messageId);
           setMessages(prev => prev.map(m => {
               if (m.id !== messageId) return m;
               return {
@@ -517,13 +519,62 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setEditedCreator(creator);
   }, [creator]);
 
+  // Keep ref in sync for use inside async callbacks
+  useEffect(() => { selectedSenderEmailRef.current = selectedSenderEmail; }, [selectedSenderEmail]);
+
+  // Lazily hydrate full conversation for a message when it's opened
+  const hydrateConversation = async (msg: Message) => {
+    const lines = await getChatLines(msg.id);
+    if (lines.length === 0) return;
+    const initialMsg = msg.conversation[0]; // always exists (built from parent row)
+    const hasInitial = lines.some(
+      l => l.role === 'FAN' && l.content === initialMsg.content &&
+        Math.abs(new Date(l.timestamp).getTime() - new Date(initialMsg.timestamp).getTime()) < 5000
+    );
+    const fullConv = hasInitial ? lines : [initialMsg, ...lines];
+    fullConv.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, conversation: fullConv } : m));
+  };
+
+  // When a thread is selected, hydrate all its messages' conversations
+  useEffect(() => {
+    if (!selectedSenderEmail) return;
+    const threadMsgs = messages.filter(m => m.creatorId === creator.id && m.senderEmail === selectedSenderEmail);
+    threadMsgs.forEach(msg => { if (msg.conversation.length <= 1) hydrateConversation(msg); });
+  }, [selectedSenderEmail]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const loadData = async (silent = false) => {
     if (!silent) setIsLoading(true);
 
-    // Fetch messages first (critical for inbox), then everything else in parallel
+    // Fetch message headers (chat_lines loaded lazily per conversation)
     const msgs = await getMessages();
-    setMessages(msgs);
+
+    // Merge: preserve already-hydrated conversations when status/replyAt unchanged
+    setMessages(prev => {
+      if (prev.length === 0) return msgs;
+      const prevMap = new Map(prev.map(m => [m.id, m]));
+      return msgs.map(m => {
+        const prevMsg = prevMap.get(m.id);
+        if (prevMsg && prevMsg.conversation.length > 1 &&
+            prevMsg.status === m.status && prevMsg.replyAt === m.replyAt) {
+          return { ...m, conversation: prevMsg.conversation };
+        }
+        return m;
+      });
+    });
     if (!silent) setIsLoading(false);
+
+    // After a silent (real-time) refresh, re-hydrate the open conversation
+    if (silent) {
+      const openEmail = selectedSenderEmailRef.current;
+      if (openEmail) {
+        const threadMsgs = msgs.filter(m => m.creatorId === creator.id && m.senderEmail === openEmail);
+        threadMsgs.forEach(msg => {
+          invalidateChatLinesCache(msg.id);
+          hydrateConversation(msg);
+        });
+      }
+    }
 
     // Load Stripe, withdrawals, and trend data in parallel (non-blocking)
     const promises: Promise<void>[] = [

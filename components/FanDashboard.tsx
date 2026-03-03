@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { CurrentUser, Message, CreatorProfile } from '../types';
 import { Button } from './Button';
 import { DiemLogo, CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download, Smile, Verified } from './Icons';
-import { getMessages, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createCheckoutSession, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl, uploadProductFile } from '../services/realBackend';
+import { getMessages, getChatLines, invalidateChatLinesCache, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createCheckoutSession, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl, uploadProductFile } from '../services/realBackend';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface Props {
@@ -66,6 +66,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const [purchasedProducts, setPurchasedProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
+  const selectedCreatorIdRef = useRef<string | null>(null);
   const [productFilter, setProductFilter] = useState<'ALL' | 'DOCUMENT' | 'IMAGE' | 'VIDEO'>('ALL');
   
   // Navigation State
@@ -275,17 +276,66 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
     }
   }, [messages, selectedCreatorId, showFollowUpInput, customAppreciationMode]);
 
+  // Keep ref in sync for use inside async callbacks
+  useEffect(() => { selectedCreatorIdRef.current = selectedCreatorId; }, [selectedCreatorId]);
+
+  // Lazily hydrate full conversation for a message when it's opened
+  const hydrateConversation = async (msg: Message) => {
+    const lines = await getChatLines(msg.id);
+    if (lines.length === 0) return;
+    const initialMsg = msg.conversation[0];
+    const hasInitial = lines.some(
+      l => l.role === 'FAN' && l.content === initialMsg.content &&
+        Math.abs(new Date(l.timestamp).getTime() - new Date(initialMsg.timestamp).getTime()) < 5000
+    );
+    const fullConv = hasInitial ? lines : [initialMsg, ...lines];
+    fullConv.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, conversation: fullConv } : m));
+  };
+
+  // When a creator conversation is opened, hydrate all thread messages
+  useEffect(() => {
+    if (!selectedCreatorId) return;
+    const threadMsgs = messages.filter(m => m.creatorId === selectedCreatorId);
+    threadMsgs.forEach(msg => { if (msg.conversation.length <= 1) hydrateConversation(msg); });
+  }, [selectedCreatorId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const loadMessages = async (silent = false) => {
     if (!silent) setIsLoading(true);
     const allMessages = await getMessages();
-    const myMessages = allMessages.filter(m => 
-      m.senderEmail === (currentUser?.email || 'sarah@example.com') || 
+    const myMessages = allMessages.filter(m =>
+      m.senderEmail === (currentUser?.email || 'sarah@example.com') ||
       currentUser?.email === 'google-user@example.com'
     );
-    // Sort descending for list view
     myMessages.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    setMessages(myMessages.length > 0 ? myMessages : allMessages.slice(0, 2));
+    const freshMessages = myMessages.length > 0 ? myMessages : allMessages.slice(0, 2);
+
+    // Merge: preserve already-hydrated conversations when status/replyAt unchanged
+    setMessages(prev => {
+      if (prev.length === 0) return freshMessages;
+      const prevMap = new Map(prev.map(m => [m.id, m]));
+      return freshMessages.map(m => {
+        const prevMsg = prevMap.get(m.id);
+        if (prevMsg && prevMsg.conversation.length > 1 &&
+            prevMsg.status === m.status && prevMsg.replyAt === m.replyAt) {
+          return { ...m, conversation: prevMsg.conversation };
+        }
+        return m;
+      });
+    });
     if (!silent) setIsLoading(false);
+
+    // After a silent (real-time) refresh, re-hydrate the open conversation
+    if (silent) {
+      const openCreatorId = selectedCreatorIdRef.current;
+      if (openCreatorId) {
+        const threadMsgs = freshMessages.filter(m => m.creatorId === openCreatorId);
+        threadMsgs.forEach(msg => {
+          invalidateChatLinesCache(msg.id);
+          hydrateConversation(msg);
+        });
+      }
+    }
   };
 
   const loadCreators = async () => {

@@ -9,6 +9,20 @@ export const DEFAULT_AVATAR = 'https://www.gravatar.com/avatar/00000000000000000
 
 export const isBackendConfigured = () => isConfigured;
 
+// --- IN-MEMORY CACHES ---
+// Message list cache (stale-while-revalidate: return immediately, refresh in background)
+let _msgCache: Message[] | null = null;
+let _msgCacheTime = 0;
+let _msgCacheUserId = '';
+const MSG_CACHE_TTL = 8000; // 8 seconds
+
+// Per-message chat_lines cache (longer TTL since chat content rarely changes)
+const _chatLinesCache = new Map<string, { lines: ChatMessage[]; ts: number }>();
+const CHAT_LINES_TTL = 30000; // 30 seconds
+
+export const invalidateMsgCache = () => { _msgCache = null; };
+export const invalidateChatLinesCache = (messageId: string) => { _chatLinesCache.delete(messageId); };
+
 const getColorForSource = (source: string) => {
     const s = source.toLowerCase();
     if (s.includes('youtube')) return '#FF0000';
@@ -790,47 +804,102 @@ export const getMessages = async (): Promise<Message[]> => {
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) return [];
 
-    // Check for expired pending messages and process refunds (Lazy Expiration)
+    const userId = session.session.user.id;
+
+    // Return cache immediately if fresh, then refresh in background
+    if (_msgCache && _msgCacheUserId === userId && Date.now() - _msgCacheTime < MSG_CACHE_TTL) {
+        // Trigger background refresh (don't await)
+        fetchMessagesFromDb(userId).then(fresh => {
+            _msgCache = fresh;
+            _msgCacheTime = Date.now();
+        }).catch(() => {});
+        return _msgCache;
+    }
+
+    const fresh = await fetchMessagesFromDb(userId);
+    _msgCache = fresh;
+    _msgCacheTime = Date.now();
+    _msgCacheUserId = userId;
+    return fresh;
+};
+
+const fetchMessagesFromDb = async (userId: string): Promise<Message[]> => {
+    // Fire-and-forget expiration processing (doesn't block message list)
     const now = new Date().toISOString();
-    const { data: expiredMessages } = await supabase
+    supabase
         .from('messages')
         .select('id, amount, sender_id')
         .eq('status', 'PENDING')
         .lt('expires_at', now)
-        .or(`sender_id.eq.${session.session.user.id},creator_id.eq.${session.session.user.id}`);
-
-    // Process expired messages in parallel, and fetch main messages concurrently
-    const expirationPromise = (expiredMessages && expiredMessages.length > 0)
-        ? Promise.all(expiredMessages.map(async (msg) => {
-            const { data: sender } = await supabase.from('profiles').select('credits').eq('id', msg.sender_id).single();
-            if (sender) {
-                await supabase.from('profiles').update({ credits: sender.credits + msg.amount }).eq('id', msg.sender_id);
+        .or(`sender_id.eq.${userId},creator_id.eq.${userId}`)
+        .then(({ data: expiredMessages }) => {
+            if (expiredMessages && expiredMessages.length > 0) {
+                Promise.all(expiredMessages.map(async (msg) => {
+                    const { data: sender } = await supabase.from('profiles').select('credits').eq('id', msg.sender_id).single();
+                    if (sender) {
+                        await supabase.from('profiles').update({ credits: sender.credits + msg.amount }).eq('id', msg.sender_id);
+                    }
+                    await supabase.from('messages').update({ status: 'EXPIRED' }).eq('id', msg.id);
+                })).catch(console.error);
             }
-            await supabase.from('messages').update({ status: 'EXPIRED' }).eq('id', msg.id);
-        }))
-        : Promise.resolve();
+        }).catch(console.error);
 
-    // Fetch messages in parallel with expiration processing
-    const [, { data, error }] = await Promise.all([
-        expirationPromise,
-        supabase
+    // Fetch message headers only (no chat_lines — loaded lazily per conversation)
+    const { data, error } = await supabase
         .from('messages')
         .select(`
             *,
             sender:profiles!sender_id(display_name, email, avatar_url),
-            creator:profiles!creator_id(display_name, avatar_url),
-            chat_lines(*)
+            creator:profiles!creator_id(display_name, avatar_url)
         `)
-        .or(`sender_id.eq.${session.session.user.id},creator_id.eq.${session.session.user.id}`)
-        .order('created_at', { ascending: false }),
-    ]);
+        .or(`sender_id.eq.${userId},creator_id.eq.${userId}`)
+        .order('created_at', { ascending: false })
+        .limit(200);
 
     if (error) {
         console.error("Error fetching messages:", error);
         return [];
     }
 
-    return data.map(m => mapDbMessageToAppMessage(m, session.session!.user.id));
+    return data.map(m => mapDbMessageToAppMessage(m, userId));
+};
+
+// Lazy-load chat lines for a specific conversation (cached)
+export const getChatLines = async (messageId: string): Promise<ChatMessage[]> => {
+    if (!isConfigured) return [];
+
+    const cached = _chatLinesCache.get(messageId);
+    if (cached && Date.now() - cached.ts < CHAT_LINES_TTL) {
+        return cached.lines;
+    }
+
+    const { data, error } = await supabase
+        .from('chat_lines')
+        .select('*')
+        .eq('message_id', messageId)
+        .order('created_at', { ascending: true });
+
+    if (error || !data) return [];
+
+    const lines: ChatMessage[] = data.map((line: any) => {
+        let content = line.content;
+        let attachmentUrl = line.attachment_url;
+        if (!attachmentUrl && content?.includes('[Attachment](')) {
+            const match = content.match(/\[Attachment\]\((.*?)\)/);
+            if (match) { attachmentUrl = match[1]; content = content.replace(match[0], '').trim(); }
+        }
+        return {
+            id: line.id,
+            role: line.role as 'CREATOR' | 'FAN',
+            content,
+            timestamp: line.created_at,
+            attachmentUrl: attachmentUrl ?? undefined,
+            isEdited: line.updated_at && line.updated_at !== line.created_at,
+        };
+    });
+
+    _chatLinesCache.set(messageId, { lines, ts: Date.now() });
+    return lines;
 };
 
 export const sendMessage = async (creatorId: string, senderName: string, senderEmail: string, content: string, amount: number, attachments?: {url: string, type: 'IMAGE' | 'FILE', name: string}[]): Promise<Message> => {
@@ -984,12 +1053,17 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
         });
     }
 
+    // Invalidate message cache so next fetch is fresh
+    invalidateMsgCache();
+
     // Return formatted
     return mapDbMessageToAppMessage(message, userId);
 };
 
 export const replyToMessage = async (messageId: string, replyText: string, isComplete: boolean, attachmentUrl?: string | null): Promise<void> => {
     if (!isConfigured) return MockBackend.replyToMessage(messageId, replyText, isComplete, attachmentUrl);
+    invalidateMsgCache();
+    invalidateChatLinesCache(messageId);
 
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error("Not logged in");
@@ -1112,6 +1186,7 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
 
 export const editChatMessage = async (chatLineId: string, newContent: string, attachmentUrl?: string | null): Promise<void> => {
     if (!isConfigured) return;
+    invalidateMsgCache();
 
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error("Not logged in");
@@ -1165,6 +1240,8 @@ export const editChatMessage = async (chatLineId: string, newContent: string, at
 
 export const cancelMessage = async (messageId: string): Promise<void> => {
     if (!isConfigured) return MockBackend.cancelMessage(messageId);
+    invalidateMsgCache();
+    invalidateChatLinesCache(messageId);
 
     // 1. Get Message to check amount
     const { data: msg } = await supabase.from('messages').select('*').eq('id', messageId).single();

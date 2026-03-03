@@ -20,6 +20,7 @@ const ja = {
     view: '表示',
     open: '開く',
     visit: '訪問',
+    buy: '購入',
     share: '共有',
     search: '検索',
     price: '価格',

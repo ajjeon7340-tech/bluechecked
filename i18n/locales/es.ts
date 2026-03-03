@@ -20,6 +20,7 @@ const es = {
     view: 'Ver',
     open: 'Abrir',
     visit: 'Visitar',
+    buy: 'Comprar',
     share: 'Compartir',
     search: 'Buscar',
     price: 'Precio',

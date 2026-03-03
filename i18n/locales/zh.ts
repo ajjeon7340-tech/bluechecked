@@ -20,6 +20,7 @@ const zh = {
     view: '查看',
     open: '打开',
     visit: '访问',
+    buy: '购买',
     share: '分享',
     search: '搜索',
     price: '价格',

@@ -20,6 +20,7 @@ const ko = {
     view: '보기',
     open: '열기',
     visit: '방문',
+    buy: '구매',
     share: '공유',
     search: '검색',
     price: '가격',

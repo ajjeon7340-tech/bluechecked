@@ -20,6 +20,7 @@ const en = {
     view: 'View',
     open: 'Open',
     visit: 'Visit',
+    buy: 'Buy',
     share: 'Share',
     search: 'Search',
     price: 'Price',
