@@ -151,7 +151,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
   const handleSkipForNow = () => {
     // Set a flag in local storage to not show the setup screen again.
-    localStorage.setItem('bluechecked_skip_setup', 'true');
+    localStorage.setItem('diem_skip_setup', 'true');
     if (tempUser) {
       onLoginSuccess(tempUser);
     }
@@ -204,7 +204,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
      setIsLoading(false);
 
      // Also set the flag on save, to prevent re-entry even if bio is empty.
-     localStorage.setItem('bluechecked_skip_setup', 'true');
+     localStorage.setItem('diem_skip_setup', 'true');
 
      if (finalUser) {
          onLoginSuccess(finalUser);

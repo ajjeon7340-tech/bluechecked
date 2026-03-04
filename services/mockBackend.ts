@@ -63,7 +63,7 @@ const ADDITIONAL_CREATORS: CreatorProfile[] = [
 // Mock In-Memory DB
 let creatorProfile: CreatorProfile = (() => {
     try {
-        const saved = localStorage.getItem('bluechecked_mock_creator_profile');
+        const saved = localStorage.getItem('diem_mock_creator_profile');
         return saved ? JSON.parse(saved) : { ...INITIAL_CREATOR };
     } catch (e) {
         return { ...INITIAL_CREATOR };
@@ -72,7 +72,7 @@ let creatorProfile: CreatorProfile = (() => {
 
 let messages: Message[] = (() => {
     try {
-        const saved = localStorage.getItem('bluechecked_mock_messages');
+        const saved = localStorage.getItem('diem_mock_messages');
         return saved ? JSON.parse(saved) : [];
     } catch {
         return [];
@@ -87,14 +87,14 @@ const creatorLikes = new Map<string, Set<string>>();
 // Mock Users Store (Persistent)
 let mockUsers: CurrentUser[] = (() => {
     try {
-        const saved = localStorage.getItem('bluechecked_mock_users');
+        const saved = localStorage.getItem('diem_mock_users');
         return saved ? JSON.parse(saved) : [];
     } catch {
         return [];
     }
 })();
 
-const saveMockUsers = () => localStorage.setItem('bluechecked_mock_users', JSON.stringify(mockUsers));
+const saveMockUsers = () => localStorage.setItem('diem_mock_users', JSON.stringify(mockUsers));
 
 // Mock Likes Log (for statistics over time)
 interface LikeEvent {
@@ -104,13 +104,13 @@ interface LikeEvent {
 }
 let mockLikesLog: LikeEvent[] = (() => {
     try {
-        const saved = localStorage.getItem('bluechecked_mock_likes_log');
+        const saved = localStorage.getItem('diem_mock_likes_log');
         return saved ? JSON.parse(saved) : [];
     } catch {
         return [];
     }
 })();
-const saveLikesLog = () => localStorage.setItem('bluechecked_mock_likes_log', JSON.stringify(mockLikesLog));
+const saveLikesLog = () => localStorage.setItem('diem_mock_likes_log', JSON.stringify(mockLikesLog));
 
 // Mock Withdrawals Store
 export interface Withdrawal {
@@ -122,17 +122,17 @@ export interface Withdrawal {
 
 let withdrawals: Withdrawal[] = (() => {
     try {
-        const saved = localStorage.getItem('bluechecked_mock_withdrawals');
+        const saved = localStorage.getItem('diem_mock_withdrawals');
         return saved ? JSON.parse(saved) : [];
     } catch {
         return [];
     }
 })();
 
-const saveWithdrawals = () => localStorage.setItem('bluechecked_mock_withdrawals', JSON.stringify(withdrawals));
+const saveWithdrawals = () => localStorage.setItem('diem_mock_withdrawals', JSON.stringify(withdrawals));
 
 let isStripeConnected = (() => {
-    return localStorage.getItem('bluechecked_mock_stripe_connected') === 'true';
+    return localStorage.getItem('diem_mock_stripe_connected') === 'true';
 })();
 
 // Mock Analytics Store
@@ -147,7 +147,7 @@ interface AnalyticsEvent {
 
 let analyticsEvents: AnalyticsEvent[] = (() => {
     try {
-        const saved = localStorage.getItem('bluechecked_mock_analytics');
+        const saved = localStorage.getItem('diem_mock_analytics');
         return saved ? JSON.parse(saved) : [];
     } catch {
         return [];
@@ -155,7 +155,7 @@ let analyticsEvents: AnalyticsEvent[] = (() => {
 })();
 
 const saveAnalytics = () => {
-    localStorage.setItem('bluechecked_mock_analytics', JSON.stringify(analyticsEvents));
+    localStorage.setItem('diem_mock_analytics', JSON.stringify(analyticsEvents));
 };
 
 // Initialize some demo analytics if empty
@@ -166,7 +166,7 @@ if (analyticsEvents.length === 0) {
 }
 
 const saveMessages = () => {
-    localStorage.setItem('bluechecked_mock_messages', JSON.stringify(messages));
+    localStorage.setItem('diem_mock_messages', JSON.stringify(messages));
 };
 
 // Helper to generate random messages
@@ -230,7 +230,7 @@ export const getCreatorProfile = async (creatorId?: string): Promise<CreatorProf
 
 export const updateCreatorProfile = async (profile: CreatorProfile): Promise<CreatorProfile> => {
     creatorProfile = { ...profile };
-    localStorage.setItem('bluechecked_mock_creator_profile', JSON.stringify(creatorProfile));
+    localStorage.setItem('diem_mock_creator_profile', JSON.stringify(creatorProfile));
     return creatorProfile;
 };
 
@@ -246,7 +246,7 @@ export const getMessages = async (): Promise<Message[]> => {
             // Refund logic for mock: If currentUser is the sender, refund them.
             if (currentUser && currentUser.email === msg.senderEmail) {
                 currentUser.credits += msg.amount;
-                localStorage.setItem('bluechecked_current_user', JSON.stringify(currentUser));
+                localStorage.setItem('diem_current_user', JSON.stringify(currentUser));
             }
         }
     });
@@ -279,7 +279,7 @@ export const sendMessage = async (creatorId: string, name: string, email: string
         }
         // Deduct credits
         currentUser.credits -= amount;
-        localStorage.setItem('bluechecked_current_user', JSON.stringify(currentUser));
+        localStorage.setItem('diem_current_user', JSON.stringify(currentUser));
         // Note: In real backend, this is handled transactionally. Here we update local state.
     }
 
@@ -379,7 +379,7 @@ export const loginUser = async (role: UserRole, identifier: string, method: 'EMA
         saveMockUsers();
         
         currentUser = newUser;
-        localStorage.setItem('bluechecked_current_user', JSON.stringify(currentUser));
+        localStorage.setItem('diem_current_user', JSON.stringify(currentUser));
         return currentUser;
     } else {
         // --- SIGN IN ---
@@ -391,7 +391,7 @@ export const loginUser = async (role: UserRole, identifier: string, method: 'EMA
 
         // Note: In mock mode we don't check password
         currentUser = existing;
-        localStorage.setItem('bluechecked_current_user', JSON.stringify(currentUser));
+        localStorage.setItem('diem_current_user', JSON.stringify(currentUser));
         return currentUser;
     }
 };
@@ -401,12 +401,12 @@ export const signInWithSocial = async (provider: 'google' | 'instagram', role: U
     const email = `mock-${provider}@example.com`;
     const existing = mockUsers.find(u => u.email === email);
     const user = await loginUser(role, email, 'EMAIL', existing ? undefined : `Mock ${provider} User`);
-    localStorage.setItem('bluechecked_current_user', JSON.stringify(user));
+    localStorage.setItem('diem_current_user', JSON.stringify(user));
     window.location.reload();
 };
 
 export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
-    const stored = localStorage.getItem('bluechecked_current_user');
+    const stored = localStorage.getItem('diem_current_user');
     if (stored) {
         currentUser = JSON.parse(stored);
         return currentUser;
@@ -421,7 +421,7 @@ export const updateCurrentUser = async (user: CurrentUser): Promise<void> => {
 export const addCredits = async (amount: number): Promise<CurrentUser> => {
     if (!currentUser) throw new Error("No user");
     currentUser.credits += amount;
-    localStorage.setItem('bluechecked_current_user', JSON.stringify(currentUser));
+    localStorage.setItem('diem_current_user', JSON.stringify(currentUser));
     return currentUser;
 };
 
@@ -811,7 +811,7 @@ export const getDetailedStatistics = async (timeFrame: StatTimeFrame, date: Date
 export const connectStripeAccount = async (): Promise<boolean> => {
     await new Promise(r => setTimeout(r, 1000));
     isStripeConnected = true;
-    localStorage.setItem('bluechecked_mock_stripe_connected', 'true');
+    localStorage.setItem('diem_mock_stripe_connected', 'true');
     return true;
 };
 

@@ -166,7 +166,7 @@ const ko = {
     terms: '이용약관',
     twitter: 'Twitter',
     contact: '문의',
-    copyright: '© 2024 Diem',
+    copyright: '© 2026 Diem',
     document: '문서',
   },
 

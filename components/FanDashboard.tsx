@@ -91,7 +91,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const [showNotifications, setShowNotifications] = useState(false);
   const [deletedNotificationIds, setDeletedNotificationIds] = useState<string[]>(() => {
       try {
-          const saved = localStorage.getItem('bluechecked_deleted_notifications');
+          const saved = localStorage.getItem('diem_deleted_notifications');
           return saved ? JSON.parse(saved) : [];
       } catch {
           return [];
@@ -100,14 +100,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
   const [lastReadTime, setLastReadTime] = useState<number>(() => {
       try {
-          return parseInt(localStorage.getItem('bluechecked_fan_last_read_time') || '0');
+          return parseInt(localStorage.getItem('diem_fan_last_read_time') || '0');
       } catch { return 0; }
   });
 
   // Left Chatrooms (hidden, not deleted from DB) - stores timestamp of when left
   const [leftChatrooms, setLeftChatrooms] = useState<Record<string, number>>(() => {
       try {
-          const saved = localStorage.getItem('bluechecked_fan_left_chatrooms');
+          const saved = localStorage.getItem('diem_fan_left_chatrooms');
           return saved ? JSON.parse(saved) : {};
       } catch { return {}; }
   });
@@ -116,7 +116,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       if (!window.confirm(t('fan.leaveConversation'))) return;
       const updated = { ...leftChatrooms, [creatorId]: Date.now() };
       setLeftChatrooms(updated);
-      localStorage.setItem('bluechecked_fan_left_chatrooms', JSON.stringify(updated));
+      localStorage.setItem('diem_fan_left_chatrooms', JSON.stringify(updated));
       setSelectedCreatorId(null);
   };
 
@@ -149,7 +149,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const [chatSessionIndex, setChatSessionIndex] = useState(Infinity);
 
   useEffect(() => {
-      localStorage.setItem('bluechecked_deleted_notifications', JSON.stringify(deletedNotificationIds));
+      localStorage.setItem('diem_deleted_notifications', JSON.stringify(deletedNotificationIds));
   }, [deletedNotificationIds]);
   // UI States
   const [isCancelling, setIsCancelling] = useState(false);
@@ -886,7 +886,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const handleToggleNotifications = () => {
       if (!showNotifications) {
           setLastReadTime(Date.now());
-          localStorage.setItem('bluechecked_fan_last_read_time', Date.now().toString());
+          localStorage.setItem('diem_fan_last_read_time', Date.now().toString());
       }
       setShowNotifications(!showNotifications);
   };

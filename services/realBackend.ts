@@ -55,7 +55,7 @@ const getSiteUrl = () => {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         return window.location.origin;
     }
-    // Allow overriding the site URL via environment variable (e.g. VITE_SITE_URL=https://telepossible.com)
+    // Allow overriding the site URL via environment variable (e.g. VITE_SITE_URL=https://diem.ee)
     if (import.meta.env.VITE_SITE_URL) {
         return import.meta.env.VITE_SITE_URL.replace(/\/$/, "");
     }
@@ -83,7 +83,7 @@ const saveUserToLocalStorage = (user: CurrentUser) => {
         if (userToStore.avatarUrl && userToStore.avatarUrl.startsWith('data:')) {
             userToStore.avatarUrl = DEFAULT_AVATAR;
         }
-        localStorage.setItem('bluechecked_current_user', JSON.stringify(userToStore));
+        localStorage.setItem('diem_current_user', JSON.stringify(userToStore));
     } catch (e) {
         console.warn("LocalStorage Quota Exceeded - skipping cache update", e);
     }
@@ -382,9 +382,9 @@ export const signInWithSocial = async (provider: 'google' | 'instagram', role: U
     // Store role preference to persist through redirect (Fallback if URL param is lost)
     // We also clear the current user cache to ensure we have space and don't mix sessions
     try {
-        localStorage.removeItem('bluechecked_current_user');
-        localStorage.removeItem('bluechecked_skip_setup');
-        localStorage.setItem('bluechecked_oauth_role', role);
+        localStorage.removeItem('diem_current_user');
+        localStorage.removeItem('diem_skip_setup');
+        localStorage.setItem('diem_oauth_role', role);
     } catch (e) {
         console.warn("Failed to save role preference to local storage", e);
     }
@@ -413,13 +413,13 @@ export const signInWithSocial = async (provider: 'google' | 'instagram', role: U
 
 export const signOut = async () => {
     if (!isConfigured) {
-        localStorage.removeItem('bluechecked_current_user');
+        localStorage.removeItem('diem_current_user');
         window.location.reload();
         return;
     }
     await supabase.auth.signOut();
-    localStorage.removeItem('bluechecked_current_user');
-    localStorage.removeItem('bluechecked_skip_setup');
+    localStorage.removeItem('diem_current_user');
+    localStorage.removeItem('diem_skip_setup');
 };
 
 export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
@@ -429,8 +429,8 @@ export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
-        localStorage.removeItem('bluechecked_current_user');
-        localStorage.removeItem('bluechecked_skip_setup');
+        localStorage.removeItem('diem_current_user');
+        localStorage.removeItem('diem_skip_setup');
         return null;
     }
 
@@ -444,7 +444,7 @@ export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
     // 3. Handle First Time OAuth Login (Profile Creation)
     if (!profile) {
         // Check for role intent from localStorage or URL
-        const storedRole = localStorage.getItem('bluechecked_oauth_role');
+        const storedRole = localStorage.getItem('diem_oauth_role');
         const params = new URLSearchParams(window.location.search);
         const urlRole = params.get('role');
         
@@ -461,14 +461,14 @@ export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
 
     if (profile) {
         // Check for role mismatch from OAuth intent
-        const storedRole = localStorage.getItem('bluechecked_oauth_role');
+        const storedRole = localStorage.getItem('diem_oauth_role');
         if (storedRole && storedRole !== profile.role) {
-            localStorage.removeItem('bluechecked_oauth_role');
+            localStorage.removeItem('diem_oauth_role');
             const error: any = new Error(`This account already exists as a ${profile.role}. Please sign in as a ${profile.role}.`);
             error.code = 'ROLE_MISMATCH';
             throw error;
         }
-        localStorage.removeItem('bluechecked_oauth_role');
+        localStorage.removeItem('diem_oauth_role');
 
         const user = mapProfileToUser(profile);
         saveUserToLocalStorage(user);
@@ -476,8 +476,8 @@ export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
     }
     
     // If we reach here, we have a session but no profile (and failed to create one)
-    localStorage.removeItem('bluechecked_current_user');
-    localStorage.removeItem('bluechecked_skip_setup');
+    localStorage.removeItem('diem_current_user');
+    localStorage.removeItem('diem_skip_setup');
     return null;
 };
 
@@ -497,7 +497,7 @@ export const completeOAuthSignup = async (roleOverride?: UserRole): Promise<Curr
         urlRole = hashParams.get('role');
     }
 
-    const storedRole = localStorage.getItem('bluechecked_oauth_role');
+    const storedRole = localStorage.getItem('diem_oauth_role');
     
     // Prioritize localStorage (user intent before redirect), fallback to URL param, default to FAN
     const roleParam = roleOverride 
@@ -538,7 +538,7 @@ export const completeOAuthSignup = async (roleOverride?: UserRole): Promise<Curr
     }
 
     // Clean up only after success
-    localStorage.removeItem('bluechecked_oauth_role');
+    localStorage.removeItem('diem_oauth_role');
 
     // Fetch again
     const { data: newProfile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();

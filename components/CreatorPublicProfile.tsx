@@ -635,12 +635,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           {/* Guaranteed Reply + Ask Me Anything */}
           {!isCustomizeMode && (
               <div
-                  onClick={onCreateOwn}
+                  onClick={() => { currentUser ? handleOpenModal() : onLoginRequest(); }}
                   className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${creator.isDiemHighlighted ? 'bg-gradient-to-r from-indigo-50/40 to-blue-50/20 border-indigo-100 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300 hover:shadow-sm'}`}
               >
-                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform border ${creator.isDiemHighlighted ? 'bg-indigo-50 text-indigo-500 border-indigo-100' : 'bg-stone-50 text-stone-900 border-stone-100'}`}>
-                      <DiemLogo size={24} className="sm:hidden" />
-                      <DiemLogo size={32} className="hidden sm:block" />
+                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform border ${creator.isDiemHighlighted ? 'bg-indigo-50 border-indigo-100' : 'bg-stone-50 border-stone-100'}`}>
+                      <img src="/favicon.ico" alt="diem" className="w-6 h-6 sm:w-8 sm:h-8 object-contain" />
                   </div>
                   <div className="flex-1 relative z-10 min-w-0 text-left">
                       <div className="flex items-center gap-2">
@@ -662,7 +661,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                           e.stopPropagation();
                           currentUser ? handleOpenModal() : onLoginRequest();
                       }}
-                      className={`px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap z-20 ${creator.isDiemHighlighted ? 'bg-indigo-400 text-white hover:bg-indigo-500' : 'bg-stone-900 text-white hover:bg-stone-800'}`}
+                      className="px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap z-20 bg-indigo-400 text-white hover:bg-indigo-500"
                   >
                       {t('common.diem')}
                   </button>
@@ -733,7 +732,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                     <h4 className="font-semibold sm:font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
                                                     <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">{link.isPromoted ? t('common.recommended') : t('profile.sendTip')}</p>
                                                 </div>
-                                                <div className={`px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap ${link.isPromoted ? 'bg-pink-300 text-white hover:bg-pink-400' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
+                                                <div className="px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap bg-pink-300 text-white hover:bg-pink-400">
                                                     <Heart size={12} /> {t('profile.tip')}
                                                 </div>
                                             </button>
@@ -756,7 +755,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                     <h4 className="font-semibold sm:font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
                                                     <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">{link.isPromoted ? t('common.recommended') : t('profile.digitalDownload')}</p>
                                                 </div>
-                                                <div className={`px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap ${link.isPromoted ? 'bg-purple-400 text-white hover:bg-purple-500' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
+                                                <div className="px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap bg-purple-400 text-white hover:bg-purple-500">
                                                     {t('common.buy')}
                                                 </div>
                                             </button>
@@ -789,8 +788,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                     <p className="text-[10px] text-stone-400 mt-0.5 font-medium truncate">{link.isPromoted ? t('common.recommended') : t('profile.externalLink')}</p>
                                                 </div>
 
-                                                <div className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap ${link.isPromoted ? 'bg-stone-900 text-white hover:bg-stone-800' : 'bg-stone-100 text-stone-600 group-hover:bg-stone-200'}`}>
-                                                    {link.isPromoted ? t('common.visit') : t('common.open')} <ExternalLink size={12} />
+                                                <div className="px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap bg-stone-900 text-white hover:bg-stone-800">
+                                                    {t('common.visit')} <ExternalLink size={12} />
                                                 </div>
                                             </a>
                                         )

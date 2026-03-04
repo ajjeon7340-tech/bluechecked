@@ -188,7 +188,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const [deletedNotificationIds, setDeletedNotificationIds] = useState<string[]>(() => {
       try {
-          const saved = localStorage.getItem('bluechecked_creator_deleted_notifications');
+          const saved = localStorage.getItem('diem_creator_deleted_notifications');
           return saved ? JSON.parse(saved) : [];
       } catch {
           return [];
@@ -197,7 +197,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const [lastReadTime, setLastReadTime] = useState<number>(() => {
       try {
-          return parseInt(localStorage.getItem('bluechecked_creator_last_read_time') || '0');
+          return parseInt(localStorage.getItem('diem_creator_last_read_time') || '0');
       } catch { return 0; }
   });
 
@@ -213,7 +213,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Left Chatrooms (hidden, not deleted from DB) - stores timestamp of when left
   const [leftChatrooms, setLeftChatrooms] = useState<Record<string, number>>(() => {
       try {
-          const saved = localStorage.getItem('bluechecked_creator_left_chatrooms');
+          const saved = localStorage.getItem('diem_creator_left_chatrooms');
           return saved ? JSON.parse(saved) : {};
       } catch { return {}; }
   });
@@ -222,7 +222,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       if (!window.confirm(t('creator.leaveConversation'))) return;
       const updated = { ...leftChatrooms, [senderEmail]: Date.now() };
       setLeftChatrooms(updated);
-      localStorage.setItem('bluechecked_creator_left_chatrooms', JSON.stringify(updated));
+      localStorage.setItem('diem_creator_left_chatrooms', JSON.stringify(updated));
       setSelectedSenderEmail(null);
   };
 
@@ -346,7 +346,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   }, []);
 
   useEffect(() => {
-      localStorage.setItem('bluechecked_creator_deleted_notifications', JSON.stringify(deletedNotificationIds));
+      localStorage.setItem('diem_creator_deleted_notifications', JSON.stringify(deletedNotificationIds));
   }, [deletedNotificationIds]);
 
   // Memoize sprinkles to prevent re-render jitter (Copied from FanDashboard for consistency)
@@ -472,7 +472,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const handleToggleNotifications = () => {
       if (!showNotifications) {
           setLastReadTime(Date.now());
-          localStorage.setItem('bluechecked_creator_last_read_time', Date.now().toString());
+          localStorage.setItem('diem_creator_last_read_time', Date.now().toString());
       }
       setShowNotifications(!showNotifications);
   };
@@ -976,7 +976,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     }
     if (view === 'NOTIFICATIONS') {
       setLastReadTime(Date.now());
-      localStorage.setItem('bluechecked_creator_last_read_time', Date.now().toString());
+      localStorage.setItem('diem_creator_last_read_time', Date.now().toString());
       setNotificationPage(1);
     } else if (view === 'REVIEWS') {
         setReviewsPage(1);
@@ -2358,13 +2358,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="flex gap-1 bg-stone-100/60 p-0.5 rounded-md">
                                     <button
                                         onClick={() => setInboxSortOrder('LATEST')}
-                                        className={`px-2 py-1 text-[10px] font-semibold rounded transition-all ${inboxSortOrder === 'LATEST' ? 'bg-stone-200 text-stone-700' : 'text-stone-400 hover:text-stone-600'}`}
+                                        className={`px-2 py-1 text-[10px] font-semibold rounded transition-all ${inboxSortOrder === 'LATEST' ? 'bg-stone-300 text-stone-800' : 'text-stone-400 hover:text-stone-600'}`}
                                     >
                                         Latest
                                     </button>
                                     <button
                                         onClick={() => setInboxSortOrder('COUNT')}
-                                        className={`px-2 py-1 text-[10px] font-semibold rounded transition-all flex items-center gap-0.5 ${inboxSortOrder === 'COUNT' ? 'bg-stone-200 text-stone-700' : 'text-stone-400 hover:text-stone-600'}`}
+                                        className={`px-2 py-1 text-[10px] font-semibold rounded transition-all flex items-center gap-0.5 ${inboxSortOrder === 'COUNT' ? 'bg-stone-300 text-stone-800' : 'text-stone-400 hover:text-stone-600'}`}
                                     >
                                         <Coins size={9} /> Sessions
                                     </button>

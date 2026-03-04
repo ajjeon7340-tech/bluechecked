@@ -37,7 +37,7 @@ function App() {
       } else {
           // Session is invalid (e.g. user deleted from DB), clear local state
           setCurrentUser(null);
-          localStorage.removeItem('bluechecked_current_user');
+          localStorage.removeItem('diem_current_user');
       }
 
       try {
@@ -105,7 +105,7 @@ function App() {
     });
 
     // Optimistically load session from local storage
-    // const storedUser = localStorage.getItem('bluechecked_current_user');
+    // const storedUser = localStorage.getItem('diem_current_user');
     // if (storedUser) {
     //     const user = JSON.parse(storedUser);
     //     setCurrentUser(user);
@@ -144,9 +144,9 @@ function App() {
                 setCurrentUser(user);
 
                 // If the user came from a creator's profile page, return them there
-                const returnToCreator = localStorage.getItem('bluechecked_return_to_creator');
+                const returnToCreator = localStorage.getItem('diem_return_to_creator');
                 if (returnToCreator) {
-                    localStorage.removeItem('bluechecked_return_to_creator');
+                    localStorage.removeItem('diem_return_to_creator');
                     try {
                         const profile = await getCreatorProfileByHandle(returnToCreator);
                         setCreator(profile);
@@ -168,7 +168,7 @@ function App() {
                     }
 
                     // Check if profile setup is needed (empty bio is a good indicator of fresh account)
-                    const hasSkippedSetup = localStorage.getItem('bluechecked_skip_setup') === 'true';
+                    const hasSkippedSetup = localStorage.getItem('diem_skip_setup') === 'true';
                     if (profile && !profile.bio && !hasSkippedSetup) {
                         setCurrentPage('SETUP_PROFILE');
                         window.history.replaceState({ page: 'SETUP_PROFILE' }, '', '');
@@ -251,18 +251,21 @@ function App() {
 
   if (isLoading) return (
     <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9] text-stone-400">
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex flex-col items-center gap-3">
         <div className="animate-spin h-6 w-6 border-2 border-stone-800 border-t-transparent rounded-full"></div>
-        <span className="text-sm font-medium">Loading Bluechecked...</span>
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="text-sm font-semibold text-stone-700">Carpe Diem</span>
+          <span className="text-xs text-stone-400">Seize your day from your favorite creator</span>
+        </div>
       </div>
     </div>
   );
 
   const navigateToDashboard = async (user: CurrentUser) => {
       // If the user came from a creator's profile page, return them there
-      const returnToCreator = localStorage.getItem('bluechecked_return_to_creator');
+      const returnToCreator = localStorage.getItem('diem_return_to_creator');
       if (returnToCreator) {
-          localStorage.removeItem('bluechecked_return_to_creator');
+          localStorage.removeItem('diem_return_to_creator');
           try {
               setIsLoading(true);
               const profile = await getCreatorProfileByHandle(returnToCreator);
@@ -285,7 +288,7 @@ function App() {
               return;
           }
 
-          const hasSkippedSetup = localStorage.getItem('bluechecked_skip_setup') === 'true';
+          const hasSkippedSetup = localStorage.getItem('diem_skip_setup') === 'true';
           if (!profile.bio && !hasSkippedSetup) {
               window.history.replaceState({ page: 'SETUP_PROFILE' }, '', '');
               setCurrentPage('SETUP_PROFILE');
@@ -423,7 +426,7 @@ function App() {
                   const handle = (creator.handle && creator.handle !== '@user')
                       ? creator.handle.replace('@', '')
                       : creator.displayName;
-                  localStorage.setItem('bluechecked_return_to_creator', handle);
+                  localStorage.setItem('diem_return_to_creator', handle);
               }
               window.history.pushState({ page: 'LOGIN' }, '', '/login');
               setCurrentPage('LOGIN');

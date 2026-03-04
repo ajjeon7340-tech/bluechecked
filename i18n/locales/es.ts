@@ -166,7 +166,7 @@ const es = {
     terms: 'Términos',
     twitter: 'Twitter',
     contact: 'Contacto',
-    copyright: '© 2024 Diem',
+    copyright: '© 2026 Diem',
     document: 'Documento',
   },
 

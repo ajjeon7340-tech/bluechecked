@@ -166,7 +166,7 @@ const ja = {
     terms: '利用規約',
     twitter: 'Twitter',
     contact: 'お問い合わせ',
-    copyright: '© 2024 Diem',
+    copyright: '© 2026 Diem',
     document: 'ドキュメント',
   },
 

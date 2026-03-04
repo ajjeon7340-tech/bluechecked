@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from './Button';
 import { LanguageSwitcher } from './LanguageSwitcher';
-import { DiemLogo, CheckCircle2, MessageSquare, ArrowRight, Clock, Sparkles, User, Heart, Lock, Check, ShoppingBag, FileText, Coins, X, Download, Verified } from './Icons';
+import { DiemLogo, CheckCircle2, MessageSquare, ArrowRight, Clock, Sparkles, User, Heart, Lock, Check, ShoppingBag, FileText, Coins, X, Download, Verified, ExternalLink } from './Icons';
 interface Props {
   onLoginClick: () => void;
   onDemoClick: () => void;
@@ -412,29 +412,54 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
               </button>
             </div>
 
-            {/* Right: Visual */}
+            {/* Right: Visual — exact public profile card layout */}
             <div className="relative">
               <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-[2.5rem] p-8">
-                <div className="space-y-4">
-                  {[
-                    { icon: FileText, title: '30-Day Fitness Plan', price: 1200, sold: 847, color: 'emerald' },
-                    { icon: ShoppingBag, title: 'Complete Meal Prep Guide', price: 800, sold: 1.2, suffix: 'K', color: 'blue' },
-                    { icon: Sparkles, title: 'VIP Coaching Call', price: 5000, sold: 156, color: 'violet' },
-                  ].map((product, idx) => (
-                    <div key={idx} className="bg-white rounded-2xl p-5 shadow-sm border border-stone-100 flex items-center gap-4 hover:shadow-md transition-all cursor-pointer group">
-                      <div className={`w-12 h-12 rounded-xl bg-${product.color}-100 text-${product.color}-600 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
-                        <product.icon size={22} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-stone-900 truncate">{product.title}</div>
-                        <div className="text-sm text-stone-500">{product.sold}{product.suffix || ''} {t('common.sold')}</div>
-                      </div>
-                      <div className="flex items-center gap-1 text-stone-900 font-semibold">
-                        <Coins size={14} className="text-amber-500" />
-                        {product.price.toLocaleString()}
-                      </div>
+                <div className="grid gap-3">
+                  {/* Digital Product card */}
+                  <div className="w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden bg-gradient-to-r from-purple-50/40 to-violet-50/20 border-purple-100 shadow-sm">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform bg-purple-50 text-purple-400">
+                      <FileText size={20} className="sm:hidden" />
+                      <FileText size={24} className="hidden sm:block" />
                     </div>
-                  ))}
+                    <div className="flex-1 relative z-10 min-w-0 text-left">
+                      <h4 className="font-semibold sm:font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">30-Day Fitness Plan</h4>
+                      <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">Digital Download</p>
+                    </div>
+                    <div className="px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap bg-purple-400 text-white hover:bg-purple-500">
+                      Buy
+                    </div>
+                  </div>
+
+                  {/* Support / Tip card */}
+                  <div className="w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden bg-gradient-to-r from-pink-50/40 to-rose-50/20 border-pink-100 shadow-sm">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform bg-pink-50 text-pink-400">
+                      <Heart size={20} className="sm:hidden" />
+                      <Heart size={24} className="hidden sm:block" />
+                    </div>
+                    <div className="flex-1 relative z-10 min-w-0 text-left">
+                      <h4 className="font-semibold sm:font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">Support My Work</h4>
+                      <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">Send a tip</p>
+                    </div>
+                    <div className="px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap bg-pink-300 text-white hover:bg-pink-400">
+                      <Heart size={12} /> Tip
+                    </div>
+                  </div>
+
+                  {/* External link card */}
+                  <div className="w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden bg-gradient-to-r from-stone-50 to-stone-100/40 border-stone-200 shadow-sm">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform bg-stone-900 text-white">
+                      <Sparkles size={20} className="sm:hidden" />
+                      <Sparkles size={24} className="hidden sm:block" />
+                    </div>
+                    <div className="flex-1 relative z-10 min-w-0 text-left">
+                      <h4 className="font-semibold sm:font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">My YouTube Channel</h4>
+                      <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">Recommended</p>
+                    </div>
+                    <div className="px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap bg-stone-900 text-white hover:bg-stone-800">
+                      Visit <ExternalLink size={12} />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

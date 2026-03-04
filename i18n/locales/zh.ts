@@ -166,7 +166,7 @@ const zh = {
     terms: '服务条款',
     twitter: 'Twitter',
     contact: '联系我们',
-    copyright: '© 2024 Diem',
+    copyright: '© 2026 Diem',
     document: '文档',
   },
 

@@ -166,7 +166,7 @@ const en = {
     terms: 'Terms',
     twitter: 'Twitter',
     contact: 'Contact',
-    copyright: '© 2024 Diem',
+    copyright: '© 2026 Diem',
     document: 'Document',
   },
 
