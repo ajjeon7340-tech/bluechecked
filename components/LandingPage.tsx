@@ -41,7 +41,7 @@ const getFeaturedConversations = (t: (key: string) => string) => [
     gradient: 'from-pink-100 to-rose-50',
     time: t('landing.conv2Time'),
     fullThread: [
-        { role: 'FAN', content: t('landing.conv2Thread1'), image: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=400&q=80', time: t('landing.conv2Thread1Time') },
+        { role: 'FAN', content: t('landing.conv2Thread1'), image: '/fan-outfit.png', time: t('landing.conv2Thread1Time') },
         { role: 'CREATOR', content: t('landing.conv2Thread2'), attachment: { name: 'Chloe_Jewelry_Styling_Guide.pdf', type: 'PDF' }, time: t('landing.conv2Thread2Time') }
     ]
   },
