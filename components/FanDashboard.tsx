@@ -1171,7 +1171,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         ) : filteredProducts.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filteredProducts.map((product, idx) => (
-                                    <div key={idx} className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col h-full relative">
+                                    <div key={idx} className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col min-w-0 relative">
                                 <div className="aspect-[4/3] bg-stone-100 relative overflow-hidden flex items-center justify-center p-8 group-hover:bg-stone-50 transition-colors">
                                      <div className="bg-white shadow-lg p-0 w-24 h-32 rounded-sm border border-stone-200 relative transform group-hover:-rotate-3 transition-transform duration-500 flex items-center justify-center">
                                          <div className="absolute inset-x-2 top-2 bottom-2 border-2 border-dashed border-stone-100"></div>
@@ -1193,7 +1193,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         </div>
                                         <span className="text-[10px] font-bold text-stone-500">{product.creatorName}</span>
                                     </div>
-                                    <h4 className="font-bold text-stone-900 mb-1 leading-tight">{product.title}</h4>
+                                    <h4 className="font-bold text-stone-900 mb-1 leading-tight line-clamp-2">{product.title}</h4>
                                     <p className="text-xs text-stone-500 mb-4 line-clamp-2 flex-1">{product.description || t('profile.digitalDownload')}</p>
                                     <div className="mt-auto pt-4 border-t border-stone-50 flex justify-between items-center">
                                         <span className="text-[10px] text-stone-400">{new Date(product.purchaseDate).toLocaleDateString()}</span>
@@ -1392,9 +1392,16 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                 )}
 
                 {/* --- VIEW: HISTORY --- */}
-                {currentView === 'HISTORY' && (
-                    <div className="max-w-5xl mx-auto animate-in fade-in h-full flex flex-col">
-                        <div className="flex items-center justify-between px-4 sm:px-6 py-4 shrink-0">
+                {currentView === 'HISTORY' && (() => {
+                    const allTxns = [
+                        ...messages.map(msg => ({ kind: 'msg' as const, msg, date: new Date(msg.createdAt).getTime() })),
+                        ...creditPurchases.map(cp => ({ kind: 'purchase' as const, cp, date: new Date(cp.date).getTime() })),
+                    ].sort((a, b) => b.date - a.date);
+                    const totalTxnPages = Math.ceil(allTxns.length / ITEMS_PER_PAGE);
+                    const displayedTxns = allTxns.slice((historyPage - 1) * ITEMS_PER_PAGE, historyPage * ITEMS_PER_PAGE);
+                    return (
+                    <div className="max-w-5xl mx-auto animate-in fade-in">
+                        <div className="flex items-center justify-between px-4 sm:px-6 py-4">
                             <div className="flex items-center gap-2">
                                 <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0">
                                     <Menu size={24} />
@@ -1403,8 +1410,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             </div>
                             <TopNav hideBurger />
                         </div>
-                        <div className="flex-1 min-h-0 px-4 sm:px-6 pb-4 sm:pb-6">
-                        <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden flex flex-col h-full">
+                        <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+                        <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
                              <div className="px-4 sm:px-6 py-4 border-b border-stone-100 flex items-center justify-end shrink-0">
                                  <Button variant="ghost" size="sm" className="text-xs"><ExternalLink size={14} className="mr-1"/> {t('fan.exportCSV')}</Button>
                              </div>
@@ -1420,10 +1427,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-stone-100">
-                                        {[
-                                            ...messages.map(msg => ({ kind: 'msg' as const, msg, date: new Date(msg.createdAt).getTime() })),
-                                            ...creditPurchases.map(cp => ({ kind: 'purchase' as const, cp, date: new Date(cp.date).getTime() })),
-                                        ].sort((a, b) => b.date - a.date).map(item => {
+                                        {displayedTxns.map(item => {
                                             if (item.kind === 'purchase') {
                                                 const cp = item.cp;
                                                 return (
@@ -1508,19 +1512,16 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 </tr>
                                             );
                                         })}
-                                        {messages.length === 0 && creditPurchases.length === 0 && (
+                                        {allTxns.length === 0 && (
                                             <tr><td colSpan={5} className="p-12 text-center text-stone-400">{t('fan.noTransactions')}</td></tr>
                                         )}
                                     </tbody>
                                 </table>
                              </div>
 
-                             {/* Mobile List View — scrollable, fits in viewport */}
-                             <div className="md:hidden flex-1 overflow-y-auto divide-y divide-stone-100">
-                                {[
-                                    ...messages.map(msg => ({ kind: 'msg' as const, msg, date: new Date(msg.createdAt).getTime() })),
-                                    ...creditPurchases.map(cp => ({ kind: 'purchase' as const, cp, date: new Date(cp.date).getTime() })),
-                                ].sort((a, b) => b.date - a.date).map(item => {
+                             {/* Mobile List View */}
+                             <div className="md:hidden divide-y divide-stone-100">
+                                {displayedTxns.map(item => {
                                     if (item.kind === 'purchase') {
                                         const cp = item.cp;
                                         return (
@@ -1575,12 +1576,22 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                         </div>
                                     );
                                 })}
-                                {messages.length === 0 && creditPurchases.length === 0 && <div className="p-8 text-center text-stone-400 text-sm">{t('fan.noTransactions')}</div>}
+                                {allTxns.length === 0 && <div className="p-8 text-center text-stone-400 text-sm">{t('fan.noTransactions')}</div>}
                              </div>
+
+                             {/* Pagination */}
+                             {totalTxnPages > 1 && (
+                                <div className="px-6 py-4 border-t border-stone-100 flex items-center justify-center gap-4">
+                                    <button onClick={() => setHistoryPage(p => Math.max(1, p - 1))} disabled={historyPage === 1} className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"><ChevronLeft size={16} /></button>
+                                    <span className="text-xs font-bold text-stone-600">Page {historyPage} of {totalTxnPages}</span>
+                                    <button onClick={() => setHistoryPage(p => Math.min(totalTxnPages, p + 1))} disabled={historyPage === totalTxnPages} className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"><ChevronRight size={16} /></button>
+                                </div>
+                             )}
                         </div>
                         </div>
                     </div>
-                )}
+                    );
+                })()}
 
                 {/* --- VIEW: SUPPORT --- */}
                 {currentView === 'SUPPORT' && (
@@ -2479,62 +2490,53 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         <div className="px-4 sm:px-6 pb-6">
                         {(() => {
                             const totalPages = Math.ceil(notifications.length / ITEMS_PER_PAGE);
-                            const displayedNotifications = notifications.slice((notificationPage - 1) * ITEMS_PER_PAGE, notificationPage * ITEMS_PER_PAGE);
+                            // Mobile: show all; Desktop: paginate
+                            const displayedNotifications = notifications; // mobile shows all
+                            const displayedDesktop = notifications.slice((notificationPage - 1) * ITEMS_PER_PAGE, notificationPage * ITEMS_PER_PAGE);
+                            const renderRow = (notif: typeof notifications[0]) => (
+                                <div key={notif.id} className="px-4 sm:px-6 py-3 sm:py-4 hover:bg-stone-50 transition-colors flex gap-3 sm:gap-4 group relative">
+                                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
+                                        <notif.icon size={16} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs sm:text-sm text-stone-900 font-medium leading-snug">{notif.text}</p>
+                                        <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5">{notif.time.toLocaleString()}</p>
+                                    </div>
+                                    <button onClick={(e) => handleDeleteNotification(e, notif.id)} className="text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 sm:p-2 flex-shrink-0">
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            );
                             return (
                         <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
-                            <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
+                            <div className="px-4 sm:px-6 py-4 border-b border-stone-100 flex items-center justify-between">
                                 <h3 className="text-sm font-bold text-stone-900">All Notifications</h3>
                                 <div className="flex items-center gap-3">
                                     <span className="text-xs text-stone-500">{notifications.length} items</span>
                                     {notifications.length > 0 && (
-                                        <button 
-                                            onClick={handleClearAllNotifications}
-                                            className="text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors flex items-center gap-1"
-                                        >
+                                        <button onClick={handleClearAllNotifications} className="text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors flex items-center gap-1">
                                             <Trash size={12} /> Clear All
                                         </button>
                                     )}
                                 </div>
                             </div>
-                            <div className="divide-y divide-stone-100">
+                            {/* Mobile: all items, no pagination */}
+                            <div className="md:hidden divide-y divide-stone-100">
                                 {displayedNotifications.length === 0 ? (
-                                    <div className="p-12 text-center text-stone-400 text-sm">No notifications yet.</div>
-                                ) : (
-                                    displayedNotifications.map(notif => (
-                                        <div key={notif.id} className="px-6 py-4 hover:bg-stone-50 transition-colors flex gap-4 group relative">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
-                                                <notif.icon size={18} />
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="text-sm text-stone-900 font-medium mb-1">{notif.text}</p>
-                                                <p className="text-xs text-stone-500">{notif.time.toLocaleString()}</p>
-                                            </div>
-                                            <button onClick={(e) => handleDeleteNotification(e, notif.id)} className="text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2">
-                                                <X size={16} />
-                                            </button>
-                                        </div>
-                                    ))
-                                )}
+                                    <div className="p-10 text-center text-stone-400 text-sm">No notifications yet.</div>
+                                ) : displayedNotifications.map(renderRow)}
                             </div>
-                            
-                            {/* Pagination Controls */}
+                            {/* Desktop: paginated */}
+                            <div className="hidden md:block divide-y divide-stone-100">
+                                {displayedDesktop.length === 0 ? (
+                                    <div className="p-12 text-center text-stone-400 text-sm">No notifications yet.</div>
+                                ) : displayedDesktop.map(renderRow)}
+                            </div>
                             {totalPages > 1 && (
-                                <div className="px-6 py-4 border-t border-stone-100 flex items-center justify-center gap-4">
-                                    <button 
-                                        onClick={() => setNotificationPage(p => Math.max(1, p - 1))}
-                                        disabled={notificationPage === 1}
-                                        className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
-                                    >
-                                        <ChevronLeft size={16} />
-                                    </button>
+                                <div className="hidden md:flex px-6 py-4 border-t border-stone-100 items-center justify-center gap-4">
+                                    <button onClick={() => setNotificationPage(p => Math.max(1, p - 1))} disabled={notificationPage === 1} className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"><ChevronLeft size={16} /></button>
                                     <span className="text-xs font-bold text-stone-600">Page {notificationPage} of {totalPages}</span>
-                                    <button 
-                                        onClick={() => setNotificationPage(p => Math.min(totalPages, p + 1))}
-                                        disabled={notificationPage === totalPages}
-                                        className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
-                                    >
-                                        <ChevronRight size={16} />
-                                    </button>
+                                    <button onClick={() => setNotificationPage(p => Math.min(totalPages, p + 1))} disabled={notificationPage === totalPages} className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"><ChevronRight size={16} /></button>
                                 </div>
                             )}
                         </div>

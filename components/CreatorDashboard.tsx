@@ -3531,66 +3531,47 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     </div>
                     {(() => {
                         const totalPages = Math.ceil(notifications.length / ITEMS_PER_PAGE);
-                        const displayedNotifications = notifications.slice((notificationPage - 1) * ITEMS_PER_PAGE, notificationPage * ITEMS_PER_PAGE);
+                        const displayedDesktop = notifications.slice((notificationPage - 1) * ITEMS_PER_PAGE, notificationPage * ITEMS_PER_PAGE);
+                        const renderRow = (notif: typeof notifications[0]) => (
+                            <div key={notif.id} onClick={() => handleNotificationClick(notif)} className="px-4 sm:px-6 py-3 sm:py-4 hover:bg-stone-50 transition-colors flex gap-3 sm:gap-4 group relative cursor-pointer">
+                                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
+                                    <notif.icon size={16} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs sm:text-sm text-stone-900 font-medium leading-snug">{notif.text}</p>
+                                    <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5">{notif.time.toLocaleString()}</p>
+                                </div>
+                                <button onClick={(e) => handleDeleteNotification(e, notif.id)} className="text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 sm:p-2 flex-shrink-0">
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        );
                         return (
                     <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
+                        <div className="px-4 sm:px-6 py-4 border-b border-stone-100 flex items-center justify-between">
                             <h3 className="text-sm font-bold text-stone-900">Notifications</h3>
                             <div className="flex items-center gap-3">
                                 <span className="text-xs text-stone-500">{notifications.length} items</span>
                                 {notifications.length > 0 && (
-                                    <button
-                                        onClick={handleClearAllNotifications}
-                                        className="text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors flex items-center gap-1"
-                                    >
+                                    <button onClick={handleClearAllNotifications} className="text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors flex items-center gap-1">
                                         <Trash size={12} /> {t('creator.clearAll')}
                                     </button>
                                 )}
                             </div>
                         </div>
-                        <div className="divide-y divide-stone-100">
-                            {displayedNotifications.length === 0 ? (
-                                <div className="p-12 text-center text-stone-400 text-sm">No notifications yet.</div>
-                            ) : (
-                                displayedNotifications.map(notif => (
-                                    <div 
-                                        key={notif.id} 
-                                        onClick={() => handleNotificationClick(notif)}
-                                        className="px-6 py-4 hover:bg-stone-50 transition-colors flex gap-4 group relative cursor-pointer"
-                                    >
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
-                                            <notif.icon size={18} />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="text-sm text-stone-900 font-medium mb-1">{notif.text}</p>
-                                            <p className="text-xs text-stone-500">{notif.time.toLocaleString()}</p>
-                                        </div>
-                                        <button onClick={(e) => handleDeleteNotification(e, notif.id)} className="text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2">
-                                            <X size={16} />
-                                        </button>
-                                    </div>
-                                ))
-                            )}
+                        {/* Mobile: all items */}
+                        <div className="md:hidden divide-y divide-stone-100">
+                            {notifications.length === 0 ? <div className="p-10 text-center text-stone-400 text-sm">No notifications yet.</div> : notifications.map(renderRow)}
                         </div>
-
-                        {/* Pagination Controls */}
+                        {/* Desktop: paginated */}
+                        <div className="hidden md:block divide-y divide-stone-100">
+                            {displayedDesktop.length === 0 ? <div className="p-12 text-center text-stone-400 text-sm">No notifications yet.</div> : displayedDesktop.map(renderRow)}
+                        </div>
                         {totalPages > 1 && (
-                            <div className="px-6 py-4 border-t border-stone-100 flex items-center justify-center gap-4">
-                                <button 
-                                    onClick={() => setNotificationPage(p => Math.max(1, p - 1))}
-                                    disabled={notificationPage === 1}
-                                    className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
-                                >
-                                    <ChevronLeft size={16} />
-                                </button>
+                            <div className="hidden md:flex px-6 py-4 border-t border-stone-100 items-center justify-center gap-4">
+                                <button onClick={() => setNotificationPage(p => Math.max(1, p - 1))} disabled={notificationPage === 1} className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"><ChevronLeft size={16} /></button>
                                 <span className="text-xs font-bold text-stone-600">Page {notificationPage} of {totalPages}</span>
-                                <button 
-                                    onClick={() => setNotificationPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={notificationPage === totalPages}
-                                    className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
-                                >
-                                    <ChevronRight size={16} />
-                                </button>
+                                <button onClick={() => setNotificationPage(p => Math.min(totalPages, p + 1))} disabled={notificationPage === totalPages} className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"><ChevronRight size={16} /></button>
                             </div>
                         )}
                     </div>
@@ -3645,25 +3626,23 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             )}
                         </div>
                         {/* Pagination Controls */}
-                        {totalPages > 1 && (
-                            <div className="px-6 py-4 border-t border-stone-100 flex items-center justify-center gap-4">
-                                <button 
-                                    onClick={() => setReviewsPage(p => Math.max(1, p - 1))}
-                                    disabled={reviewsPage === 1}
-                                    className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
-                                >
-                                    <ChevronLeft size={16} />
-                                </button>
-                                <span className="text-xs font-bold text-stone-600">Page {reviewsPage} of {totalPages}</span>
-                                <button 
-                                    onClick={() => setReviewsPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={reviewsPage === totalPages}
-                                    className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
-                                >
-                                    <ChevronRight size={16} />
-                                </button>
-                            </div>
-                        )}
+                        <div className="px-6 py-4 border-t border-stone-100 flex items-center justify-center gap-4">
+                            <button
+                                onClick={() => setReviewsPage(p => Math.max(1, p - 1))}
+                                disabled={reviewsPage === 1}
+                                className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
+                            >
+                                <ChevronLeft size={16} />
+                            </button>
+                            <span className="text-xs font-bold text-stone-600">Page {reviewsPage} of {Math.max(1, totalPages)}</span>
+                            <button
+                                onClick={() => setReviewsPage(p => Math.min(totalPages, p + 1))}
+                                disabled={reviewsPage === totalPages || totalPages <= 1}
+                                className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
+                            >
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
                     </div>
                     );
                     })()}
