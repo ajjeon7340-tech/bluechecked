@@ -128,6 +128,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Analytics State
   const [proData, setProData] = useState<ProAnalyticsData | null>(null);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
+  const [analyticsRange, setAnalyticsRange] = useState<'1D' | '7D' | '30D' | 'ALL'>('30D');
 
   // Statistics State
   const [statsTimeFrame, setStatsTimeFrame] = useState<StatTimeFrame>('WEEKLY');
@@ -522,11 +523,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   }, [trendTimeFrame, trendDate]);
 
   useEffect(() => {
-    // Load pro analytics if user is premium and on analytics tab
-    if (currentView === 'ANALYTICS' && creator.isPremium && !proData) {
-        loadProAnalytics();
+    if (currentView === 'ANALYTICS' && creator.isPremium) {
+        loadProAnalytics(analyticsRange);
     }
-  }, [currentView, creator.isPremium]);
+  }, [currentView, creator.isPremium, analyticsRange]);
 
   useEffect(() => {
     if (currentView === 'STATISTICS') {
@@ -632,9 +632,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       setTrendDate(newDate);
   };
 
-  const loadProAnalytics = async () => {
+  const loadProAnalytics = async (range: '1D' | '7D' | '30D' | 'ALL' = analyticsRange) => {
       setIsLoadingAnalytics(true);
-      const data = await getProAnalytics();
+      const data = await getProAnalytics(range);
       setProData(data);
       setIsLoadingAnalytics(false);
   };
@@ -2093,7 +2093,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <p className="text-stone-500 text-xs sm:text-sm">{t('creator.performanceMetrics')}</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 bg-stone-100 rounded-xl p-1">
+                                {(['1D', '7D', '30D', 'ALL'] as const).map(r => (
+                                    <button
+                                        key={r}
+                                        onClick={() => setAnalyticsRange(r)}
+                                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${analyticsRange === r ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                                    >
+                                        {r === '1D' ? 'Today' : r === '7D' ? '7 Days' : r === '30D' ? '30 Days' : 'All Time'}
+                                    </button>
+                                ))}
+                            </div>
                             <button className="px-3 py-1.5 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm hover:bg-stone-50">{t('creator.exportReport')}</button>
                             <TopNav hideBurger />
                         </div>

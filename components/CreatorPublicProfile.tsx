@@ -654,7 +654,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       </div>
                       <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-stone-500 mt-0.5 font-medium truncate">
                           <MessageSquare size={12} className="text-emerald-500" />
-                          <span>{creator.isDiemHighlighted ? t('common.recommended') : t('profile.guaranteed', { hours: creator.responseWindowHours })}</span>
+                          <span>{t('profile.guaranteed', { hours: creator.responseWindowHours })}{creator.isDiemHighlighted ? ` · ${t('common.recommended')}` : ''}</span>
                       </div>
                   </div>
                   <button
@@ -662,7 +662,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                           e.stopPropagation();
                           currentUser ? handleOpenModal() : onLoginRequest();
                       }}
-                      className={`px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap z-20 ${creator.isDiemHighlighted ? 'bg-indigo-400 text-white hover:bg-indigo-500' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
+                      className={`px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap z-20 transition-colors ${creator.isDiemHighlighted ? 'bg-indigo-500 text-white group-hover:bg-indigo-600' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
                   >
                       {t('common.diem')}
                   </button>
@@ -731,9 +731,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 </div>
                                                 <div className="flex-1 relative z-10 min-w-0 text-left">
                                                     <h4 className="font-semibold sm:font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
-                                                    <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">{link.isPromoted ? t('common.recommended') : t('profile.sendTip')}</p>
+                                                    <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">{t('profile.sendTip')}{link.isPromoted ? ` · ${t('common.recommended')}` : ''}</p>
                                                 </div>
-                                                <div className={`px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap ${link.isPromoted ? 'bg-pink-300 text-white hover:bg-pink-400' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
+                                                <div className={`px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap transition-colors ${link.isPromoted ? 'bg-pink-400 text-white group-hover:bg-pink-500' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                                     <Heart size={12} /> {t('profile.tip')}
                                                 </div>
                                             </button>
@@ -754,9 +754,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 </div>
                                                 <div className="flex-1 relative z-10 min-w-0 text-left">
                                                     <h4 className="font-semibold sm:font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
-                                                    <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">{link.isPromoted ? t('common.recommended') : t('profile.digitalDownload')}</p>
+                                                    <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">{t('profile.digitalDownload')}{link.isPromoted ? ` · ${t('common.recommended')}` : ''}</p>
                                                 </div>
-                                                <div className={`px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap ${link.isPromoted ? 'bg-purple-400 text-white hover:bg-purple-500' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
+                                                <div className={`px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap transition-colors ${link.isPromoted ? 'bg-purple-500 text-white group-hover:bg-purple-600' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                                     {t('common.buy')}
                                                 </div>
                                             </button>
@@ -781,10 +781,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 
                                                 <div className="flex-1 relative z-10 min-w-0 text-left">
                                                     <h4 className="font-semibold sm:font-bold text-sm sm:text-base text-stone-900 group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
-                                                    <p className="text-[10px] text-stone-400 mt-0.5 font-medium truncate">{link.isPromoted ? t('common.recommended') : t('profile.externalLink')}</p>
+                                                    <p className="text-[10px] text-stone-400 mt-0.5 font-medium truncate">{t('profile.externalLink')}{link.isPromoted ? ` · ${t('common.recommended')}` : ''}</p>
                                                 </div>
 
-                                                <div className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap ${link.isPromoted ? 'bg-stone-900 text-white hover:bg-stone-800' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
+                                                <div className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap transition-colors ${link.isPromoted ? 'bg-stone-900 text-white group-hover:bg-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                                     {link.isPromoted ? t('common.visit') : t('common.open')} <ExternalLink size={12} />
                                                 </div>
                                             </a>

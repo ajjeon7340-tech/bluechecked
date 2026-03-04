@@ -1518,22 +1518,33 @@ export const getCreatorTrendingStatus = async (creatorId: string): Promise<{ isT
     return { isTrending: interactionCount >= 5, interactionCount };
 };
 
-export const getProAnalytics = async (): Promise<ProAnalyticsData | null> => {
+export const getProAnalytics = async (range: '1D' | '7D' | '30D' | 'ALL' = '30D'): Promise<ProAnalyticsData | null> => {
     if (!isConfigured) return MockBackend.getProAnalytics();
 
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) return null;
     const creatorId = session.session.user.id;
 
-    // Fetch analytics data (last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const cutoff = new Date();
+    if (range === '1D') cutoff.setDate(cutoff.getDate() - 1);
+    else if (range === '7D') cutoff.setDate(cutoff.getDate() - 7);
+    else if (range === '30D') cutoff.setDate(cutoff.getDate() - 30);
+    else cutoff.setFullYear(2000); // ALL
 
-    const { data: events } = await supabase
+    const eventsQuery = supabase
         .from('analytics_events')
         .select('*')
         .eq('creator_id', creatorId)
-        .gte('created_at', thirtyDaysAgo.toISOString());
+        .gte('created_at', cutoff.toISOString());
+
+    const messagesQuery = supabase
+        .from('messages')
+        .select('amount, content')
+        .eq('creator_id', creatorId)
+        .eq('status', 'COLLECTED')
+        .gte('created_at', cutoff.toISOString());
+
+    const [{ data: events }, { data: collectedMessages }] = await Promise.all([eventsQuery, messagesQuery]);
 
     if (!events || events.length === 0) {
         // Return empty real data structure instead of mock data if configured
@@ -1604,23 +1615,36 @@ export const getProAnalytics = async (): Promise<ProAnalyticsData | null> => {
         }
     });
 
-    // Track DIEM messages — aggregate under a single synthetic entry
+    // Use collected messages for reliable revenue attribution
+    const msgs = collectedMessages || [];
+    const diemMsgs = msgs.filter(m => !m.content?.startsWith('Purchased Product:') && !m.content?.startsWith('Fan Tip:'));
+    const productMsgs = msgs.filter(m => m.content?.startsWith('Purchased Product:'));
+    const tipMsgs = msgs.filter(m => m.content?.startsWith('Fan Tip:'));
+
+    // Attribute product revenue to matching assetStats entries
+    productMsgs.forEach(m => {
+        const title = m.content.replace('Purchased Product: ', '');
+        const entry = Object.values(assetStats).find(s => s.type === 'PRODUCT' && s.title === title);
+        if (entry) entry.revenue += m.amount || 0;
+    });
+
+    // DIEM messages
     const diemConversions = events.filter(e => e.event_type === 'CONVERSION' && e.metadata?.type === 'MESSAGE');
-    if (diemConversions.length > 0) {
+    if (diemConversions.length > 0 || diemMsgs.length > 0) {
         assetStats['__diem__'] = {
             clicks: diemConversions.length,
-            revenue: diemConversions.reduce((sum, e) => sum + (e.metadata?.price || 0), 0),
+            revenue: diemMsgs.reduce((sum, m) => sum + (m.amount || 0), 0),
             type: 'DIEM',
             title: 'DIEM Messages',
         };
     }
 
-    // Track Tips — aggregate under a single synthetic entry
+    // Tips
     const tipConversions = events.filter(e => e.event_type === 'CONVERSION' && e.metadata?.type === 'TIP');
-    if (tipConversions.length > 0) {
+    if (tipConversions.length > 0 || tipMsgs.length > 0) {
         assetStats['__tip__'] = {
             clicks: tipConversions.length,
-            revenue: tipConversions.reduce((sum, e) => sum + (e.metadata?.amount || 0), 0),
+            revenue: tipMsgs.reduce((sum, m) => sum + (m.amount || 0), 0),
             type: 'TIP',
             title: 'Fan Tips',
         };

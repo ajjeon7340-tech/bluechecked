@@ -112,19 +112,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Handle PaymentIntent succeeded (legacy/backwards compat)
-    if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = event.data.object
-      const userId = paymentIntent.metadata?.user_id
-      const credits = parseInt(paymentIntent.metadata?.credits || '0')
-
-      if (!userId || !credits) {
-        console.error('Missing metadata in PaymentIntent:', paymentIntent.id)
-        return new Response('Missing metadata', { status: 400 })
-      }
-
-      await addCreditsToUser(userId, credits)
-    }
 
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
