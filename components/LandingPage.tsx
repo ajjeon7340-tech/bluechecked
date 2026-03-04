@@ -41,8 +41,8 @@ const getFeaturedConversations = (t: (key: string) => string) => [
     gradient: 'from-pink-100 to-rose-50',
     time: t('landing.conv2Time'),
     fullThread: [
-        { role: 'FAN', content: t('landing.conv2Thread1'), time: t('landing.conv2Thread1Time') },
-        { role: 'CREATOR', content: t('landing.conv2Thread2'), time: t('landing.conv2Thread2Time') }
+        { role: 'FAN', content: t('landing.conv2Thread1'), image: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=400&q=80', time: t('landing.conv2Thread1Time') },
+        { role: 'CREATOR', content: t('landing.conv2Thread2'), attachment: { name: 'Chloe_Jewelry_Styling_Guide.pdf', type: 'PDF' }, time: t('landing.conv2Thread2Time') }
     ]
   },
   {
@@ -549,6 +549,12 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
 
                                     <div className={`p-4 rounded-2xl border ${isFan ? 'bg-white border-stone-200 rounded-tl-lg shadow-sm' : 'bg-stone-50 border-stone-200/60 rounded-tl-lg'}`}>
                                         {msg.content && <p className="text-sm text-stone-700 leading-relaxed whitespace-pre-wrap">{msg.content}</p>}
+
+                                        {msg.image && (
+                                            <div className={`${msg.content ? 'mt-3' : ''} rounded-xl overflow-hidden border border-stone-200`}>
+                                                <img src={msg.image} alt="outfit" className="w-full max-h-72 object-cover object-top" />
+                                            </div>
+                                        )}
 
                                         {msg.attachment && (
                                             <div className="mt-3 flex items-center gap-3 p-3 bg-white rounded-xl border border-stone-200 hover:border-stone-300 transition-colors cursor-pointer group">

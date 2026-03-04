@@ -448,9 +448,9 @@ function App() {
           creator={creator} 
           currentUser={currentUser}
           key={refreshTrigger} // Force re-render on dashboard when messages update via refreshTrigger
-          onLogout={() => {
+          onLogout={async () => {
+            await signOut();
             setCurrentUser(null);
-            localStorage.removeItem('bluechecked_current_user'); // Ensure session clear
             window.history.pushState({ page: 'LANDING' }, '', '/');
             setCurrentPage('LANDING');
           }}
@@ -469,9 +469,9 @@ function App() {
          <FanDashboard 
             currentUser={currentUser}
             onUpdateUser={(u) => setCurrentUser(u)}
-            onLogout={() => {
+            onLogout={async () => {
+              await signOut();
               setCurrentUser(null);
-              localStorage.removeItem('bluechecked_current_user'); // Ensure session clear
               window.history.pushState({ page: 'LANDING' }, '', '/');
               setCurrentPage('LANDING');
             }}
