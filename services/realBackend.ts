@@ -1589,27 +1589,42 @@ export const getProAnalytics = async (): Promise<ProAnalyticsData | null> => {
     ];
 
     // 3. Top Assets (Real Aggregation)
-    const assetStats: Record<string, { clicks: number, revenue: number, type: 'LINK' | 'PRODUCT', title: string }> = {};
-    
-    // Initialize with known links from profile if available, or build dynamically from events
-    // Here we build dynamically from events to capture deleted links too
+    const assetStats: Record<string, { clicks: number, revenue: number, type: string, title: string }> = {};
+
+    // Track links (CLICK/CONVERSION with id)
     events.filter(e => (e.event_type === 'CLICK' || e.event_type === 'CONVERSION') && e.metadata?.id).forEach(e => {
         const id = e.metadata.id;
         if (!assetStats[id]) {
-            assetStats[id] = { 
-                clicks: 0, 
-                revenue: 0, 
-                type: e.metadata.type || 'LINK', 
-                title: e.metadata.title || 'Unknown Asset' 
-            };
+            assetStats[id] = { clicks: 0, revenue: 0, type: e.metadata.type || 'LINK', title: e.metadata.title || 'Unknown Asset' };
         }
         assetStats[id].clicks++;
+        // Links have no revenue; products log price on CONVERSION
+        if (e.event_type === 'CONVERSION' && e.metadata?.price) {
+            assetStats[id].revenue += e.metadata.price;
+        }
     });
 
-    // Calculate revenue from messages (for products)
-    // Note: We need to fetch messages to attribute revenue to products
-    // For MVP, we'll skip revenue attribution here or do a separate query if needed.
-    // Assuming revenue is 0 for links.
+    // Track DIEM messages — aggregate under a single synthetic entry
+    const diemConversions = events.filter(e => e.event_type === 'CONVERSION' && e.metadata?.type === 'MESSAGE');
+    if (diemConversions.length > 0) {
+        assetStats['__diem__'] = {
+            clicks: diemConversions.length,
+            revenue: diemConversions.reduce((sum, e) => sum + (e.metadata?.price || 0), 0),
+            type: 'DIEM',
+            title: 'DIEM Messages',
+        };
+    }
+
+    // Track Tips — aggregate under a single synthetic entry
+    const tipConversions = events.filter(e => e.event_type === 'CONVERSION' && e.metadata?.type === 'TIP');
+    if (tipConversions.length > 0) {
+        assetStats['__tip__'] = {
+            clicks: tipConversions.length,
+            revenue: tipConversions.reduce((sum, e) => sum + (e.metadata?.amount || 0), 0),
+            type: 'TIP',
+            title: 'Fan Tips',
+        };
+    }
 
     const profileViews = views.length || 1;
     const topAssets = Object.entries(assetStats)

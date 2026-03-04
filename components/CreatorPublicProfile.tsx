@@ -188,7 +188,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     setIsSubmitting(true);
     try {
         await sendMessage(creator.id, name, email, generalMessage, creator.pricePerMessage, attachments);
-        logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'MESSAGE' });
+        logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'MESSAGE', price: creator.pricePerMessage });
         setIsSubmitting(false);
         setIsModalOpen(false);
         setShowPostSendPrompt(true);
@@ -210,7 +210,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
       // Simulate deduction logic (would be a real API call)
       try {
         await sendMessage(creator.id, name, email, `Purchased Product: ${selectedProductLink.title}`, selectedProductLink.price);
-        logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'PRODUCT', id: selectedProductLink.id });
+        logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'PRODUCT', id: selectedProductLink.id, title: selectedProductLink.title, price: selectedProductLink.price });
         setIsSubmitting(false);
         setStep('product_success');
       } catch (e: any) {
@@ -638,8 +638,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                   onClick={() => { currentUser ? handleOpenModal() : onLoginRequest(); }}
                   className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${creator.isDiemHighlighted ? 'bg-gradient-to-r from-indigo-50/40 to-blue-50/20 border-indigo-100 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300 hover:shadow-sm'}`}
               >
-                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform border ${creator.isDiemHighlighted ? 'bg-indigo-50 border-indigo-100' : 'bg-stone-50 border-stone-100'}`}>
-                      <img src="/favicon.ico" alt="diem" className="w-6 h-6 sm:w-8 sm:h-8 object-contain" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform border bg-indigo-50 border-indigo-100 text-indigo-500">
+                      <DiemLogo size={24} className="sm:hidden" />
+                      <DiemLogo size={32} className="hidden sm:block" />
                   </div>
                   <div className="flex-1 relative z-10 min-w-0 text-left">
                       <div className="flex items-center gap-2">
@@ -718,7 +719,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 onClick={() => handleSupportClick(link.price)}
                                                 className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-pink-50/40 to-rose-50/20 border-pink-100 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300 hover:shadow-sm'}`}
                                             >
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : link.isPromoted ? 'bg-pink-50 text-pink-400' : 'bg-stone-50 text-stone-500'}`}>
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : 'bg-pink-50 text-pink-400'}`}>
                                                     {hasThumbnail ? (
                                                         <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
                                                     ) : (
@@ -741,7 +742,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 onClick={() => handleProductClick(link)}
                                                 className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-purple-50/40 to-violet-50/20 border-purple-100 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300 hover:shadow-sm'}`}
                                             >
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : link.isPromoted ? 'bg-purple-50 text-purple-400' : 'bg-stone-50 text-stone-500'}`}>
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : 'bg-purple-50 text-purple-400'}`}>
                                                     {hasThumbnail ? (
                                                         <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
                                                     ) : (
@@ -767,18 +768,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 onClick={() => logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'LINK', id: link.id, title: link.title, url: link.url })}
                                                 className={`block w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-stone-50 to-stone-100/40 border-stone-200 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300'}`}
                                             >
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : (link.isPromoted ? 'bg-stone-900 text-white' : 'bg-stone-50 text-stone-500')}`}>
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : 'bg-stone-900 text-white'}`}>
                                                     {hasThumbnail ? (
                                                         <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
-                                                    ) : link.isPromoted ? (
+                                                    ) : (
                                                         <>
                                                             <Sparkles size={20} className="sm:hidden" />
                                                             <Sparkles size={24} className="hidden sm:block" />
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <ExternalLink size={20} className="sm:hidden" />
-                                                            <ExternalLink size={24} className="hidden sm:block" />
                                                         </>
                                                     )}
                                                 </div>

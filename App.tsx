@@ -7,6 +7,7 @@ import { LoginPage } from './components/LoginPage';
 import { FanDashboard } from './components/FanDashboard';
 import { getCreatorProfile, getCreatorProfileByHandle, checkAndSyncSession, completeOAuthSignup, signOut, subscribeToAuthChanges } from './services/realBackend';
 import { CreatorProfile, CurrentUser, UserRole } from './types';
+import { DiemLogo } from './components/Icons';
 
 type PageState = 'LANDING' | 'LOGIN' | 'DASHBOARD' | 'PROFILE' | 'FAN_DASHBOARD' | 'SETUP_PROFILE';
 
@@ -16,6 +17,7 @@ function App() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showLoadingUI, setShowLoadingUI] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSignUpConfirm, setShowSignUpConfirm] = useState(false);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
@@ -24,6 +26,13 @@ function App() {
   useEffect(() => {
       currentUserRef.current = currentUser;
   }, [currentUser]);
+
+  // Only show the loading UI after 300ms — fast loads skip the spinner entirely
+  useEffect(() => {
+      if (!isLoading) { setShowLoadingUI(false); return; }
+      const t = setTimeout(() => setShowLoadingUI(true), 300);
+      return () => clearTimeout(t);
+  }, [isLoading]);
 
   const loadCreatorData = async (specificCreatorId?: string, stopLoading = true): Promise<CreatorProfile | null> => {
     try {
@@ -249,17 +258,23 @@ function App() {
     </div>
   );
 
-  if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9] text-stone-400">
-      <div className="flex flex-col items-center gap-3">
-        <div className="animate-spin h-6 w-6 border-2 border-stone-800 border-t-transparent rounded-full"></div>
-        <div className="flex flex-col items-center gap-0.5">
-          <span className="text-sm font-semibold text-stone-700">Carpe Diem</span>
-          <span className="text-xs text-stone-400">Seize your day from your favorite creator</span>
+  if (isLoading) {
+    if (!showLoadingUI) return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9]" style={{ animation: 'fadeIn 0.3s ease both' }}>
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <DiemLogo size={48} />
+            <div className="absolute -bottom-1 -right-1 h-4 w-4 border-2 border-stone-800 border-t-transparent rounded-full animate-spin" />
+          </div>
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="text-sm font-semibold text-stone-700">Carpe Diem</span>
+            <span className="text-xs text-stone-400">Seize your day from your favorite creator</span>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   const navigateToDashboard = async (user: CurrentUser) => {
       // If the user came from a creator's profile page, return them there

@@ -90,9 +90,11 @@ const DUMMY_PRO_DATA: ProAnalyticsData = {
         { name: 'Conversions', count: 850, fill: '#4ADE80' }
     ],
     topAssets: [
+        { id: '__diem__', title: 'DIEM Messages', type: 'DIEM', clicks: 320, revenue: 38400, ctr: '2.1%' },
         { id: '1', title: 'Ultimate React Guide', type: 'PRODUCT', clicks: 2400, revenue: 12000, ctr: '15.6%' },
-        { id: '2', title: 'Discord Community', type: 'LINK', clicks: 1100, revenue: 0, ctr: '7.1%' },
         { id: '3', title: '1:1 Coaching', type: 'PRODUCT', clicks: 450, revenue: 45000, ctr: '2.9%' },
+        { id: '__tip__', title: 'Fan Tips', type: 'TIP', clicks: 45, revenue: 8500, ctr: '0.3%' },
+        { id: '2', title: 'Discord Community', type: 'LINK', clicks: 1100, revenue: 0, ctr: '7.1%' },
     ],
     audienceType: { new: 62, returning: 38 }
 };
