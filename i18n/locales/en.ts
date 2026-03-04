@@ -88,6 +88,8 @@ const en = {
     conv1Thread1Time: '2h ago',
     conv1Thread2: "I can feel your sincerity in every word. Let's polish this together so you can walk into that interview with a smile! 😊",
     conv1Thread2Time: '1h ago',
+    conv1Thread2b: "I went through your resume carefully and did a full revision! I strengthened your summary, restructured the bullet points, and made your key achievements stand out more clearly to recruiters. Here's the updated version — also attached a short PDF with points to keep in mind as you prepare. 📝",
+    conv1Thread2bTime: '1h ago',
     conv1Thread3: "I've reviewed your experience and it's impressive. I've attached a list of expected interview questions tailored to your background. Practice these!",
     conv1Thread3Time: '1h ago',
     conv1Thread4: "Good luck with your interview! You've got this. 🍀",

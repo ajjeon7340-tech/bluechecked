@@ -25,6 +25,7 @@ const getFeaturedConversations = (t: (key: string) => string) => [
     fullThread: [
         { role: 'FAN', content: t('landing.conv1Thread1'), attachment: { name: 'My_Resume_2025.pdf', type: 'PDF' }, time: t('landing.conv1Thread1Time') },
         { role: 'CREATOR', content: t('landing.conv1Thread2'), time: t('landing.conv1Thread2Time') },
+        { role: 'CREATOR', content: t('landing.conv1Thread2b'), attachment: { name: 'Ji-won_Revised_Resume.pdf', type: 'PDF' }, time: t('landing.conv1Thread2bTime') },
         { role: 'CREATOR', content: t('landing.conv1Thread3'), attachment: { name: 'Expected_Interview_Questions.pdf', type: 'PDF' }, time: t('landing.conv1Thread3Time') },
         { role: 'CREATOR', content: t('landing.conv1Thread4'), time: t('landing.conv1Thread4Time') }
     ]
@@ -58,7 +59,7 @@ const getFeaturedConversations = (t: (key: string) => string) => [
     time: t('landing.conv3Time'),
     fullThread: [
         { role: 'FAN', content: t('landing.conv3Thread1'), image: '/stock-chart.png', time: t('landing.conv3Thread1Time') },
-        { role: 'CREATOR', content: t('landing.conv3Thread2'), time: t('landing.conv3Thread2Time') }
+        { role: 'CREATOR', content: t('landing.conv3Thread2'), attachment: { name: 'David_Portfolio_Strategy.pdf', type: 'PDF' }, time: t('landing.conv3Thread2Time') }
     ]
   },
 ];

@@ -88,6 +88,8 @@ const zh = {
     conv1Thread1Time: '2小时前',
     conv1Thread2: '从每个字都能感受到你的真诚。让我们一起打磨，让你带着微笑走进面试！ 😊',
     conv1Thread2Time: '1小时前',
+    conv1Thread2b: '我仔细审阅了您的简历并进行了全面修改！加强了个人简介，重构了要点，让您的核心成就对招聘人员更加突出。修改版本已附上，另附一份简短PDF供您准备时参考。📝',
+    conv1Thread2bTime: '1小时前',
     conv1Thread3: '我审阅了你的经历，非常出色。我附上了针对你背景的预期面试问题清单。好好练习！',
     conv1Thread3Time: '1小时前',
     conv1Thread4: '面试加油！你一定行的。 🍀',

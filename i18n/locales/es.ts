@@ -88,6 +88,8 @@ const es = {
     conv1Thread1Time: 'hace 2h',
     conv1Thread2: 'Puedo sentir tu sinceridad en cada palabra. ¡Vamos a pulirlo juntos para que entres a esa entrevista con una sonrisa! 😊',
     conv1Thread2Time: 'hace 1h',
+    conv1Thread2b: '¡Revisé tu currículum detenidamente y hice una revisión completa! Reforcé el resumen, reestructuré los puntos clave y dejé tus logros principales más visibles para los reclutadores. Aquí tienes la versión actualizada — también adjunté un PDF corto con puntos a tener en cuenta mientras te preparas. 📝',
+    conv1Thread2bTime: 'hace 1h',
     conv1Thread3: 'He revisado tu experiencia y es impresionante. He adjuntado una lista de preguntas de entrevista esperadas adaptadas a tu perfil. ¡Practícalas!',
     conv1Thread3Time: 'hace 1h',
     conv1Thread4: '¡Buena suerte en tu entrevista! Tú puedes. 🍀',
