@@ -23,7 +23,7 @@ const getFeaturedConversations = (t: (key: string) => string) => [
     gradient: 'from-purple-100 to-violet-50',
     time: t('landing.conv1Time'),
     fullThread: [
-        { role: 'FAN', content: t('landing.conv1Thread1'), time: t('landing.conv1Thread1Time') },
+        { role: 'FAN', content: t('landing.conv1Thread1'), attachment: { name: 'My_Resume_2025.pdf', type: 'PDF' }, time: t('landing.conv1Thread1Time') },
         { role: 'CREATOR', content: t('landing.conv1Thread2'), time: t('landing.conv1Thread2Time') },
         { role: 'CREATOR', content: t('landing.conv1Thread3'), attachment: { name: 'Expected_Interview_Questions.pdf', type: 'PDF' }, time: t('landing.conv1Thread3Time') },
         { role: 'CREATOR', content: t('landing.conv1Thread4'), time: t('landing.conv1Thread4Time') }
@@ -57,7 +57,7 @@ const getFeaturedConversations = (t: (key: string) => string) => [
     gradient: 'from-emerald-100 to-teal-50',
     time: t('landing.conv3Time'),
     fullThread: [
-        { role: 'FAN', content: t('landing.conv3Thread1'), time: t('landing.conv3Thread1Time') },
+        { role: 'FAN', content: t('landing.conv3Thread1'), image: '/stock-chart.png', time: t('landing.conv3Thread1Time') },
         { role: 'CREATOR', content: t('landing.conv3Thread2'), time: t('landing.conv3Thread2Time') }
     ]
   },
