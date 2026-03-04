@@ -573,11 +573,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     if (target.conversation.length <= 1) hydrateConversation(target);
   }, [selectedSenderEmail]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // When navigating to a different session, hydrate it on demand
-  useEffect(() => {
-    const msg = threadMessages[effectiveSessionIndex];
-    if (msg && msg.conversation.length <= 1) hydrateConversation(msg);
-  }, [effectiveSessionIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadData = async (silent = false) => {
     if (!silent) setIsLoading(true);
@@ -850,6 +845,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       if (threadMessages.length === 0) return 0;
       return Math.min(chatSessionIndex, threadMessages.length - 1);
   }, [chatSessionIndex, threadMessages.length]);
+
+  // When navigating to a different session, hydrate it on demand
+  useEffect(() => {
+    const msg = threadMessages[effectiveSessionIndex];
+    if (msg && msg.conversation.length <= 1) hydrateConversation(msg);
+  }, [effectiveSessionIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Determine the "Active" message for the reply input (Latest Pending, or just latest)
   const activeMessage = useMemo(() => {
