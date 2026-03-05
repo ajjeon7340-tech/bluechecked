@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from './Button';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -69,6 +69,18 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
   const FEATURED_CONVERSATIONS = getFeaturedConversations(t);
   const [expandedConversation, setExpandedConversation] = useState<typeof FEATURED_CONVERSATIONS[0] | null>(null);
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
+  const [convIdx, setConvIdx] = useState(0);
+  const [stepsIdx, setStepsIdx] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setConvIdx(i => (i + 1) % FEATURED_CONVERSATIONS.length), 3500);
+    return () => clearInterval(t);
+  }, [FEATURED_CONVERSATIONS.length]);
+
+  useEffect(() => {
+    const t = setInterval(() => setStepsIdx(i => (i + 1) % 3), 3500);
+    return () => clearInterval(t);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#FAFAF9] font-sans selection:bg-amber-100 selection:text-amber-900 overflow-x-hidden">
@@ -171,14 +183,18 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
             </h2>
           </div>
 
-          {/* Creator Cards - Editorial Grid */}
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-            {FEATURED_CONVERSATIONS.map((item, idx) => (
-              <div
-                key={item.id}
-                className="group bg-white rounded-3xl p-6 border border-stone-200 shadow-sm hover:shadow-xl hover:shadow-stone-200/50 hover:-translate-y-1 transition-all duration-500 cursor-pointer flex flex-col"
-                onClick={() => setExpandedConversation(item)}
-              >
+          {/* Creator Cards - Mobile Carousel */}
+          <div className="md:hidden overflow-hidden">
+            <div
+              className="flex transition-transform duration-500 ease-out"
+              style={{ transform: `translateX(-${convIdx * 100}%)` }}
+            >
+              {FEATURED_CONVERSATIONS.map((item) => (
+                <div
+                  key={item.id}
+                  className="w-full flex-shrink-0 group bg-white rounded-3xl p-6 border border-stone-200 shadow-sm cursor-pointer flex flex-col"
+                  onClick={() => setExpandedConversation(item)}
+                >
                 {/* 1. Request (Fan) */}
                 <div className="flex relative z-10">
                     {/* Left: Avatar + Thread Line */}
@@ -228,6 +244,66 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                     </div>
                 </div>
               </div>
+              ))}
+            </div>
+            {/* Dots */}
+            <div className="flex justify-center gap-2 mt-6">
+              {FEATURED_CONVERSATIONS.map((_, i) => (
+                <button key={i} onClick={() => setConvIdx(i)} className={`w-2 h-2 rounded-full transition-all duration-300 ${convIdx === i ? 'bg-stone-900 w-5' : 'bg-stone-300'}`} />
+              ))}
+            </div>
+          </div>
+
+          {/* Creator Cards - Desktop Grid */}
+          <div className="hidden md:grid md:grid-cols-3 gap-6 lg:gap-8">
+            {FEATURED_CONVERSATIONS.map((item) => (
+              <div
+                key={item.id}
+                className="group bg-white rounded-3xl p-6 border border-stone-200 shadow-sm hover:shadow-xl hover:shadow-stone-200/50 hover:-translate-y-1 transition-all duration-500 cursor-pointer flex flex-col"
+                onClick={() => setExpandedConversation(item)}
+              >
+                {/* 1. Request (Fan) */}
+                <div className="flex relative z-10">
+                    <div className="flex flex-col items-center mr-3 relative">
+                        <div className="absolute left-[17px] top-10 -bottom-6 w-0.5 bg-stone-200"></div>
+                        <div className="w-9 h-9 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200 flex-shrink-0">
+                            <User size={16} />
+                        </div>
+                    </div>
+                    <div className="flex-1 min-w-0 pb-6">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="font-semibold text-sm text-stone-900">{t('landing.anonymousFan')}</span>
+                            <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                                <User size={10} className="fill-current" />
+                                <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.fan')}</span>
+                            </div>
+                        </div>
+                        <div className="bg-white p-4 rounded-2xl rounded-tl-lg border border-stone-200 shadow-sm">
+                            <p className="text-sm text-stone-700 leading-relaxed">{item.request}</p>
+                        </div>
+                    </div>
+                </div>
+                {/* 2. Response (Creator) */}
+                <div className="flex relative z-10">
+                    <div className="flex flex-col items-center mr-3 relative">
+                        <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-stone-200">
+                            <img src={item.creator.avatar} alt={item.creator.name} className="w-full h-full object-cover" />
+                        </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="font-semibold text-sm text-stone-900">{item.creator.name}</span>
+                            <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-1 rounded-full flex-shrink-0 overflow-visible">
+                                <Verified size={12} />
+                                <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.creator')}</span>
+                            </div>
+                        </div>
+                        <div className="bg-stone-50 p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
+                            <p className="text-sm text-stone-700 leading-relaxed">{item.response}</p>
+                        </div>
+                    </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -243,57 +319,67 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
-            {[
-              {
-                step: t('landing.step01'),
-                title: t('landing.setYourRate'),
-                desc: t('landing.setYourRateDesc'),
-                icon: Coins
-              },
-              {
-                step: t('landing.step02'),
-                title: t('landing.receiveQuestions'),
-                desc: t('landing.receiveQuestionsDesc'),
-                icon: MessageSquare
-              },
-              {
-                step: t('landing.step03'),
-                title: t('landing.replyAndEarn'),
-                desc: t('landing.replyAndEarnDesc'),
-                icon: Check
-              }
-            ].map((item, idx) => (
-              <div
-                key={idx}
-                className="relative group"
-                onMouseEnter={() => setHoveredFeature(idx)}
-                onMouseLeave={() => setHoveredFeature(null)}
-              >
-                {/* Connecting Line */}
-                {idx < 2 && (
-                  <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-px bg-stone-200"></div>
-                )}
-
-                <div className="relative bg-white rounded-3xl p-8 border border-stone-100 transition-all duration-300 hover:shadow-lg hover:shadow-stone-100 hover:border-stone-200">
-                  {/* Step Number */}
-                  <div className="text-sm font-semibold text-stone-300 mb-6">{item.step}</div>
-
-                  {/* Icon */}
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 ${
-                    hoveredFeature === idx
-                      ? 'bg-stone-900 text-white'
-                      : 'bg-stone-100 text-stone-600'
-                  }`}>
-                    <item.icon size={24} />
+          {/* Mobile Carousel */}
+          {(() => {
+            const steps = [
+              { step: t('landing.step01'), title: t('landing.setYourRate'), desc: t('landing.setYourRateDesc'), icon: Coins },
+              { step: t('landing.step02'), title: t('landing.receiveQuestions'), desc: t('landing.receiveQuestionsDesc'), icon: MessageSquare },
+              { step: t('landing.step03'), title: t('landing.replyAndEarn'), desc: t('landing.replyAndEarnDesc'), icon: Check },
+            ];
+            return (
+              <>
+                <div className="md:hidden overflow-hidden">
+                  <div
+                    className="flex transition-transform duration-500 ease-out"
+                    style={{ transform: `translateX(-${stepsIdx * 100}%)` }}
+                  >
+                    {steps.map((item, idx) => (
+                      <div key={idx} className="w-full flex-shrink-0">
+                        <div className="relative bg-white rounded-3xl p-8 border border-stone-100">
+                          <div className="text-sm font-semibold text-stone-300 mb-6">{item.step}</div>
+                          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-stone-100 text-stone-600">
+                            <item.icon size={24} />
+                          </div>
+                          <h3 className="text-xl font-semibold text-stone-900 mb-3">{item.title}</h3>
+                          <p className="text-stone-500 leading-relaxed">{item.desc}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-
-                  <h3 className="text-xl font-semibold text-stone-900 mb-3">{item.title}</h3>
-                  <p className="text-stone-500 leading-relaxed">{item.desc}</p>
+                  {/* Dots */}
+                  <div className="flex justify-center gap-2 mt-6">
+                    {steps.map((_, i) => (
+                      <button key={i} onClick={() => setStepsIdx(i)} className={`h-2 rounded-full transition-all duration-300 ${stepsIdx === i ? 'bg-stone-900 w-5' : 'bg-stone-300 w-2'}`} />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+
+                {/* Desktop Grid */}
+                <div className="hidden md:grid md:grid-cols-3 gap-8 lg:gap-12">
+                  {steps.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="relative group"
+                      onMouseEnter={() => setHoveredFeature(idx)}
+                      onMouseLeave={() => setHoveredFeature(null)}
+                    >
+                      {idx < 2 && (
+                        <div className="absolute top-8 left-[60%] w-[80%] h-px bg-stone-200"></div>
+                      )}
+                      <div className="relative bg-white rounded-3xl p-8 border border-stone-100 transition-all duration-300 hover:shadow-lg hover:shadow-stone-100 hover:border-stone-200">
+                        <div className="text-sm font-semibold text-stone-300 mb-6">{item.step}</div>
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 ${hoveredFeature === idx ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-600'}`}>
+                          <item.icon size={24} />
+                        </div>
+                        <h3 className="text-xl font-semibold text-stone-900 mb-3">{item.title}</h3>
+                        <p className="text-stone-500 leading-relaxed">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
         </div>
       </section>
 

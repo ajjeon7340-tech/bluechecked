@@ -65,6 +65,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const [featuredCreators, setFeaturedCreators] = useState<CreatorProfile[]>([]);
   const [purchasedProducts, setPurchasedProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [showFanLoadingUI, setShowFanLoadingUI] = useState(false);
   const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
   const selectedCreatorIdRef = useRef<string | null>(null);
   const subscriptionDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -195,6 +197,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+      if (!isInitialLoad) { setShowFanLoadingUI(false); return; }
+      const t = setTimeout(() => setShowFanLoadingUI(true), 300);
+      return () => clearTimeout(t);
+  }, [isInitialLoad]);
 
   useEffect(() => {
       const handlePopState = () => {
@@ -332,7 +340,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         return m;
       });
     });
-    if (!silent) setIsLoading(false);
+    if (!silent) { setIsLoading(false); setIsInitialLoad(false); }
 
     // After a silent (real-time) refresh, re-hydrate the open conversation
     if (silent) {
@@ -1033,6 +1041,21 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
     </div>
   );
 
+  if (isInitialLoad) {
+    if (!showFanLoadingUI) return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9]" style={{ animation: 'fadeIn 0.3s ease both' }}>
+        <div className="flex flex-col items-center gap-4">
+          <DiemLogo size={48} />
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="text-sm font-semibold text-stone-700">Carpe Diem</span>
+            <span className="text-xs text-stone-400">Seize your day from your favorite creator</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex font-sans text-stone-900 overflow-hidden">
         {/* Inject Animation Styles Globally for the Component */}
@@ -1117,7 +1140,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                 
                 {/* --- VIEW: PURCHASED (BETA) --- */}
                 {currentView === 'PURCHASED' && (
-                    <div className="animate-in fade-in">
+                    <div className="animate-in fade-in w-full overflow-x-hidden">
                         <div className="flex items-center justify-between px-4 sm:px-6 py-4">
                             <div className="flex items-center gap-2">
                                 <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0">
