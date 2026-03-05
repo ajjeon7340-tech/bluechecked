@@ -1136,11 +1136,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
             )}
 
             {/* Content Area */}
-            <div className={`flex-1 relative bg-[#FAF9F6] ${currentView === 'OVERVIEW' ? 'overflow-hidden' : 'overflow-auto'} ${currentView === 'OVERVIEW' && !selectedCreatorId ? 'p-0' : ''}`}>
+            <div className={`flex-1 relative bg-[#FAF9F6] ${currentView === 'OVERVIEW' ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'} ${currentView === 'OVERVIEW' && !selectedCreatorId ? 'p-0' : ''}`}>
                 
                 {/* --- VIEW: PURCHASED (BETA) --- */}
                 {currentView === 'PURCHASED' && (
-                    <div className="animate-in fade-in w-full overflow-x-hidden">
+                    <div className="animate-in fade-in w-full">
                         <div className="flex items-center justify-between px-4 sm:px-6 py-4">
                             <div className="flex items-center gap-2">
                                 <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0">
@@ -1150,9 +1150,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             </div>
                             <TopNav hideBurger />
                         </div>
-                        <div className="px-4 sm:px-6 pb-6 space-y-6 max-w-5xl mx-auto">
-                        <div className="bg-stone-900 text-white p-5 sm:p-8 rounded-2xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                        <div className="px-3 sm:px-6 pb-6 space-y-4 sm:space-y-6 max-w-5xl mx-auto">
+                        <div className="bg-stone-900 text-white p-4 sm:p-8 rounded-2xl relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                             <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div>
                                     <div className="flex items-center gap-2 mb-3">
@@ -1173,7 +1173,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </div>
 
                         {/* Content Filter Tabs */}
-                        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                        <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                              {(['ALL', 'DOCUMENT', 'IMAGE', 'VIDEO'] as const).map(type => (
                                  <button 
                                     key={type}
@@ -1192,36 +1192,41 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         {isLoading ? (
                             <div className="text-center py-20 text-stone-400">{t('fan.loadingLibrary')}</div>
                         ) : filteredProducts.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                                 {filteredProducts.map((product, idx) => (
-                                    <div key={idx} className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col min-w-0 relative">
-                                <div className="aspect-[4/3] bg-stone-100 relative overflow-hidden flex items-center justify-center p-8 group-hover:bg-stone-50 transition-colors">
-                                     <div className="bg-white shadow-lg p-0 w-24 h-32 rounded-sm border border-stone-200 relative transform group-hover:-rotate-3 transition-transform duration-500 flex items-center justify-center">
-                                         <div className="absolute inset-x-2 top-2 bottom-2 border-2 border-dashed border-stone-100"></div>
+                                    <div key={idx} className="bg-white rounded-xl sm:rounded-2xl border border-stone-200 overflow-hidden shadow-sm flex flex-col">
+                                <div className="bg-stone-100 flex items-center justify-center p-4 sm:p-8 h-28 sm:h-auto sm:aspect-[4/3] relative">
+                                     <div className="bg-white shadow-lg w-14 h-20 sm:w-24 sm:h-32 rounded-sm border border-stone-200 flex items-center justify-center flex-shrink-0">
                                          {(() => {
                                              const type = getFileType(product.url);
-                                             if (type === 'IMAGE') return <ImageIcon size={32} className="text-purple-500" />;
-                                             if (type === 'VIDEO') return <Video size={32} className="text-blue-500" />;
-                                             return <FileText size={32} className="text-red-500" />;
+                                             if (type === 'IMAGE') return <ImageIcon size={20} className="text-purple-500 sm:hidden" />;
+                                             if (type === 'VIDEO') return <Video size={20} className="text-blue-500 sm:hidden" />;
+                                             return <FileText size={20} className="text-red-500 sm:hidden" />;
+                                         })()}
+                                         {(() => {
+                                             const type = getFileType(product.url);
+                                             if (type === 'IMAGE') return <ImageIcon size={32} className="text-purple-500 hidden sm:block" />;
+                                             if (type === 'VIDEO') return <Video size={32} className="text-blue-500 hidden sm:block" />;
+                                             return <FileText size={32} className="text-red-500 hidden sm:block" />;
                                          })()}
                                      </div>
-                                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-stone-500 border border-stone-200">
+                                     <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-1.5 py-0.5 rounded text-[9px] font-bold text-stone-500 border border-stone-200">
                                          {getFileType(product.url)}
                                      </div>
                                 </div>
-                                <div className="p-5 flex flex-col flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <div className="w-5 h-5 rounded-full bg-stone-200 overflow-hidden">
+                                <div className="p-3 sm:p-5 flex flex-col flex-1">
+                                    <div className="flex items-center gap-1.5 mb-1.5 min-w-0">
+                                        <div className="w-4 h-4 rounded-full bg-stone-200 overflow-hidden flex-shrink-0">
                                             <img src={product.creatorAvatar || 'https://via.placeholder.com/100'} alt="Creator" className="w-full h-full object-cover"/>
                                         </div>
-                                        <span className="text-[10px] font-bold text-stone-500">{product.creatorName}</span>
+                                        <span className="text-[9px] font-bold text-stone-500 truncate">{product.creatorName}</span>
                                     </div>
-                                    <h4 className="font-bold text-stone-900 mb-1 leading-tight line-clamp-2">{product.title}</h4>
-                                    <p className="text-xs text-stone-500 mb-4 line-clamp-2 flex-1">{product.description || t('profile.digitalDownload')}</p>
-                                    <div className="mt-auto pt-4 border-t border-stone-50 flex justify-between items-center">
-                                        <span className="text-[10px] text-stone-400">{new Date(product.purchaseDate).toLocaleDateString()}</span>
-                                        <button 
-                                            className="text-xs font-semibold text-stone-700 hover:underline flex items-center gap-1"
+                                    <h4 className="font-bold text-stone-900 text-xs sm:text-sm mb-1 leading-tight line-clamp-2">{product.title}</h4>
+                                    <p className="text-[10px] sm:text-xs text-stone-500 mb-3 line-clamp-2 flex-1 hidden sm:block">{product.description || t('profile.digitalDownload')}</p>
+                                    <div className="pt-2 border-t border-stone-100 flex justify-between items-center gap-1">
+                                        <span className="text-[9px] text-stone-400">{new Date(product.purchaseDate).toLocaleDateString()}</span>
+                                        <button
+                                            className="text-[10px] sm:text-xs font-semibold text-stone-700 hover:underline flex items-center gap-0.5 flex-shrink-0"
                                             onClick={async (e) => {
                                                 e.preventDefault();
                                                 try {
@@ -1229,7 +1234,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     if (secureUrl) {
                                                         const link = document.createElement('a');
                                                         link.href = secureUrl;
-                                                        link.download = product.title || 'download'; // Suggest filename
+                                                        link.download = product.title || 'download';
                                                         document.body.appendChild(link);
                                                         link.click();
                                                         document.body.removeChild(link);
@@ -1242,7 +1247,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 }
                                             }}
                                         >
-                                            {t('profile.downloadFile')} <Download size={12}/>
+                                            <Download size={10}/> {t('profile.downloadFile')}
                                         </button>
                                     </div>
                                 </div>
