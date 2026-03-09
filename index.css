@@ -5,11 +5,3 @@
   to { opacity: 1; }
 }
 
-/* Typography */
-body {
-  font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
-}
-
-h1, h2, h3, h4 {
-  font-family: 'Playfair Display', Georgia, serif;
-}

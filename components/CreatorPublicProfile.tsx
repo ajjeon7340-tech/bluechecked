@@ -463,7 +463,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       onClick={onCreateOwn}
                       className="flex items-center cursor-pointer hover:opacity-70 transition-opacity"
                     >
-                      <DiemLogo size={50} className="text-stone-800" />
+                      <DiemLogo size={20} className="text-stone-800" />
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -639,8 +639,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                   className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${creator.isDiemHighlighted ? 'bg-gradient-to-r from-indigo-50/40 to-blue-50/20 border-indigo-100 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300 hover:shadow-sm'}`}
               >
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform border bg-indigo-50 border-indigo-100 text-indigo-500">
-                      <DiemLogo size={24} className="sm:hidden" />
-                      <DiemLogo size={32} className="hidden sm:block" />
+                      <DiemLogo size={14} className="sm:hidden" />
+                      <DiemLogo size={18} className="hidden sm:block" />
                   </div>
                   <div className="flex-1 relative z-10 min-w-0 text-left">
                       <div className="flex items-center gap-2">

@@ -263,7 +263,7 @@ function App() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9]" style={{ animation: 'fadeIn 0.3s ease both' }}>
         <div className="flex flex-col items-center gap-4">
-          <DiemLogo size={48} />
+          <DiemLogo size={32} />
           <div className="flex flex-col items-center gap-0.5">
             <span className="text-sm font-semibold text-stone-700">Carpe Diem</span>
             <span className="text-xs text-stone-400">Seize your day from your favorite creator</span>
