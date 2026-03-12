@@ -116,12 +116,20 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       } catch { return {}; }
   });
 
-  const leaveChatroom = (creatorId: string) => {
+  const leaveChatroom = async (creatorId: string) => {
       if (!window.confirm(t('fan.leaveConversation'))) return;
+
+      // Cancel any pending requests to this creator
+      const pendingMessages = messages.filter(
+          m => m.creatorId === creatorId && m.status === 'PENDING'
+      );
+      await Promise.all(pendingMessages.map(m => cancelMessage(m.id).catch(() => {})));
+
       const updated = { ...leftChatrooms, [creatorId]: Date.now() };
       setLeftChatrooms(updated);
       localStorage.setItem('diem_fan_left_chatrooms', JSON.stringify(updated));
       setSelectedCreatorId(null);
+      if (pendingMessages.length > 0) loadMessages(true);
   };
 
   // Chat Reaction State
