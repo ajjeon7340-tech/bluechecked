@@ -99,6 +99,8 @@ const DUMMY_PRO_DATA: ProAnalyticsData = {
     audienceType: { new: 62, returning: 38 }
 };
 
+const firstName = (name: string) => name?.split(' ')[0] || name;
+
 export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogout, onViewProfile, onRefreshData }) => {
   const { t } = useTranslation();
   const [currentView, setCurrentView] = useState<DashboardView>(() => {
@@ -2410,7 +2412,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         >
                                             <div className="flex justify-between items-start mb-1">
                                                 <span className={`text-sm font-semibold ${isUnread ? 'text-stone-900' : 'text-stone-600'}`}>
-                                                    {group.senderName}
+                                                    {firstName(group.senderName)}
                                                     {isUnread && <span className="inline-block w-2 h-2 bg-stone-900 rounded-full ml-2"></span>}
                                                 </span>
                                                 <span className="text-xs text-stone-400">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
@@ -2518,7 +2520,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </button>
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2 min-w-0">
-                                                <h3 className="font-bold text-stone-900 truncate">{activeMessage.senderName}</h3>
+                                                <h3 className="font-bold text-stone-900 truncate">{firstName(activeMessage.senderName)}</h3>
                                                 {activeMessage.status === 'PENDING' && (
                                                     <button 
                                                         onClick={(e) => handleReject(e)}

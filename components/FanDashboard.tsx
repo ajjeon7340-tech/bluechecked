@@ -59,6 +59,8 @@ const getRelativeTime = (dateString: string, t?: (key: string, opts?: any) => st
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 };
 
+const firstName = (name: string) => name?.split(' ')[0] || name;
+
 export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseCreators, onUpdateUser }) => {
   const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -254,14 +256,17 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         recordCreditPurchase(pendingAmount);
         localStorage.removeItem('diem_pending_purchase_amount');
       }
+      setToastMessage(t('fan.paymentSuccess'));
+      setTimeout(() => setToastMessage(null), 4000);
       setTimeout(async () => {
         try {
           const updatedUser = await addCredits(0);
           if (onUpdateUser) onUpdateUser(updatedUser);
-        } catch {}
+        } catch {
+          setToastMessage('Your balance is still being processed. Please check back in a moment.');
+          setTimeout(() => setToastMessage(null), 5000);
+        }
       }, 2000);
-      setToastMessage(t('fan.paymentSuccess'));
-      setTimeout(() => setToastMessage(null), 4000);
     } else if (params.get('checkout') === 'cancel') {
       const url = new URL(window.location.href);
       url.searchParams.delete('checkout');
@@ -715,7 +720,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
               // url is null — Stripe not configured, fall through to mock
           } catch (e: any) {
               console.error(e);
-              // Fall through to mock
+              setIsProcessingTopUp(false);
+              alert('Your balance is still being processed. Please try again in a few moments.');
+              return;
           }
       }
 
@@ -1088,7 +1095,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                 <div className="space-y-1 flex-1">
                     <div className="px-3 mb-2 text-xs font-bold text-stone-400 uppercase tracking-wider">{t('fan.fanMenu')}</div>
                     <SidebarItem icon={Home} label={t('fan.conversations')} view="OVERVIEW" />
-                    <SidebarItem icon={Search} label={t('fan.exploreCreators')} view="EXPLORE" />
+                    {/* <SidebarItem icon={Search} label={t('fan.exploreCreators')} view="EXPLORE" /> */}
                     <SidebarItem icon={ShoppingBag} label={t('fan.purchased')} view="PURCHASED" isBeta={true} />
                     <SidebarItem icon={Bell} label={t('creator.notifications')} view="NOTIFICATIONS" />
                     {/* Wallet now acts as a trigger for the modal, not a separate view */}
@@ -1262,8 +1269,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                     </div>
                 )}
 
-                {/* --- VIEW: EXPLORE CREATORS --- */}
-                {currentView === 'EXPLORE' && (
+                {/* --- VIEW: EXPLORE CREATORS (hidden for now) --- */}
+                {false && currentView === 'EXPLORE' && (
                     <div className="animate-in fade-in">
                         <div className="flex items-center justify-between px-4 sm:px-6 py-4">
                             <div className="flex items-center gap-2">
@@ -1818,7 +1825,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex justify-between items-start">
-                                                        <span className="text-sm font-semibold text-stone-900">{group.creatorName}</span>
+                                                        <span className="text-sm font-semibold text-stone-900">{firstName(group.creatorName)}</span>
                                                         <span className="text-xs text-stone-400">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
                                                     </div>
                                                 </div>
@@ -1882,7 +1889,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     <ChevronLeft size={20} />
                                 </button>
                                 <div>
-                                    <h2 className="font-bold text-stone-900 text-lg leading-tight">{conversationGroups.find(g => g.creatorId === selectedCreatorId)?.creatorName || 'Creator'}</h2>
+                                    <h2 className="font-bold text-stone-900 text-lg leading-tight">{firstName(conversationGroups.find(g => g.creatorId === selectedCreatorId)?.creatorName || 'Creator')}</h2>
                                     <p className="text-[10px] text-stone-500 font-medium">Verified Expert</p>
                                 </div>
                             </div>

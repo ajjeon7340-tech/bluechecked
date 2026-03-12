@@ -1288,11 +1288,12 @@ export const addCredits = async (amount: number): Promise<CurrentUser> => {
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error("No user");
 
-    const { data: profile } = await supabase.from('profiles').select('credits').eq('id', session.session.user.id).single();
-
-    const newBalance = (profile?.credits || 0) + amount;
-
-    await supabase.from('profiles').update({ credits: newBalance }).eq('id', session.session.user.id);
+    // amount=0 means just refresh balance — don't write to DB
+    if (amount > 0) {
+        const { data: profile } = await supabase.from('profiles').select('credits').eq('id', session.session.user.id).single();
+        const newBalance = (profile?.credits || 0) + amount;
+        await supabase.from('profiles').update({ credits: newBalance }).eq('id', session.session.user.id);
+    }
 
     // Return updated user object
     const { data: updated } = await supabase.from('profiles').select('*').eq('id', session.session.user.id).single();
