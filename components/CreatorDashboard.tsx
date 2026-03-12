@@ -2517,7 +2517,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <ChevronLeft size={20} />
                                         </button>
                                         <div className="min-w-0">
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 min-w-0">
                                                 <h3 className="font-bold text-stone-900 truncate">{activeMessage.senderName}</h3>
                                                 {activeMessage.status === 'PENDING' && (
                                                     <button 
@@ -2987,63 +2987,61 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <span className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded border border-green-100 font-medium whitespace-nowrap text-[10px] sm:text-xs">
                                                 <Coins size={12} className="flex-shrink-0" /> <span className="hidden sm:inline">Payment held in </span>escrow
                                             </span>
+                                            <button
+                                                onClick={() => replyFileInputRef.current?.click()}
+                                                disabled={isUploadingReplyAttachment || replyAttachments.length >= 3}
+                                                className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-colors disabled:opacity-30"
+                                                title={replyAttachments.length >= 3 ? 'Max 3 photos' : 'Attach photos (max 3)'}
+                                            >
+                                                {isUploadingReplyAttachment ? <div className="w-4 h-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" /> : <Paperclip size={16} />}
+                                            </button>
+                                            <input type="file" ref={replyFileInputRef} className="hidden" accept="image/*" multiple onChange={handleReplyFileChange} />
                                         </div>
 
-                                        <div className="relative">
-                                            {replyAttachments.length > 0 && (
-                                                <div className="mb-2 mx-3 flex flex-wrap gap-2">
-                                                    {replyAttachments.map((att, i) => (
-                                                        <div key={i} className="flex items-center gap-2 bg-stone-50 p-1.5 rounded-lg border border-stone-200 animate-in zoom-in duration-200">
-                                                            {isImage(att) ? (
-                                                                <img src={att} className="w-10 h-10 rounded object-cover" alt={`attachment ${i + 1}`} />
-                                                            ) : (
-                                                                <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-stone-500 border border-stone-100">
-                                                                    <Paperclip size={14} />
-                                                                </div>
-                                                            )}
-                                                            <button onClick={() => setReplyAttachments(prev => prev.filter((_, idx) => idx !== i))} className="text-stone-400 hover:text-red-500 p-1 hover:bg-stone-100 rounded transition-colors">
-                                                                <X size={12} />
-                                                            </button>
-                                                        </div>
-                                                    ))}
-                                                    {replyAttachments.length < 3 && (
-                                                        <span className="text-[10px] text-stone-400 self-center">{replyAttachments.length}/3</span>
-                                                    )}
-                                                </div>
-                                            )}
-                                            <textarea 
-                                                value={replyText}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                                        e.preventDefault();
-                                                        handleSendReply(false);
-                                                    }
-                                                }}
-                                                onChange={(e) => setReplyText(e.target.value)}
-                                                placeholder="Write your reply..."
-                                                className="w-full bg-stone-50/50 border border-stone-200/60 rounded-xl p-3 pb-12 text-sm focus:ring-1 focus:ring-stone-400 focus:border-stone-300 outline-none resize-none min-h-[100px] text-stone-900 placeholder:text-stone-400"
-                                            />
-                                            
-                                            <div className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 flex items-center gap-1.5 sm:gap-3">
-                                                <button
-                                                    onClick={() => replyFileInputRef.current?.click()}
-                                                    disabled={isUploadingReplyAttachment || replyAttachments.length >= 3}
-                                                    className="p-1.5 sm:p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-colors disabled:opacity-30"
-                                                    title={replyAttachments.length >= 3 ? 'Max 3 photos' : 'Attach photos (max 3)'}
-                                                >
-                                                    {isUploadingReplyAttachment ? <div className="w-4 h-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" /> : <Paperclip size={16} />}
-                                                </button>
-                                                <input type="file" ref={replyFileInputRef} className="hidden" accept="image/*" multiple onChange={handleReplyFileChange} />
-
-                                                <button
-                                                    onClick={() => handleSendReply(false)}
-                                                    disabled={(!replyText.trim() && replyAttachments.length === 0) || isSendingReply || isRejecting}
-                                                    className="h-8 sm:h-10 px-3 sm:px-4 rounded-full bg-stone-600 text-white hover:bg-stone-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 sm:gap-2 font-semibold text-[11px] sm:text-xs"
-                                                    title="Send reply (Keep Pending)"
-                                                >
-                                                    <span className="hidden sm:inline">Send</span> <Send size={14} />
-                                                </button>
+                                        {replyAttachments.length > 0 && (
+                                            <div className="mb-2 flex flex-wrap gap-2">
+                                                {replyAttachments.map((att, i) => (
+                                                    <div key={i} className="flex items-center gap-2 bg-stone-50 p-1.5 rounded-lg border border-stone-200 animate-in zoom-in duration-200">
+                                                        {isImage(att) ? (
+                                                            <img src={att} className="w-10 h-10 rounded object-cover" alt={`attachment ${i + 1}`} />
+                                                        ) : (
+                                                            <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-stone-500 border border-stone-100">
+                                                                <Paperclip size={14} />
+                                                            </div>
+                                                        )}
+                                                        <button onClick={() => setReplyAttachments(prev => prev.filter((_, idx) => idx !== i))} className="text-stone-400 hover:text-red-500 p-1 hover:bg-stone-100 rounded transition-colors">
+                                                            <X size={12} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                {replyAttachments.length < 3 && (
+                                                    <span className="text-[10px] text-stone-400 self-center">{replyAttachments.length}/3</span>
+                                                )}
                                             </div>
+                                        )}
+
+                                        <textarea
+                                            value={replyText}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                    e.preventDefault();
+                                                    handleSendReply(false);
+                                                }
+                                            }}
+                                            onChange={(e) => setReplyText(e.target.value)}
+                                            placeholder="Write your reply..."
+                                            className="w-full bg-stone-50/50 border border-stone-200/60 rounded-xl p-3 text-sm focus:ring-1 focus:ring-stone-400 focus:border-stone-300 outline-none resize-none min-h-[100px] text-stone-900 placeholder:text-stone-400"
+                                        />
+
+                                        <div className="flex justify-end mt-2">
+                                            <button
+                                                onClick={() => handleSendReply(false)}
+                                                disabled={(!replyText.trim() && replyAttachments.length === 0) || isSendingReply || isRejecting}
+                                                className="h-9 px-4 rounded-full bg-stone-600 text-white hover:bg-stone-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold text-xs"
+                                                title="Send reply (Keep Pending)"
+                                            >
+                                                Send <Send size={14} />
+                                            </button>
                                         </div>
                                     </div>
                                 )}

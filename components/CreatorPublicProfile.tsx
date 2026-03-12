@@ -11,7 +11,7 @@ interface Props {
   onMessageSent: () => void;
   onCreateOwn: () => void;
   onLoginRequest: () => void;
-  onNavigateToDashboard: () => void;
+  onNavigateToDashboard: (creatorId?: string) => void;
   onRefreshData: () => Promise<void>;
 }
 
@@ -1267,7 +1267,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                 <p className="text-sm text-stone-500 text-center mb-6">{t('profile.requestSentDesc', { name: creator.displayName })}</p>
                 <div className="flex flex-col gap-2.5">
                     <button
-                        onClick={() => { setShowPostSendPrompt(false); onNavigateToDashboard(); }}
+                        onClick={() => { setShowPostSendPrompt(false); onNavigateToDashboard(creator.id); }}
                         className="w-full bg-stone-900 text-white py-3 rounded-2xl text-sm font-semibold hover:bg-stone-800 transition-colors flex items-center justify-center gap-2"
                     >
                         <MessageSquare size={16} /> {t('profile.goToInbox')}

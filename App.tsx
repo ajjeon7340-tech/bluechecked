@@ -443,13 +443,14 @@ function App() {
               window.history.pushState({ page: 'LOGIN' }, '', '/login');
               setCurrentPage('LOGIN');
           }}
-          onNavigateToDashboard={async () => {
+          onNavigateToDashboard={async (creatorId?: string) => {
             if (currentUser?.role === 'CREATOR') {
               setIsLoading(true);
               await loadCreatorData(currentUser.id);
               window.history.pushState({ page: 'DASHBOARD' }, '', '/dashboard');
               setCurrentPage('DASHBOARD');
             } else {
+              if (creatorId) localStorage.setItem('diem_open_creator', creatorId);
               window.history.pushState({ page: 'FAN_DASHBOARD' }, '', '/dashboard');
               setCurrentPage('FAN_DASHBOARD');
             }

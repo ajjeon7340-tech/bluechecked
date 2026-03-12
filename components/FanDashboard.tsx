@@ -261,6 +261,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         } catch {}
       }, 2000);
       setToastMessage(t('fan.paymentSuccess'));
+      setTimeout(() => setToastMessage(null), 4000);
     } else if (params.get('checkout') === 'cancel') {
       const url = new URL(window.location.href);
       url.searchParams.delete('checkout');
@@ -288,6 +289,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
   // Keep ref in sync for use inside async callbacks
   useEffect(() => { selectedCreatorIdRef.current = selectedCreatorId; }, [selectedCreatorId]);
+
+  // Open pending creator after initial load (from post-send navigation on profile page)
+  useEffect(() => {
+    if (!isInitialLoad) {
+      const pendingCreatorId = localStorage.getItem('diem_open_creator');
+      if (pendingCreatorId) {
+        localStorage.removeItem('diem_open_creator');
+        setSelectedCreatorId(pendingCreatorId);
+        setCurrentView('OVERVIEW');
+      }
+    }
+  }, [isInitialLoad]);
 
   // Lazily hydrate full conversation for a message when it's opened
   const hydrateConversation = async (msg: Message) => {
@@ -795,33 +808,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   
   const notifications = useMemo(() => {
       const list: { id: string, icon: any, text: string, time: Date, color: string, creatorId?: string }[] = [];
-      
-      // Add Welcome Notification (Ensures list is never empty on first load)
-      list.push({
-          id: 'welcome',
-          icon: Sparkles,
-          text: t('fan.welcomeNotification'),
-          time: new Date(),
-          color: 'bg-stone-100 text-stone-600'
-      });
 
       messages.forEach(msg => {
           const isProduct = msg.content.startsWith('Purchased Product:');
           const isTip = msg.content.startsWith('Fan Tip:');
 
-          // 1. Sent Request
-          if (!isProduct) {
-              list.push({
-                  id: `sent-${msg.id}`,
-                  icon: isTip ? Heart : Send,
-                  text: isTip ? t('fan.tipSent', { name: msg.creatorName || t('common.creator') }) : t('fan.requestSent', { name: msg.creatorName || t('common.creator') }),
-                  time: new Date(msg.createdAt),
-                  color: isTip ? 'bg-pink-100 text-pink-600' : 'bg-stone-100 text-stone-700',
-                  creatorId: msg.creatorId
-              });
-          }
-
-          // 2. Reply Received
+          // 1. Reply Received
           if (msg.status === 'REPLIED' && msg.replyAt && !isProduct && !isTip) {
               list.push({
                   id: `reply-${msg.id}`,
@@ -1127,7 +1119,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         </aside>
 
         {/* 2. MAIN CONTENT */}
-        <main className="flex-1 md:ml-64 flex flex-col h-screen relative">
+        <main className="flex-1 md:ml-64 flex flex-col h-screen relative min-w-0 overflow-x-hidden">
             {/* Demo Banner */}
             {!isBackendConfigured() && (
                 <div className="bg-stone-800 text-white text-[10px] font-semibold px-4 py-1 text-center z-50">
@@ -2281,8 +2273,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         {/* Bottom Actions */}
                         <div className="bg-white border-t border-stone-200 shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.05)] z-20 flex-shrink-0">
                             {latestMessage && latestMessage.status === 'PENDING' && (
-                                <div className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between bg-stone-50 gap-3">
-                                    <div className="flex items-center gap-3 min-w-0">
+                                <div className="p-3 sm:p-4 flex flex-row items-center justify-between bg-stone-50 gap-2">
+                                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                                         {(() => {
                                             const lastChat = latestMessage.conversation[latestMessage.conversation.length - 1];
                                             const isCreatorReplied = lastChat?.role === 'CREATOR';
@@ -2338,7 +2330,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     ) : (
                                         <button
                                             onClick={() => handleCancelClick(latestMessage.id)}
-                                            className="text-stone-400 hover:text-red-600 text-xs font-bold hover:bg-red-50 px-3 py-1.5 rounded-full transition-colors flex-shrink-0 self-end sm:self-auto"
+                                            className="text-stone-400 hover:text-red-600 text-xs font-bold hover:bg-red-50 px-3 py-1.5 rounded-full transition-colors flex-shrink-0"
                                         >
                                             Cancel Request
                                         </button>
@@ -2648,16 +2640,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         )}
 
         {toastMessage && (
-            <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-4 fade-in duration-500">
-                <div className="relative overflow-hidden bg-stone-900 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-4 border border-white/10 ring-1 ring-white/20">
+            <div className="fixed bottom-6 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-[100] animate-in slide-in-from-bottom-4 fade-in duration-500 flex justify-center">
+                <div className="relative overflow-hidden bg-stone-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-white/10 ring-1 ring-white/20 w-full sm:w-auto">
                     <div className="absolute inset-0 bg-gradient-to-r from-stone-500 via-stone-700 to-stone-900 opacity-20"></div>
                     <div className="relative z-10 flex items-center gap-3">
-                        <div className="bg-gradient-to-tr from-stone-600 to-stone-800 p-1.5 rounded-full shadow-lg shadow-stone-800/20">
+                        <div className="bg-gradient-to-tr from-stone-600 to-stone-800 p-1.5 rounded-full shadow-lg shadow-stone-800/20 flex-shrink-0">
                             <Send size={16} className="text-white fill-white" />
                         </div>
-                        <div>
-                            <p className="text-sm font-bold text-white tracking-wide">{toastMessage}</p>
-                        </div>
+                        <p className="text-sm font-bold text-white tracking-wide">{toastMessage}</p>
                     </div>
                 </div>
             </div>
