@@ -638,7 +638,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                   onClick={() => { currentUser ? handleOpenModal() : onLoginRequest(); }}
                   className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${creator.isDiemHighlighted ? 'bg-gradient-to-r from-indigo-50/40 to-blue-50/20 border-indigo-100 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300 hover:shadow-sm'}`}
               >
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
                       <img src="/favicon.svg" alt="Diem" className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 relative z-10 min-w-0 text-left">
