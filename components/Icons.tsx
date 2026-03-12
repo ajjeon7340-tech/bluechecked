@@ -124,23 +124,23 @@ export const Coins = ({ className, size = 24, ...props }: any) => (
   </svg>
 );
 
-export const DiemLogo = ({ className, size = 24, ...props }: any) => {
-  // viewBox "0 0 120 32" — height is 32 units, width is 120 units
-  const height = size;
-  const width = size * (120 / 32);
-  return (
-    <svg
-      width={width}
-      height={height}
-      viewBox="0 0 120 32"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      {...props}
-    >
-      <text x="0" y="26" fontFamily="'Playfair Display', Georgia, serif" fontSize="26" fontWeight="600" letterSpacing="-0.5" fill="#2B2825">diem<tspan fill="#C8903C">.</tspan></text>
-    </svg>
-  );
-};
+export const DiemLogo = ({ className, size = 24, ...props }: any) => (
+  <span
+    className={className}
+    style={{
+      fontFamily: "'Playfair Display', Georgia, serif",
+      fontSize: `${size}px`,
+      fontWeight: 600,
+      letterSpacing: '-0.02em',
+      lineHeight: 1,
+      display: 'inline-block',
+      whiteSpace: 'nowrap',
+    }}
+    {...props}
+  >
+    diem<span style={{ color: '#C8903C' }}>.</span>
+  </span>
+);
 
 export const Verified = ({ className, size = 24, ...props }: any) => (
   <svg
