@@ -1505,7 +1505,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200 overflow-hidden">
                                                                 {msg.creatorAvatarUrl ? <img src={msg.creatorAvatarUrl} className="w-full h-full object-cover" /> : <User size={14} />}
                                                             </div>
-                                                            <span className="font-bold text-stone-900 text-sm">{msg.creatorName || 'Creator'}</span>
+                                                            <span className="font-bold text-stone-900 text-sm">{firstName(msg.creatorName || 'Creator')}</span>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
@@ -1591,7 +1591,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="font-bold text-stone-900 text-sm truncate">{msg.creatorName || 'Creator'}</span>
+                                                    <span className="font-bold text-stone-900 text-sm truncate">{firstName(msg.creatorName || 'Creator')}</span>
                                                     <span className={`font-mono font-bold text-sm shrink-0 ml-2 ${isRefunded ? 'text-stone-400 line-through' : msg.status === 'REPLIED' ? 'text-red-500' : 'text-stone-900'}`}>
                                                         {msg.status === 'REPLIED' ? `-${msg.amount}` : msg.amount}
                                                     </span>
@@ -2125,7 +2125,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     <div className="flex items-center justify-between mb-2 ml-1">
                                                         <div className="flex items-center gap-2">
                                                                 <span className="font-semibold text-sm text-stone-900">
-                                                                    {isCreator ? (msg.creatorName || 'Creator') : (currentUser?.name || 'You')}
+                                                                    {isCreator ? firstName(msg.creatorName || 'Creator') : firstName(currentUser?.name || 'You')}
                                                                 </span>
                                                                 {isCreator ? (
                                                                     <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-1 rounded-full overflow-visible">
@@ -2203,7 +2203,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             )}
                                                         </div>
                                                         {messageReactions[chat.id] && (
-                                                            <span className="text-[10px] text-stone-400">{chat.role === 'FAN' ? (currentUser?.name || 'You') : (msg.creatorName || 'Creator')}</span>
+                                                            <span className="text-[10px] text-stone-400">{chat.role === 'FAN' ? firstName(currentUser?.name || 'You') : firstName(msg.creatorName || 'Creator')}</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -2227,7 +2227,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     </div>
                                                 </div>
                                                 <div className="flex-1 flex items-center">
-                                                    <span className="text-[15px] text-stone-400">Waiting for {msg.creatorName || 'creator'}'s reply...</span>
+                                                    <span className="text-[15px] text-stone-400">Waiting for {firstName(msg.creatorName || 'creator')}'s reply...</span>
                                                 </div>
                                             </div>
                                         )}

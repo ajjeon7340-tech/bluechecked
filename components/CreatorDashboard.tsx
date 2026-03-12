@@ -2650,7 +2650,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     <div className="flex-1 min-w-0 pb-2">
                                                         <div className="flex items-center justify-between mb-2 ml-1">
                                                             <div className="flex items-center gap-2">
-                                                                <span className="font-semibold text-sm text-stone-900">{msg.senderName}</span>
+                                                                <span className="font-semibold text-sm text-stone-900">{firstName(msg.senderName)}</span>
                                                                 <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
                                                                     <User size={10} className="fill-current" />
                                                                     <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.fan')}</span>
@@ -2724,7 +2724,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     )}
                                                 </div>
                                                 {messageReactions[firstChat.id] && (
-                                                    <span className="text-[10px] text-stone-400">{creator.displayName || 'You'}</span>
+                                                    <span className="text-[10px] text-stone-400">{firstName(creator.displayName || 'You')}</span>
                                                 )}
                                             </div>
                                                         </div>
@@ -2891,7 +2891,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     )}
                                                                 </div>
                                                                 {messageReactions[chat.id] && (
-                                                                    <span className="text-[10px] text-stone-400">{creator.displayName || 'You'}</span>
+                                                                    <span className="text-[10px] text-stone-400">{firstName(creator.displayName || 'You')}</span>
                                                                 )}
                                                                 {isCreator && editingChatId !== chat.id && msg.status !== 'REPLIED' && (
                                                                     <button
