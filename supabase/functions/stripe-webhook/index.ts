@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-const STRIPE_WEBHOOK_SECRET = Deno.env.get('STRIPE_WEBHOOK_SECRET')
+const STRIPE_WEBHOOK_SECRET_TEST = Deno.env.get('STRIPE_WEBHOOK_SECRET_TEST')
+const STRIPE_WEBHOOK_SECRET_LIVE = Deno.env.get('STRIPE_WEBHOOK_SECRET_LIVE')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
@@ -72,7 +73,7 @@ Deno.serve(async (req) => {
     })
   }
 
-  if (!STRIPE_WEBHOOK_SECRET || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     console.error('Missing required env vars')
     return new Response('Server configuration error', { status: 500 })
   }
@@ -85,13 +86,21 @@ Deno.serve(async (req) => {
       return new Response('Missing stripe-signature header', { status: 400 })
     }
 
+    // Peek at the event to determine test vs live mode, then verify with the right secret
+    const rawEvent = JSON.parse(body)
+    const STRIPE_WEBHOOK_SECRET = rawEvent.livemode ? STRIPE_WEBHOOK_SECRET_LIVE : STRIPE_WEBHOOK_SECRET_TEST
+    if (!STRIPE_WEBHOOK_SECRET) {
+      console.error('Missing webhook secret for mode:', rawEvent.livemode ? 'live' : 'test')
+      return new Response('Server configuration error', { status: 500 })
+    }
+
     const isValid = await verifyStripeSignature(body, sigHeader, STRIPE_WEBHOOK_SECRET)
     if (!isValid) {
       console.error('Invalid webhook signature')
       return new Response('Invalid signature', { status: 400 })
     }
 
-    const event = JSON.parse(body)
+    const event = rawEvent
 
     // Handle Checkout Session completed (new flow)
     if (event.type === 'checkout.session.completed') {

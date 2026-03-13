@@ -5,11 +5,12 @@ import { CreatorDashboard } from './components/CreatorDashboard';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { FanDashboard } from './components/FanDashboard';
+import { TermsOfService } from './components/TermsOfService';
 import { getCreatorProfile, getCreatorProfileByHandle, checkAndSyncSession, completeOAuthSignup, signOut, subscribeToAuthChanges } from './services/realBackend';
 import { CreatorProfile, CurrentUser, UserRole } from './types';
 import { DiemLogo } from './components/Icons';
 
-type PageState = 'LANDING' | 'LOGIN' | 'DASHBOARD' | 'PROFILE' | 'FAN_DASHBOARD' | 'SETUP_PROFILE';
+type PageState = 'LANDING' | 'LOGIN' | 'DASHBOARD' | 'PROFILE' | 'FAN_DASHBOARD' | 'SETUP_PROFILE' | 'TERMS';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<PageState>('LANDING');
@@ -113,23 +114,41 @@ function App() {
         }
     });
 
-    // Optimistically load session from local storage
-    // const storedUser = localStorage.getItem('diem_current_user');
-    // if (storedUser) {
-    //     const user = JSON.parse(storedUser);
-    //     setCurrentUser(user);
-    //     setCurrentPage(user.role === 'CREATOR' ? 'DASHBOARD' : 'FAN_DASHBOARD');
-    // }
-
     // Check for existing session
     const initSession = async () => {
+        // Fast path: restore from cache to show page immediately
+        try {
+            const cachedUserStr = localStorage.getItem('diem_current_user');
+            if (cachedUserStr) {
+                const cachedUser = JSON.parse(cachedUserStr);
+                setCurrentUser(cachedUser);
+                if (cachedUser.role === 'CREATOR') {
+                    const cachedCreatorStr = localStorage.getItem('diem_cached_creator');
+                    if (cachedCreatorStr) {
+                        setCreator(JSON.parse(cachedCreatorStr));
+                        setCurrentPage('DASHBOARD');
+                        setIsLoading(false);
+                    }
+                } else {
+                    setCurrentPage('FAN_DASHBOARD');
+                    setIsLoading(false);
+                }
+            }
+        } catch { /* ignore stale cache errors */ }
+
         try {
             // 1. Check URL for Creator Handle (e.g. diem.ee/alexcode)
             const path = window.location.pathname;
             const potentialHandle = path.substring(1); // remove leading /
-            const isSystemRoute = ['login', 'dashboard', 'setup', 'reset-password'].some(route => 
+            const isSystemRoute = ['login', 'dashboard', 'setup', 'reset-password', 'terms'].some(route =>
                 potentialHandle.toLowerCase() === route || potentialHandle.toLowerCase().startsWith(route + '/')
             );
+
+            if (path === '/terms') {
+                setCurrentPage('TERMS');
+                setIsLoading(false);
+                return;
+            }
 
             if (potentialHandle && !isSystemRoute && path !== '/') {
                 try {
@@ -150,6 +169,7 @@ function App() {
 
             const user = await checkAndSyncSession();
             if (user) {
+                localStorage.setItem('diem_current_user', JSON.stringify(user));
                 setCurrentUser(user);
 
                 // If the user came from a creator's profile page, return them there
@@ -170,11 +190,13 @@ function App() {
 
                 if (user.role === 'CREATOR') {
                     const profile = await loadCreatorData(user.id, false);
-                    
+
                     if (!profile) {
                         setIsLoading(false);
                         return;
                     }
+
+                    localStorage.setItem('diem_cached_creator', JSON.stringify(profile));
 
                     // Check if profile setup is needed (empty bio is a good indicator of fresh account)
                     const hasSkippedSetup = localStorage.getItem('diem_skip_setup') === 'true';
@@ -197,6 +219,9 @@ function App() {
                     setIsLoading(false);
                 }
             } else {
+                // Session invalid — clear any stale cache
+                localStorage.removeItem('diem_current_user');
+                localStorage.removeItem('diem_cached_creator');
                 window.history.replaceState({ page: 'LANDING' }, '', '/');
                 setIsLoading(false);
             }
@@ -205,6 +230,7 @@ function App() {
                 setShowSignUpConfirm(true);
             } else if (err.code === 'ROLE_MISMATCH') {
                 alert(err.message);
+                clearSessionCache();
                 await signOut();
                 window.history.replaceState({ page: 'LANDING' }, '', '/');
                 setCurrentPage('LANDING');
@@ -300,6 +326,9 @@ function App() {
               return;
           }
 
+          localStorage.setItem('diem_cached_creator', JSON.stringify(profile));
+          localStorage.setItem('diem_current_user', JSON.stringify(user));
+
           const hasSkippedSetup = localStorage.getItem('diem_skip_setup') === 'true';
           if (!profile.bio && !hasSkippedSetup) {
               window.history.replaceState({ page: 'SETUP_PROFILE' }, '', '');
@@ -310,9 +339,15 @@ function App() {
           }
           setIsLoading(false);
       } else {
+          localStorage.setItem('diem_current_user', JSON.stringify(user));
           window.history.replaceState({ page: 'FAN_DASHBOARD' }, '', '');
           setCurrentPage('FAN_DASHBOARD');
       }
+  };
+
+  const clearSessionCache = () => {
+      localStorage.removeItem('diem_current_user');
+      localStorage.removeItem('diem_cached_creator');
   };
 
   const handleLoginSuccess = async (user: CurrentUser) => {
@@ -355,6 +390,7 @@ function App() {
   };
 
   const handleCancelSignUp = async () => {
+      clearSessionCache();
       await signOut();
       setShowSignUpConfirm(false);
       setCurrentPage('LANDING');
@@ -363,6 +399,15 @@ function App() {
   return (
     <div className="font-sans text-stone-900">
       
+      {currentPage === 'TERMS' && (
+        <TermsOfService
+          onBack={() => {
+            window.history.pushState({ page: 'LANDING' }, '', '/');
+            setCurrentPage('LANDING');
+          }}
+        />
+      )}
+
       {currentPage === 'LANDING' && (
         <LandingPage
           onLoginClick={() => {
@@ -401,6 +446,7 @@ function App() {
           currentUser={currentUser}
           onLoginSuccess={handleLoginSuccess}
           onBack={async () => {
+              clearSessionCache();
               await signOut();
               setCurrentUser(null);
               window.history.pushState({ page: 'LANDING' }, '', '/');
@@ -465,6 +511,7 @@ function App() {
           currentUser={currentUser}
           key={refreshTrigger} // Force re-render on dashboard when messages update via refreshTrigger
           onLogout={async () => {
+            clearSessionCache();
             await signOut();
             setCurrentUser(null);
             window.history.pushState({ page: 'LANDING' }, '', '/');
@@ -486,6 +533,7 @@ function App() {
             currentUser={currentUser}
             onUpdateUser={(u) => setCurrentUser(u)}
             onLogout={async () => {
+              clearSessionCache();
               await signOut();
               setCurrentUser(null);
               window.history.pushState({ page: 'LANDING' }, '', '/');

@@ -589,7 +589,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
 
             <div className="flex items-center gap-8 text-sm text-stone-500">
               <a href="#" className="hover:text-stone-900 transition-colors">{t('landing.privacy')}</a>
-              <a href="#" className="hover:text-stone-900 transition-colors">{t('landing.terms')}</a>
+              <a href="/terms" className="hover:text-stone-900 transition-colors">{t('landing.terms')}</a>
               <a href="#" className="hover:text-stone-900 transition-colors">{t('landing.twitter')}</a>
               <a href="#" className="hover:text-stone-900 transition-colors">{t('landing.contact')}</a>
             </div>

@@ -60,6 +60,9 @@ const getRelativeTime = (dateString: string, t?: (key: string, opts?: any) => st
 };
 
 const firstName = (name: string) => name?.split(' ')[0] || name;
+const ResponsiveName = ({ name }: { name: string }) => (
+  <><span className="hidden sm:inline">{name}</span><span className="sm:hidden">{firstName(name)}</span></>
+);
 
 export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseCreators, onUpdateUser }) => {
   const { t } = useTranslation();
@@ -125,7 +128,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       );
       await Promise.all(pendingMessages.map(m => cancelMessage(m.id).catch(() => {})));
 
-      const updated = { ...leftChatrooms, [creatorId]: Date.now() };
+      const updated = { ...leftChatrooms, [creatorId]: Date.now() + 1000 };
       setLeftChatrooms(updated);
       localStorage.setItem('diem_fan_left_chatrooms', JSON.stringify(updated));
       setSelectedCreatorId(null);
@@ -444,7 +447,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const filteredGroups = useMemo(() => {
       return conversationGroups.filter(g => {
           const leftAt = leftChatrooms[g.creatorId];
-          if (leftAt && new Date(g.latestMessage.createdAt).getTime() < leftAt) return false;
+          if (leftAt && new Date(g.latestMessage.createdAt).getTime() <= leftAt) return false;
           
           const status = g.latestMessage.status;
           if (inboxFilter === 'PENDING' && status !== 'PENDING') return false;
@@ -491,7 +494,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       const leftAt = leftChatrooms[selectedCreatorId];
       return messages
         .filter(m => m.creatorId === selectedCreatorId && !m.content.startsWith('Purchased Product:') && !m.content.startsWith('Fan Tip:'))
-        .filter(m => !leftAt || new Date(m.createdAt).getTime() >= leftAt)
+        .filter(m => !leftAt || new Date(m.createdAt).getTime() > leftAt)
         .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }, [messages, selectedCreatorId, leftChatrooms]);
 
@@ -1137,8 +1140,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         <main className="flex-1 md:ml-64 flex flex-col h-screen relative min-w-0 overflow-x-hidden">
             {/* Demo Banner */}
             {!isBackendConfigured() && (
-                <div className="bg-stone-800 text-white text-[10px] font-semibold px-4 py-1 text-center z-50">
-                    {t('fan.demoMode')}
+                <div className="bg-amber-500 text-white text-[11px] font-bold px-4 py-1.5 text-center z-50 tracking-wide">
+                    MOCK DATA — not connected to real backend
                 </div>
             )}
 
@@ -1505,7 +1508,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200 overflow-hidden">
                                                                 {msg.creatorAvatarUrl ? <img src={msg.creatorAvatarUrl} className="w-full h-full object-cover" /> : <User size={14} />}
                                                             </div>
-                                                            <span className="font-bold text-stone-900 text-sm">{firstName(msg.creatorName || 'Creator')}</span>
+                                                            <span className="font-bold text-stone-900 text-sm"><ResponsiveName name={msg.creatorName || 'Creator'} /></span>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
@@ -1591,7 +1594,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="font-bold text-stone-900 text-sm truncate">{firstName(msg.creatorName || 'Creator')}</span>
+                                                    <span className="font-bold text-stone-900 text-sm truncate"><ResponsiveName name={msg.creatorName || 'Creator'} /></span>
                                                     <span className={`font-mono font-bold text-sm shrink-0 ml-2 ${isRefunded ? 'text-stone-400 line-through' : msg.status === 'REPLIED' ? 'text-red-500' : 'text-stone-900'}`}>
                                                         {msg.status === 'REPLIED' ? `-${msg.amount}` : msg.amount}
                                                     </span>
@@ -1833,7 +1836,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex justify-between items-start">
-                                                        <span className="text-sm font-semibold text-stone-900">{firstName(group.creatorName)}</span>
+                                                        <span className="text-sm font-semibold text-stone-900"><ResponsiveName name={group.creatorName} /></span>
                                                         <span className="text-xs text-stone-400">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
                                                     </div>
                                                 </div>
@@ -1897,7 +1900,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     <ChevronLeft size={20} />
                                 </button>
                                 <div>
-                                    <h2 className="font-bold text-stone-900 text-lg leading-tight">{firstName(conversationGroups.find(g => g.creatorId === selectedCreatorId)?.creatorName || 'Creator')}</h2>
+                                    <h2 className="font-bold text-stone-900 text-lg leading-tight"><ResponsiveName name={conversationGroups.find(g => g.creatorId === selectedCreatorId)?.creatorName || 'Creator'} /></h2>
                                     <p className="text-[10px] text-stone-500 font-medium">Verified Expert</p>
                                 </div>
                             </div>
@@ -2125,7 +2128,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     <div className="flex items-center justify-between mb-2 ml-1">
                                                         <div className="flex items-center gap-2">
                                                                 <span className="font-semibold text-sm text-stone-900">
-                                                                    {isCreator ? firstName(msg.creatorName || 'Creator') : firstName(currentUser?.name || 'You')}
+                                                                    {isCreator ? <ResponsiveName name={msg.creatorName || 'Creator'} /> : <ResponsiveName name={currentUser?.name || 'You'} />}
                                                                 </span>
                                                                 {isCreator ? (
                                                                     <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-1 rounded-full overflow-visible">
@@ -2203,7 +2206,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             )}
                                                         </div>
                                                         {messageReactions[chat.id] && (
-                                                            <span className="text-[10px] text-stone-400">{chat.role === 'FAN' ? firstName(currentUser?.name || 'You') : firstName(msg.creatorName || 'Creator')}</span>
+                                                            <span className="text-[10px] text-stone-400">{chat.role === 'FAN' ? <ResponsiveName name={currentUser?.name || 'You'} /> : <ResponsiveName name={msg.creatorName || 'Creator'} />}</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -2227,7 +2230,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     </div>
                                                 </div>
                                                 <div className="flex-1 flex items-center">
-                                                    <span className="text-[15px] text-stone-400">Waiting for {firstName(msg.creatorName || 'creator')}'s reply...</span>
+                                                    <span className="text-[15px] text-stone-400">Waiting for <ResponsiveName name={msg.creatorName || 'creator'} />'s reply...</span>
                                                 </div>
                                             </div>
                                         )}

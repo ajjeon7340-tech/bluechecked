@@ -36,13 +36,17 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
   // Setup / Onboarding State
   const [step, setStep] = useState<'LOGIN' | 'SETUP_PROFILE' | 'RESET_PASSWORD'>(initialStep);
+  const [setupPage, setSetupPage] = useState(1);
   const [tempUser, setTempUser] = useState<CurrentUser | null>(currentUser || null);
 
   // Creator Config
-  const [price, setPrice] = useState(20);
+  const [price, setPrice] = useState(100);
   const [responseHours, setResponseHours] = useState(48);
   const [platforms, setPlatforms] = useState<(string | { id: string, url: string })[]>([]);
   const [handle, setHandle] = useState('');
+  const [intakeInstructions, setIntakeInstructions] = useState('');
+  const [welcomeMessage, setWelcomeMessage] = useState('');
+  const [affiliateLinks, setAffiliateLinks] = useState<{ title: string; url: string }[]>([{ title: '', url: '' }]);
 
   // Shared Profile Config
   const [displayName, setDisplayName] = useState(currentUser?.name || '');
@@ -158,6 +162,13 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   };
 
   const handleCompleteSetup = async () => {
+     // Page 1 → Page 2 for creators
+     if (setupPage === 1 && tempUser?.role === 'CREATOR') {
+         if (!handle.trim()) { alert("User ID (Handle) is required."); return; }
+         setSetupPage(2);
+         return;
+     }
+
      setIsLoading(true);
 
      let finalUser = tempUser;
@@ -175,15 +186,14 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
      // 2. If Creator, Update Creator Profile
      if (finalUser && finalUser.role === 'CREATOR') {
-        if (!handle.trim()) {
-            alert("User ID (Handle) is required.");
-            setIsLoading(false);
-            return;
-        }
-
         try {
             const currentProfile = await getCreatorProfile();
-            // We update the newly created blank profile with the setup details
+            const validLinks = affiliateLinks.filter(l => l.title.trim() && l.url.trim()).map((l, i) => ({
+                id: `link-${i}`,
+                title: l.title.trim(),
+                url: l.url.trim(),
+                type: 'EXTERNAL' as const,
+            }));
             await updateCreatorProfile({
                 ...currentProfile,
                 displayName: finalUser.name,
@@ -192,7 +202,10 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 avatarUrl: finalUser.avatarUrl || currentProfile.avatarUrl,
                 pricePerMessage: price,
                 responseWindowHours: responseHours,
-                platforms: platforms.length > 0 ? platforms : (currentProfile.platforms || [])
+                platforms: platforms.length > 0 ? platforms : (currentProfile.platforms || []),
+                intakeInstructions: intakeInstructions || currentProfile.intakeInstructions,
+                welcomeMessage: welcomeMessage || currentProfile.welcomeMessage,
+                links: validLinks.length > 0 ? validLinks : (currentProfile.links || []),
             });
         } catch (e) {
             console.error("Failed to setup profile:", e);
@@ -269,9 +282,26 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   }
 
   if (step === 'SETUP_PROFILE') {
+    const isCreator = (tempUser?.role || role) === 'CREATOR';
+    const totalPages = isCreator ? 2 : 1;
+
     return (
        <div className="min-h-screen bg-[#FAFAF9] flex flex-col items-center justify-center p-4">
           <div className="max-w-xl w-full bg-white p-8 rounded-3xl shadow-xl shadow-stone-200/50 border border-stone-100 animate-in slide-in-from-bottom-4 duration-500">
+
+             {/* Progress indicator */}
+             {isCreator && (
+                 <div className="flex items-center gap-2 mb-6">
+                     {[1, 2].map(p => (
+                         <div key={p} className={`h-1.5 flex-1 rounded-full transition-all ${p <= setupPage ? 'bg-stone-900' : 'bg-stone-200'}`} />
+                     ))}
+                     <span className="text-xs text-stone-400 ml-1">{setupPage}/{totalPages}</span>
+                 </div>
+             )}
+
+             {/* ── PAGE 1 ── */}
+             {setupPage === 1 && (
+             <>
              <div className="text-center mb-6">
                 <div
                     onClick={handleAvatarClick}
@@ -282,69 +312,43 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                         <span className="text-white text-xs font-bold">{t('auth.upload')}</span>
                     </div>
                 </div>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                />
+                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                 <h2 className="text-2xl font-bold text-stone-900">
-                    {role === 'CREATOR' ? t('auth.setupCreatorProfile') : t('auth.completeProfile')}
+                    {isCreator ? t('auth.setupCreatorProfile') : t('auth.completeProfile')}
                 </h2>
                 <p className="text-stone-500 text-sm">{t('auth.profileStandOut')}</p>
              </div>
 
-             <div className="space-y-6">
-
-                {/* Name Field */}
+             <div className="space-y-5">
                 <div>
                    <label className="block text-sm font-medium text-stone-700 mb-1">{t('auth.displayName')}</label>
-                   <input
-                     type="text"
-                     value={displayName}
-                     onChange={e => setDisplayName(e.target.value)}
-                     placeholder={t('auth.yourName')}
-                     className="w-full border border-stone-200 rounded-xl p-3 focus:ring-2 focus:ring-stone-500 outline-none transition-all"
-                    />
+                   <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder={t('auth.yourName')} className="w-full border border-stone-200 rounded-xl p-3 focus:ring-2 focus:ring-stone-500 outline-none transition-all" />
                 </div>
 
-                {/* Common Fields */}
                 <div>
                    <label className="block text-sm font-medium text-stone-700 mb-1">{t('auth.bioAbout')}</label>
-                   <textarea
-                     value={bio}
-                     onChange={e => setBio(e.target.value)}
-                     placeholder={role === 'CREATOR' ? t('auth.creatorBioPlaceholder') : t('auth.fanBioPlaceholder')}
-                     className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all"
-                    />
+                   <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder={isCreator ? t('auth.creatorBioPlaceholder') : t('auth.fanBioPlaceholder')} className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all" />
                 </div>
 
-                {/* Creator Specific Fields */}
-                {role === 'CREATOR' && (
+                {isCreator && (
                     <>
                         <div>
                             <label className="block text-sm font-medium text-stone-700 mb-1">User ID (Handle)</label>
-                            <input 
-                                type="text" 
-                                value={handle} 
-                                onChange={e => setHandle(e.target.value)} 
-                                placeholder="@username"
-                                className="w-full border border-stone-200 rounded-xl p-3 focus:ring-2 focus:ring-stone-500 outline-none transition-all" 
-                            />
+                            <input type="text" value={handle} onChange={e => setHandle(e.target.value)} placeholder="@username" className="w-full border border-stone-200 rounded-xl p-3 focus:ring-2 focus:ring-stone-500 outline-none transition-all" />
                             {handle && (
                                 <p className="text-[10px] text-stone-400 mt-1 ml-1">
                                     Your public page: <span className="font-mono text-stone-600">{window.location.host}/{handle.replace('@', '')}</span>
                                 </p>
                             )}
                         </div>
+
                         <div className="bg-stone-50 p-5 rounded-2xl border border-stone-100 space-y-4">
                             <h3 className="text-sm font-bold text-stone-900 uppercase tracking-wide flex items-center gap-2">
-                                <MessageSquare size={16} className="text-stone-500"/> {t('auth.messageSettings')}
+                                <MessageSquare size={16} className="text-stone-500" /> {t('auth.messageSettings')}
                             </h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-stone-700 mb-1">{t('auth.priceLabel')}</label>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1">Price per message (credits)</label>
                                     <input type="number" value={price} onChange={e => setPrice(Number(e.target.value))} className="w-full border border-stone-200 rounded-xl p-2 focus:ring-2 focus:ring-stone-500 outline-none transition-all" />
                                 </div>
                                 <div>
@@ -356,54 +360,114 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                                     </select>
                                 </div>
                             </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-stone-700 mb-1">Request instructions</label>
+                                <textarea
+                                    value={intakeInstructions}
+                                    onChange={e => setIntakeInstructions(e.target.value)}
+                                    placeholder="Tell fans what to include in their message (e.g. your question, topic, context...)"
+                                    className="w-full border border-stone-200 rounded-xl p-3 h-20 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all text-sm"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-stone-700 mb-1">Auto-reply welcome message</label>
+                                <textarea
+                                    value={welcomeMessage}
+                                    onChange={e => setWelcomeMessage(e.target.value)}
+                                    placeholder="Sent automatically when a fan submits a request (e.g. Thanks for reaching out! I'll get back to you within 48 hours.)"
+                                    className="w-full border border-stone-200 rounded-xl p-3 h-20 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all text-sm"
+                                />
+                            </div>
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium text-stone-700 mb-2">{t('auth.connectedPlatforms')}</label>
                             <p className="text-xs text-stone-500 mb-3">{t('auth.platformsDesc')}</p>
-
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 {SUPPORTED_PLATFORMS.map(platform => {
                                     const platformData = platforms.find(p => (typeof p === 'string' ? p : p.id) === platform.id);
                                     const isSelected = !!platformData;
                                     const url = typeof platformData === 'object' ? platformData.url : '';
-
                                     return (
-                                        <button
-                                            key={platform.id}
-                                            onClick={() => handleTogglePlatform(platform.id)}
-                                            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all text-left ${
-                                                isSelected
-                                                ? 'bg-stone-900 text-white border-stone-900 shadow-md'
-                                                : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
-                                            }`}
-                                        >
+                                        <button key={platform.id} onClick={() => handleTogglePlatform(platform.id)} className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all text-left ${isSelected ? 'bg-stone-900 text-white border-stone-900 shadow-md' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'}`}>
                                             <platform.icon className={`w-4 h-4 flex-shrink-0 ${isSelected ? 'text-white' : 'text-stone-400'}`} />
                                             <div className="flex-1 min-w-0">
                                                 <span className="text-xs font-bold block">{platform.label}</span>
-                                                {isSelected && url && (
-                                                    <span className="text-[9px] text-stone-300 truncate block">{url.replace(/^https?:\/\/(www\.)?/, '')}</span>
-                                                )}
+                                                {isSelected && url && <span className="text-[9px] text-stone-300 truncate block">{url.replace(/^https?:\/\/(www\.)?/, '')}</span>}
                                             </div>
                                             {isSelected && <Check size={12} className="ml-auto text-green-400 flex-shrink-0" />}
                                         </button>
-                                    )
+                                    );
                                 })}
                             </div>
                         </div>
                     </>
                 )}
 
-                <div className="space-y-3 pt-4">
-                    <Button fullWidth onClick={handleCompleteSetup} isLoading={isLoading} size="lg">{t('auth.saveProfileContinue')}</Button>
-                    <button onClick={handleSkipForNow} className="w-full text-center text-stone-400 text-sm hover:text-stone-600 font-medium transition-colors">
-                        {t('auth.skipForNow')}
-                    </button>
-                    <button onClick={onBack} className="w-full text-center text-stone-300 hover:text-red-500 text-xs font-medium transition-colors mt-2">
-                        {t('auth.cancelSignOut')}
-                    </button>
+                <div className="space-y-3 pt-2">
+                    <Button fullWidth onClick={handleCompleteSetup} isLoading={isLoading} size="lg">
+                        {isCreator ? 'Next →' : t('auth.saveProfileContinue')}
+                    </Button>
+                    <button onClick={handleSkipForNow} className="w-full text-center text-stone-400 text-sm hover:text-stone-600 font-medium transition-colors">{t('auth.skipForNow')}</button>
+                    <button onClick={onBack} className="w-full text-center text-stone-300 hover:text-red-500 text-xs font-medium transition-colors mt-2">{t('auth.cancelSignOut')}</button>
                 </div>
              </div>
+             </>
+             )}
+
+             {/* ── PAGE 2: Affiliate Links ── */}
+             {setupPage === 2 && isCreator && (
+             <>
+             <div className="mb-6">
+                 <h2 className="text-2xl font-bold text-stone-900">Affiliate Links</h2>
+                 <p className="text-stone-500 text-sm mt-1">Add links you want to share with fans — products, social pages, resources, etc.</p>
+             </div>
+
+             <div className="space-y-3 mb-6">
+                 {affiliateLinks.map((link, i) => (
+                     <div key={i} className="bg-stone-50 rounded-2xl border border-stone-100 p-4 space-y-3">
+                         <div className="flex items-center justify-between">
+                             <span className="text-xs font-bold text-stone-500 uppercase tracking-wide">Link {i + 1}</span>
+                             {affiliateLinks.length > 1 && (
+                                 <button onClick={() => setAffiliateLinks(prev => prev.filter((_, j) => j !== i))} className="text-stone-300 hover:text-red-400 transition-colors">
+                                     <X size={14} />
+                                 </button>
+                             )}
+                         </div>
+                         <input
+                             type="text"
+                             value={link.title}
+                             onChange={e => setAffiliateLinks(prev => prev.map((l, j) => j === i ? { ...l, title: e.target.value } : l))}
+                             placeholder="Title (e.g. My YouTube Channel)"
+                             className="w-full border border-stone-200 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-stone-500 outline-none transition-all"
+                         />
+                         <input
+                             type="url"
+                             value={link.url}
+                             onChange={e => setAffiliateLinks(prev => prev.map((l, j) => j === i ? { ...l, url: e.target.value } : l))}
+                             placeholder="https://"
+                             className="w-full border border-stone-200 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-stone-500 outline-none transition-all"
+                         />
+                     </div>
+                 ))}
+                 <button
+                     onClick={() => setAffiliateLinks(prev => [...prev, { title: '', url: '' }])}
+                     className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-stone-200 rounded-2xl text-sm text-stone-400 hover:border-stone-400 hover:text-stone-600 transition-all"
+                 >
+                     <Plus size={14} /> Add another link
+                 </button>
+             </div>
+
+             <div className="space-y-3">
+                 <Button fullWidth onClick={handleCompleteSetup} isLoading={isLoading} size="lg">Save & Finish</Button>
+                 <button onClick={() => setSetupPage(1)} className="w-full text-center text-stone-400 text-sm hover:text-stone-600 font-medium transition-colors">← Back</button>
+                 <button onClick={handleSkipForNow} className="w-full text-center text-stone-300 hover:text-stone-500 text-xs font-medium transition-colors">Skip for now</button>
+             </div>
+             </>
+             )}
+
           </div>
        </div>
     );

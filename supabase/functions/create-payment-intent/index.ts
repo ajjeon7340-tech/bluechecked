@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')
+const STRIPE_SECRET_KEY_TEST = Deno.env.get('STRIPE_SECRET_KEY_TEST')
+const STRIPE_SECRET_KEY_LIVE = Deno.env.get('STRIPE_SECRET_KEY_LIVE')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 const APP_URL = Deno.env.get('APP_URL') || 'https://www.diem.ee/dashboard/finance'
@@ -26,11 +27,11 @@ function calculateServiceFee(baseCents: number): number {
   return fee
 }
 
-async function stripeRequest(endpoint: string, params: Record<string, string>) {
+async function stripeRequest(endpoint: string, params: Record<string, string>, secretKey: string) {
   const res = await fetch(`https://api.stripe.com/v1${endpoint}`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
+      'Authorization': `Bearer ${secretKey}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: new URLSearchParams(params).toString(),
@@ -45,13 +46,6 @@ async function stripeRequest(endpoint: string, params: Record<string, string>) {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
-  }
-
-  if (!STRIPE_SECRET_KEY) {
-    return new Response(JSON.stringify({ error: 'Stripe not configured' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
   }
 
   try {
@@ -74,7 +68,15 @@ Deno.serve(async (req) => {
       })
     }
 
-    const { credits } = await req.json()
+    const { credits, testMode } = await req.json()
+
+    const STRIPE_SECRET_KEY = testMode ? STRIPE_SECRET_KEY_TEST : STRIPE_SECRET_KEY_LIVE
+    if (!STRIPE_SECRET_KEY) {
+      return new Response(JSON.stringify({ error: 'Stripe not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     // Server-side tier validation
     const baseCents = CREDIT_TIERS[credits]
@@ -110,7 +112,7 @@ Deno.serve(async (req) => {
       cancel_url: `${APP_URL}/dashboard?checkout=cancel`,
     }
 
-    const session = await stripeRequest('/checkout/sessions', params)
+    const session = await stripeRequest('/checkout/sessions', params, STRIPE_SECRET_KEY)
 
     return new Response(JSON.stringify({ url: session.url }), {
       status: 200,

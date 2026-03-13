@@ -1305,8 +1305,9 @@ export const createCheckoutSession = async (credits: number): Promise<{ url: str
     if (!session.session) throw new Error('Not authenticated');
 
     try {
+        const testMode = !import.meta.env.PROD || !import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE;
         const res = await supabase.functions.invoke('create-payment-intent', {
-            body: { credits },
+            body: { credits, testMode },
         });
 
         if (res.error) throw new Error(res.error.message || 'Failed to create checkout session');
@@ -2088,17 +2089,18 @@ const callStripeConnect = async (body: Record<string, unknown>) => {
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error('Not authenticated');
 
+    const testMode = !import.meta.env.PROD || !import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE;
     const res = await supabase.functions.invoke('stripe-connect', {
-        body,
+        body: { ...body, testMode },
     });
 
-    // Check for errors - supabase-js may put error info in different places
+    // Log full response for debugging
+    console.log('[stripe-connect] res.error:', res.error, 'res.data:', res.data);
+
     if (res.error) {
         const message = res.data?.error || res.error.message || 'Edge function error';
         throw new Error(message);
     }
-
-    // Some versions return error in data even without res.error on non-2xx
     if (res.data?.error) {
         throw new Error(res.data.error);
     }

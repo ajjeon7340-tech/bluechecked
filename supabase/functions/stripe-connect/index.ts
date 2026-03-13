@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')
+const STRIPE_SECRET_KEY_TEST = Deno.env.get('STRIPE_SECRET_KEY_TEST')
+const STRIPE_SECRET_KEY_LIVE = Deno.env.get('STRIPE_SECRET_KEY_LIVE')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 const APP_URL = Deno.env.get('APP_URL') || 'https://www.diem.ee'
@@ -15,11 +16,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-async function stripeRequest(endpoint: string, params?: Record<string, string>) {
+async function stripeRequest(endpoint: string, secretKey: string, params?: Record<string, string>) {
   const res = await fetch(`https://api.stripe.com/v1${endpoint}`, {
     method: params ? 'POST' : 'GET',
     headers: {
-      'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
+      'Authorization': `Bearer ${secretKey}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: params ? new URLSearchParams(params).toString() : undefined,
@@ -65,10 +66,6 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  if (!STRIPE_SECRET_KEY) {
-    return errorResponse('Stripe is not configured', 500)
-  }
-
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     return errorResponse('Supabase is not configured', 500)
   }
@@ -79,7 +76,14 @@ Deno.serve(async (req) => {
       return errorResponse('Unauthorized', 401)
     }
 
-    const { action, amount } = await req.json()
+    const { action, amount, testMode } = await req.json()
+    console.log('[stripe-connect] action:', action, 'testMode:', testMode)
+    console.log('[stripe-connect] TEST key present:', !!STRIPE_SECRET_KEY_TEST, 'LIVE key present:', !!STRIPE_SECRET_KEY_LIVE)
+    const STRIPE_SECRET_KEY = testMode ? STRIPE_SECRET_KEY_TEST : STRIPE_SECRET_KEY_LIVE
+    if (!STRIPE_SECRET_KEY) {
+      console.error('[stripe-connect] Missing key for testMode:', testMode)
+      return errorResponse('Stripe is not configured', 500)
+    }
     const adminClient = getAdminClient()
 
     // ---- CREATE ACCOUNT ----
@@ -93,7 +97,7 @@ Deno.serve(async (req) => {
       let stripeAccountId = existing?.stripe_account_id
 
       if (!stripeAccountId) {
-        const account = await stripeRequest('/accounts', {
+        const account = await stripeRequest('/accounts', STRIPE_SECRET_KEY, {
           type: 'express',
           email: user.email || '',
           'metadata[supabase_user_id]': user.id,
@@ -113,7 +117,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      const accountLink = await stripeRequest('/account_links', {
+      const accountLink = await stripeRequest('/account_links', STRIPE_SECRET_KEY, {
         account: stripeAccountId,
         refresh_url: `${APP_URL}/dashboard?stripe=refresh`,
         return_url: `${APP_URL}/dashboard?stripe=return`,
@@ -136,7 +140,7 @@ Deno.serve(async (req) => {
         return jsonResponse({ connected: false })
       }
 
-      const account = await stripeRequest(`/accounts/${existing.stripe_account_id}`)
+      const account = await stripeRequest(`/accounts/${existing.stripe_account_id}`, STRIPE_SECRET_KEY)
       const connected = account.charges_enabled && account.payouts_enabled
 
       if (connected) {
@@ -174,7 +178,7 @@ Deno.serve(async (req) => {
 
       // Verify the Stripe account is actually ready for payouts
       try {
-        const account = await stripeRequest(`/accounts/${stripeAccount.stripe_account_id}`)
+        const account = await stripeRequest(`/accounts/${stripeAccount.stripe_account_id}`, STRIPE_SECRET_KEY)
         if (!account.payouts_enabled) {
           console.error('Stripe account payouts not enabled:', account.id)
           return errorResponse('Stripe account onboarding incomplete. Please complete verification in Stripe.')
@@ -223,7 +227,7 @@ Deno.serve(async (req) => {
       // Step 2: Create Stripe Transfer
       let transfer
       try {
-        transfer = await stripeRequest('/transfers', {
+        transfer = await stripeRequest('/transfers', STRIPE_SECRET_KEY, {
           amount: netCents.toString(),
           currency: 'usd',
           destination: stripeAccount.stripe_account_id,

@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CreatorProfile, Message, DashboardStats, MonthlyStat, AffiliateLink, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
-import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, Withdrawal } from '../services/realBackend';
+import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, Withdrawal, isBackendConfigured } from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { 
@@ -100,6 +100,9 @@ const DUMMY_PRO_DATA: ProAnalyticsData = {
 };
 
 const firstName = (name: string) => name?.split(' ')[0] || name;
+const ResponsiveName = ({ name }: { name: string }) => (
+  <><span className="hidden sm:inline">{name}</span><span className="sm:hidden">{firstName(name)}</span></>
+);
 
 export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogout, onViewProfile, onRefreshData }) => {
   const { t } = useTranslation();
@@ -1363,7 +1366,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   );
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] flex font-sans text-stone-900 overflow-hidden">
+    <div className="min-h-screen bg-[#FAF9F6] flex flex-col font-sans text-stone-900 overflow-hidden">
+      {!isBackendConfigured() && (
+        <div className="bg-amber-500 text-white text-[11px] font-bold px-4 py-1.5 text-center z-50 tracking-wide w-full shrink-0">
+          MOCK DATA — not connected to real backend
+        </div>
+      )}
+      <div className="flex flex-1 overflow-hidden">
       {/* Mobile Sidebar Overlay - Fixes menu close bug */}
       {isSidebarOpen && (
         <div 
@@ -2412,7 +2421,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         >
                                             <div className="flex justify-between items-start mb-1">
                                                 <span className={`text-sm font-semibold ${isUnread ? 'text-stone-900' : 'text-stone-600'}`}>
-                                                    {firstName(group.senderName)}
+                                                    <ResponsiveName name={group.senderName} />
                                                     {isUnread && <span className="inline-block w-2 h-2 bg-stone-900 rounded-full ml-2"></span>}
                                                 </span>
                                                 <span className="text-xs text-stone-400">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
@@ -2520,7 +2529,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </button>
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2 min-w-0">
-                                                <h3 className="font-bold text-stone-900 truncate">{firstName(activeMessage.senderName)}</h3>
+                                                <h3 className="font-bold text-stone-900 truncate"><ResponsiveName name={activeMessage.senderName} /></h3>
                                                 {activeMessage.status === 'PENDING' && (
                                                     <button 
                                                         onClick={(e) => handleReject(e)}
@@ -2650,7 +2659,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     <div className="flex-1 min-w-0 pb-2">
                                                         <div className="flex items-center justify-between mb-2 ml-1">
                                                             <div className="flex items-center gap-2">
-                                                                <span className="font-semibold text-sm text-stone-900">{firstName(msg.senderName)}</span>
+                                                                <span className="font-semibold text-sm text-stone-900"><ResponsiveName name={msg.senderName} /></span>
                                                                 <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
                                                                     <User size={10} className="fill-current" />
                                                                     <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.fan')}</span>
@@ -2724,7 +2733,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     )}
                                                 </div>
                                                 {messageReactions[firstChat.id] && (
-                                                    <span className="text-[10px] text-stone-400">{firstName(creator.displayName || 'You')}</span>
+                                                    <span className="text-[10px] text-stone-400"><ResponsiveName name={creator.displayName || 'You'} /></span>
                                                 )}
                                             </div>
                                                         </div>
@@ -2891,7 +2900,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     )}
                                                                 </div>
                                                                 {messageReactions[chat.id] && (
-                                                                    <span className="text-[10px] text-stone-400">{firstName(creator.displayName || 'You')}</span>
+                                                                    <span className="text-[10px] text-stone-400"><ResponsiveName name={creator.displayName || 'You'} /></span>
                                                                 )}
                                                                 {isCreator && editingChatId !== chat.id && msg.status !== 'REPLIED' && (
                                                                     <button
@@ -3758,6 +3767,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
               <img src={enlargedImage} className="max-w-full max-h-full object-contain rounded-lg" alt="Enlarged" onClick={e => e.stopPropagation()} />
           </div>
       )}
+      </div>
     </div>
   );
 };
