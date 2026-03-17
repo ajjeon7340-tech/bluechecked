@@ -702,6 +702,7 @@ const en = {
     creatorReplied: '{{name}} replied to your request!',
     requestExpired: 'Request to {{name}} expired. {{amount}} credits refunded.',
     requestRejected: 'Request to {{name}} was rejected.',
+    requestCancelled: 'You cancelled your request to {{name}}.',
     productPurchased: 'You purchased {{product}}',
     leaveConversation: 'Leave this conversation? It will be hidden from your inbox but not deleted.',
     sessionOf: 'Session {{current}} of {{total}}',

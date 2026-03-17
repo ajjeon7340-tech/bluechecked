@@ -855,14 +855,14 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
               });
           }
 
-          // 4. Rejected (Cancelled)
+          // 4. Cancelled by fan
           if (msg.status === 'CANCELLED') {
                list.push({
                   id: `can-${msg.id}`,
                   icon: Ban,
-                  text: t('fan.requestRejected', { name: msg.creatorName || t('common.creator') }),
-                  time: new Date(msg.createdAt), // Fallback
-                  color: 'bg-red-100 text-red-600',
+                  text: t('fan.requestCancelled', { name: msg.creatorName || t('common.creator') }),
+                  time: new Date(msg.createdAt),
+                  color: 'bg-stone-100 text-stone-500',
                   creatorId: msg.creatorId
               });
           }
