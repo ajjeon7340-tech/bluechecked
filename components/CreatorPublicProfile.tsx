@@ -1313,14 +1313,67 @@ export const CreatorPublicProfile: React.FC<Props> = ({
       {/* Post-Send Navigation Prompt */}
       {showPostSendPrompt && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 sm:p-0">
+            <style>{`
+                @keyframes sketch-draw { to { stroke-dashoffset: 0; } }
+                @keyframes sketch-pop { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+            `}</style>
             <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px]" onClick={() => setShowPostSendPrompt(false)} />
-            <div className="relative bg-white rounded-3xl shadow-2xl border border-stone-100 p-6 sm:p-8 max-w-sm w-full mx-4 animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-300">
-                <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 mb-4 mx-auto">
-                    <Check size={28} />
+            <div className="relative bg-white rounded-3xl shadow-2xl border border-stone-100 px-6 pt-6 pb-8 max-w-sm w-full mx-4 animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-300 flex flex-col items-center text-center">
+
+                {/* Sketch animation */}
+                <svg viewBox="0 0 220 170" width="200" height="155" xmlns="http://www.w3.org/2000/svg">
+                    {/* Envelope body */}
+                    <path d="M 35,55 L 35,135 L 175,135 L 175,55 Z"
+                        fill="none" stroke="#1c1917" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+                        pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+                        style={{ animation: 'sketch-draw 0.7s cubic-bezier(0.4,0,0.2,1) 0.1s forwards' }} />
+                    {/* Envelope flap */}
+                    <path d="M 35,55 L 105,100 L 175,55"
+                        fill="none" stroke="#1c1917" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+                        pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+                        style={{ animation: 'sketch-draw 0.45s cubic-bezier(0.4,0,0.2,1) 0.75s forwards' }} />
+                    {/* Bottom left seam */}
+                    <path d="M 35,135 L 97,100"
+                        fill="none" stroke="#1c1917" strokeWidth="2.2" strokeLinecap="round"
+                        pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+                        style={{ animation: 'sketch-draw 0.3s ease 1.15s forwards' }} />
+                    {/* Bottom right seam */}
+                    <path d="M 175,135 L 113,100"
+                        fill="none" stroke="#1c1917" strokeWidth="2.2" strokeLinecap="round"
+                        pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+                        style={{ animation: 'sketch-draw 0.3s ease 1.38s forwards' }} />
+                    {/* Heart */}
+                    <path d="M 105,83 C 105,80 102,75 98,77 C 94,79 94,84 98,88 L 105,95 L 112,88 C 116,84 116,79 112,77 C 108,75 105,80 105,83 Z"
+                        fill="none" stroke="#1c1917" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+                        pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+                        style={{ animation: 'sketch-draw 0.55s ease 1.6s forwards' }} />
+                    {/* Motion lines */}
+                    <path d="M 183,72 Q 200,69 205,66" fill="none" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round"
+                        pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+                        style={{ animation: 'sketch-draw 0.2s ease 2.05s forwards' }} />
+                    <path d="M 183,92 Q 202,91 207,91" fill="none" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round"
+                        pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+                        style={{ animation: 'sketch-draw 0.2s ease 2.2s forwards' }} />
+                    <path d="M 183,112 Q 198,115 203,118" fill="none" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round"
+                        pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+                        style={{ animation: 'sketch-draw 0.2s ease 2.35s forwards' }} />
+                    {/* Sparkle dots */}
+                    <circle cx="22" cy="85" r="2.5" fill="#1c1917"
+                        style={{ opacity: 0, animation: 'sketch-pop 0.3s ease 2.4s forwards' }} />
+                    <circle cx="15" cy="110" r="1.5" fill="#1c1917"
+                        style={{ opacity: 0, animation: 'sketch-pop 0.3s ease 2.55s forwards' }} />
+                    <circle cx="205" cy="50" r="2" fill="#1c1917"
+                        style={{ opacity: 0, animation: 'sketch-pop 0.3s ease 2.5s forwards' }} />
+                    <circle cx="30" cy="44" r="1.5" fill="#1c1917"
+                        style={{ opacity: 0, animation: 'sketch-pop 0.3s ease 2.6s forwards' }} />
+                </svg>
+
+                <div style={{ opacity: 0, animation: 'sketch-pop 0.5s ease 2.1s forwards' }} className="space-y-1.5 mb-6">
+                    <h3 className="text-lg font-bold text-stone-900">{t('profile.requestSent')}</h3>
+                    <p className="text-sm text-stone-500">{t('profile.requestSentDesc', { name: creator.displayName })}</p>
                 </div>
-                <h3 className="text-lg font-bold text-stone-900 text-center mb-1">{t('profile.requestSent')}</h3>
-                <p className="text-sm text-stone-500 text-center mb-6">{t('profile.requestSentDesc', { name: creator.displayName })}</p>
-                <div className="flex flex-col gap-2.5">
+
+                <div style={{ opacity: 0, animation: 'sketch-pop 0.5s ease 2.5s forwards' }} className="flex flex-col gap-2.5 w-full">
                     <button
                         onClick={() => { setShowPostSendPrompt(false); onNavigateToDashboard(creator.id); }}
                         className="w-full bg-stone-900 text-white py-3 rounded-2xl text-sm font-semibold hover:bg-stone-800 transition-colors flex items-center justify-center gap-2"
