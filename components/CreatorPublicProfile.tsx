@@ -1017,30 +1017,75 @@ export const CreatorPublicProfile: React.FC<Props> = ({
               )}
 
               {step === 'success' && (
-                <div className="py-8 relative overflow-hidden flex flex-col items-center justify-center">
-                    {/* Consistent Magical Card Style */}
-                    <div className="relative overflow-hidden bg-stone-900 rounded-2xl p-8 text-center animate-in zoom-in duration-500 shadow-xl ring-1 ring-white/10 w-full max-w-sm">
-                        {/* Animated Background Particles */}
-                        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40">
-                            <div className="absolute top-[10%] left-[20%] text-white animate-float text-xs">✦</div>
-                            <div className="absolute bottom-[20%] right-[10%] text-white animate-float text-sm" style={{animationDelay: '1s'}}>✦</div>
-                            <div className="absolute top-[40%] right-[30%] text-white animate-pulse text-xs">✨</div>
-                            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
-                        </div>
-                        
-                        <div className="relative z-10 flex flex-col items-center justify-center animate-float">
-                            <div className="bg-white/20 backdrop-blur-md p-4 rounded-full shadow-inner border border-white/40 mb-4 ring-4 ring-white/10">
-                                <Send size={32} className="text-white stroke-[3px]" />
-                            </div>
-                            <h3 className="font-black text-white text-3xl tracking-tight mb-2 drop-shadow-sm">{t('profile.itsOnTheWay')}</h3>
-                            <p className="text-white/90 font-medium text-sm leading-relaxed mb-6">
-                                <span className="font-bold text-white">{t('profile.creatorNotified', { name: creator.displayName })}</span><br/> {t('profile.emailWhenMagic')} <Sparkles size={14} className="text-yellow-300 animate-pulse inline" />
-                            </p>
-                            
-                            <Button fullWidth onClick={closeModal} className="bg-white text-stone-900 hover:bg-stone-50 rounded-xl h-12 font-bold text-sm border-none">
-                                {t('profile.backToProfile')}
-                            </Button>
-                        </div>
+                <div className="py-4 flex flex-col items-center justify-center text-center gap-5">
+                    <style>{`
+                        @keyframes sketch-draw { to { stroke-dashoffset: 0; } }
+                        @keyframes sketch-pop { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                    `}</style>
+
+                    {/* Sketch SVG illustration */}
+                    <svg viewBox="0 0 220 190" width="220" height="190" xmlns="http://www.w3.org/2000/svg">
+                        {/* Envelope body */}
+                        <path d="M 35,72 L 35,152 L 175,152 L 175,72 Z"
+                            fill="none" stroke="#1c1917" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+                            pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+                            style={{ animation: 'sketch-draw 0.7s cubic-bezier(0.4,0,0.2,1) 0.1s forwards' }} />
+                        {/* Envelope flap */}
+                        <path d="M 35,72 L 105,118 L 175,72"
+                            fill="none" stroke="#1c1917" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+                            pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+                            style={{ animation: 'sketch-draw 0.45s cubic-bezier(0.4,0,0.2,1) 0.75s forwards' }} />
+                        {/* Bottom left seam */}
+                        <path d="M 35,152 L 97,118"
+                            fill="none" stroke="#1c1917" strokeWidth="2.2" strokeLinecap="round"
+                            pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+                            style={{ animation: 'sketch-draw 0.3s ease 1.15s forwards' }} />
+                        {/* Bottom right seam */}
+                        <path d="M 175,152 L 113,118"
+                            fill="none" stroke="#1c1917" strokeWidth="2.2" strokeLinecap="round"
+                            pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+                            style={{ animation: 'sketch-draw 0.3s ease 1.38s forwards' }} />
+                        {/* Heart on envelope */}
+                        <path d="M 105,100 C 105,97 102,92 98,94 C 94,96 94,101 98,105 L 105,112 L 112,105 C 116,101 116,96 112,94 C 108,92 105,97 105,100 Z"
+                            fill="none" stroke="#1c1917" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+                            pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+                            style={{ animation: 'sketch-draw 0.55s ease 1.6s forwards' }} />
+                        {/* Motion lines — right */}
+                        <path d="M 183,88 Q 200,85 205,82"
+                            fill="none" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round"
+                            pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+                            style={{ animation: 'sketch-draw 0.2s ease 2.05s forwards' }} />
+                        <path d="M 183,110 Q 202,109 207,109"
+                            fill="none" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round"
+                            pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+                            style={{ animation: 'sketch-draw 0.2s ease 2.2s forwards' }} />
+                        <path d="M 183,130 Q 198,133 203,136"
+                            fill="none" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round"
+                            pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+                            style={{ animation: 'sketch-draw 0.2s ease 2.35s forwards' }} />
+                        {/* Sparkle dots */}
+                        <circle cx="22" cy="100" r="2.5" fill="#1c1917"
+                            style={{ opacity: 0, animation: 'sketch-pop 0.3s ease 2.4s forwards' }} />
+                        <circle cx="15" cy="128" r="1.5" fill="#1c1917"
+                            style={{ opacity: 0, animation: 'sketch-pop 0.3s ease 2.55s forwards' }} />
+                        <circle cx="205" cy="68" r="2" fill="#1c1917"
+                            style={{ opacity: 0, animation: 'sketch-pop 0.3s ease 2.5s forwards' }} />
+                        <circle cx="30" cy="60" r="1.5" fill="#1c1917"
+                            style={{ opacity: 0, animation: 'sketch-pop 0.3s ease 2.6s forwards' }} />
+                    </svg>
+
+                    <div style={{ opacity: 0, animation: 'sketch-pop 0.5s ease 2.1s forwards' }} className="space-y-1.5">
+                        <h3 className="font-bold text-stone-900 text-2xl tracking-tight">{t('profile.itsOnTheWay')}</h3>
+                        <p className="text-stone-500 text-sm leading-relaxed">
+                            <span className="font-semibold text-stone-700">{t('profile.creatorNotified', { name: creator.displayName })}</span><br/>
+                            {t('profile.emailWhenMagic')}
+                        </p>
+                    </div>
+
+                    <div style={{ opacity: 0, animation: 'sketch-pop 0.5s ease 2.5s forwards' }} className="w-full">
+                        <Button fullWidth onClick={closeModal} className="rounded-2xl h-12 font-semibold">
+                            {t('profile.backToProfile')}
+                        </Button>
                     </div>
                 </div>
               )}
