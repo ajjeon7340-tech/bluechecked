@@ -58,6 +58,7 @@ export interface CreatorProfile {
   links: AffiliateLink[];
   linkSections?: LinkSection[];
   linksSectionTitle?: string;
+  buttonColor?: string;
   products: Product[];
   likesCount: number;
   isPremium?: boolean;
