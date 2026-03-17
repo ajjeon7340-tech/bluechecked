@@ -485,14 +485,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                             <Share size={16} />
                         </button>
 
-                        {!currentUser && (
-                          <button
-                              onClick={onLoginRequest}
-                              className="text-stone-500 hover:text-stone-900 px-4 py-2 font-medium text-xs transition-colors"
-                          >
-                              {t('common.signIn')}
-                          </button>
-                        )}
 
                     </div>
                 </div>
