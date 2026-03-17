@@ -8,7 +8,7 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { 
   Clock, CheckCircle2, AlertCircle, DollarSign, Sparkles, ChevronLeft, LogOut, 
   ExternalLink, User, Settings, Plus, Trash, X, Camera, Paperclip, Send, DiemLogo,
-  Home, BarChart3, Wallet, Users, Bell, Search, Menu, ChevronDown, Ban, Check,
+  Home, BarChart3, Wallet, Users, Bell, Search, Menu, ChevronDown, ChevronUp, Ban, Check,
   Heart, Star, Eye, TrendingUp, MessageSquare, ArrowRight, Lock, 
   InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Download, ShoppingBag, FileText, PieChart as PieIcon, LayoutGrid, MonitorPlay, Link as LinkIcon, Calendar, ChevronRight, Coins, CreditCard
   , MousePointerClick, GripVertical, Smile, Pencil, RefreshCw, Verified
@@ -268,6 +268,21 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           ...prev,
           linkSections: (prev.linkSections || []).map(s => s.id === sectionId ? { ...s, title: title.trim() } : s),
       }));
+  };
+
+  const handleMoveSection = (sectionId: string, direction: 'up' | 'down') => {
+      setEditedCreator(prev => {
+          const sorted = [...(prev.linkSections || [])].sort((a, b) => a.order - b.order);
+          const idx = sorted.findIndex(s => s.id === sectionId);
+          const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+          if (swapIdx < 0 || swapIdx >= sorted.length) return prev;
+          const updated = sorted.map((s, i) => {
+              if (i === idx) return { ...s, order: sorted[swapIdx].order };
+              if (i === swapIdx) return { ...s, order: sorted[idx].order };
+              return s;
+          });
+          return { ...prev, linkSections: updated };
+      });
   };
 
   const handleAssignLinkSection = (linkId: string, sectionId: string | undefined) => {
@@ -3347,13 +3362,30 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="mb-4 p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-3">
                                     <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Custom Sections</span>
                                     {(editedCreator.linkSections || []).length > 0 && (
-                                        <div className="flex flex-wrap gap-2">
-                                            {[...(editedCreator.linkSections || [])].sort((a,b) => a.order - b.order).map(section => (
-                                                <div key={section.id} className="flex items-center gap-1 bg-white border border-stone-200 rounded-full px-3 py-1.5 group shadow-sm">
+                                        <div className="flex flex-col gap-1.5">
+                                            {[...(editedCreator.linkSections || [])].sort((a,b) => a.order - b.order).map((section, idx, arr) => (
+                                                <div key={section.id} className="flex items-center gap-1.5 bg-white border border-stone-200 rounded-xl px-3 py-2 group shadow-sm">
+                                                    {/* Reorder buttons */}
+                                                    <div className="flex flex-col gap-0.5 flex-shrink-0">
+                                                        <button
+                                                            onClick={() => handleMoveSection(section.id, 'up')}
+                                                            disabled={idx === 0}
+                                                            className="text-stone-300 hover:text-stone-600 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                                                        >
+                                                            <ChevronUp size={11}/>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleMoveSection(section.id, 'down')}
+                                                            disabled={idx === arr.length - 1}
+                                                            className="text-stone-300 hover:text-stone-600 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                                                        >
+                                                            <ChevronDown size={11}/>
+                                                        </button>
+                                                    </div>
                                                     {editingSectionId === section.id ? (
                                                         <>
                                                             <input
-                                                                className="text-xs font-medium bg-transparent outline-none border-b border-stone-400 w-24"
+                                                                className="flex-1 text-xs font-medium bg-transparent outline-none border-b border-stone-400"
                                                                 value={editingSectionTitle}
                                                                 autoFocus
                                                                 onChange={e => setEditingSectionTitle(e.target.value)}
@@ -3363,14 +3395,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     if (e.key === 'Escape') setEditingSectionId(null);
                                                                 }}
                                                             />
-                                                            <button onClick={() => { handleRenameSectionTitle(section.id, editingSectionTitle); setEditingSectionId(null); }} className="text-green-600 hover:text-green-800 ml-1">
+                                                            <button onClick={() => { handleRenameSectionTitle(section.id, editingSectionTitle); setEditingSectionId(null); }} className="text-green-600 hover:text-green-800 ml-1 flex-shrink-0">
                                                                 <Check size={12}/>
                                                             </button>
                                                         </>
                                                     ) : (
                                                         <>
                                                             <span
-                                                                className="text-xs font-medium text-stone-700 cursor-pointer hover:text-stone-900"
+                                                                className="flex-1 text-xs font-medium text-stone-700 cursor-pointer hover:text-stone-900"
                                                                 onClick={() => { setEditingSectionId(section.id); setEditingSectionTitle(section.title); }}
                                                                 title="Click to rename"
                                                             >
@@ -3378,7 +3410,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             </span>
                                                             <button
                                                                 onClick={() => handleDeleteSection(section.id)}
-                                                                className="text-stone-300 hover:text-red-500 ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                className="text-stone-300 hover:text-red-500 ml-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                                                             >
                                                                 <X size={11}/>
                                                             </button>
