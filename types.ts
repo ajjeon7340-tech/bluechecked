@@ -15,6 +15,12 @@ export interface CurrentUser {
   bio?: string;
 }
 
+export interface LinkSection {
+  id: string;
+  title: string;
+  order: number;
+}
+
 export interface AffiliateLink {
   id: string;
   title: string;
@@ -24,6 +30,7 @@ export interface AffiliateLink {
   type?: 'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT';
   price?: number; // In Credits
   thumbnailUrl?: string;
+  sectionId?: string;
 }
 
 export interface Product {
@@ -49,7 +56,9 @@ export interface CreatorProfile {
   customQuestions: string[]; 
   tags: string[];
   links: AffiliateLink[];
-  products: Product[]; 
+  linkSections?: LinkSection[];
+  linksSectionTitle?: string;
+  products: Product[];
   likesCount: number;
   isPremium?: boolean;
   isDiemHighlighted?: boolean;

@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CreatorProfile, Message, DashboardStats, MonthlyStat, AffiliateLink, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
+import { CreatorProfile, Message, DashboardStats, MonthlyStat, AffiliateLink, LinkSection, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
 import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, Withdrawal, isBackendConfigured } from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -236,6 +236,46 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   // Drag and Drop State for Links
   const [draggedLinkIndex, setDraggedLinkIndex] = useState<number | null>(null);
+
+  // Section State
+  const [newSectionTitle, setNewSectionTitle] = useState('');
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
+  const [editingSectionTitle, setEditingSectionTitle] = useState('');
+  const [newLinkSectionId, setNewLinkSectionId] = useState('');
+
+  const handleAddSection = () => {
+      if (!newSectionTitle.trim()) return;
+      const newSection: LinkSection = {
+          id: `s-${Date.now()}`,
+          title: newSectionTitle.trim(),
+          order: (editedCreator.linkSections || []).length,
+      };
+      setEditedCreator(prev => ({ ...prev, linkSections: [...(prev.linkSections || []), newSection] }));
+      setNewSectionTitle('');
+  };
+
+  const handleDeleteSection = (sectionId: string) => {
+      setEditedCreator(prev => ({
+          ...prev,
+          linkSections: (prev.linkSections || []).filter(s => s.id !== sectionId),
+          links: (prev.links || []).map(l => l.sectionId === sectionId ? { ...l, sectionId: undefined } : l),
+      }));
+  };
+
+  const handleRenameSectionTitle = (sectionId: string, title: string) => {
+      if (!title.trim()) return;
+      setEditedCreator(prev => ({
+          ...prev,
+          linkSections: (prev.linkSections || []).map(s => s.id === sectionId ? { ...s, title: title.trim() } : s),
+      }));
+  };
+
+  const handleAssignLinkSection = (linkId: string, sectionId: string | undefined) => {
+      setEditedCreator(prev => ({
+          ...prev,
+          links: (prev.links || []).map(l => l.id === linkId ? { ...l, sectionId } : l),
+      }));
+  };
 
   const handleDragStart = (index: number) => {
       setDraggedLinkIndex(index);
@@ -1140,9 +1180,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       isPromoted: false,
       type: newLinkType,
       price: (newLinkType === 'DIGITAL_PRODUCT' || newLinkType === 'SUPPORT') && newLinkPrice ? Number(newLinkPrice) : undefined,
-      thumbnailUrl: newLinkThumbnail
+      thumbnailUrl: newLinkThumbnail,
+      sectionId: newLinkSectionId || undefined,
     };
-    
+
     setEditedCreator(prev => ({ ...prev, links: [...(prev.links || []), newLink] }));
     setNewLinkTitle('');
     setNewLinkUrl('');
@@ -1150,6 +1191,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setNewLinkPrice('');
     setNewLinkThumbnail('');
     setNewLinkType('EXTERNAL');
+    setNewLinkSectionId('');
   };
 
   const handleRemoveLink = (id: string) => {
@@ -3284,16 +3326,94 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </button>
                             </div>
 
-                            {/* Featured Links Section - UPDATED with Digital Products */}
+                            {/* Links & Products Section */}
                             <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-2">Featured Links & Products</label>
+                                <label className="block text-sm font-medium text-stone-700 mb-2">Links & Products</label>
+
+                                {/* Section Header Label */}
+                                <div className="mb-3">
+                                    <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wide mb-1.5">Section Header Label</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Featured Links & Products"
+                                        className="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm focus:ring-1 focus:ring-stone-400 outline-none bg-white"
+                                        value={editedCreator.linksSectionTitle || ''}
+                                        onChange={e => setEditedCreator(prev => ({ ...prev, linksSectionTitle: e.target.value || undefined }))}
+                                    />
+                                    <p className="text-[10px] text-stone-400 mt-1">This label appears above your links on your public profile.</p>
+                                </div>
+
+                                {/* Section Management */}
+                                <div className="mb-4 p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-3">
+                                    <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Custom Sections</span>
+                                    {(editedCreator.linkSections || []).length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {[...(editedCreator.linkSections || [])].sort((a,b) => a.order - b.order).map(section => (
+                                                <div key={section.id} className="flex items-center gap-1 bg-white border border-stone-200 rounded-full px-3 py-1.5 group shadow-sm">
+                                                    {editingSectionId === section.id ? (
+                                                        <>
+                                                            <input
+                                                                className="text-xs font-medium bg-transparent outline-none border-b border-stone-400 w-24"
+                                                                value={editingSectionTitle}
+                                                                autoFocus
+                                                                onChange={e => setEditingSectionTitle(e.target.value)}
+                                                                onBlur={() => { handleRenameSectionTitle(section.id, editingSectionTitle); setEditingSectionId(null); }}
+                                                                onKeyDown={e => {
+                                                                    if (e.key === 'Enter') { handleRenameSectionTitle(section.id, editingSectionTitle); setEditingSectionId(null); }
+                                                                    if (e.key === 'Escape') setEditingSectionId(null);
+                                                                }}
+                                                            />
+                                                            <button onClick={() => { handleRenameSectionTitle(section.id, editingSectionTitle); setEditingSectionId(null); }} className="text-green-600 hover:text-green-800 ml-1">
+                                                                <Check size={12}/>
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <span
+                                                                className="text-xs font-medium text-stone-700 cursor-pointer hover:text-stone-900"
+                                                                onClick={() => { setEditingSectionId(section.id); setEditingSectionTitle(section.title); }}
+                                                                title="Click to rename"
+                                                            >
+                                                                {section.title}
+                                                            </span>
+                                                            <button
+                                                                onClick={() => handleDeleteSection(section.id)}
+                                                                className="text-stone-300 hover:text-red-500 ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            >
+                                                                <X size={11}/>
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="New section name..."
+                                            className="flex-1 px-3 py-1.5 border border-stone-200 rounded-lg text-xs focus:ring-1 focus:ring-stone-400 outline-none bg-white"
+                                            value={newSectionTitle}
+                                            onChange={e => setNewSectionTitle(e.target.value)}
+                                            onKeyDown={e => e.key === 'Enter' && handleAddSection()}
+                                        />
+                                        <button
+                                            onClick={handleAddSection}
+                                            disabled={!newSectionTitle.trim()}
+                                            className="px-3 py-1.5 bg-stone-900 text-white rounded-lg text-xs font-medium hover:bg-stone-700 disabled:opacity-40 transition-colors flex items-center gap-1"
+                                        >
+                                            <Plus size={12}/> Add
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <div className="space-y-3 mb-3">
                                     {(editedCreator.links || []).map((link, index) => {
                                         const isProduct = link.type === 'DIGITAL_PRODUCT';
                                         const isSupport = link.type === 'SUPPORT';
                                         return (
-                                            <div 
-                                                key={link.id} 
+                                            <div
+                                                key={link.id}
                                                 draggable
                                                 onDragStart={() => handleDragStart(index)}
                                                 onDragEnter={() => handleDragEnter(index)}
@@ -3382,9 +3502,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             placeholder="https://..."
                                                         />
                                                     )}
-                                                    <div className="flex items-center gap-2">
-                                                        <input 
-                                                            type="checkbox" 
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <input
+                                                            type="checkbox"
                                                             id={`promo-${link.id}`}
                                                             checked={link.isPromoted || false}
                                                             onChange={(e) => handleUpdateLink(link.id, 'isPromoted', e.target.checked)}
@@ -3394,6 +3514,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             {link.isPromoted ? <Sparkles size={10} className="text-stone-500"/> : null}
                                                             Highlight
                                                         </label>
+                                                        {(editedCreator.linkSections || []).length > 0 && (
+                                                            <select
+                                                                value={link.sectionId || ''}
+                                                                onChange={(e) => handleAssignLinkSection(link.id, e.target.value || undefined)}
+                                                                className="ml-auto text-[10px] border border-stone-200 rounded-md px-2 py-0.5 bg-white focus:ring-1 focus:ring-stone-400 outline-none text-stone-600"
+                                                            >
+                                                                <option value="">No section</option>
+                                                                {[...(editedCreator.linkSections || [])].sort((a,b) => a.order - b.order).map(s => (
+                                                                    <option key={s.id} value={s.id}>{s.title}</option>
+                                                                ))}
+                                                            </select>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <button onClick={() => handleRemoveLink(link.id)} className="text-stone-400 hover:text-red-500 p-1">
@@ -3514,6 +3646,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             </div>
                                         )}
                                     </div>
+                                    {(editedCreator.linkSections || []).length > 0 && (
+                                        <select
+                                            value={newLinkSectionId}
+                                            onChange={e => setNewLinkSectionId(e.target.value)}
+                                            className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-1 focus:ring-stone-400 outline-none bg-white text-stone-600"
+                                        >
+                                            <option value="">No section</option>
+                                            {[...(editedCreator.linkSections || [])].sort((a,b) => a.order - b.order).map(s => (
+                                                <option key={s.id} value={s.id}>{s.title}</option>
+                                            ))}
+                                        </select>
+                                    )}
                                     <Button size="sm" onClick={handleAddLink} type="button" fullWidth className="mt-2">
                                          <Plus size={16} className="mr-1"/> Add {newLinkType === 'DIGITAL_PRODUCT' ? 'Product' : newLinkType === 'SUPPORT' ? 'Support Item' : 'Link'}
                                     </Button>

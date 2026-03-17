@@ -333,8 +333,18 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 {isCreator && (
                     <>
                         <div>
-                            <label className="block text-sm font-medium text-stone-700 mb-1">User ID (Handle)</label>
-                            <input type="text" value={handle} onChange={e => setHandle(e.target.value)} placeholder="@username" className="w-full border border-stone-200 rounded-xl p-3 focus:ring-2 focus:ring-stone-500 outline-none transition-all" />
+                            <label className="block text-sm font-medium text-stone-700 mb-1">Public Page ID</label>
+                            <p className="text-xs text-stone-400 mb-2">This will be your unique public page address — choose carefully, it can't be changed later.</p>
+                            <div className="flex items-center border border-stone-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-stone-500 transition-all">
+                                <span className="px-3 py-3 bg-stone-50 text-stone-500 font-medium border-r border-stone-200 select-none">@</span>
+                                <input
+                                    type="text"
+                                    value={handle.replace('@', '')}
+                                    onChange={e => setHandle(e.target.value.replace('@', ''))}
+                                    placeholder="username"
+                                    className="flex-1 p-3 outline-none bg-white"
+                                />
+                            </div>
                             {handle && (
                                 <p className="text-[10px] text-stone-400 mt-1 ml-1">
                                     Your public page: <span className="font-mono text-stone-600">{window.location.host}/{handle.replace('@', '')}</span>

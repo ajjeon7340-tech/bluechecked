@@ -415,6 +415,16 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const displayedLinks = isCustomizeMode ? (editedCreator.links || []) : (creator.links || []);
   const platforms = isCustomizeMode ? (editedCreator.platforms || []) : (creator.platforms || []);
 
+  // Group links by custom sections
+  const displayedSections = isCustomizeMode ? (editedCreator.linkSections || []) : (creator.linkSections || []);
+  const sortedSections = [...displayedSections].sort((a, b) => a.order - b.order);
+  const groupedLinks: { id: string | null; title: string | null; links: typeof displayedLinks }[] = sortedSections.length > 0
+    ? [
+        ...sortedSections.map(s => ({ id: s.id, title: s.title, links: displayedLinks.filter(l => l.sectionId === s.id) })),
+        { id: null, title: null, links: displayedLinks.filter(l => !l.sectionId) },
+      ]
+    : [{ id: null, title: null, links: displayedLinks }];
+
   return (
     <div className="min-h-screen font-sans text-stone-900 pb-20 selection:bg-stone-200 selection:text-stone-900 relative bg-[#FAF9F6]">
       <style>{`
@@ -669,16 +679,22 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           )}
 
           {/* 4. AFFILIATE LINKS & DIGITAL PRODUCTS */}
-          <div className="w-full space-y-4">
-                <div className="flex justify-between items-end mb-2">
-                    <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
-                        <Tag size={14} /> {t('profile.featuredLinks')}
-                    </h3>
-                </div>
-
-                {displayedLinks.length > 0 ? (
+          <div className="w-full space-y-6">
+                {groupedLinks.map((group, groupIdx) => {
+                    const groupLinksToShow = group.links;
+                    if (groupLinksToShow.length === 0 && !isCustomizeMode) return null;
+                    // For the null/default group in sectioned mode with no unsectioned links, skip
+                    if (group.id === null && sortedSections.length > 0 && groupLinksToShow.length === 0 && !isCustomizeMode) return null;
+                    return (
+                    <div key={group.id ?? 'default'} className="space-y-3">
+                        <div className="flex justify-between items-end">
+                            <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
+                                <Tag size={14} /> {group.title ?? (creator.linksSectionTitle || t('profile.featuredLinks'))}
+                            </h3>
+                        </div>
+                        {groupLinksToShow.length > 0 ? (
                     <div className="grid gap-3">
-                        {displayedLinks.map((link) => {
+                        {groupLinksToShow.map((link) => {
                             const isProduct = link.type === 'DIGITAL_PRODUCT';
                             const isSupport = link.type === 'SUPPORT';
                             const hasThumbnail = !!link.thumbnailUrl;
@@ -803,10 +819,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         })}
                     </div>
                 ) : (
-                    <div className="p-8 text-center border-2 border-dashed border-stone-200 rounded-3xl text-stone-400">
+                    <div className="p-6 text-center border-2 border-dashed border-stone-200 rounded-2xl text-stone-400 text-xs">
                         {isCustomizeMode ? t('profile.addLinkAbove') : t('profile.noLinksYet')}
                     </div>
                 )}
+                    </div>
+                    );
+                })}
           </div>
       </div>
 
