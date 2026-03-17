@@ -3345,19 +3345,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             <div>
                                 <label className="block text-sm font-medium text-stone-700 mb-2">Links & Products</label>
 
-                                {/* Section Header Label */}
-                                <div className="mb-3">
-                                    <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wide mb-1.5">Section Header Label</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Featured Links & Products"
-                                        className="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm focus:ring-1 focus:ring-stone-400 outline-none bg-white"
-                                        value={editedCreator.linksSectionTitle || ''}
-                                        onChange={e => setEditedCreator(prev => ({ ...prev, linksSectionTitle: e.target.value || undefined }))}
-                                    />
-                                    <p className="text-[10px] text-stone-400 mt-1">This label appears above your links on your public profile.</p>
-                                </div>
-
                                 {/* Section Management */}
                                 <div className="mb-4 p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-3">
                                     <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Custom Sections</span>
