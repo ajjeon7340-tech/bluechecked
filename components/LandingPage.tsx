@@ -347,41 +347,41 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
               // Step 1: Set your rate — price tag + coin
               <svg key="s1" viewBox="0 0 100 80" width="100" height="80" fill="none" xmlns="http://www.w3.org/2000/svg">
                 {/* Price tag */}
-                <path d="M20 10 L60 10 L78 40 L60 70 L20 70 Z" stroke="#1c1917" strokeWidth="2" strokeLinejoin="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.6s ease forwards 0.1s' } : {}} />
-                <circle cx="32" cy="28" r="5" stroke="#f59e0b" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 0.5s' } : {}} />
-                <line x1="34" y1="44" x2="64" y2="44" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 0.7s' } : {}} />
-                <line x1="34" y1="54" x2="56" y2="54" stroke="#d6d3d1" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 0.9s' } : {}} />
+                <path d="M20 10 L60 10 L78 40 L60 70 L20 70 Z" stroke="#1c1917" strokeWidth="2" strokeLinejoin="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.6s ease forwards 0.1s' } : {}} />
+                <circle cx="32" cy="28" r="5" stroke="#f59e0b" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 0.5s' } : {}} />
+                <line x1="34" y1="44" x2="64" y2="44" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 0.7s' } : {}} />
+                <line x1="34" y1="54" x2="56" y2="54" stroke="#d6d3d1" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 0.9s' } : {}} />
                 {/* Sparkles */}
-                <line x1="85" y1="14" x2="90" y2="8" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.1s' } : {}} />
-                <line x1="90" y1="22" x2="96" y2="20" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.2s' } : {}} />
-                <line x1="82" y1="22" x2="82" y2="16" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.3s' } : {}} />
+                <line x1="85" y1="14" x2="90" y2="8" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.1s' } : {}} />
+                <line x1="90" y1="22" x2="96" y2="20" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.2s' } : {}} />
+                <line x1="82" y1="22" x2="82" y2="16" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.3s' } : {}} />
               </svg>,
               // Step 2: Receive questions — envelope with question mark
               <svg key="s2" viewBox="0 0 100 80" width="100" height="80" fill="none" xmlns="http://www.w3.org/2000/svg">
                 {/* Envelope body */}
-                <rect x="8" y="18" width="70" height="48" rx="5" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.5s ease forwards 0.1s' } : {}} />
+                <rect x="8" y="18" width="70" height="48" rx="5" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.5s ease forwards 0.1s' } : {}} />
                 {/* Flap */}
-                <path d="M8 18 L43 44 L78 18" stroke="#1c1917" strokeWidth="2" strokeLinejoin="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.5s ease forwards 0.4s' } : {}} />
+                <path d="M8 18 L43 44 L78 18" stroke="#1c1917" strokeWidth="2" strokeLinejoin="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.5s ease forwards 0.4s' } : {}} />
                 {/* Question mark bubble */}
-                <circle cx="78" cy="22" r="14" stroke="#6366f1" strokeWidth="2" fill="white" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.4s ease forwards 0.7s' } : {}} />
-                <path d="M73 17 C73 13 83 13 83 18 C83 21 78 22 78 26" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.4s ease forwards 1.0s' } : {}} />
+                <circle cx="78" cy="22" r="14" stroke="#6366f1" strokeWidth="2" fill="white" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.4s ease forwards 0.7s' } : {}} />
+                <path d="M73 17 C73 13 83 13 83 18 C83 21 78 22 78 26" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.4s ease forwards 1.0s' } : {}} />
                 <circle cx="78" cy="30" r="1.5" fill="#6366f1" />
               </svg>,
               // Step 3: Reply & earn — reply arrow + money bag
               <svg key="s3" viewBox="0 0 100 80" width="100" height="80" fill="none" xmlns="http://www.w3.org/2000/svg">
                 {/* Money bag */}
-                <path d="M30 55 C30 35 65 35 65 55 C65 70 55 75 47 75 C39 75 30 70 30 55 Z" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.6s ease forwards 0.1s' } : {}} />
-                <path d="M39 35 C39 28 55 28 55 35" stroke="#1c1917" strokeWidth="2" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.4s ease forwards 0.5s' } : {}} />
-                <line x1="47" y1="48" x2="47" y2="65" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 0.8s' } : {}} />
-                <line x1="41" y1="48" x2="53" y2="48" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 0.9s' } : {}} />
-                <line x1="41" y1="65" x2="53" y2="65" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 1.0s' } : {}} />
+                <path d="M30 55 C30 35 65 35 65 55 C65 70 55 75 47 75 C39 75 30 70 30 55 Z" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.6s ease forwards 0.1s' } : {}} />
+                <path d="M39 35 C39 28 55 28 55 35" stroke="#1c1917" strokeWidth="2" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.4s ease forwards 0.5s' } : {}} />
+                <line x1="47" y1="48" x2="47" y2="65" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 0.8s' } : {}} />
+                <line x1="41" y1="48" x2="53" y2="48" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 0.9s' } : {}} />
+                <line x1="41" y1="65" x2="53" y2="65" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 1.0s' } : {}} />
                 {/* Reply arrow */}
-                <path d="M72 15 L80 22 L72 29" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 1.1s' } : {}} />
-                <path d="M66 22 L80 22 L80 32" stroke="#10b981" strokeWidth="2" strokeLinecap="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 1.2s' } : {}} />
+                <path d="M72 15 L80 22 L72 29" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 1.1s' } : {}} />
+                <path d="M66 22 L80 22 L80 32" stroke="#10b981" strokeWidth="2" strokeLinecap="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 1.2s' } : {}} />
                 {/* Sparkles */}
-                <line x1="14" y1="24" x2="19" y2="18" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.3s' } : {}} />
-                <line x1="20" y1="30" x2="26" y2="28" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.4s' } : {}} />
-                <line x1="12" y1="32" x2="12" y2="26" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.5s' } : {}} />
+                <line x1="14" y1="24" x2="19" y2="18" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.3s' } : {}} />
+                <line x1="20" y1="30" x2="26" y2="28" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.4s' } : {}} />
+                <line x1="12" y1="32" x2="12" y2="26" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.5s' } : {}} />
               </svg>,
             ];
 
