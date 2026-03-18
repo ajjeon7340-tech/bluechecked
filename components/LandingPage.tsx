@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from './Button';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -71,6 +71,8 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
   const [convIdx, setConvIdx] = useState(0);
   const [stepsIdx, setStepsIdx] = useState(0);
+  const [howItWorksVisible, setHowItWorksVisible] = useState(false);
+  const howItWorksRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const t = setInterval(() => setConvIdx(i => (i + 1) % FEATURED_CONVERSATIONS.length), 3500);
@@ -80,6 +82,17 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
   useEffect(() => {
     const t = setInterval(() => setStepsIdx(i => (i + 1) % 3), 3500);
     return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    const el = howItWorksRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setHowItWorksVisible(true); observer.disconnect(); } },
+      { threshold: 0.2 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   return (
@@ -177,40 +190,6 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
             </button>
           </div>
         </div>
-      </section>
-
-      {/* Sketch Hero Illustration */}
-      <section className="pb-10 flex justify-center">
-        <svg viewBox="0 0 480 130" width="480" height="130" className="w-full max-w-lg opacity-80" fill="none" xmlns="http://www.w3.org/2000/svg">
-          {/* Creator card (left) */}
-          <rect x="20" y="20" width="130" height="90" rx="12" stroke="#1c1917" strokeWidth="1.8" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.6s ease forwards 0.2s' }} />
-          <circle cx="56" cy="52" r="16" stroke="#1c1917" strokeWidth="1.5" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.5s ease forwards 0.4s' }} />
-          <line x1="38" y1="76" x2="102" y2="76" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.4s ease forwards 0.6s' }} />
-          <line x1="45" y1="88" x2="95" y2="88" stroke="#d6d3d1" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.3s ease forwards 0.8s' }} />
-          {/* Verified badge */}
-          <circle cx="96" cy="44" r="10" stroke="#6366f1" strokeWidth="1.5" fill="white" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.3s ease forwards 0.9s' }} />
-          <path d="M91 44 L95 48 L102 39" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.3s ease forwards 1.1s' }} />
-
-          {/* Arrow / message bubble in middle */}
-          <path d="M160 65 Q200 40 240 65" stroke="#1c1917" strokeWidth="1.8" strokeLinecap="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.5s ease forwards 1.2s' }} />
-          <polyline points="232,58 241,66 236,75" stroke="#1c1917" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.3s ease forwards 1.5s' }} />
-          {/* Coin on arrow */}
-          <circle cx="200" cy="43" r="11" stroke="#f59e0b" strokeWidth="1.8" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.3s ease forwards 1.4s' }} />
-          <line x1="200" y1="37" x2="200" y2="49" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.2s ease forwards 1.6s' }} />
-
-          {/* Fan card (right) */}
-          <rect x="330" y="20" width="130" height="90" rx="12" stroke="#1c1917" strokeWidth="1.8" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.6s ease forwards 0.3s' }} />
-          <circle cx="366" cy="52" r="16" stroke="#1c1917" strokeWidth="1.5" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.5s ease forwards 0.5s' }} />
-          <line x1="348" y1="76" x2="412" y2="76" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.4s ease forwards 0.7s' }} />
-          <line x1="355" y1="88" x2="405" y2="88" stroke="#d6d3d1" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.3s ease forwards 0.9s' }} />
-          {/* Heart */}
-          <path d="M394 44 C394 40 400 38 400 44 C400 38 406 40 406 44 C406 48 400 52 400 52 C400 52 394 48 394 44Z" stroke="#ec4899" strokeWidth="1.5" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.4s ease forwards 1.0s' }} />
-
-          {/* Sparkle accents */}
-          <line x1="290" y1="20" x2="294" y2="14" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.2s ease forwards 1.7s' }} />
-          <line x1="297" y1="28" x2="304" y2="26" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.2s ease forwards 1.8s' }} />
-          <line x1="286" y1="30" x2="286" y2="24" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.2s ease forwards 1.9s' }} />
-        </svg>
       </section>
 
       {/* Featured Conversations - Weverse Magazine Style */}
@@ -351,7 +330,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
       </section>
 
       {/* How It Works - Clean & Warm */}
-      <section className="py-24 bg-[#FAFAF9]">
+      <section ref={howItWorksRef} className="py-24 bg-[#FAFAF9]">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
             <p className="text-sm font-medium text-stone-400 uppercase tracking-wider mb-4">{t('landing.simpleTransparent')}</p>
@@ -362,6 +341,50 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
 
           {/* Mobile Carousel */}
           {(() => {
+            const v = howItWorksVisible;
+            // Per-step sketch SVG illustrations
+            const sketchIllustrations = [
+              // Step 1: Set your rate — price tag + coin
+              <svg key="s1" viewBox="0 0 100 80" width="100" height="80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Price tag */}
+                <path d="M20 10 L60 10 L78 40 L60 70 L20 70 Z" stroke="#1c1917" strokeWidth="2" strokeLinejoin="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.6s ease forwards 0.1s' } : {}} />
+                <circle cx="32" cy="28" r="5" stroke="#f59e0b" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 0.5s' } : {}} />
+                <line x1="34" y1="44" x2="64" y2="44" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 0.7s' } : {}} />
+                <line x1="34" y1="54" x2="56" y2="54" stroke="#d6d3d1" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 0.9s' } : {}} />
+                {/* Sparkles */}
+                <line x1="85" y1="14" x2="90" y2="8" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.1s' } : {}} />
+                <line x1="90" y1="22" x2="96" y2="20" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.2s' } : {}} />
+                <line x1="82" y1="22" x2="82" y2="16" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.3s' } : {}} />
+              </svg>,
+              // Step 2: Receive questions — envelope with question mark
+              <svg key="s2" viewBox="0 0 100 80" width="100" height="80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Envelope body */}
+                <rect x="8" y="18" width="70" height="48" rx="5" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.5s ease forwards 0.1s' } : {}} />
+                {/* Flap */}
+                <path d="M8 18 L43 44 L78 18" stroke="#1c1917" strokeWidth="2" strokeLinejoin="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.5s ease forwards 0.4s' } : {}} />
+                {/* Question mark bubble */}
+                <circle cx="78" cy="22" r="14" stroke="#6366f1" strokeWidth="2" fill="white" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.4s ease forwards 0.7s' } : {}} />
+                <path d="M73 17 C73 13 83 13 83 18 C83 21 78 22 78 26" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.4s ease forwards 1.0s' } : {}} />
+                <circle cx="78" cy="30" r="1.5" fill="#6366f1" />
+              </svg>,
+              // Step 3: Reply & earn — reply arrow + money bag
+              <svg key="s3" viewBox="0 0 100 80" width="100" height="80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Money bag */}
+                <path d="M30 55 C30 35 65 35 65 55 C65 70 55 75 47 75 C39 75 30 70 30 55 Z" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.6s ease forwards 0.1s' } : {}} />
+                <path d="M39 35 C39 28 55 28 55 35" stroke="#1c1917" strokeWidth="2" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.4s ease forwards 0.5s' } : {}} />
+                <line x1="47" y1="48" x2="47" y2="65" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 0.8s' } : {}} />
+                <line x1="41" y1="48" x2="53" y2="48" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 0.9s' } : {}} />
+                <line x1="41" y1="65" x2="53" y2="65" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 1.0s' } : {}} />
+                {/* Reply arrow */}
+                <path d="M72 15 L80 22 L72 29" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 1.1s' } : {}} />
+                <path d="M66 22 L80 22 L80 32" stroke="#10b981" strokeWidth="2" strokeLinecap="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.3s ease forwards 1.2s' } : {}} />
+                {/* Sparkles */}
+                <line x1="14" y1="24" x2="19" y2="18" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.3s' } : {}} />
+                <line x1="20" y1="30" x2="26" y2="28" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.4s' } : {}} />
+                <line x1="12" y1="32" x2="12" y2="26" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={v ? 0 : 1} style={v ? { animation: 'lp-sketch 0.2s ease forwards 1.5s' } : {}} />
+              </svg>,
+            ];
+
             const steps = [
               { step: t('landing.step01'), title: t('landing.setYourRate'), desc: t('landing.setYourRateDesc'), icon: Coins },
               { step: t('landing.step02'), title: t('landing.receiveQuestions'), desc: t('landing.receiveQuestionsDesc'), icon: MessageSquare },
@@ -377,10 +400,8 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                     {steps.map((item, idx) => (
                       <div key={idx} className="w-full flex-shrink-0">
                         <div className="relative bg-white rounded-3xl p-8 border border-stone-100">
-                          <div className="text-sm font-semibold text-stone-300 mb-6">{item.step}</div>
-                          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-stone-100 text-stone-600">
-                            <item.icon size={24} />
-                          </div>
+                          <div className="text-sm font-semibold text-stone-300 mb-4">{item.step}</div>
+                          <div className="mb-4">{sketchIllustrations[idx]}</div>
                           <h3 className="text-xl font-semibold text-stone-900 mb-3">{item.title}</h3>
                           <p className="text-stone-500 leading-relaxed">{item.desc}</p>
                         </div>
@@ -408,10 +429,8 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                         <div className="absolute top-8 left-[60%] w-[80%] h-px bg-stone-200"></div>
                       )}
                       <div className="relative bg-white rounded-3xl p-8 border border-stone-100 transition-all duration-300 hover:shadow-lg hover:shadow-stone-100 hover:border-stone-200">
-                        <div className="text-sm font-semibold text-stone-300 mb-6">{item.step}</div>
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 ${hoveredFeature === idx ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-600'}`}>
-                          <item.icon size={24} />
-                        </div>
+                        <div className="text-sm font-semibold text-stone-300 mb-4">{item.step}</div>
+                        <div className="mb-4">{sketchIllustrations[idx]}</div>
                         <h3 className="text-xl font-semibold text-stone-900 mb-3">{item.title}</h3>
                         <p className="text-stone-500 leading-relaxed">{item.desc}</p>
                       </div>
