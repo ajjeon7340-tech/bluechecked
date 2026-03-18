@@ -1310,14 +1310,15 @@ export const addCredits = async (amount: number): Promise<CurrentUser> => {
     return mapProfileToUser(updated);
 };
 
-export const createCheckoutSession = async (credits: number): Promise<{ url: string | null }> => {
+export const createCheckoutSession = async (credits: number, returnUrl?: string): Promise<{ url: string | null }> => {
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error('Not authenticated');
 
     try {
         const testMode = !import.meta.env.PROD || !import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE;
+        const resolvedReturnUrl = returnUrl || (typeof window !== 'undefined' ? window.location.origin + '/dashboard' : undefined);
         const res = await supabase.functions.invoke('create-payment-intent', {
-            body: { credits, testMode },
+            body: { credits, testMode, returnUrl: resolvedReturnUrl },
         });
 
         if (res.error) throw new Error(res.error.message || 'Failed to create checkout session');

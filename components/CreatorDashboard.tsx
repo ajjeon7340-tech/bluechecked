@@ -826,14 +826,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     const balance = stats.availableBalance;
     if (balance <= 0) return;
 
-    const MIN_WITHDRAWAL = 2000;
     const PLATFORM_FEE_RATE = 0.10;
     const CREDIT_TO_USD = 0.01;
-
-    if (balance < MIN_WITHDRAWAL) {
-        alert(t('creator.minimumWithdrawal') + ` You have ${balance.toLocaleString()} ${t('common.credits').toLowerCase()}.`);
-        return;
-    }
 
     const grossUsd = balance * CREDIT_TO_USD;
     const platformFee = grossUsd * PLATFORM_FEE_RATE;

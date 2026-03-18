@@ -201,7 +201,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
   // Wallet / Top Up State
   const [showTopUpModal, setShowTopUpModal] = useState(false);
-  const [topUpAmount, setTopUpAmount] = useState(1000);
+  const [topUpSuccess, setTopUpSuccess] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState(500);
+  const [lastTopUpAmount, setLastTopUpAmount] = useState(1000);
   const [isProcessingTopUp, setIsProcessingTopUp] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [creditPurchases, setCreditPurchases] = useState<{ id: string; amount: number; date: string }[]>(() => {
@@ -743,7 +745,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           const updatedUser = await addCredits(topUpAmount);
           if (onUpdateUser) onUpdateUser(updatedUser);
           recordCreditPurchase(topUpAmount);
-          setShowTopUpModal(false);
+          setLastTopUpAmount(topUpAmount);
+          setTopUpSuccess(true);
+          setTimeout(() => {
+              setTopUpSuccess(false);
+              setShowTopUpModal(false);
+          }, 3000);
       } catch (e) {
           console.error(e);
           alert(t('fan.topUpFailed'));
@@ -1806,14 +1813,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     <h3 className="text-sm font-bold text-stone-900 mb-1">
                                         {searchQuery ? t('fan.noConversations') : t('fan.noMessagesYet')}
                                     </h3>
-                                    <p className="text-xs text-stone-500 mb-4">
+                                    <p className="text-xs text-stone-500">
                                         {searchQuery ? t('fan.tryDifferentSearch') : t('fan.findExpert')}
                                     </p>
-                                    {!searchQuery && (
-                                        <Button onClick={() => setCurrentView('EXPLORE')} size="sm" className="rounded-full">
-                                            {t('fan.exploreCreators')}
-                                        </Button>
-                                    )}
                                 </div>
                             ) : (
                                 filteredGroups.map(group => {
@@ -2590,8 +2592,34 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
         {showTopUpModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto">
                 <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl relative animate-in zoom-in-95 duration-300 my-auto max-h-[90vh] overflow-y-auto">
-                    <button onClick={() => setShowTopUpModal(false)} className="absolute top-4 right-4 p-2 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-500 z-10 transition-colors"><X size={18}/></button>
+                    {!topUpSuccess && <button onClick={() => setShowTopUpModal(false)} className="absolute top-4 right-4 p-2 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-500 z-10 transition-colors"><X size={18}/></button>}
 
+                    {topUpSuccess ? (
+                        <div className="p-8 flex flex-col items-center justify-center text-center gap-4">
+                            <style>{`
+                                @keyframes fd-sketch { to { stroke-dashoffset: 0; } }
+                                @keyframes fd-pop { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                            `}</style>
+                            <svg viewBox="0 0 160 140" width="160" height="140" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="28" y="40" width="90" height="65" rx="8" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={{ animation: 'fd-sketch 0.6s ease forwards 0.1s' }} />
+                                <rect x="84" y="58" width="34" height="22" rx="5" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={{ animation: 'fd-sketch 0.5s ease forwards 0.4s' }} />
+                                <circle cx="96" cy="69" r="5" stroke="#1c1917" strokeWidth="1.5" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={{ animation: 'fd-sketch 0.4s ease forwards 0.7s' }} />
+                                <line x1="28" y1="56" x2="118" y2="56" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={{ animation: 'fd-sketch 0.5s ease forwards 0.25s' }} />
+                                <circle cx="50" cy="20" r="10" stroke="#f59e0b" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={{ animation: 'fd-sketch 0.4s ease forwards 0.9s' }} />
+                                <text x="45" y="25" fontSize="10" fill="#f59e0b" style={{ animation: 'fd-pop 0.3s ease forwards 1.1s', opacity: 0 }}>$</text>
+                                <circle cx="80" cy="12" r="10" stroke="#f59e0b" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={{ animation: 'fd-sketch 0.4s ease forwards 1.1s' }} />
+                                <circle cx="115" cy="20" r="8" stroke="#f59e0b" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={{ animation: 'fd-sketch 0.4s ease forwards 1.3s' }} />
+                                <line x1="73" y1="30" x2="73" y2="44" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={{ animation: 'fd-sketch 0.3s ease forwards 1.5s' }} />
+                                <polyline points="67,38 73,45 79,38" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={{ animation: 'fd-sketch 0.3s ease forwards 1.65s' }} />
+                                <line x1="130" y1="40" x2="136" y2="34" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={{ animation: 'fd-sketch 0.2s ease forwards 1.8s' }} />
+                                <line x1="135" y1="50" x2="143" y2="48" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={{ animation: 'fd-sketch 0.2s ease forwards 1.95s' }} />
+                            </svg>
+                            <div style={{ animation: 'fd-pop 0.4s ease forwards 2.0s', opacity: 0 }}>
+                                <p className="text-xl font-black text-stone-900">{lastTopUpAmount.toLocaleString()} Credits Added!</p>
+                                <p className="text-stone-400 text-sm mt-1">Your wallet has been topped up.</p>
+                            </div>
+                        </div>
+                    ) : (
                     <div className="p-8">
                         <div className="text-center mb-6">
                             <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-1">Available Balance</div>
@@ -2603,7 +2631,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 mb-6">
-                            {[500, 1000, 2500, 5000].map(amt => (
+                            {[100, 500, 1000, 2500].map(amt => (
                                 <button
                                 key={amt}
                                 onClick={() => setTopUpAmount(amt)}
@@ -2653,6 +2681,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             <Lock size={10} /> Secure encrypted payment
                         </p>
                     </div>
+                    )}
                 </div>
             </div>
         )}

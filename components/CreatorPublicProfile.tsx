@@ -159,7 +159,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
       // Try Stripe Checkout if backend is configured
       if (isBackendConfigured()) {
           try {
-              const { url } = await createCheckoutSession(topUpAmount);
+              // Store creator handle so App.tsx returns user here after checkout
+              if (creator.handle) {
+                  localStorage.setItem('diem_return_to_creator', creator.handle);
+              }
+              const { url } = await createCheckoutSession(topUpAmount, window.location.origin + '/dashboard');
               if (url) {
                   window.location.href = url;
                   return;

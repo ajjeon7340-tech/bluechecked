@@ -13,6 +13,7 @@ const corsHeaders = {
 
 // Server-side credit tiers — client amount is validated against these
 const CREDIT_TIERS: Record<number, number> = {
+  100: 100,    // 100 credits = $1.00 = 100 cents
   500: 500,    // 500 credits = $5.00 = 500 cents
   1000: 1000,  // 1000 credits = $10.00
   2500: 2500,  // 2500 credits = $25.00
@@ -68,7 +69,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    const { credits, testMode } = await req.json()
+    const { credits, testMode, returnUrl } = await req.json()
 
     const STRIPE_SECRET_KEY = testMode ? STRIPE_SECRET_KEY_TEST : STRIPE_SECRET_KEY_LIVE
     if (!STRIPE_SECRET_KEY) {
@@ -107,9 +108,9 @@ Deno.serve(async (req) => {
       // Metadata for webhook
       'metadata[user_id]': user.id,
       'metadata[credits]': credits.toString(),
-      // Redirect URLs
-      success_url: `${APP_URL}/dashboard?checkout=success`,
-      cancel_url: `${APP_URL}/dashboard?checkout=cancel`,
+      // Redirect URLs — prefer returnUrl from frontend (most reliable)
+      success_url: `${returnUrl || APP_URL}?checkout=success`,
+      cancel_url: `${returnUrl || APP_URL}?checkout=cancel`,
     }
 
     const session = await stripeRequest('/checkout/sessions', params, STRIPE_SECRET_KEY)
