@@ -106,6 +106,13 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
         .animate-float-gentle {
           animation: float-gentle 6s ease-in-out infinite;
         }
+        @keyframes lp-sketch { to { stroke-dashoffset: 0; } }
+        @keyframes lp-pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .lp-sketch-path {
+          stroke-dasharray: 1;
+          stroke-dashoffset: 1;
+          animation: lp-sketch 0.6s ease forwards;
+        }
       `}</style>
 
       {/* Navigation - Minimal & Warm */}
@@ -170,6 +177,40 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
             </button>
           </div>
         </div>
+      </section>
+
+      {/* Sketch Hero Illustration */}
+      <section className="pb-10 flex justify-center">
+        <svg viewBox="0 0 480 130" width="480" height="130" className="w-full max-w-lg opacity-80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {/* Creator card (left) */}
+          <rect x="20" y="20" width="130" height="90" rx="12" stroke="#1c1917" strokeWidth="1.8" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.6s ease forwards 0.2s' }} />
+          <circle cx="56" cy="52" r="16" stroke="#1c1917" strokeWidth="1.5" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.5s ease forwards 0.4s' }} />
+          <line x1="38" y1="76" x2="102" y2="76" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.4s ease forwards 0.6s' }} />
+          <line x1="45" y1="88" x2="95" y2="88" stroke="#d6d3d1" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.3s ease forwards 0.8s' }} />
+          {/* Verified badge */}
+          <circle cx="96" cy="44" r="10" stroke="#6366f1" strokeWidth="1.5" fill="white" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.3s ease forwards 0.9s' }} />
+          <path d="M91 44 L95 48 L102 39" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.3s ease forwards 1.1s' }} />
+
+          {/* Arrow / message bubble in middle */}
+          <path d="M160 65 Q200 40 240 65" stroke="#1c1917" strokeWidth="1.8" strokeLinecap="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.5s ease forwards 1.2s' }} />
+          <polyline points="232,58 241,66 236,75" stroke="#1c1917" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.3s ease forwards 1.5s' }} />
+          {/* Coin on arrow */}
+          <circle cx="200" cy="43" r="11" stroke="#f59e0b" strokeWidth="1.8" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.3s ease forwards 1.4s' }} />
+          <line x1="200" y1="37" x2="200" y2="49" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.2s ease forwards 1.6s' }} />
+
+          {/* Fan card (right) */}
+          <rect x="330" y="20" width="130" height="90" rx="12" stroke="#1c1917" strokeWidth="1.8" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.6s ease forwards 0.3s' }} />
+          <circle cx="366" cy="52" r="16" stroke="#1c1917" strokeWidth="1.5" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.5s ease forwards 0.5s' }} />
+          <line x1="348" y1="76" x2="412" y2="76" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.4s ease forwards 0.7s' }} />
+          <line x1="355" y1="88" x2="405" y2="88" stroke="#d6d3d1" strokeWidth="1.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.3s ease forwards 0.9s' }} />
+          {/* Heart */}
+          <path d="M394 44 C394 40 400 38 400 44 C400 38 406 40 406 44 C406 48 400 52 400 52 C400 52 394 48 394 44Z" stroke="#ec4899" strokeWidth="1.5" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.4s ease forwards 1.0s' }} />
+
+          {/* Sparkle accents */}
+          <line x1="290" y1="20" x2="294" y2="14" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.2s ease forwards 1.7s' }} />
+          <line x1="297" y1="28" x2="304" y2="26" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.2s ease forwards 1.8s' }} />
+          <line x1="286" y1="30" x2="286" y2="24" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'lp-sketch 0.2s ease forwards 1.9s' }} />
+        </svg>
       </section>
 
       {/* Featured Conversations - Weverse Magazine Style */}

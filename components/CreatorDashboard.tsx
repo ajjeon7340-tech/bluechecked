@@ -151,6 +151,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [isStripeConnected, setIsStripeConnected] = useState(false);
   const [isConnectingStripe, setIsConnectingStripe] = useState(false);
+  const [showWithdrawAnimation, setShowWithdrawAnimation] = useState(false);
+  const [withdrawnAmount, setWithdrawnAmount] = useState(0);
+  const [showStripeAnimation, setShowStripeAnimation] = useState(false);
   
   // Reply State
   const [replyText, setReplyText] = useState('');
@@ -242,6 +245,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [editingSectionTitle, setEditingSectionTitle] = useState('');
   const [newLinkSectionId, setNewLinkSectionId] = useState('');
+
+  // Settings text tab state
+  const [settingsTextTab, setSettingsTextTab] = useState<'bio' | 'instructions' | 'reply'>('bio');
 
   const handleAddSection = () => {
       if (!newSectionTitle.trim()) return;
@@ -573,7 +579,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       // Re-check Stripe status
       getStripeConnectionStatus().then(status => {
         setIsStripeConnected(status);
-        if (status) setCurrentView('FINANCE');
+        if (status) {
+          setCurrentView('FINANCE');
+          setShowStripeAnimation(true);
+          setTimeout(() => setShowStripeAnimation(false), 4000);
+        }
       });
     }
   }, []);
@@ -841,7 +851,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     try {
         await requestWithdrawal(balance);
         await loadData(true);
-        alert(t('creator.withdrawSuccess') + ` $${netUsd.toFixed(2)}.`);
+        setWithdrawnAmount(netUsd);
+        setShowWithdrawAnimation(true);
+        setTimeout(() => setShowWithdrawAnimation(false), 4000);
     } catch (e: any) {
         alert(e.message || t('creator.withdrawFailed'));
     } finally {
@@ -860,6 +872,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           } else {
               // Mock backend: just mark as connected
               setIsStripeConnected(true);
+              setShowStripeAnimation(true);
+              setTimeout(() => setShowStripeAnimation(false), 4000);
           }
       } catch (e) {
           alert(t('creator.withdrawFailed'));
@@ -2558,21 +2572,80 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 )}
                                 {/* Collection Animation Overlay */}
                                 {showCollectAnimation && (
-                                    <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-4 fade-in duration-500">
-                                        <div className="relative overflow-hidden bg-stone-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-4 border border-white/10 ring-1 ring-white/20">
-                                            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20"></div>
-                                            <div className="relative z-10 flex items-center gap-3">
-                                                <div className="bg-gradient-to-tr from-emerald-400 to-teal-500 p-1.5 rounded-full shadow-lg shadow-emerald-500/20">
-                                                    <Check size={14} className="text-white stroke-[3px]" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-bold">{t('creator.creditsCollected')}</p>
-                                                </div>
+                                    <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
+                                        <style>{`
+                                            @keyframes cd-sketch { to { stroke-dashoffset: 0; } }
+                                            @keyframes cd-pop { from { opacity: 0; transform: translateY(12px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+                                        `}</style>
+                                        <div className="bg-white rounded-3xl shadow-2xl ring-1 ring-stone-100 px-8 py-6 flex flex-col items-center gap-3 animate-in zoom-in-95 fade-in duration-300">
+                                            {/* Sketch coin/checkmark illustration */}
+                                            <svg viewBox="0 0 120 100" width="120" height="100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                {/* Coin stack */}
+                                                <ellipse cx="60" cy="72" rx="26" ry="8" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.1s' }} />
+                                                <rect x="34" y="52" width="52" height="20" rx="2" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.2s' }} />
+                                                <ellipse cx="60" cy="52" rx="26" ry="8" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.3s' }} />
+                                                <rect x="34" y="34" width="52" height="20" rx="2" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.4s' }} />
+                                                <ellipse cx="60" cy="34" rx="26" ry="8" stroke="#1c1917" strokeWidth="2" fill="#f5f0eb" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.5s' }} />
+                                                {/* Sparkle lines */}
+                                                <line x1="96" y1="18" x2="103" y2="11" stroke="#10b981" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.7s' }} />
+                                                <line x1="100" y1="30" x2="108" y2="28" stroke="#10b981" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.8s' }} />
+                                                <line x1="90" y1="10" x2="90" y2="4" stroke="#10b981" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.9s' }} />
+                                                {/* Check */}
+                                                <path d="M50 34 L57 41 L72 26" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.6s' }} />
+                                            </svg>
+                                            <div style={{ animation: 'cd-pop 0.4s ease forwards 0.9s', opacity: 0 }}>
+                                                <p className="text-base font-bold text-stone-900">{t('creator.creditsCollected')}</p>
+                                                <p className="text-2xl font-black text-emerald-600 text-center">+{collectedAmount}</p>
                                             </div>
-                                            <div className="relative z-10 w-px h-4 bg-white/20"></div>
-                                            <div className="relative z-10 flex items-center gap-1.5 text-emerald-400 font-mono font-bold text-lg">
-                                                <Plus size={14} strokeWidth={3} />
-                                                {collectedAmount}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Withdraw Success Animation */}
+                                {showWithdrawAnimation && (
+                                    <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
+                                        <div className="bg-white rounded-3xl shadow-2xl ring-1 ring-stone-100 px-8 py-6 flex flex-col items-center gap-3 animate-in zoom-in-95 fade-in duration-300">
+                                            <svg viewBox="0 0 120 100" width="120" height="100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                {/* Wallet outline */}
+                                                <rect x="20" y="30" width="80" height="50" rx="6" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.5s ease forwards 0.1s' }} />
+                                                <rect x="72" y="47" width="28" height="18" rx="4" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.3s' }} />
+                                                <circle cx="82" cy="56" r="4" stroke="#1c1917" strokeWidth="1.5" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.5s' }} />
+                                                <line x1="20" y1="43" x2="100" y2="43" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.2s' }} />
+                                                {/* Arrow up (withdraw) */}
+                                                <line x1="44" y1="22" x2="44" y2="8" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.6s' }} />
+                                                <polyline points="38,15 44,8 50,15" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.7s' }} />
+                                                {/* Sparkles */}
+                                                <line x1="90" y1="18" x2="97" y2="11" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.8s' }} />
+                                                <line x1="95" y1="25" x2="103" y2="23" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.9s' }} />
+                                            </svg>
+                                            <div style={{ animation: 'cd-pop 0.4s ease forwards 1s', opacity: 0 }}>
+                                                <p className="text-base font-bold text-stone-900">Withdrawal Requested!</p>
+                                                <p className="text-2xl font-black text-indigo-600 text-center">${withdrawnAmount.toFixed(2)}</p>
+                                                <p className="text-xs text-stone-400 text-center mt-0.5">will be sent to your Stripe account</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Stripe Connect Success Animation */}
+                                {showStripeAnimation && (
+                                    <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
+                                        <div className="bg-white rounded-3xl shadow-2xl ring-1 ring-stone-100 px-8 py-6 flex flex-col items-center gap-3 animate-in zoom-in-95 fade-in duration-300">
+                                            <svg viewBox="0 0 120 100" width="120" height="100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                {/* Credit card */}
+                                                <rect x="18" y="25" width="84" height="55" rx="8" stroke="#635BFF" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.5s ease forwards 0.1s' }} />
+                                                <line x1="18" y1="42" x2="102" y2="42" stroke="#635BFF" strokeWidth="3" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.2s' }} />
+                                                <rect x="28" y="52" width="20" height="8" rx="3" stroke="#635BFF" strokeWidth="1.5" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.4s' }} />
+                                                {/* Big checkmark */}
+                                                <circle cx="84" cy="35" r="14" stroke="#10b981" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.5s ease forwards 0.5s' }} />
+                                                <path d="M77 35 L82 40 L92 28" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.8s' }} />
+                                                {/* Sparkles */}
+                                                <line x1="20" y1="14" x2="26" y2="8" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 1s' }} />
+                                                <line x1="14" y1="20" x2="8" y2="20" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 1.1s' }} />
+                                            </svg>
+                                            <div style={{ animation: 'cd-pop 0.4s ease forwards 1.2s', opacity: 0 }}>
+                                                <p className="text-base font-bold text-stone-900">Stripe Connected!</p>
+                                                <p className="text-sm text-stone-400 text-center">You're ready to receive payouts</p>
                                             </div>
                                         </div>
                                     </div>
@@ -3161,7 +3234,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <h3 className="font-bold text-base sm:text-lg flex items-center gap-2"><Sparkles className="text-yellow-300 fill-yellow-300" size={18}/> Diem Pro</h3>
                                 <p className="text-stone-400 text-xs sm:text-sm mt-1">Upgrade to unlock analytics and remove commissions.</p>
                             </div>
-                            <Button className="bg-white text-stone-900 hover:bg-stone-50 text-sm whitespace-nowrap flex-shrink-0" onClick={() => setShowPremiumModal(true)}>Upgrade</Button>
+                            <button onClick={() => setShowPremiumModal(true)} className="px-5 py-2 bg-white text-stone-900 hover:bg-stone-100 font-semibold text-sm rounded-xl whitespace-nowrap flex-shrink-0 transition-colors">Upgrade</button>
                         </div>
                     )}
 
@@ -3230,36 +3303,53 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     Your public page: <span className="font-mono text-stone-600">{window.location.host}/{editedCreator.handle?.replace('@', '')}</span>
                                 </p>
                             </div>
+                            {/* Bio / Instructions / Auto-Reply tab switcher */}
                             <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-1">Bio</label>
-                                <textarea 
-                                    value={editedCreator.bio}
-                                    onChange={e => setEditedCreator({...editedCreator, bio: e.target.value})}
-                                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none h-24 resize-none"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-1">Request Instructions (Important)</label>
-                                <textarea 
-                                    value={editedCreator.intakeInstructions || ''}
-                                    onChange={e => setEditedCreator({...editedCreator, intakeInstructions: e.target.value})}
-                                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none h-24 resize-none"
-                                    placeholder="Please be as detailed as possible so I can give you the best answer."
-                                />
-                                <p className="text-[10px] text-stone-400 mt-1">This is shown to fans before they send a request.</p>
-                            </div>
-
-                             {/* New Welcome Message Field */}
-                            <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-1">Auto-Reply Welcome Message</label>
-                                <textarea 
-                                    value={editedCreator.welcomeMessage || ''}
-                                    onChange={e => setEditedCreator({...editedCreator, welcomeMessage: e.target.value})}
-                                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none h-24 resize-none"
-                                    placeholder="Hi! Thanks for your message. I'll get back to you soon..."
-                                />
-                                <p className="text-[10px] text-stone-400 mt-1">This is sent automatically when a fan pays.</p>
+                                <div className="flex bg-stone-100 rounded-xl p-1 mb-3 gap-0.5">
+                                    {[
+                                        { key: 'bio', label: 'Bio / About' },
+                                        { key: 'instructions', label: 'Request Instructions' },
+                                        { key: 'reply', label: 'Auto-Reply' },
+                                    ].map(tab => (
+                                        <button
+                                            key={tab.key}
+                                            onClick={() => setSettingsTextTab(tab.key as typeof settingsTextTab)}
+                                            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${settingsTextTab === tab.key ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                {settingsTextTab === 'bio' && (
+                                    <textarea
+                                        value={editedCreator.bio}
+                                        onChange={e => setEditedCreator({...editedCreator, bio: e.target.value})}
+                                        className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none h-28 resize-none"
+                                        placeholder="Tell fans about yourself..."
+                                    />
+                                )}
+                                {settingsTextTab === 'instructions' && (
+                                    <>
+                                        <textarea
+                                            value={editedCreator.intakeInstructions || ''}
+                                            onChange={e => setEditedCreator({...editedCreator, intakeInstructions: e.target.value})}
+                                            className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none h-28 resize-none"
+                                            placeholder="Please be as detailed as possible so I can give you the best answer."
+                                        />
+                                        <p className="text-[10px] text-stone-400 mt-1">This is shown to fans before they send a request.</p>
+                                    </>
+                                )}
+                                {settingsTextTab === 'reply' && (
+                                    <>
+                                        <textarea
+                                            value={editedCreator.welcomeMessage || ''}
+                                            onChange={e => setEditedCreator({...editedCreator, welcomeMessage: e.target.value})}
+                                            className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none h-28 resize-none"
+                                            placeholder="Hi! Thanks for your message. I'll get back to you soon..."
+                                        />
+                                        <p className="text-[10px] text-stone-400 mt-1">This is sent automatically when a fan pays.</p>
+                                    </>
+                                )}
                             </div>
                             
                             <div className="grid grid-cols-2 gap-4">

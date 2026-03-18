@@ -46,7 +46,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [step, setStep] = useState<'compose' | 'payment' | 'topup' | 'success' | 'product_confirm' | 'product_payment' | 'product_success' | 'support_confirm' | 'support_payment' | 'support_success'>('compose');
+  const [step, setStep] = useState<'compose' | 'payment' | 'topup' | 'topup_success' | 'success' | 'product_confirm' | 'product_payment' | 'product_success' | 'support_confirm' | 'support_payment' | 'support_success'>('compose');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -177,13 +177,17 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           await onRefreshData();
 
           setIsSubmitting(false);
-          if (selectedProductLink) {
-              setStep('product_payment');
-          } else if (step === 'support_payment' || step === 'support_confirm') {
-              setStep('support_payment');
-          } else {
-              setStep('payment');
-          }
+          const prevStep = step;
+          setStep('topup_success');
+          setTimeout(() => {
+              if (selectedProductLink) {
+                  setStep('product_payment');
+              } else if (prevStep === 'support_payment' || prevStep === 'support_confirm') {
+                  setStep('support_payment');
+              } else {
+                  setStep('payment');
+              }
+          }, 2800);
       } catch (e) {
           console.error(e);
           setIsSubmitting(false);
@@ -841,6 +845,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                 {step === 'compose' && t('profile.newRequest')}
                 {step === 'payment' && t('profile.confirmPayment')}
                 {step === 'topup' && t('profile.topUpWallet')}
+                {step === 'topup_success' && '🪙 Credits Added!'}
                 {step === 'success' && t('profile.sent')}
                 {step === 'product_confirm' && t('profile.checkout')}
                 {step === 'product_payment' && t('profile.confirmPayment')}
@@ -1024,6 +1029,37 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                           {t('profile.purchaseCredits')}
                       </Button>
                   </div>
+              )}
+
+              {step === 'topup_success' && (
+                <div className="py-6 flex flex-col items-center justify-center text-center gap-4">
+                    <style>{`
+                        @keyframes sketch-draw { to { stroke-dashoffset: 0; } }
+                        @keyframes sketch-pop { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                    `}</style>
+                    <svg viewBox="0 0 160 140" width="160" height="140" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        {/* Wallet */}
+                        <rect x="28" y="40" width="90" height="65" rx="8" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'sketch-draw 0.5s ease forwards 0.1s' }} />
+                        <rect x="84" y="58" width="34" height="22" rx="5" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'sketch-draw 0.4s ease forwards 0.3s' }} />
+                        <circle cx="96" cy="69" r="5" stroke="#1c1917" strokeWidth="1.5" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'sketch-draw 0.3s ease forwards 0.5s' }} />
+                        <line x1="28" y1="56" x2="118" y2="56" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'sketch-draw 0.4s ease forwards 0.2s' }} />
+                        {/* Coins flying in */}
+                        <circle cx="50" cy="20" r="10" stroke="#f59e0b" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'sketch-draw 0.3s ease forwards 0.6s' }} />
+                        <text x="45" y="25" fontSize="10" fill="#f59e0b" style={{ animation: 'sketch-pop 0.3s ease forwards 0.7s', opacity: 0 }}>$</text>
+                        <circle cx="80" cy="12" r="10" stroke="#f59e0b" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'sketch-draw 0.3s ease forwards 0.8s' }} />
+                        <circle cx="115" cy="20" r="8" stroke="#f59e0b" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'sketch-draw 0.3s ease forwards 0.9s' }} />
+                        {/* Arrow down into wallet */}
+                        <line x1="73" y1="30" x2="73" y2="44" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'sketch-draw 0.3s ease forwards 1.0s' }} />
+                        <polyline points="67,38 73,45 79,38" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'sketch-draw 0.3s ease forwards 1.1s' }} />
+                        {/* Sparkles */}
+                        <line x1="130" y1="40" x2="136" y2="34" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'sketch-draw 0.2s ease forwards 1.2s' }} />
+                        <line x1="135" y1="50" x2="143" y2="48" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'sketch-draw 0.2s ease forwards 1.3s' }} />
+                    </svg>
+                    <div style={{ animation: 'sketch-pop 0.4s ease forwards 1.4s', opacity: 0 }}>
+                        <p className="text-xl font-black text-stone-900">{topUpAmount.toLocaleString()} Credits Added!</p>
+                        <p className="text-stone-400 text-sm mt-1">Returning you to checkout...</p>
+                    </div>
+                </div>
               )}
 
               {step === 'success' && (

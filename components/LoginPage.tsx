@@ -94,6 +94,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   const [newPassword, setNewPassword] = useState('');
   const [regComplete, setRegComplete] = useState(false);
   const [completedUser, setCompletedUser] = useState<CurrentUser | null>(null);
+  const [setupTextTab, setSetupTextTab] = useState<'bio' | 'instructions' | 'reply'>('bio');
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -428,10 +429,12 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                    <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder={t('auth.yourName')} className="w-full border border-stone-200 rounded-xl p-3 focus:ring-2 focus:ring-stone-500 outline-none transition-all" />
                 </div>
 
+                {!isCreator && (
                 <div>
                    <label className="block text-sm font-medium text-stone-700 mb-1">{t('auth.bioAbout')}</label>
-                   <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder={isCreator ? t('auth.creatorBioPlaceholder') : t('auth.fanBioPlaceholder')} className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all" />
+                   <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder={t('auth.fanBioPlaceholder')} className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all" />
                 </div>
+                )}
 
                 {isCreator && (
                     <>
@@ -474,24 +477,54 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                                 </div>
                             </div>
 
+                            {/* Bio / Instructions / Auto-Reply tab switcher */}
                             <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-1">Request instructions</label>
-                                <textarea
-                                    value={intakeInstructions}
-                                    onChange={e => setIntakeInstructions(e.target.value)}
-                                    placeholder="Tell fans what to include in their message (e.g. your question, topic, context...)"
-                                    className="w-full border border-stone-200 rounded-xl p-3 h-20 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all text-sm"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-1">Auto-reply welcome message</label>
-                                <textarea
-                                    value={welcomeMessage}
-                                    onChange={e => setWelcomeMessage(e.target.value)}
-                                    placeholder="Sent automatically when a fan submits a request (e.g. Thanks for reaching out! I'll get back to you within 48 hours.)"
-                                    className="w-full border border-stone-200 rounded-xl p-3 h-20 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all text-sm"
-                                />
+                                <div className="flex bg-white rounded-xl p-1 mb-3 gap-0.5 border border-stone-200">
+                                    {[
+                                        { key: 'bio', label: 'Bio / About' },
+                                        { key: 'instructions', label: 'Request Instructions' },
+                                        { key: 'reply', label: 'Auto-Reply' },
+                                    ].map(tab => (
+                                        <button
+                                            key={tab.key}
+                                            type="button"
+                                            onClick={() => setSetupTextTab(tab.key as typeof setupTextTab)}
+                                            className={`flex-1 py-1.5 text-[11px] font-semibold rounded-lg transition-all ${setupTextTab === tab.key ? 'bg-stone-900 text-white shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                {setupTextTab === 'bio' && (
+                                    <textarea
+                                        value={bio}
+                                        onChange={e => setBio(e.target.value)}
+                                        placeholder={t('auth.creatorBioPlaceholder')}
+                                        className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all text-sm"
+                                    />
+                                )}
+                                {setupTextTab === 'instructions' && (
+                                    <>
+                                        <textarea
+                                            value={intakeInstructions}
+                                            onChange={e => setIntakeInstructions(e.target.value)}
+                                            placeholder="Tell fans what to include in their message (e.g. your question, topic, context...)"
+                                            className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all text-sm"
+                                        />
+                                        <p className="text-[10px] text-stone-400 mt-1">Shown to fans before they send a request.</p>
+                                    </>
+                                )}
+                                {setupTextTab === 'reply' && (
+                                    <>
+                                        <textarea
+                                            value={welcomeMessage}
+                                            onChange={e => setWelcomeMessage(e.target.value)}
+                                            placeholder="Sent automatically when a fan submits a request (e.g. Thanks for reaching out! I'll get back to you within 48 hours.)"
+                                            className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all text-sm"
+                                        />
+                                        <p className="text-[10px] text-stone-400 mt-1">Sent automatically when a fan pays.</p>
+                                    </>
+                                )}
                             </div>
                         </div>
 
