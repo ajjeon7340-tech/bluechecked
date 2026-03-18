@@ -328,14 +328,21 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
         </div>
       </section>
 
-      {/* How It Works - Clean & Warm */}
-      <section ref={howItWorksRef} className="py-24 bg-[#FAFAF9]">
+      {/* How It Works */}
+      <section ref={howItWorksRef} className="py-28 bg-gradient-to-b from-stone-50 to-[#FAFAF9]">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <p className="text-sm font-medium text-stone-400 uppercase tracking-wider mb-4">{t('landing.simpleTransparent')}</p>
-            <h2 className="text-3xl sm:text-4xl font-semibold text-stone-900 tracking-tight">
+          <div className="text-center mb-20">
+            <p className="text-xs font-bold text-stone-400 uppercase tracking-[0.18em] mb-4">{t('landing.simpleTransparent')}</p>
+            <h2 className="text-3xl sm:text-5xl font-semibold text-stone-900 tracking-tight mb-4">
               {t('landing.howItWorks')}
             </h2>
+            {/* Sketch underline accent */}
+            <svg viewBox="0 0 200 12" width="200" height="12" className="mx-auto" fill="none">
+              <path d="M 10 8 C 50 4 100 10 160 6 C 175 5 185 7 192 8"
+                stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" fill="none"
+                pathLength={1} strokeDasharray="1" strokeDashoffset={1}
+                style={howItWorksVisible ? { animation: 'lp-sketch 0.8s ease forwards 0.3s' } : {}} />
+            </svg>
           </div>
 
           {/* Mobile Carousel */}
@@ -505,29 +512,56 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
             ];
 
             const steps = [
-              { step: t('landing.step01'), title: t('landing.setYourRate'), desc: t('landing.setYourRateDesc'), icon: Coins },
-              { step: t('landing.step02'), title: t('landing.receiveQuestions'), desc: t('landing.receiveQuestionsDesc'), icon: MessageSquare },
-              { step: t('landing.step03'), title: t('landing.replyAndEarn'), desc: t('landing.replyAndEarnDesc'), icon: Check },
+              {
+                num: '01', title: t('landing.setYourRate'), desc: t('landing.setYourRateDesc'),
+                bg: 'bg-amber-50', border: 'border-amber-100', badge: 'bg-amber-100 text-amber-700',
+                glow: 'hover:shadow-amber-100',
+              },
+              {
+                num: '02', title: t('landing.receiveQuestions'), desc: t('landing.receiveQuestionsDesc'),
+                bg: 'bg-indigo-50', border: 'border-indigo-100', badge: 'bg-indigo-100 text-indigo-700',
+                glow: 'hover:shadow-indigo-100',
+              },
+              {
+                num: '03', title: t('landing.replyAndEarn'), desc: t('landing.replyAndEarnDesc'),
+                bg: 'bg-emerald-50', border: 'border-emerald-100', badge: 'bg-emerald-100 text-emerald-700',
+                glow: 'hover:shadow-emerald-100',
+              },
             ];
+
+            const Card = ({ item, idx }: { item: typeof steps[0], idx: number }) => (
+              <div className={`relative ${item.bg} rounded-3xl border ${item.border} p-8 flex flex-col transition-all duration-300 hover:shadow-xl ${item.glow} hover:-translate-y-1`}>
+                {/* Step badge */}
+                <span className={`inline-flex items-center justify-center w-9 h-9 rounded-xl text-xs font-black tracking-widest mb-6 self-start ${item.badge}`}>
+                  {item.num}
+                </span>
+                {/* Illustration — centered, full width */}
+                <div className="flex justify-center items-center flex-1 py-4">
+                  <div className="w-full max-w-[180px]">
+                    {React.cloneElement(sketchIllustrations[idx] as React.ReactElement, {
+                      width: '100%', height: 'auto', style: { display: 'block' }
+                    })}
+                  </div>
+                </div>
+                {/* Text */}
+                <div className="mt-6 pt-6 border-t border-white/60">
+                  <h3 className="text-xl font-bold text-stone-900 mb-2 tracking-tight">{item.title}</h3>
+                  <p className="text-stone-500 leading-relaxed text-sm">{item.desc}</p>
+                </div>
+              </div>
+            );
+
             return (
               <>
+                {/* Mobile Carousel */}
                 <div className="md:hidden overflow-hidden">
-                  <div
-                    className="flex transition-transform duration-500 ease-out"
-                    style={{ transform: `translateX(-${stepsIdx * 100}%)` }}
-                  >
+                  <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${stepsIdx * 100}%)` }}>
                     {steps.map((item, idx) => (
-                      <div key={idx} className="w-full flex-shrink-0">
-                        <div className="relative bg-white rounded-3xl p-8 border border-stone-100">
-                          <div className="text-sm font-semibold text-stone-300 mb-4">{item.step}</div>
-                          <div className="mb-4">{sketchIllustrations[idx]}</div>
-                          <h3 className="text-xl font-semibold text-stone-900 mb-3">{item.title}</h3>
-                          <p className="text-stone-500 leading-relaxed">{item.desc}</p>
-                        </div>
+                      <div key={idx} className="w-full flex-shrink-0 px-1">
+                        <Card item={item} idx={idx} />
                       </div>
                     ))}
                   </div>
-                  {/* Dots */}
                   <div className="flex justify-center gap-2 mt-6">
                     {steps.map((_, i) => (
                       <button key={i} onClick={() => setStepsIdx(i)} className={`h-2 rounded-full transition-all duration-300 ${stepsIdx === i ? 'bg-stone-900 w-5' : 'bg-stone-300 w-2'}`} />
@@ -536,22 +570,20 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                 </div>
 
                 {/* Desktop Grid */}
-                <div className="hidden md:grid md:grid-cols-3 gap-8 lg:gap-12">
+                <div className="hidden md:grid md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
                   {steps.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="relative group"
-                      onMouseEnter={() => setHoveredFeature(idx)}
-                      onMouseLeave={() => setHoveredFeature(null)}
-                    >
+                    <div key={idx} className="relative flex">
+                      {/* Sketch dashed arrow connector */}
                       {idx < 2 && (
-                        <div className="absolute top-8 left-[60%] w-[80%] h-px bg-stone-200"></div>
+                        <div className="absolute -right-5 top-1/3 z-10 hidden lg:flex items-center">
+                          <svg viewBox="0 0 40 20" width="40" height="20" fill="none">
+                            <path d="M 2 10 C 10 6 22 14 34 10" stroke="#d6d3d1" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="3 2.5" />
+                            <path d="M 28 6 L 35 10 L 28 14" stroke="#d6d3d1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </div>
                       )}
-                      <div className="relative bg-white rounded-3xl p-8 border border-stone-100 transition-all duration-300 hover:shadow-lg hover:shadow-stone-100 hover:border-stone-200">
-                        <div className="text-sm font-semibold text-stone-300 mb-4">{item.step}</div>
-                        <div className="mb-4">{sketchIllustrations[idx]}</div>
-                        <h3 className="text-xl font-semibold text-stone-900 mb-3">{item.title}</h3>
-                        <p className="text-stone-500 leading-relaxed">{item.desc}</p>
+                      <div className="w-full">
+                        <Card item={item} idx={idx} />
                       </div>
                     </div>
                   ))}
