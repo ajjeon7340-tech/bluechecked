@@ -3461,8 +3461,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                                 <div className="flex-1 min-w-0 space-y-2">
                                                     <div className="flex items-center justify-between gap-2">
-                                                        <div className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit ${isProduct ? 'bg-purple-100 text-purple-600' : isSupport ? 'bg-pink-100 text-pink-600' : 'bg-stone-200 text-stone-500'}`}>
-                                                            {isProduct ? 'Digital Download' : isSupport ? 'Support / Tip' : 'Link'}
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit ${isProduct ? 'bg-purple-100 text-purple-600' : isSupport ? 'bg-pink-100 text-pink-600' : 'bg-stone-200 text-stone-500'}`}>
+                                                                {isProduct ? 'Digital Download' : isSupport ? 'Support / Tip' : 'Link'}
+                                                            </div>
+                                                            {link.buttonColor && (
+                                                                <span className="w-3.5 h-3.5 rounded-full flex-shrink-0 border border-white shadow-sm" style={{ backgroundColor: link.buttonColor }} />
+                                                            )}
                                                         </div>
                                                         {(isProduct || (isSupport && link.price)) && <span className="text-xs font-bold text-stone-900">{link.price} Credits</span>}
                                                     </div>
@@ -3533,6 +3538,26 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             {link.isPromoted ? <Sparkles size={10} className="text-stone-500"/> : null}
                                                             Highlight
                                                         </label>
+                                                        <span className="text-stone-200">|</span>
+                                                        {/* Inline color swatches */}
+                                                        {['#1c1917','#6366f1','#8b5cf6','#ec4899','#10b981','#0ea5e9','#f59e0b','#ef4444'].map(color => (
+                                                            <button
+                                                                key={color}
+                                                                onClick={() => handleUpdateLink(link.id, 'buttonColor', link.buttonColor === color ? undefined : color)}
+                                                                className="w-4 h-4 rounded-full transition-all flex-shrink-0"
+                                                                style={{ backgroundColor: color, outline: link.buttonColor === color ? `2px solid ${color}` : '2px solid transparent', outlineOffset: '2px' }}
+                                                            />
+                                                        ))}
+                                                        <label className="relative w-4 h-4 rounded-full border border-dashed border-stone-300 cursor-pointer flex items-center justify-center hover:border-stone-500 transition-colors flex-shrink-0" title="Custom color">
+                                                            {link.buttonColor && !['#1c1917','#6366f1','#8b5cf6','#ec4899','#10b981','#0ea5e9','#f59e0b','#ef4444'].includes(link.buttonColor) && (
+                                                                <span className="absolute inset-0 rounded-full" style={{ backgroundColor: link.buttonColor }} />
+                                                            )}
+                                                            <input type="color" className="absolute opacity-0 w-0 h-0" value={link.buttonColor || '#000000'} onChange={e => handleUpdateLink(link.id, 'buttonColor', e.target.value)} />
+                                                            {(!link.buttonColor || ['#1c1917','#6366f1','#8b5cf6','#ec4899','#10b981','#0ea5e9','#f59e0b','#ef4444'].includes(link.buttonColor)) && <span className="text-[7px] text-stone-400 font-bold">+</span>}
+                                                        </label>
+                                                        {link.buttonColor && (
+                                                            <button onClick={() => handleUpdateLink(link.id, 'buttonColor', undefined)} className="text-[9px] text-stone-300 hover:text-red-400 underline transition-colors">×</button>
+                                                        )}
                                                         {(editedCreator.linkSections || []).length > 0 && (
                                                             <select
                                                                 value={link.sectionId || ''}
@@ -3544,28 +3569,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     <option key={s.id} value={s.id}>{s.title}</option>
                                                                 ))}
                                                             </select>
-                                                        )}
-                                                    </div>
-                                                    {/* Per-link button color */}
-                                                    <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-stone-100">
-                                                        <span className="text-[10px] text-stone-400 font-medium mr-0.5">Button color:</span>
-                                                        {['#1c1917','#6366f1','#8b5cf6','#ec4899','#10b981','#0ea5e9','#f59e0b','#ef4444'].map(color => (
-                                                            <button
-                                                                key={color}
-                                                                onClick={() => handleUpdateLink(link.id, 'buttonColor', link.buttonColor === color ? undefined : color)}
-                                                                className="w-5 h-5 rounded-full transition-all flex-shrink-0"
-                                                                style={{ backgroundColor: color, outline: link.buttonColor === color ? `2px solid ${color}` : '2px solid transparent', outlineOffset: '2px' }}
-                                                            />
-                                                        ))}
-                                                        <label className="relative w-5 h-5 rounded-full border border-dashed border-stone-300 cursor-pointer flex items-center justify-center hover:border-stone-500 transition-colors flex-shrink-0" title="Custom">
-                                                            {link.buttonColor && !['#1c1917','#6366f1','#8b5cf6','#ec4899','#10b981','#0ea5e9','#f59e0b','#ef4444'].includes(link.buttonColor) && (
-                                                                <span className="absolute inset-0 rounded-full" style={{ backgroundColor: link.buttonColor }} />
-                                                            )}
-                                                            <input type="color" className="absolute opacity-0 w-0 h-0" value={link.buttonColor || '#000000'} onChange={e => handleUpdateLink(link.id, 'buttonColor', e.target.value)} />
-                                                            {(!link.buttonColor || ['#1c1917','#6366f1','#8b5cf6','#ec4899','#10b981','#0ea5e9','#f59e0b','#ef4444'].includes(link.buttonColor)) && <span className="text-[8px] text-stone-400 font-bold">+</span>}
-                                                        </label>
-                                                        {link.buttonColor && (
-                                                            <button onClick={() => handleUpdateLink(link.id, 'buttonColor', undefined)} className="text-[9px] text-stone-300 hover:text-red-400 underline transition-colors">reset</button>
                                                         )}
                                                     </div>
                                                 </div>

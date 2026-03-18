@@ -552,9 +552,14 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                                  </div>
                                  <div className="flex-1 min-w-0">
                                      <p className="font-semibold text-stone-800 truncate">{link.title}</p>
-                                     <p className="text-[10px] text-stone-400 truncate">{isSupport ? `Tip · ${link.price ?? 0} credits` : isProduct ? `Product · ${link.price ?? 0} credits` : link.url}</p>
+                                     <div className="flex items-center gap-1.5 mt-0.5">
+                                         <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${isProduct ? 'bg-purple-100 text-purple-600' : isSupport ? 'bg-pink-100 text-pink-600' : 'bg-stone-200 text-stone-500'}`}>
+                                             {isProduct ? 'Digital' : isSupport ? 'Tip' : 'Link'}
+                                         </span>
+                                         {link.buttonColor && <span className="w-3 h-3 rounded-full flex-shrink-0 border border-white shadow-sm" style={{ backgroundColor: link.buttonColor }} />}
+                                         <span className="text-[10px] text-stone-400 truncate">{isSupport ? `${link.price ?? 0} credits` : isProduct ? `${link.price ?? 0} credits` : link.url}</span>
+                                     </div>
                                  </div>
-                                 {link.buttonColor && <span className="w-4 h-4 rounded-full flex-shrink-0 border border-white shadow-sm" style={{ backgroundColor: link.buttonColor }} />}
                                  <button onClick={() => setRegLinks(prev => prev.filter(l => l.id !== link.id))} className="text-stone-300 hover:text-red-400 transition-colors flex-shrink-0">
                                      <Trash size={14}/>
                                  </button>
@@ -597,6 +602,22 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                      </div>
                  )}
 
+                 {/* Highlight + Color — inline row */}
+                 <div className="flex items-center gap-1.5 flex-wrap">
+                     <span className="text-[10px] text-stone-400 font-medium">Button color:</span>
+                     {REG_PRESET_COLORS.map(color => (
+                         <button key={color} onClick={() => setRegNewLinkColor(regNewLinkColor === color ? '' : color)}
+                             className="w-4 h-4 rounded-full flex-shrink-0 transition-all"
+                             style={{ backgroundColor: color, outline: regNewLinkColor === color ? `2px solid ${color}` : '2px solid transparent', outlineOffset: '2px' }} />
+                     ))}
+                     <label className="relative w-4 h-4 rounded-full border border-dashed border-stone-300 cursor-pointer flex items-center justify-center hover:border-stone-500 transition-colors flex-shrink-0">
+                         {regNewLinkColor && !REG_PRESET_COLORS.includes(regNewLinkColor) && <span className="absolute inset-0 rounded-full" style={{ backgroundColor: regNewLinkColor }} />}
+                         <input type="color" className="absolute opacity-0 w-0 h-0" value={regNewLinkColor || '#000000'} onChange={e => setRegNewLinkColor(e.target.value)} />
+                         {(!regNewLinkColor || REG_PRESET_COLORS.includes(regNewLinkColor)) && <span className="text-[7px] text-stone-400 font-bold">+</span>}
+                     </label>
+                     {regNewLinkColor && <button onClick={() => setRegNewLinkColor('')} className="text-[9px] text-stone-300 hover:text-red-400 underline transition-colors">×</button>}
+                 </div>
+
                  {/* Section selector */}
                  {regSections.length > 0 && (
                      <select value={regNewLinkSectionId} onChange={e => setRegNewLinkSectionId(e.target.value)}
@@ -605,21 +626,6 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                          {regSections.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                      </select>
                  )}
-
-                 {/* Button color */}
-                 <div className="flex items-center gap-1.5 flex-wrap">
-                     <span className="text-[10px] text-stone-400 font-medium mr-0.5">Button color:</span>
-                     {REG_PRESET_COLORS.map(color => (
-                         <button key={color} onClick={() => setRegNewLinkColor(regNewLinkColor === color ? '' : color)}
-                             className="w-5 h-5 rounded-full flex-shrink-0 transition-all"
-                             style={{ backgroundColor: color, outline: regNewLinkColor === color ? `2px solid ${color}` : '2px solid transparent', outlineOffset: '2px' }} />
-                     ))}
-                     <label className="relative w-5 h-5 rounded-full border border-dashed border-stone-300 cursor-pointer flex items-center justify-center hover:border-stone-500 transition-colors flex-shrink-0">
-                         {regNewLinkColor && !REG_PRESET_COLORS.includes(regNewLinkColor) && <span className="absolute inset-0 rounded-full" style={{ backgroundColor: regNewLinkColor }} />}
-                         <input type="color" className="absolute opacity-0 w-0 h-0" value={regNewLinkColor || '#000000'} onChange={e => setRegNewLinkColor(e.target.value)} />
-                         {(!regNewLinkColor || REG_PRESET_COLORS.includes(regNewLinkColor)) && <span className="text-[8px] text-stone-400 font-bold">+</span>}
-                     </label>
-                 </div>
 
                  <button onClick={handleRegAddLink} disabled={!regNewLinkTitle.trim() || (regNewLinkType !== 'SUPPORT' && !regNewLinkUrl.trim())}
                      className="w-full py-2.5 bg-stone-900 text-white rounded-xl text-sm font-semibold hover:bg-stone-800 disabled:opacity-40 transition-colors flex items-center justify-center gap-2">
