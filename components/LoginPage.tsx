@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from './Button';
-import { DiemLogo, CheckCircle2, Lock, GoogleLogo, InstagramLogo, Mail, User, MessageSquare, Camera, X, Plus, YouTubeLogo, XLogo, TikTokLogo, Twitch, Check, Phone } from './Icons';
-import { CurrentUser } from '../types';
+import { DiemLogo, CheckCircle2, Lock, GoogleLogo, InstagramLogo, Mail, User, MessageSquare, Camera, X, Plus, YouTubeLogo, XLogo, TikTokLogo, Twitch, Check, Phone, FileText, Heart, ExternalLink, Coins, Trash } from './Icons';
+import { CurrentUser, AffiliateLink, LinkSection } from '../types';
 import { loginUser, updateCreatorProfile, getCreatorProfile, updateCurrentUser, signInWithSocial, resendConfirmationEmail, sendPasswordResetEmail, updatePassword, signOut } from '../services/realBackend';
 
 interface Props {
@@ -46,7 +46,45 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   const [handle, setHandle] = useState('');
   const [intakeInstructions, setIntakeInstructions] = useState('');
   const [welcomeMessage, setWelcomeMessage] = useState('');
-  const [affiliateLinks, setAffiliateLinks] = useState<{ title: string; url: string }[]>([{ title: '', url: '' }]);
+  const [regLinks, setRegLinks] = useState<AffiliateLink[]>([]);
+  const [regSections, setRegSections] = useState<LinkSection[]>([]);
+  const [regNewSectionTitle, setRegNewSectionTitle] = useState('');
+  const [regNewLinkType, setRegNewLinkType] = useState<'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT'>('EXTERNAL');
+  const [regNewLinkTitle, setRegNewLinkTitle] = useState('');
+  const [regNewLinkUrl, setRegNewLinkUrl] = useState('');
+  const [regNewLinkPrice, setRegNewLinkPrice] = useState('');
+  const [regNewLinkSectionId, setRegNewLinkSectionId] = useState('');
+  const [regNewLinkColor, setRegNewLinkColor] = useState('');
+
+  const REG_PRESET_COLORS = ['#1c1917','#6366f1','#8b5cf6','#ec4899','#10b981','#0ea5e9','#f59e0b','#ef4444'];
+
+  const handleRegAddSection = () => {
+      if (!regNewSectionTitle.trim()) return;
+      setRegSections(prev => [...prev, { id: `s-${Date.now()}`, title: regNewSectionTitle.trim(), order: prev.length }]);
+      setRegNewSectionTitle('');
+  };
+
+  const handleRegAddLink = () => {
+      if (!regNewLinkTitle.trim()) return;
+      if (regNewLinkType !== 'SUPPORT' && !regNewLinkUrl.trim()) return;
+      const newLink: AffiliateLink = {
+          id: `l-${Date.now()}`,
+          title: regNewLinkTitle.trim(),
+          url: regNewLinkType === 'SUPPORT' ? '#' : regNewLinkUrl.trim(),
+          type: regNewLinkType,
+          price: (regNewLinkType === 'DIGITAL_PRODUCT' || regNewLinkType === 'SUPPORT') && regNewLinkPrice ? Number(regNewLinkPrice) : undefined,
+          sectionId: regNewLinkSectionId || undefined,
+          buttonColor: regNewLinkColor || undefined,
+          isPromoted: false,
+      };
+      setRegLinks(prev => [...prev, newLink]);
+      setRegNewLinkTitle('');
+      setRegNewLinkUrl('');
+      setRegNewLinkPrice('');
+      setRegNewLinkSectionId('');
+      setRegNewLinkColor('');
+      setRegNewLinkType('EXTERNAL');
+  };
 
   // Shared Profile Config
   const [displayName, setDisplayName] = useState(currentUser?.name || '');
@@ -54,6 +92,8 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   const [avatarUrl, setAvatarUrl] = useState(currentUser?.avatarUrl || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [newPassword, setNewPassword] = useState('');
+  const [regComplete, setRegComplete] = useState(false);
+  const [completedUser, setCompletedUser] = useState<CurrentUser | null>(null);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,12 +228,6 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
      if (finalUser && finalUser.role === 'CREATOR') {
         try {
             const currentProfile = await getCreatorProfile();
-            const validLinks = affiliateLinks.filter(l => l.title.trim() && l.url.trim()).map((l, i) => ({
-                id: `link-${i}`,
-                title: l.title.trim(),
-                url: l.url.trim(),
-                type: 'EXTERNAL' as const,
-            }));
             await updateCreatorProfile({
                 ...currentProfile,
                 displayName: finalUser.name,
@@ -205,7 +239,8 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                 platforms: platforms.length > 0 ? platforms : (currentProfile.platforms || []),
                 intakeInstructions: intakeInstructions || currentProfile.intakeInstructions,
                 welcomeMessage: welcomeMessage || currentProfile.welcomeMessage,
-                links: validLinks.length > 0 ? validLinks : (currentProfile.links || []),
+                links: regLinks.length > 0 ? regLinks : (currentProfile.links || []),
+                linkSections: regSections.length > 0 ? regSections : (currentProfile.linkSections || []),
             });
         } catch (e) {
             console.error("Failed to setup profile:", e);
@@ -220,7 +255,8 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
      localStorage.setItem('diem_skip_setup', 'true');
 
      if (finalUser) {
-         onLoginSuccess(finalUser);
+         setCompletedUser(finalUser);
+         setRegComplete(true);
      }
   };
 
@@ -279,6 +315,73 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
               </div>
           </div>
       );
+  }
+
+  if (step === 'SETUP_PROFILE' && regComplete && completedUser) {
+    return (
+      <div className="min-h-screen bg-[#FAFAF9] flex flex-col items-center justify-center p-4 font-sans">
+        <style>{`
+          @keyframes sketch-draw { to { stroke-dashoffset: 0; } }
+          @keyframes sketch-pop { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        `}</style>
+        <div className="flex flex-col items-center text-center gap-5 max-w-sm w-full">
+          <svg viewBox="0 0 240 200" width="220" height="185" xmlns="http://www.w3.org/2000/svg">
+            {/* Door / profile card frame */}
+            <path d="M 70,160 L 70,50 Q 70,40 80,40 L 160,40 Q 170,40 170,50 L 170,160 Z"
+              fill="none" stroke="#1c1917" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+              pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+              style={{ animation: 'sketch-draw 0.8s cubic-bezier(0.4,0,0.2,1) 0.1s forwards' }} />
+            {/* Door handle */}
+            <path d="M 152,102 Q 156,100 156,105 Q 156,110 152,108"
+              fill="none" stroke="#1c1917" strokeWidth="2" strokeLinecap="round"
+              pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+              style={{ animation: 'sketch-draw 0.3s ease 0.85s forwards' }} />
+            {/* Person head */}
+            <circle cx="120" cy="78" r="14"
+              fill="none" stroke="#1c1917" strokeWidth="2" strokeLinecap="round"
+              pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+              style={{ animation: 'sketch-draw 0.5s ease 1.1s forwards' }} />
+            {/* Person body */}
+            <path d="M 96,138 Q 96,110 120,110 Q 144,110 144,138"
+              fill="none" stroke="#1c1917" strokeWidth="2" strokeLinecap="round"
+              pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+              style={{ animation: 'sketch-draw 0.5s ease 1.55s forwards' }} />
+            {/* Welcome star burst lines */}
+            <path d="M 185,45 L 192,38" fill="none" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round"
+              pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+              style={{ animation: 'sketch-draw 0.2s ease 2.0s forwards' }} />
+            <path d="M 188,52 L 197,52" fill="none" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round"
+              pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+              style={{ animation: 'sketch-draw 0.2s ease 2.1s forwards' }} />
+            <path d="M 185,59 L 192,66" fill="none" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round"
+              pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+              style={{ animation: 'sketch-draw 0.2s ease 2.2s forwards' }} />
+            <path d="M 45,80 L 38,73" fill="none" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round"
+              pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+              style={{ animation: 'sketch-draw 0.2s ease 2.15s forwards' }} />
+            <path d="M 42,90 L 33,90" fill="none" stroke="#1c1917" strokeWidth="1.5" strokeLinecap="round"
+              pathLength={1} strokeDasharray="1" strokeDashoffset="1"
+              style={{ animation: 'sketch-draw 0.2s ease 2.25s forwards' }} />
+            {/* Sparkle dots */}
+            <circle cx="195" cy="52" r="3" fill="#1c1917"
+              style={{ opacity: 0, animation: 'sketch-pop 0.3s ease 2.3s forwards' }} />
+            <circle cx="35" cy="90" r="2" fill="#1c1917"
+              style={{ opacity: 0, animation: 'sketch-pop 0.3s ease 2.35s forwards' }} />
+            <circle cx="175" cy="155" r="2" fill="#1c1917"
+              style={{ opacity: 0, animation: 'sketch-pop 0.3s ease 2.4s forwards' }} />
+          </svg>
+
+          <div style={{ opacity: 0, animation: 'sketch-pop 0.5s ease 2.1s forwards' }} className="space-y-1.5">
+            <h2 className="text-2xl font-bold text-stone-900">You're in!</h2>
+            <p className="text-stone-500 text-sm">Your profile is live. Time to start connecting with fans.</p>
+          </div>
+
+          <div style={{ opacity: 0, animation: 'sketch-pop 0.5s ease 2.6s forwards' }} className="w-full">
+            <Button fullWidth size="lg" onClick={() => onLoginSuccess(completedUser)}>Go to Dashboard</Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (step === 'SETUP_PROFILE') {
@@ -427,47 +530,125 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
              </>
              )}
 
-             {/* ── PAGE 2: Affiliate Links ── */}
+             {/* ── PAGE 2: Links & Products ── */}
              {setupPage === 2 && isCreator && (
              <>
-             <div className="mb-6">
-                 <h2 className="text-2xl font-bold text-stone-900">Affiliate Links</h2>
-                 <p className="text-stone-500 text-sm mt-1">Add links you want to share with fans — products, social pages, resources, etc.</p>
+             <div className="mb-5">
+                 <h2 className="text-2xl font-bold text-stone-900">Links & Products</h2>
+                 <p className="text-stone-500 text-sm mt-1">Add links, digital products, or tip buttons to your profile. You can always edit these later.</p>
              </div>
 
-             <div className="space-y-3 mb-6">
-                 {affiliateLinks.map((link, i) => (
-                     <div key={i} className="bg-stone-50 rounded-2xl border border-stone-100 p-4 space-y-3">
-                         <div className="flex items-center justify-between">
-                             <span className="text-xs font-bold text-stone-500 uppercase tracking-wide">Link {i + 1}</span>
-                             {affiliateLinks.length > 1 && (
-                                 <button onClick={() => setAffiliateLinks(prev => prev.filter((_, j) => j !== i))} className="text-stone-300 hover:text-red-400 transition-colors">
-                                     <X size={14} />
+             {/* Existing links */}
+             {regLinks.length > 0 && (
+                 <div className="space-y-2 mb-4">
+                     {regLinks.map(link => {
+                         const isProduct = link.type === 'DIGITAL_PRODUCT';
+                         const isSupport = link.type === 'SUPPORT';
+                         return (
+                             <div key={link.id} className={`flex items-center gap-3 p-3 rounded-xl border text-sm ${isProduct ? 'bg-purple-50 border-purple-100' : isSupport ? 'bg-pink-50 border-pink-100' : 'bg-stone-50 border-stone-200'}`}>
+                                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isProduct ? 'bg-purple-100 text-purple-500' : isSupport ? 'bg-pink-100 text-pink-500' : 'bg-stone-200 text-stone-500'}`}
+                                     style={link.buttonColor ? { backgroundColor: `${link.buttonColor}22`, color: link.buttonColor } : undefined}>
+                                     {isProduct ? <FileText size={14}/> : isSupport ? <Heart size={14}/> : <ExternalLink size={14}/>}
+                                 </div>
+                                 <div className="flex-1 min-w-0">
+                                     <p className="font-semibold text-stone-800 truncate">{link.title}</p>
+                                     <p className="text-[10px] text-stone-400 truncate">{isSupport ? `Tip · ${link.price ?? 0} credits` : isProduct ? `Product · ${link.price ?? 0} credits` : link.url}</p>
+                                 </div>
+                                 {link.buttonColor && <span className="w-4 h-4 rounded-full flex-shrink-0 border border-white shadow-sm" style={{ backgroundColor: link.buttonColor }} />}
+                                 <button onClick={() => setRegLinks(prev => prev.filter(l => l.id !== link.id))} className="text-stone-300 hover:text-red-400 transition-colors flex-shrink-0">
+                                     <Trash size={14}/>
                                  </button>
-                             )}
-                         </div>
-                         <input
-                             type="text"
-                             value={link.title}
-                             onChange={e => setAffiliateLinks(prev => prev.map((l, j) => j === i ? { ...l, title: e.target.value } : l))}
-                             placeholder="Title (e.g. My YouTube Channel)"
-                             className="w-full border border-stone-200 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-stone-500 outline-none transition-all"
-                         />
-                         <input
-                             type="url"
-                             value={link.url}
-                             onChange={e => setAffiliateLinks(prev => prev.map((l, j) => j === i ? { ...l, url: e.target.value } : l))}
-                             placeholder="https://"
-                             className="w-full border border-stone-200 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-stone-500 outline-none transition-all"
-                         />
+                             </div>
+                         );
+                     })}
+                 </div>
+             )}
+
+             {/* Add new link form */}
+             <div className="bg-stone-50 rounded-2xl border border-stone-200 p-4 space-y-3 mb-4">
+                 <p className="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Add item</p>
+
+                 {/* Type tabs */}
+                 <div className="flex gap-1 bg-stone-100 rounded-lg p-1">
+                     {([['EXTERNAL','Link'],['SUPPORT','Support / Tip'],['DIGITAL_PRODUCT','Digital Product']] as const).map(([type, label]) => (
+                         <button key={type} onClick={() => setRegNewLinkType(type)}
+                             className={`flex-1 px-2 py-1.5 text-[10px] font-bold rounded-md transition-all ${regNewLinkType === type ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}>
+                             {label}
+                         </button>
+                     ))}
+                 </div>
+
+                 <input type="text" placeholder={regNewLinkType === 'SUPPORT' ? 'e.g. Buy me a coffee' : 'Title'}
+                     className="w-full border border-stone-200 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-stone-500 outline-none bg-white"
+                     value={regNewLinkTitle} onChange={e => setRegNewLinkTitle(e.target.value)} />
+
+                 {regNewLinkType !== 'SUPPORT' && (
+                     <input type="url" placeholder="https://"
+                         className="w-full border border-stone-200 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-stone-500 outline-none bg-white"
+                         value={regNewLinkUrl} onChange={e => setRegNewLinkUrl(e.target.value)} />
+                 )}
+
+                 {(regNewLinkType === 'DIGITAL_PRODUCT' || regNewLinkType === 'SUPPORT') && (
+                     <div className="relative">
+                         <Coins size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+                         <input type="number" placeholder={regNewLinkType === 'SUPPORT' ? 'Default tip (credits)' : 'Price (credits)'}
+                             className="w-full pl-8 pr-3 py-2.5 border border-stone-200 rounded-xl text-sm focus:ring-2 focus:ring-stone-500 outline-none bg-white"
+                             value={regNewLinkPrice} onChange={e => setRegNewLinkPrice(e.target.value)} />
                      </div>
-                 ))}
-                 <button
-                     onClick={() => setAffiliateLinks(prev => [...prev, { title: '', url: '' }])}
-                     className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-stone-200 rounded-2xl text-sm text-stone-400 hover:border-stone-400 hover:text-stone-600 transition-all"
-                 >
-                     <Plus size={14} /> Add another link
+                 )}
+
+                 {/* Section selector */}
+                 {regSections.length > 0 && (
+                     <select value={regNewLinkSectionId} onChange={e => setRegNewLinkSectionId(e.target.value)}
+                         className="w-full border border-stone-200 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-stone-500 outline-none bg-white text-stone-600">
+                         <option value="">No section</option>
+                         {regSections.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+                     </select>
+                 )}
+
+                 {/* Button color */}
+                 <div className="flex items-center gap-1.5 flex-wrap">
+                     <span className="text-[10px] text-stone-400 font-medium mr-0.5">Button color:</span>
+                     {REG_PRESET_COLORS.map(color => (
+                         <button key={color} onClick={() => setRegNewLinkColor(regNewLinkColor === color ? '' : color)}
+                             className="w-5 h-5 rounded-full flex-shrink-0 transition-all"
+                             style={{ backgroundColor: color, outline: regNewLinkColor === color ? `2px solid ${color}` : '2px solid transparent', outlineOffset: '2px' }} />
+                     ))}
+                     <label className="relative w-5 h-5 rounded-full border border-dashed border-stone-300 cursor-pointer flex items-center justify-center hover:border-stone-500 transition-colors flex-shrink-0">
+                         {regNewLinkColor && !REG_PRESET_COLORS.includes(regNewLinkColor) && <span className="absolute inset-0 rounded-full" style={{ backgroundColor: regNewLinkColor }} />}
+                         <input type="color" className="absolute opacity-0 w-0 h-0" value={regNewLinkColor || '#000000'} onChange={e => setRegNewLinkColor(e.target.value)} />
+                         {(!regNewLinkColor || REG_PRESET_COLORS.includes(regNewLinkColor)) && <span className="text-[8px] text-stone-400 font-bold">+</span>}
+                     </label>
+                 </div>
+
+                 <button onClick={handleRegAddLink} disabled={!regNewLinkTitle.trim() || (regNewLinkType !== 'SUPPORT' && !regNewLinkUrl.trim())}
+                     className="w-full py-2.5 bg-stone-900 text-white rounded-xl text-sm font-semibold hover:bg-stone-800 disabled:opacity-40 transition-colors flex items-center justify-center gap-2">
+                     <Plus size={14}/> Add {regNewLinkType === 'DIGITAL_PRODUCT' ? 'Product' : regNewLinkType === 'SUPPORT' ? 'Tip Button' : 'Link'}
                  </button>
+             </div>
+
+             {/* Section management */}
+             <div className="bg-stone-50 rounded-2xl border border-stone-200 p-4 space-y-2 mb-6">
+                 <p className="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Custom Sections</p>
+                 {regSections.length > 0 && (
+                     <div className="flex flex-wrap gap-2">
+                         {regSections.map(s => (
+                             <div key={s.id} className="flex items-center gap-1 bg-white border border-stone-200 rounded-full px-3 py-1 shadow-sm">
+                                 <span className="text-xs font-medium text-stone-700">{s.title}</span>
+                                 <button onClick={() => setRegSections(prev => prev.filter(r => r.id !== s.id))} className="text-stone-300 hover:text-red-400 ml-1"><X size={10}/></button>
+                             </div>
+                         ))}
+                     </div>
+                 )}
+                 <div className="flex gap-2">
+                     <input type="text" placeholder="New section name..." value={regNewSectionTitle} onChange={e => setRegNewSectionTitle(e.target.value)}
+                         onKeyDown={e => e.key === 'Enter' && handleRegAddSection()}
+                         className="flex-1 px-3 py-1.5 border border-stone-200 rounded-lg text-xs focus:ring-1 focus:ring-stone-400 outline-none bg-white" />
+                     <button onClick={handleRegAddSection} disabled={!regNewSectionTitle.trim()}
+                         className="px-3 py-1.5 bg-stone-900 text-white rounded-lg text-xs font-medium hover:bg-stone-700 disabled:opacity-40 transition-colors flex items-center gap-1">
+                         <Plus size={12}/> Add
+                     </button>
+                 </div>
              </div>
 
              <div className="space-y-3">

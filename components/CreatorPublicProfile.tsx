@@ -697,7 +697,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                             const isProduct = link.type === 'DIGITAL_PRODUCT';
                             const isSupport = link.type === 'SUPPORT';
                             const hasThumbnail = !!link.thumbnailUrl;
-                            const accentColor = creator.buttonColor;
+                            const accentColor = link.buttonColor;
                             const btnStyle = accentColor ? { backgroundColor: accentColor, color: getContrastColor(accentColor) } : undefined;
                             const iconStyle = accentColor && !hasThumbnail ? { backgroundColor: `${accentColor}22`, color: accentColor } : undefined;
                             return (

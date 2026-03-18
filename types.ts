@@ -31,6 +31,7 @@ export interface AffiliateLink {
   price?: number; // In Credits
   thumbnailUrl?: string;
   sectionId?: string;
+  buttonColor?: string;
 }
 
 export interface Product {
@@ -58,7 +59,6 @@ export interface CreatorProfile {
   links: AffiliateLink[];
   linkSections?: LinkSection[];
   linksSectionTitle?: string;
-  buttonColor?: string;
   products: Product[];
   likesCount: number;
   isPremium?: boolean;

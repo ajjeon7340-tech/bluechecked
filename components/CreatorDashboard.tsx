@@ -3341,40 +3341,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </button>
                             </div>
 
-                            {/* Button Color */}
-                            <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 space-y-3">
-                                <div>
-                                    <p className="text-sm font-semibold text-stone-800">Button Color</p>
-                                    <p className="text-xs text-stone-400 mt-0.5">Applied to all action buttons on your public profile.</p>
-                                </div>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    {['#1c1917', '#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#0ea5e9', '#f59e0b', '#ef4444'].map(color => (
-                                        <button
-                                            key={color}
-                                            onClick={() => setEditedCreator(prev => ({ ...prev, buttonColor: prev.buttonColor === color ? undefined : color }))}
-                                            className="w-7 h-7 rounded-full transition-all"
-                                            style={{
-                                                backgroundColor: color,
-                                                outline: editedCreator.buttonColor === color ? `3px solid ${color}` : '3px solid transparent',
-                                                outlineOffset: '2px',
-                                            }}
-                                        />
-                                    ))}
-                                    {/* Custom color */}
-                                    <label className="relative w-7 h-7 rounded-full border-2 border-dashed border-stone-300 overflow-hidden cursor-pointer flex items-center justify-center hover:border-stone-500 transition-colors" title="Custom color">
-                                        {editedCreator.buttonColor && !['#1c1917','#6366f1','#8b5cf6','#ec4899','#10b981','#0ea5e9','#f59e0b','#ef4444'].includes(editedCreator.buttonColor) ? (
-                                            <span className="absolute inset-0 rounded-full" style={{ backgroundColor: editedCreator.buttonColor }} />
-                                        ) : (
-                                            <span className="text-[10px] text-stone-400 font-bold">+</span>
-                                        )}
-                                        <input type="color" className="absolute opacity-0 w-0 h-0" value={editedCreator.buttonColor || '#000000'} onChange={e => setEditedCreator(prev => ({ ...prev, buttonColor: e.target.value }))} />
-                                    </label>
-                                    {editedCreator.buttonColor && (
-                                        <button onClick={() => setEditedCreator(prev => ({ ...prev, buttonColor: undefined }))} className="text-[10px] text-stone-400 hover:text-red-500 underline transition-colors">Reset</button>
-                                    )}
-                                </div>
-                            </div>
-
                             {/* Links & Products Section */}
                             <div>
                                 <label className="block text-sm font-medium text-stone-700 mb-2">Links & Products</label>
@@ -3578,6 +3544,28 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     <option key={s.id} value={s.id}>{s.title}</option>
                                                                 ))}
                                                             </select>
+                                                        )}
+                                                    </div>
+                                                    {/* Per-link button color */}
+                                                    <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-stone-100">
+                                                        <span className="text-[10px] text-stone-400 font-medium mr-0.5">Button color:</span>
+                                                        {['#1c1917','#6366f1','#8b5cf6','#ec4899','#10b981','#0ea5e9','#f59e0b','#ef4444'].map(color => (
+                                                            <button
+                                                                key={color}
+                                                                onClick={() => handleUpdateLink(link.id, 'buttonColor', link.buttonColor === color ? undefined : color)}
+                                                                className="w-5 h-5 rounded-full transition-all flex-shrink-0"
+                                                                style={{ backgroundColor: color, outline: link.buttonColor === color ? `2px solid ${color}` : '2px solid transparent', outlineOffset: '2px' }}
+                                                            />
+                                                        ))}
+                                                        <label className="relative w-5 h-5 rounded-full border border-dashed border-stone-300 cursor-pointer flex items-center justify-center hover:border-stone-500 transition-colors flex-shrink-0" title="Custom">
+                                                            {link.buttonColor && !['#1c1917','#6366f1','#8b5cf6','#ec4899','#10b981','#0ea5e9','#f59e0b','#ef4444'].includes(link.buttonColor) && (
+                                                                <span className="absolute inset-0 rounded-full" style={{ backgroundColor: link.buttonColor }} />
+                                                            )}
+                                                            <input type="color" className="absolute opacity-0 w-0 h-0" value={link.buttonColor || '#000000'} onChange={e => handleUpdateLink(link.id, 'buttonColor', e.target.value)} />
+                                                            {(!link.buttonColor || ['#1c1917','#6366f1','#8b5cf6','#ec4899','#10b981','#0ea5e9','#f59e0b','#ef4444'].includes(link.buttonColor)) && <span className="text-[8px] text-stone-400 font-bold">+</span>}
+                                                        </label>
+                                                        {link.buttonColor && (
+                                                            <button onClick={() => handleUpdateLink(link.id, 'buttonColor', undefined)} className="text-[9px] text-stone-300 hover:text-red-400 underline transition-colors">reset</button>
                                                         )}
                                                     </div>
                                                 </div>

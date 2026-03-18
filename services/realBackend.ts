@@ -638,7 +638,6 @@ const enrichCreatorProfile = async (data: any): Promise<CreatorProfile> => {
             .filter((l: any) => l.id?.startsWith('__section__'))
             .map((l: any) => ({ id: l.id.replace('__section__', ''), title: l.title, order: l.order ?? 0 })),
         linksSectionTitle: (data.links || []).find((l: any) => l.id === '__links_title__')?.title || undefined,
-        buttonColor: (data.links || []).find((l: any) => l.id === '__button_color__')?.title || undefined,
         products: data.products || [],
         platforms: data.platforms || [],
         isPremium: data.is_premium || false,
@@ -765,7 +764,6 @@ export const getCreatorProfileFast = async (creatorId?: string): Promise<Creator
             .filter((l: any) => l.id?.startsWith('__section__'))
             .map((l: any) => ({ id: l.id.replace('__section__', ''), title: l.title, order: l.order ?? 0 })),
         linksSectionTitle: (data.links || []).find((l: any) => l.id === '__links_title__')?.title || undefined,
-        buttonColor: (data.links || []).find((l: any) => l.id === '__button_color__')?.title || undefined,
         products: data.products || [],
         platforms: data.platforms || [],
         isPremium: data.is_premium || false,
@@ -783,7 +781,6 @@ export const updateCreatorProfile = async (profile: CreatorProfile): Promise<Cre
         { id: '__diem_config__', title: '', url: '', isPromoted: profile.isDiemHighlighted || false },
         ...(profile.linkSections || []).map(s => ({ id: `__section__${s.id}`, title: s.title, url: '', order: s.order })),
         ...(profile.linksSectionTitle ? [{ id: '__links_title__', title: profile.linksSectionTitle, url: '' }] : []),
-        ...(profile.buttonColor ? [{ id: '__button_color__', title: profile.buttonColor, url: '' }] : []),
         ...(profile.links || []),
     ];
 
@@ -2053,7 +2050,6 @@ export const getFeaturedCreators = async (): Promise<CreatorProfile[]> => {
                 .filter((l: any) => l.id?.startsWith('__section__'))
                 .map((l: any) => ({ id: l.id.replace('__section__', ''), title: l.title, order: l.order ?? 0 })),
             linksSectionTitle: (p.links || []).find((l: any) => l.id === '__links_title__')?.title || undefined,
-            buttonColor: (p.links || []).find((l: any) => l.id === '__button_color__')?.title || undefined,
             products: p.products || [],
             platforms: p.platforms || []
         };
