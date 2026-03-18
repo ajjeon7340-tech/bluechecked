@@ -379,16 +379,12 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
           {/* Mobile Carousel */}
           {(() => {
             // Per-step sketch SVG illustrations
-            // S/ST take stepIdx so each card's animation only runs when that step is active
+            // S/ST animate only when the step has been activated (key-based remount handles replay)
             const S = (si: number, delay: number, dur = 0.9): React.CSSProperties =>
-              (stepAnimKeys[si] > 0) ? {
-                animation: `lp-sketch ${dur}s ease forwards ${delay}s`,
-                animationPlayState: activeStep === si ? 'running' : 'paused',
-              } : {};
+              (stepAnimKeys[si] > 0) ? { animation: `lp-sketch ${dur}s ease forwards ${delay}s` } : {};
             const ST = (si: number, skD: number, skDur: number, twDur: number, twDel: number): React.CSSProperties =>
               (stepAnimKeys[si] > 0) ? {
                 animation: `lp-sketch ${skDur}s ease forwards ${skD}s, lp-twinkle ${twDur}s ease-in-out infinite ${twDel}s`,
-                animationPlayState: activeStep === si ? 'running' : 'paused',
               } : {};
             const FL = (si: number, dur: number, del: number): React.CSSProperties =>
               howItWorksVisible ? { animation: `lp-float ${dur}s ease-in-out infinite ${del}s`, transformBox: 'fill-box', transformOrigin: 'center' } : {};
