@@ -165,6 +165,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
         @keyframes lp-bounce { 0%,100%{transform:translateY(0px)} 45%{transform:translateY(-11px)} 60%{transform:translateY(-8px)} }
         @keyframes lp-twinkle { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.06;transform:scale(0.25)} }
         @keyframes lp-coin-rise { 0%{transform:translateY(0px);opacity:0} 18%{opacity:1} 82%{opacity:.6} 100%{transform:translateY(-32px);opacity:0} }
+        @keyframes lp-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
       `}</style>
 
       {/* Navigation - Minimal & Warm */}
@@ -672,7 +673,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                     {steps.map((_, i) => (
                       <button
                         key={i}
-                        onClick={() => { setStepAnimKeys(keys => { const k = [...keys]; k[i]++; return k; }); setActiveStep(i); }}
+                        onClick={() => { setStepAnimKeys(keys => { const k = [...keys]; if (k[i] === 0) k[i] = 1; return k; }); setActiveStep(i); }}
                         className="h-2 rounded-full transition-all duration-300"
                         style={{
                           width: activeStep === i ? '20px' : '8px',
@@ -722,8 +723,10 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                             style={{
                               background: accentColors[idx],
                               transformOrigin: 'left',
-                              transition: 'transform 0.7s ease',
-                              transform: activeStep > idx ? 'scaleX(1)' : activeStep === idx ? 'scaleX(0.4)' : 'scaleX(0)',
+                              ...(activeStep === idx && !stepAnimDone[idx]
+                                ? { animation: `lp-progress ${STEP_DURATIONS[idx]}ms linear forwards` }
+                                : { transform: stepAnimKeys[idx] > 0 ? 'scaleX(1)' : 'scaleX(0)', transition: 'transform 0.4s ease' }
+                              ),
                             }}
                           />
                         </div>
