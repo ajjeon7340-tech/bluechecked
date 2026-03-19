@@ -2154,15 +2154,16 @@ export const connectStripeAccount = async (): Promise<string | null> => {
     }
 };
 
-export const getStripeConnectionStatus = async (): Promise<boolean> => {
-    if (!isConfigured) return MockBackend.getStripeConnectionStatus();
+export const getStripeConnectionStatus = async (): Promise<{ connected: boolean; last4: string | null }> => {
+    if (!isConfigured) return { connected: await MockBackend.getStripeConnectionStatus(), last4: null };
 
     try {
         const data = await callStripeConnect({ action: 'check-status' });
-        return data.connected === true;
+        const last4 = data.last4 ?? null;
+        return { connected: data.connected === true || !!last4, last4 };
     } catch (e: any) {
         console.warn('Stripe check-status failed:', e.message);
-        return false;
+        return { connected: false, last4: null };
     }
 };
 
