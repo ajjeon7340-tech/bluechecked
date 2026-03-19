@@ -150,6 +150,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Withdrawal State
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [isStripeConnected, setIsStripeConnected] = useState(false);
+  const [stripeLast4, setStripeLast4] = useState<string | null>(null);
   const [isConnectingStripe, setIsConnectingStripe] = useState(false);
   const [showWithdrawAnimation, setShowWithdrawAnimation] = useState(false);
   const [withdrawnAmount, setWithdrawnAmount] = useState(0);
@@ -249,11 +250,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Settings text tab state
   const [settingsTextTab, setSettingsTextTab] = useState<'bio' | 'instructions' | 'reply'>('bio');
 
-  // Onboarding tutorial
+  // Onboarding tutorial (settings)
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
+  const [tutorialIsRevisit, setTutorialIsRevisit] = useState(false);
   const tutorialLinksRef = useRef<HTMLDivElement>(null);
   const tutorialSectionsRef = useRef<HTMLDivElement>(null);
+
+  // Inbox tutorial
+  const [showInboxTutorial, setShowInboxTutorial] = useState(false);
+  const [inboxTutorialStep, setInboxTutorialStep] = useState(0);
 
   const TUTORIAL_STEPS = [
     { title: 'Your Status Message', desc: 'This appears on your public profile — it\'s the first thing fans see when they visit your page. Make it personal!', tab: 'bio' as const, highlight: 'bio' },
@@ -591,9 +597,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       window.history.replaceState({}, '', url.toString());
 
       // Re-check Stripe status
-      getStripeConnectionStatus().then(status => {
-        setIsStripeConnected(status);
-        if (status) {
+      getStripeConnectionStatus().then(({ connected, last4 }) => {
+        setIsStripeConnected(connected);
+        setStripeLast4(last4);
+        if (connected) {
           setCurrentView('FINANCE');
           setShowStripeAnimation(true);
           setTimeout(() => setShowStripeAnimation(false), 4000);
@@ -606,14 +613,42 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       loadTrendData();
   }, [trendTimeFrame, trendDate]);
 
-  // Show tutorial the first time a creator visits SETTINGS
+  // Auto-show settings tutorial on first account creation
+  useEffect(() => {
+    if (!currentUser) return;
+    const autoKey = `diem_creator_tutorial_auto_shown_${currentUser.id}`;
+    const doneKey = `diem_creator_tutorial_done_${currentUser.id}`;
+    if (!localStorage.getItem(autoKey) && !localStorage.getItem(doneKey)) {
+      localStorage.setItem(autoKey, '1');
+      setCurrentView('SETTINGS');
+      setSettingsTextTab('bio');
+      setShowTutorial(true);
+      setTutorialStep(0);
+      setTutorialIsRevisit(false);
+    }
+  }, [currentUser?.id]);
+
+  // Show settings tutorial when revisiting SETTINGS (if skipped during auto-show)
   useEffect(() => {
     if (currentView === 'SETTINGS' && currentUser) {
-      const key = `diem_creator_tutorial_done_${currentUser.id}`;
-      if (!localStorage.getItem(key)) {
+      const autoKey = `diem_creator_tutorial_auto_shown_${currentUser.id}`;
+      const doneKey = `diem_creator_tutorial_done_${currentUser.id}`;
+      if (localStorage.getItem(autoKey) && !localStorage.getItem(doneKey) && !showTutorial) {
         setShowTutorial(true);
         setTutorialStep(0);
         setSettingsTextTab('bio');
+        setTutorialIsRevisit(true);
+      }
+    }
+  }, [currentView, currentUser?.id]);
+
+  // Show inbox tutorial on first INBOX visit
+  useEffect(() => {
+    if (currentView === 'INBOX' && currentUser) {
+      const key = `diem_creator_inbox_tutorial_done_${currentUser.id}`;
+      if (!localStorage.getItem(key)) {
+        setShowInboxTutorial(true);
+        setInboxTutorialStep(0);
       }
     }
   }, [currentView, currentUser?.id]);
@@ -628,9 +663,31 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     if (nextStep === 4) setTimeout(() => tutorialSectionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
   };
 
+  const handleTutorialSkip = () => {
+    // If this is the revisit from settings (second chance), mark as done
+    if (tutorialIsRevisit && currentUser) {
+      localStorage.setItem(`diem_creator_tutorial_done_${currentUser.id}`, '1');
+    }
+    setShowTutorial(false);
+  };
+
   const handleTutorialDone = () => {
     if (currentUser) localStorage.setItem(`diem_creator_tutorial_done_${currentUser.id}`, '1');
     setShowTutorial(false);
+  };
+
+  const handleInboxTutorialNext = () => {
+    const INBOX_STEPS = 3;
+    if (inboxTutorialStep + 1 >= INBOX_STEPS) {
+      handleInboxTutorialDone();
+    } else {
+      setInboxTutorialStep(prev => prev + 1);
+    }
+  };
+
+  const handleInboxTutorialDone = () => {
+    if (currentUser) localStorage.setItem(`diem_creator_inbox_tutorial_done_${currentUser.id}`, '1');
+    setShowInboxTutorial(false);
   };
 
   useEffect(() => {
@@ -721,7 +778,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
     // Load Stripe, withdrawals, and trend data in parallel (non-blocking)
     const promises: Promise<void>[] = [
-        getStripeConnectionStatus().then(status => setIsStripeConnected(status)),
+        getStripeConnectionStatus().then(({ connected, last4 }) => { setIsStripeConnected(connected); setStripeLast4(last4); }),
         getWithdrawalHistory().then(history => setWithdrawals(history)),
     ];
     if (trendData.length === 0) {
@@ -2018,7 +2075,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <h3 className="font-bold text-stone-900">{t('creator.payoutMethod')}</h3>
                                         <p className="text-sm text-stone-500">
                                             {isStripeConnected
-                                                ? t('creator.stripeConnectedDesc')
+                                                ? stripeLast4
+                                                    ? `Connected to Stripe (•••• ${stripeLast4}). Automatic payouts enabled.`
+                                                    : t('creator.stripeConnectedDesc')
                                                 : t('creator.stripeLinkDesc')}
                                         </p>
                                     </div>
@@ -4075,7 +4134,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       {showTutorial && currentView === 'SETTINGS' && (
         <>
           {/* Backdrop */}
-          <div className="fixed inset-0 bg-black/40 z-50" onClick={handleTutorialDone} />
+          <div className="fixed inset-0 bg-black/40 z-50" onClick={handleTutorialSkip} />
           {/* Coach card */}
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[min(400px,calc(100vw-32px))] bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden">
             {/* Progress bar */}
@@ -4097,7 +4156,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
               </div>
               <p className="text-sm text-stone-500 leading-relaxed mb-4">{TUTORIAL_STEPS[tutorialStep].desc}</p>
               <div className="flex items-center justify-between">
-                <button onClick={handleTutorialDone} className="text-xs text-stone-400 hover:text-stone-600 transition-colors">
+                <button onClick={handleTutorialSkip} className="text-xs text-stone-400 hover:text-stone-600 transition-colors">
                   Skip tutorial
                 </button>
                 <div className="flex items-center gap-3">
@@ -4118,6 +4177,96 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           </div>
         </>
       )}
+
+      {/* Inbox Tutorial Overlay */}
+      {showInboxTutorial && currentView === 'INBOX' && (() => {
+        const INBOX_TUTORIAL_STEPS = [
+          {
+            emoji: '📬',
+            title: 'Your Inbox',
+            desc: 'When a fan sends you a Diem, it appears here. Each session has a timer — reply before it expires to collect your credits.',
+            preview: (
+              <div className="mt-3 mb-1 rounded-xl border border-stone-200 bg-white overflow-hidden">
+                <div className="flex items-start gap-3 p-3">
+                  <div className="w-9 h-9 rounded-full bg-stone-900 flex items-center justify-center flex-shrink-0">
+                    <DiemLogo size={18} className="text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center mb-0.5">
+                      <span className="text-sm font-semibold text-stone-900">Diem</span>
+                      <span className="text-xs text-stone-400">Just now</span>
+                    </div>
+                    <p className="text-xs text-stone-500 line-clamp-2">Hi! I'm your first fan. I'd love to know your best advice for getting started. What would you tell someone just beginning?</p>
+                    <div className="flex items-center justify-between mt-1.5">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">23h 59m left</span>
+                      <span className="text-xs font-mono font-medium text-stone-700 flex items-center gap-1"><Coins size={10}/> 10</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ),
+          },
+          {
+            emoji: '💬',
+            title: 'Reply & Follow Up',
+            desc: "Open a message and type your reply at the bottom. You can send as many follow-up messages as you want — the conversation stays open. But fans can only send one message per session, so make your response count!",
+            preview: null,
+          },
+          {
+            emoji: '🪙',
+            title: 'Collect Your Credits',
+            desc: "After replying, hit Collect to add the credits to your balance. Credits stack up across all your fans, and you can withdraw to your bank anytime via Stripe.",
+            preview: (
+              <div className="mt-3 mb-1 flex items-center gap-3 p-3 rounded-xl border border-emerald-100 bg-emerald-50">
+                <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                  <Coins size={18} className="text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-emerald-800">Credits collected!</p>
+                  <p className="text-[11px] text-emerald-600">Tap <strong>Collect</strong> on replied messages to claim your credits.</p>
+                </div>
+              </div>
+            ),
+          },
+        ];
+        const step = INBOX_TUTORIAL_STEPS[inboxTutorialStep];
+        return (
+          <>
+            <div className="fixed inset-0 bg-black/40 z-50" onClick={handleInboxTutorialDone} />
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[min(420px,calc(100vw-32px))] bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden">
+              <div className="h-1 bg-stone-100">
+                <div className="h-full bg-stone-900 transition-all duration-300" style={{ width: `${((inboxTutorialStep + 1) / INBOX_TUTORIAL_STEPS.length) * 100}%` }} />
+              </div>
+              <div className="p-5">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">{step.emoji}</span>
+                    <span className="font-bold text-stone-900 text-sm">{step.title}</span>
+                  </div>
+                  <span className="text-[11px] text-stone-400 font-medium shrink-0 ml-2">{inboxTutorialStep + 1} / {INBOX_TUTORIAL_STEPS.length}</span>
+                </div>
+                <p className="text-sm text-stone-500 leading-relaxed">{step.desc}</p>
+                {step.preview}
+                <div className="flex items-center justify-between mt-4">
+                  <button onClick={handleInboxTutorialDone} className="text-xs text-stone-400 hover:text-stone-600 transition-colors">
+                    Skip tutorial
+                  </button>
+                  <div className="flex items-center gap-3">
+                    <div className="flex gap-1">
+                      {INBOX_TUTORIAL_STEPS.map((_, i) => (
+                        <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === inboxTutorialStep ? 'w-4 bg-stone-900' : i < inboxTutorialStep ? 'w-1.5 bg-stone-300' : 'w-1.5 bg-stone-200'}`} />
+                      ))}
+                    </div>
+                    <button onClick={handleInboxTutorialNext} className="px-4 py-2 bg-stone-900 text-white text-sm font-semibold rounded-xl hover:bg-stone-700 transition-colors">
+                      {inboxTutorialStep < INBOX_TUTORIAL_STEPS.length - 1 ? 'Next →' : 'Got it ✓'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        );
+      })()}
 
       {/* Image Lightbox */}
       {enlargedImage && (
