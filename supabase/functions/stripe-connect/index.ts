@@ -88,43 +88,68 @@ Deno.serve(async (req) => {
 
     // ---- CREATE ACCOUNT ----
     if (action === 'create-account') {
-      const { data: existing } = await adminClient
+      console.log('[stripe-connect] create-account for user:', user.id, 'email:', user.email)
+
+      const { data: existing, error: fetchError } = await adminClient
         .from('stripe_accounts')
         .select('stripe_account_id')
         .eq('user_id', user.id)
+        .eq('test_mode', testMode)
         .maybeSingle()
 
+      if (fetchError) {
+        console.error('[stripe-connect] DB fetch error:', fetchError)
+        return errorResponse('Database error: ' + fetchError.message, 500)
+      }
+
       let stripeAccountId = existing?.stripe_account_id
+      console.log('[stripe-connect] existing stripe account:', stripeAccountId)
 
       if (!stripeAccountId) {
-        const account = await stripeRequest('/accounts', STRIPE_SECRET_KEY, {
-          type: 'express',
-          email: user.email || '',
-          'metadata[supabase_user_id]': user.id,
-        })
+        console.log('[stripe-connect] creating new Stripe Express account...')
+        let account
+        try {
+          account = await stripeRequest('/accounts', STRIPE_SECRET_KEY, {
+            type: 'express',
+            ...(user.email ? { email: user.email } : {}),
+            'metadata[supabase_user_id]': user.id,
+          })
+        } catch (stripeErr: any) {
+          console.error('[stripe-connect] Stripe account creation failed:', stripeErr.message)
+          return errorResponse('Stripe account creation failed: ' + stripeErr.message, 500)
+        }
         stripeAccountId = account.id
+        console.log('[stripe-connect] created account:', stripeAccountId)
 
         const { error: insertError } = await adminClient
           .from('stripe_accounts')
           .insert({
             user_id: user.id,
             stripe_account_id: stripeAccountId,
+            test_mode: testMode,
           })
 
         if (insertError) {
-          console.error('Failed to save Stripe account:', insertError)
-          return errorResponse('Failed to save Stripe account')
+          console.error('[stripe-connect] Failed to save Stripe account:', insertError)
+          return errorResponse('Failed to save Stripe account: ' + insertError.message, 500)
         }
       }
 
-      const accountLink = await stripeRequest('/account_links', STRIPE_SECRET_KEY, {
-        account: stripeAccountId,
-        refresh_url: `${APP_URL}/dashboard?stripe=refresh`,
-        return_url: `${APP_URL}/dashboard?stripe=return`,
-        type: 'account_onboarding',
-      })
+      console.log('[stripe-connect] creating account link for:', stripeAccountId)
+      let accountLink
+      try {
+        accountLink = await stripeRequest('/account_links', STRIPE_SECRET_KEY, {
+          account: stripeAccountId,
+          refresh_url: `${APP_URL}/dashboard?stripe=refresh`,
+          return_url: `${APP_URL}/dashboard?stripe=return`,
+          type: 'account_onboarding',
+        })
+      } catch (linkErr: any) {
+        console.error('[stripe-connect] Account link creation failed:', linkErr.message)
+        return errorResponse('Account link creation failed: ' + linkErr.message, 500)
+      }
 
-      console.log('Generated Account Link:', accountLink.url)
+      console.log('[stripe-connect] Generated Account Link:', accountLink.url)
       return jsonResponse({ url: accountLink.url })
     }
 
@@ -134,6 +159,7 @@ Deno.serve(async (req) => {
         .from('stripe_accounts')
         .select('stripe_account_id')
         .eq('user_id', user.id)
+        .eq('test_mode', testMode)
         .maybeSingle()
 
       if (!existing?.stripe_account_id) {
@@ -159,16 +185,12 @@ Deno.serve(async (req) => {
         return errorResponse('Invalid amount')
       }
 
-      // Minimum withdrawal check
-      if (amount < MIN_WITHDRAWAL_CREDITS) {
-        return errorResponse(`Minimum withdrawal is ${MIN_WITHDRAWAL_CREDITS} credits ($${(MIN_WITHDRAWAL_CREDITS * CREDIT_TO_USD).toFixed(2)})`)
-      }
-
       // Get the user's Stripe account
       const { data: stripeAccount } = await adminClient
         .from('stripe_accounts')
         .select('stripe_account_id, onboarded')
         .eq('user_id', user.id)
+        .eq('test_mode', testMode)
         .maybeSingle()
 
       if (!stripeAccount?.stripe_account_id || !stripeAccount.onboarded) {

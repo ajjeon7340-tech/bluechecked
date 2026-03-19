@@ -1319,6 +1319,9 @@ export const createCheckoutSession = async (credits: number, returnUrl?: string)
         const resolvedReturnUrl = returnUrl || (typeof window !== 'undefined' ? window.location.origin + '/dashboard' : undefined);
         const res = await supabase.functions.invoke('create-payment-intent', {
             body: { credits, testMode, returnUrl: resolvedReturnUrl },
+            headers: {
+                Authorization: `Bearer ${session.session.access_token}`,
+            },
         });
 
         if (res.error) throw new Error(res.error.message || 'Failed to create checkout session');
@@ -2107,13 +2110,25 @@ const callStripeConnect = async (body: Record<string, unknown>) => {
     const testMode = !import.meta.env.PROD || !import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE;
     const res = await supabase.functions.invoke('stripe-connect', {
         body: { ...body, testMode },
+        headers: {
+            Authorization: `Bearer ${session.session.access_token}`,
+        },
     });
 
     // Log full response for debugging
     console.log('[stripe-connect] res.error:', res.error, 'res.data:', res.data);
 
     if (res.error) {
-        const message = res.data?.error || res.error.message || 'Edge function error';
+        // Try to extract actual error body from FunctionsHttpError
+        let message = res.error.message || 'Edge function error';
+        try {
+            const context = (res.error as any).context;
+            if (context) {
+                const errBody = await context.json().catch(() => null);
+                console.log('[stripe-connect] error body:', errBody);
+                if (errBody?.error) message = errBody.error;
+            }
+        } catch (_) {}
         throw new Error(message);
     }
     if (res.data?.error) {
