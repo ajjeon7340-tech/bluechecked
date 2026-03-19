@@ -381,11 +381,12 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
           {(() => {
             // Per-step sketch SVG illustrations
             // S/ST animate only when the step has been activated (key-based remount handles replay)
+            const isActive = (si: number) => activeStep === si;
             const S = (si: number, delay: number, dur = 0.9): React.CSSProperties =>
-              (stepAnimKeys[si] > 0) ? { animation: `lp-sketch ${dur}s ease forwards ${delay}s` } : {};
-            // ST: sparkles draw once and stay — no infinite twinkle (changing animation string restarts sketch)
+              (stepAnimKeys[si] > 0) ? { animation: `lp-sketch ${dur}s ease forwards ${delay}s`, animationPlayState: isActive(si) ? 'running' : 'paused' } : {};
+            // ST: sparkles draw once and stay; paused when step inactive
             const ST = (si: number, skD: number, skDur: number): React.CSSProperties =>
-              (stepAnimKeys[si] > 0) ? { animation: `lp-sketch ${skDur}s ease forwards ${skD}s` } : {};
+              (stepAnimKeys[si] > 0) ? { animation: `lp-sketch ${skDur}s ease forwards ${skD}s`, animationPlayState: isActive(si) ? 'running' : 'paused' } : {};
             // FL/BN: only animate the active step, rest stay still
             const FL = (si: number, dur: number, del: number): React.CSSProperties =>
               (activeStep === si) ? { animation: `lp-float ${dur}s ease-in-out infinite ${del}s`, transformBox: 'fill-box', transformOrigin: 'center' } : { transformBox: 'fill-box', transformOrigin: 'center' };
