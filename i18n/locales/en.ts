@@ -480,7 +480,7 @@ const en = {
     withdrawAmount: 'Withdraw ${{amount}}',
     transferDays: 'Transfers typically take 1-3 business days.',
     payoutMethod: 'Payout Method',
-    stripeConnectedDesc: 'Connected to Stripe (•••• 4242). Automatic payouts enabled.',
+    stripeConnectedDesc: 'Connected to Stripe. Automatic payouts enabled.',
     stripeLinkDesc: 'Link your bank account via Stripe to receive payouts.',
     connected: 'Connected',
     connectStripeBtn: 'Connect Stripe',
