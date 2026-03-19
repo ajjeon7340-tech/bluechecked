@@ -78,6 +78,10 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
 
   // Duration (ms) until the last sketch path finishes drawing per step, plus a short pause
   const STEP_DURATIONS = [4600, 4500, 4100] as const;
+  // Time (ms) when last path finishes drawing per step (max delay + duration + small buffer)
+  const ANIM_COMPLETE_TIMES = [3900, 3800, 3400] as const;
+  // Once true for a step, its sketch is done — show completed form, no animation restart
+  const [stepAnimDone, setStepAnimDone] = useState([false, false, false]);
 
   useEffect(() => {
     const t = setInterval(() => setConvIdx(i => (i + 1) % FEATURED_CONVERSATIONS.length), 3500);
@@ -115,6 +119,21 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
     }, STEP_DURATIONS[activeStep]);
     return () => clearTimeout(timeout);
   }, [howItWorksVisible, activeStep]);
+
+  // Mark step as done after its animation completes, or immediately when leaving mid-animation
+  useEffect(() => {
+    if (!howItWorksVisible || stepAnimKeys[activeStep] === 0) return;
+    const step = activeStep; // capture for cleanup closure
+    const timer = setTimeout(() => {
+      setStepAnimDone(prev => { if (prev[step]) return prev; const d = [...prev]; d[step] = true; return d; });
+    }, ANIM_COMPLETE_TIMES[activeStep]);
+    return () => {
+      clearTimeout(timer);
+      // If leaving before timer fires, mark as done so halted = completed form
+      setStepAnimDone(prev => { if (prev[step]) return prev; const d = [...prev]; d[step] = true; return d; });
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeStep, howItWorksVisible, stepAnimKeys[0], stepAnimKeys[1], stepAnimKeys[2]]);
 
   return (
     <div className="min-h-screen bg-[#FAFAF9] font-sans selection:bg-amber-100 selection:text-amber-900 overflow-x-hidden">
@@ -381,12 +400,17 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
           {(() => {
             // Per-step sketch SVG illustrations
             // S/ST animate only when the step has been activated (key-based remount handles replay)
-            const isActive = (si: number) => activeStep === si;
-            const S = (si: number, delay: number, dur = 0.9): React.CSSProperties =>
-              (stepAnimKeys[si] > 0) ? { animation: `lp-sketch ${dur}s ease forwards ${delay}s`, animationPlayState: isActive(si) ? 'running' : 'paused' } : {};
-            // ST: sparkles draw once and stay; paused when step inactive
-            const ST = (si: number, skD: number, skDur: number): React.CSSProperties =>
-              (stepAnimKeys[si] > 0) ? { animation: `lp-sketch ${skDur}s ease forwards ${skD}s`, animationPlayState: isActive(si) ? 'running' : 'paused' } : {};
+            // S/ST: play animation only on first active visit; show completed form (offset=0) otherwise
+            const S = (si: number, delay: number, dur = 0.9): React.CSSProperties => {
+              if (stepAnimKeys[si] === 0) return {};
+              if (activeStep === si && !stepAnimDone[si]) return { animation: `lp-sketch ${dur}s ease forwards ${delay}s` };
+              return { strokeDashoffset: 0 };
+            };
+            const ST = (si: number, skD: number, skDur: number): React.CSSProperties => {
+              if (stepAnimKeys[si] === 0) return {};
+              if (activeStep === si && !stepAnimDone[si]) return { animation: `lp-sketch ${skDur}s ease forwards ${skD}s` };
+              return { strokeDashoffset: 0 };
+            };
             // FL/BN: only animate the active step, rest stay still
             const FL = (si: number, dur: number, del: number): React.CSSProperties =>
               (activeStep === si) ? { animation: `lp-float ${dur}s ease-in-out infinite ${del}s`, transformBox: 'fill-box', transformOrigin: 'center' } : { transformBox: 'fill-box', transformOrigin: 'center' };
