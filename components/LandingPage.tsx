@@ -108,7 +108,8 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
     const timeout = setTimeout(() => {
       setActiveStep(prev => {
         const next = (prev + 1) % 3;
-        setStepAnimKeys(keys => { const k = [...keys]; k[next]++; return k; });
+        // Only trigger animation the first time a step becomes active (never replay)
+        setStepAnimKeys(keys => { const k = [...keys]; if (k[next] === 0) k[next] = 1; return k; });
         return next;
       });
     }, STEP_DURATIONS[activeStep]);
@@ -382,14 +383,14 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
             // S/ST animate only when the step has been activated (key-based remount handles replay)
             const S = (si: number, delay: number, dur = 0.9): React.CSSProperties =>
               (stepAnimKeys[si] > 0) ? { animation: `lp-sketch ${dur}s ease forwards ${delay}s` } : {};
-            const ST = (si: number, skD: number, skDur: number, twDur: number, twDel: number): React.CSSProperties =>
-              (stepAnimKeys[si] > 0) ? {
-                animation: `lp-sketch ${skDur}s ease forwards ${skD}s, lp-twinkle ${twDur}s ease-in-out infinite ${twDel}s`,
-              } : {};
+            // ST: sparkles draw once and stay — no infinite twinkle (changing animation string restarts sketch)
+            const ST = (si: number, skD: number, skDur: number): React.CSSProperties =>
+              (stepAnimKeys[si] > 0) ? { animation: `lp-sketch ${skDur}s ease forwards ${skD}s` } : {};
+            // FL/BN: only animate the active step, rest stay still
             const FL = (si: number, dur: number, del: number): React.CSSProperties =>
-              howItWorksVisible ? { animation: `lp-float ${dur}s ease-in-out infinite ${del}s`, transformBox: 'fill-box', transformOrigin: 'center' } : {};
+              (activeStep === si) ? { animation: `lp-float ${dur}s ease-in-out infinite ${del}s`, transformBox: 'fill-box', transformOrigin: 'center' } : { transformBox: 'fill-box', transformOrigin: 'center' };
             const BN = (si: number, dur: number, del: number): React.CSSProperties =>
-              howItWorksVisible ? { animation: `lp-bounce ${dur}s ease-in-out infinite ${del}s`, transformBox: 'fill-box', transformOrigin: 'center' } : {};
+              (activeStep === si) ? { animation: `lp-bounce ${dur}s ease-in-out infinite ${del}s`, transformBox: 'fill-box', transformOrigin: 'center' } : { transformBox: 'fill-box', transformOrigin: 'center' };
 
             const sketchIllustrations = [
 
@@ -425,20 +426,20 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                     stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" fill="none"
                     pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={S(0, 2.6, 0.7)} />
                 </g>
-                {/* Gold sparkles — twinkle continuously */}
+                {/* Gold sparkles */}
                 <line x1="110" y1="8" x2="116" y2="2" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round"
-                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(0, 3.0, 0.3, 1.8, 3.5)} />
+                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(0, 3.0, 0.3)} />
                 <line x1="118" y1="17" x2="121" y2="11" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round"
-                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(0, 3.1, 0.3, 1.8, 3.8)} />
+                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(0, 3.1, 0.3)} />
                 <line x1="108" y1="19" x2="108" y2="13" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round"
-                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(0, 3.2, 0.3, 1.8, 4.1)} />
+                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(0, 3.2, 0.3)} />
                 {/* Green sparkles */}
                 <line x1="5" y1="76" x2="1" y2="82" stroke="#10b981" strokeWidth="2" strokeLinecap="round"
-                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(0, 3.3, 0.3, 2.1, 3.9)} />
+                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(0, 3.3, 0.3)} />
                 <line x1="2" y1="70" x2="8" y2="68" stroke="#10b981" strokeWidth="2" strokeLinecap="round"
-                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(0, 3.4, 0.3, 2.1, 4.3)} />
+                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(0, 3.4, 0.3)} />
                 <line x1="11" y1="82" x2="11" y2="88" stroke="#10b981" strokeWidth="2" strokeLinecap="round"
-                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(0, 3.5, 0.3, 2.1, 4.7)} />
+                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(0, 3.5, 0.3)} />
               </svg>,
 
               /* ── Step 2: Receive Questions — Envelope + speech bubble ── */
@@ -479,15 +480,15 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                 </g>
                 {/* Sparkles */}
                 <line x1="57" y1="27" x2="63" y2="21" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round"
-                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(1, 3.0, 0.3, 1.9, 3.6)} />
+                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(1, 3.0, 0.3)} />
                 <line x1="65" y1="34" x2="71" y2="32" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round"
-                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(1, 3.1, 0.3, 1.9, 3.9)} />
+                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(1, 3.1, 0.3)} />
                 <line x1="55" y1="36" x2="55" y2="30" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round"
-                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(1, 3.2, 0.3, 1.9, 4.3)} />
+                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(1, 3.2, 0.3)} />
                 <line x1="4" y1="24" x2="0" y2="30" stroke="#10b981" strokeWidth="2" strokeLinecap="round"
-                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(1, 3.3, 0.3, 2.2, 4.0)} />
+                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(1, 3.3, 0.3)} />
                 <line x1="0" y1="18" x2="6" y2="16" stroke="#10b981" strokeWidth="2" strokeLinecap="round"
-                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(1, 3.4, 0.3, 2.2, 4.4)} />
+                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(1, 3.4, 0.3)} />
               </svg>,
 
               /* ── Step 3: Reply & Earn — Money bag + rising coins ── */
@@ -521,30 +522,30 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                 </g>
                 {/* Rising coins — continuously float up, no sketch draw */}
                 <circle cx="90" cy="56" r="10" stroke="#f59e0b" strokeWidth="2"
-                  style={howItWorksVisible ? { animation: 'lp-coin-rise 2.5s ease-in-out infinite 2.8s', opacity: 0 } : { opacity: 0 }} />
+                  style={activeStep === 2 ? { animation: 'lp-coin-rise 2.5s ease-in-out infinite 2.8s', opacity: 0 } : { opacity: 0 }} />
                 <line x1="90" y1="50" x2="90" y2="62" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round"
-                  style={howItWorksVisible ? { animation: 'lp-coin-rise 2.5s ease-in-out infinite 2.8s', opacity: 0 } : { opacity: 0 }} />
+                  style={activeStep === 2 ? { animation: 'lp-coin-rise 2.5s ease-in-out infinite 2.8s', opacity: 0 } : { opacity: 0 }} />
                 <circle cx="98" cy="68" r="8" stroke="#fbbf24" strokeWidth="2"
-                  style={howItWorksVisible ? { animation: 'lp-coin-rise 2.5s ease-in-out infinite 3.65s', opacity: 0 } : { opacity: 0 }} />
+                  style={activeStep === 2 ? { animation: 'lp-coin-rise 2.5s ease-in-out infinite 3.65s', opacity: 0 } : { opacity: 0 }} />
                 <line x1="98" y1="63" x2="98" y2="73" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round"
-                  style={howItWorksVisible ? { animation: 'lp-coin-rise 2.5s ease-in-out infinite 3.65s', opacity: 0 } : { opacity: 0 }} />
+                  style={activeStep === 2 ? { animation: 'lp-coin-rise 2.5s ease-in-out infinite 3.65s', opacity: 0 } : { opacity: 0 }} />
                 <circle cx="86" cy="74" r="9" stroke="#fcd34d" strokeWidth="2"
-                  style={howItWorksVisible ? { animation: 'lp-coin-rise 2.5s ease-in-out infinite 4.5s', opacity: 0 } : { opacity: 0 }} />
+                  style={activeStep === 2 ? { animation: 'lp-coin-rise 2.5s ease-in-out infinite 4.5s', opacity: 0 } : { opacity: 0 }} />
                 <line x1="86" y1="69" x2="86" y2="79" stroke="#fcd34d" strokeWidth="1.5" strokeLinecap="round"
-                  style={howItWorksVisible ? { animation: 'lp-coin-rise 2.5s ease-in-out infinite 4.5s', opacity: 0 } : { opacity: 0 }} />
+                  style={activeStep === 2 ? { animation: 'lp-coin-rise 2.5s ease-in-out infinite 4.5s', opacity: 0 } : { opacity: 0 }} />
                 {/* Sparkles — green top-left, gold bottom-right */}
                 <line x1="10" y1="18" x2="4" y2="12" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round"
-                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(2, 2.5, 0.3, 1.7, 3.3)} />
+                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(2, 2.5, 0.3)} />
                 <line x1="4" y1="24" x2="0" y2="22" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round"
-                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(2, 2.6, 0.3, 1.7, 3.6)} />
+                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(2, 2.6, 0.3)} />
                 <line x1="12" y1="26" x2="12" y2="20" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round"
-                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(2, 2.7, 0.3, 1.7, 3.9)} />
+                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(2, 2.7, 0.3)} />
                 <line x1="112" y1="82" x2="118" y2="88" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round"
-                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(2, 2.8, 0.3, 2.0, 3.7)} />
+                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(2, 2.8, 0.3)} />
                 <line x1="118" y1="76" x2="121" y2="79" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round"
-                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(2, 2.9, 0.3, 2.0, 4.1)} />
+                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(2, 2.9, 0.3)} />
                 <line x1="110" y1="78" x2="110" y2="84" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round"
-                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(2, 3.0, 0.3, 2.0, 4.5)} />
+                  pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={ST(2, 3.0, 0.3)} />
               </svg>,
             ];
 
@@ -577,7 +578,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                     transform: isActive ? 'translateY(-8px) scale(1.02)' : 'scale(0.97)',
                     boxShadow: isActive ? `0 24px 48px -12px ${shadowColors[idx]}` : 'none',
                   }}
-                  onClick={() => { setStepAnimKeys(keys => { const k = [...keys]; k[idx]++; return k; }); setActiveStep(idx); }}
+                  onClick={() => { setStepAnimKeys(keys => { const k = [...keys]; if (k[idx] === 0) k[idx] = 1; return k; }); setActiveStep(idx); }}
                 >
                   {/* Step badge */}
                   <span
@@ -664,7 +665,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                       {/* Step dot + label */}
                       <button
                         className="flex flex-col items-center gap-2 group flex-shrink-0"
-                        onClick={() => { setStepAnimKeys(keys => { const k = [...keys]; k[idx]++; return k; }); setActiveStep(idx); }}
+                        onClick={() => { setStepAnimKeys(keys => { const k = [...keys]; if (k[idx] === 0) k[idx] = 1; return k; }); setActiveStep(idx); }}
                       >
                         <div
                           className="w-11 h-11 rounded-full flex items-center justify-center font-black text-sm"
