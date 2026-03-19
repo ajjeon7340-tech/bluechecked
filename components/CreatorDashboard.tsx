@@ -249,6 +249,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Settings text tab state
   const [settingsTextTab, setSettingsTextTab] = useState<'bio' | 'instructions' | 'reply'>('bio');
 
+  // Onboarding tutorial
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState(0);
+  const tutorialLinksRef = useRef<HTMLDivElement>(null);
+  const tutorialSectionsRef = useRef<HTMLDivElement>(null);
+
+  const TUTORIAL_STEPS = [
+    { title: 'Your Status Message', desc: 'This appears on your public profile — it\'s the first thing fans see when they visit your page. Make it personal!', tab: 'bio' as const, highlight: 'bio' },
+    { title: 'Request Instructions', desc: 'Shown to fans before they send you a Diem request. Guide them on what context to include so you can give the best answer.', tab: 'instructions' as const, highlight: 'instructions' },
+    { title: 'Auto-Reply Message', desc: 'Sent automatically the moment a fan pays — a warm acknowledgment while you prepare your response.', tab: 'reply' as const, highlight: 'reply' },
+    { title: 'Links & Products', desc: 'Share links to your social profiles, website, or resources. You can also upload digital products fans can purchase directly.', tab: null, highlight: 'links' },
+    { title: 'Custom Sections', desc: 'Group your links under named sections like "My Work" or "Resources". Type a section name and hit Add to create one.', tab: null, highlight: 'sections' },
+  ] as const;
+
   const handleAddSection = () => {
       if (!newSectionTitle.trim()) return;
       const newSection: LinkSection = {
@@ -591,6 +605,33 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   useEffect(() => {
       loadTrendData();
   }, [trendTimeFrame, trendDate]);
+
+  // Show tutorial the first time a creator visits SETTINGS
+  useEffect(() => {
+    if (currentView === 'SETTINGS' && currentUser) {
+      const key = `diem_creator_tutorial_done_${currentUser.id}`;
+      if (!localStorage.getItem(key)) {
+        setShowTutorial(true);
+        setTutorialStep(0);
+        setSettingsTextTab('bio');
+      }
+    }
+  }, [currentView, currentUser?.id]);
+
+  const handleTutorialNext = () => {
+    const nextStep = tutorialStep + 1;
+    if (nextStep >= TUTORIAL_STEPS.length) { handleTutorialDone(); return; }
+    setTutorialStep(nextStep);
+    const tab = TUTORIAL_STEPS[nextStep].tab;
+    if (tab) setSettingsTextTab(tab);
+    if (nextStep === 3) setTimeout(() => tutorialLinksRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+    if (nextStep === 4) setTimeout(() => tutorialSectionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+  };
+
+  const handleTutorialDone = () => {
+    if (currentUser) localStorage.setItem(`diem_creator_tutorial_done_${currentUser.id}`, '1');
+    setShowTutorial(false);
+  };
 
   useEffect(() => {
     if (currentView === 'ANALYTICS' && creator.isPremium) {
@@ -3298,7 +3339,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </p>
                             </div>
                             {/* Bio / Instructions / Auto-Reply tab switcher */}
-                            <div>
+                            <div className={showTutorial && tutorialStep <= 2 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                                 <div className="flex bg-stone-100 rounded-xl p-1 mb-3 gap-0.5">
                                     {[
                                         { key: 'bio', label: 'Bio / About' },
@@ -3426,11 +3467,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             </div>
 
                             {/* Links & Products Section */}
-                            <div>
+                            <div ref={tutorialLinksRef} className={showTutorial && tutorialStep === 3 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                                 <label className="block text-sm font-medium text-stone-700 mb-2">Links & Products</label>
 
                                 {/* Section Management */}
-                                <div className="mb-4 p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-3">
+                                <div ref={tutorialSectionsRef} className={`mb-4 p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-3${showTutorial && tutorialStep === 4 ? ' ring-2 ring-amber-400' : ''}`}>
                                     <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Custom Sections</span>
                                     {(editedCreator.linkSections || []).length > 0 && (
                                         <div className="flex flex-col gap-1.5">
@@ -4030,6 +4071,54 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             </div>
         </div>
       )}
+      {/* Onboarding Tutorial Overlay */}
+      {showTutorial && currentView === 'SETTINGS' && (
+        <>
+          {/* Backdrop */}
+          <div className="fixed inset-0 bg-black/40 z-50" onClick={handleTutorialDone} />
+          {/* Coach card */}
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[min(400px,calc(100vw-32px))] bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden">
+            {/* Progress bar */}
+            <div className="h-1 bg-stone-100">
+              <div
+                className="h-full bg-amber-400 transition-all duration-300"
+                style={{ width: `${((tutorialStep + 1) / TUTORIAL_STEPS.length) * 100}%` }}
+              />
+            </div>
+            <div className="p-5">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">
+                    {['✍️', '📋', '💬', '🔗', '📂'][tutorialStep]}
+                  </span>
+                  <span className="font-bold text-stone-900 text-sm">{TUTORIAL_STEPS[tutorialStep].title}</span>
+                </div>
+                <span className="text-[11px] text-stone-400 font-medium shrink-0 ml-2">{tutorialStep + 1} / {TUTORIAL_STEPS.length}</span>
+              </div>
+              <p className="text-sm text-stone-500 leading-relaxed mb-4">{TUTORIAL_STEPS[tutorialStep].desc}</p>
+              <div className="flex items-center justify-between">
+                <button onClick={handleTutorialDone} className="text-xs text-stone-400 hover:text-stone-600 transition-colors">
+                  Skip tutorial
+                </button>
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-1">
+                    {TUTORIAL_STEPS.map((_, i) => (
+                      <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === tutorialStep ? 'w-4 bg-amber-500' : i < tutorialStep ? 'w-1.5 bg-amber-200' : 'w-1.5 bg-stone-200'}`} />
+                    ))}
+                  </div>
+                  <button
+                    onClick={handleTutorialNext}
+                    className="px-4 py-2 bg-stone-900 text-white text-sm font-semibold rounded-xl hover:bg-stone-700 transition-colors"
+                  >
+                    {tutorialStep < TUTORIAL_STEPS.length - 1 ? 'Next →' : 'Got it ✓'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Image Lightbox */}
       {enlargedImage && (
           <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setEnlargedImage(null)}>
