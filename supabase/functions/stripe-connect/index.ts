@@ -166,8 +166,9 @@ Deno.serve(async (req) => {
         return jsonResponse({ connected: false })
       }
 
-      const account = await stripeRequest(`/accounts/${existing.stripe_account_id}`, STRIPE_SECRET_KEY)
+      const account = await stripeRequest(`/accounts/${existing.stripe_account_id}?expand[]=external_accounts`, STRIPE_SECRET_KEY)
       const connected = account.charges_enabled && account.payouts_enabled
+      const last4 = account.external_accounts?.data?.[0]?.last4 ?? null
 
       if (connected) {
         await adminClient
@@ -176,7 +177,7 @@ Deno.serve(async (req) => {
           .eq('user_id', user.id)
       }
 
-      return jsonResponse({ connected })
+      return jsonResponse({ connected, last4 })
     }
 
     // ---- CREATE PAYOUT (with fees + rollback) ----
