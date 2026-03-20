@@ -54,58 +54,104 @@ Deno.serve(async (req) => {
     if (authError || !user) return errorResponse('Unauthorized', 401)
 
     const creatorId = user.id
+    console.log('[welcome] creatorId:', creatorId)
 
-    // Look up the Diem account by email
-    const { data: { users }, error: listError } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
-    if (listError) {
-      console.error('[welcome] Failed to list users:', listError)
-      return errorResponse('Failed to find Diem account', 500)
+    // Look up Diem account via profiles table (simpler than listing all auth users)
+    const { data: diemProfile, error: diemError } = await adminClient
+      .from('profiles')
+      .select('id')
+      .eq('email', DIEM_ACCOUNT_EMAIL)
+      .maybeSingle()
+
+    if (diemError) {
+      console.error('[welcome] profiles lookup error:', diemError)
+      return errorResponse('Failed to find Diem account: ' + diemError.message, 500)
     }
 
-    const diemUser = users.find((u: any) => u.email === DIEM_ACCOUNT_EMAIL)
-    if (!diemUser) {
-      console.error('[welcome] Diem account not found:', DIEM_ACCOUNT_EMAIL)
-      return errorResponse('Diem account not found', 404)
+    if (!diemProfile) {
+      console.error('[welcome] Diem profile not found for email:', DIEM_ACCOUNT_EMAIL)
+      // Fallback: look up in auth.users
+      const { data: { users }, error: listError } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
+      if (listError || !users) {
+        console.error('[welcome] auth.admin.listUsers also failed:', listError)
+        return errorResponse('Diem account not found', 404)
+      }
+      const diemAuthUser = users.find((u: any) => u.email === DIEM_ACCOUNT_EMAIL)
+      if (!diemAuthUser) {
+        console.error('[welcome] Diem account not found in auth.users either')
+        return errorResponse('Diem account not found', 404)
+      }
+      console.log('[welcome] Found Diem user via auth fallback:', diemAuthUser.id)
+      return await insertWelcomeMessage(adminClient, diemAuthUser.id, creatorId)
     }
 
-    const diemUserId = diemUser.id
-
-    // Check if welcome message already sent (idempotent)
-    const { count } = await adminClient
-      .from('messages')
-      .select('id', { count: 'exact', head: true })
-      .eq('sender_id', diemUserId)
-      .eq('creator_id', creatorId)
-
-    if (count && count > 0) {
-      return jsonResponse({ alreadySent: true })
-    }
-
-    // Insert welcome message — 30 day expiry, no credits deducted from Diem
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-
-    const { error: insertError } = await adminClient
-      .from('messages')
-      .insert({
-        sender_id: diemUserId,
-        creator_id: creatorId,
-        content: WELCOME_MESSAGE,
-        amount: WELCOME_AMOUNT,
-        status: 'PENDING',
-        expires_at: expiresAt,
-        is_read: false,
-      })
-
-    if (insertError) {
-      console.error('[welcome] Failed to insert message:', insertError)
-      return errorResponse('Failed to send welcome message: ' + insertError.message, 500)
-    }
-
-    console.log('[welcome] Sent welcome message from', diemUserId, 'to creator', creatorId)
-    return jsonResponse({ success: true })
+    console.log('[welcome] Found Diem profile id:', diemProfile.id)
+    return await insertWelcomeMessage(adminClient, diemProfile.id, creatorId)
 
   } catch (err: any) {
-    console.error('[welcome] Error:', err)
+    console.error('[welcome] Unexpected error:', err)
     return errorResponse(err.message || 'Internal error', 500)
   }
 })
+
+async function insertWelcomeMessage(
+  adminClient: ReturnType<typeof createClient>,
+  diemUserId: string,
+  creatorId: string
+) {
+  // Idempotent: skip if already sent
+  const { count } = await adminClient
+    .from('messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('sender_id', diemUserId)
+    .eq('creator_id', creatorId)
+
+  if (count && count > 0) {
+    console.log('[welcome] Already sent, skipping')
+    return jsonResponse({ alreadySent: true })
+  }
+
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+
+  const { error: insertError } = await adminClient
+    .from('messages')
+    .insert({
+      sender_id: diemUserId,
+      creator_id: creatorId,
+      content: WELCOME_MESSAGE,
+      amount: WELCOME_AMOUNT,
+      status: 'PENDING',
+      expires_at: expiresAt,
+      is_read: false,
+    })
+
+  if (insertError) {
+    console.error('[welcome] Insert error:', insertError)
+    return errorResponse('Failed to insert welcome message: ' + insertError.message, 500)
+  }
+
+  console.log('[welcome] Successfully sent from', diemUserId, 'to', creatorId)
+  return jsonResponse({ success: true })
+}
+
+function jsonResponse(data: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+function errorResponse(message: string, status = 400) {
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+      'Content-Type': 'application/json',
+    },
+  })
+}

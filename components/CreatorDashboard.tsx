@@ -625,9 +625,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       setShowTutorial(true);
       setTutorialStep(0);
       setTutorialIsRevisit(false);
-      // Send real welcome message from Diem account
-      sendWelcomeMessage();
     }
+  }, [currentUser?.id]);
+
+  // Send welcome message on every load — idempotent, skips if already sent
+  useEffect(() => {
+    if (currentUser) sendWelcomeMessage();
   }, [currentUser?.id]);
 
   // Show settings tutorial when revisiting SETTINGS (if skipped during auto-show)
