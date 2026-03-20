@@ -2138,6 +2138,20 @@ const callStripeConnect = async (body: Record<string, unknown>) => {
     return res.data;
 };
 
+export const sendWelcomeMessage = async (): Promise<void> => {
+    if (!isConfigured) return;
+    try {
+        const { data: session } = await supabase.auth.getSession();
+        if (!session.session) return;
+        const res = await supabase.functions.invoke('send-welcome-message', {
+            headers: { Authorization: `Bearer ${session.session.access_token}` },
+        });
+        console.log('[welcome] result:', res.data);
+    } catch (e: any) {
+        console.warn('[welcome] Failed to send welcome message:', e.message);
+    }
+};
+
 export const connectStripeAccount = async (): Promise<string | null> => {
     if (!isConfigured) {
         console.log("[Stripe] Backend not configured, using mock mode (returning null URL)");
