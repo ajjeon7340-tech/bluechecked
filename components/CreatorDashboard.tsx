@@ -614,46 +614,36 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       loadTrendData();
   }, [trendTimeFrame, trendDate]);
 
-  // Auto-show settings tutorial on first account creation
-  // Auto-show tutorial on first account creation
+  // Tutorial logic: single effect to avoid race conditions between auto-show and revisit
   useEffect(() => {
     if (!currentUser) return;
     const autoKey = `diem_creator_tutorial_auto_shown_${currentUser.id}`;
     const doneKey = `diem_creator_tutorial_done_${currentUser.id}`;
-    if (!localStorage.getItem(autoKey) && !localStorage.getItem(doneKey)) {
-      autoShowActiveRef.current = true; // block settings-revisit effect from firing simultaneously
+    const isDone = !!localStorage.getItem(doneKey);
+    const wasAutoShown = !!localStorage.getItem(autoKey);
+
+    if (!isDone && !wasAutoShown) {
+      // First account creation — auto-show
       localStorage.setItem(autoKey, '1');
+      autoShowActiveRef.current = true;
       setCurrentView('SETTINGS');
       setSettingsTextTab('bio');
       setTutorialStep(0);
       setTutorialIsRevisit(false);
       setShowTutorial(true);
+    } else if (!isDone && wasAutoShown && currentView === 'SETTINGS' && !autoShowActiveRef.current) {
+      // Revisit from settings after having skipped the auto-show
+      setTutorialStep(0);
+      setSettingsTextTab('bio');
+      setTutorialIsRevisit(true);
+      setShowTutorial(true);
     }
-  }, [currentUser?.id]);
+  }, [currentView, currentUser?.id]);
 
   // Send welcome message on every load — idempotent, skips if already sent
   useEffect(() => {
     if (currentUser) sendWelcomeMessage();
   }, [currentUser?.id]);
-
-  // Show settings tutorial when revisiting SETTINGS manually (if skipped during auto-show)
-  useEffect(() => {
-    // If this was triggered by the auto-show navigating to SETTINGS, skip it
-    if (autoShowActiveRef.current) {
-      autoShowActiveRef.current = false;
-      return;
-    }
-    if (currentView === 'SETTINGS' && currentUser) {
-      const autoKey = `diem_creator_tutorial_auto_shown_${currentUser.id}`;
-      const doneKey = `diem_creator_tutorial_done_${currentUser.id}`;
-      if (localStorage.getItem(autoKey) && !localStorage.getItem(doneKey)) {
-        setShowTutorial(true);
-        setTutorialStep(0);
-        setSettingsTextTab('bio');
-        setTutorialIsRevisit(true);
-      }
-    }
-  }, [currentView, currentUser?.id]);
 
   // Show inbox tutorial on first INBOX visit
   useEffect(() => {

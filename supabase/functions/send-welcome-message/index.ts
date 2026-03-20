@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
 })
 
 async function insertWelcomeMessage(
-  adminClient: ReturnType<typeof createClient>,
+  adminClient: any,
   diemUserId: string,
   creatorId: string
 ) {
