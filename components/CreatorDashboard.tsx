@@ -254,6 +254,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
   const [tutorialIsRevisit, setTutorialIsRevisit] = useState(false);
+  const autoShowActiveRef = useRef(false); // prevents settings-revisit effect from interfering with auto-show
   const tutorialLinksRef = useRef<HTMLDivElement>(null);
   const tutorialSectionsRef = useRef<HTMLDivElement>(null);
 
@@ -614,17 +615,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   }, [trendTimeFrame, trendDate]);
 
   // Auto-show settings tutorial on first account creation
+  // Auto-show tutorial on first account creation
   useEffect(() => {
     if (!currentUser) return;
     const autoKey = `diem_creator_tutorial_auto_shown_${currentUser.id}`;
     const doneKey = `diem_creator_tutorial_done_${currentUser.id}`;
     if (!localStorage.getItem(autoKey) && !localStorage.getItem(doneKey)) {
+      autoShowActiveRef.current = true; // block settings-revisit effect from firing simultaneously
       localStorage.setItem(autoKey, '1');
       setCurrentView('SETTINGS');
       setSettingsTextTab('bio');
-      setShowTutorial(true);
       setTutorialStep(0);
       setTutorialIsRevisit(false);
+      setShowTutorial(true);
     }
   }, [currentUser?.id]);
 
@@ -633,12 +636,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     if (currentUser) sendWelcomeMessage();
   }, [currentUser?.id]);
 
-  // Show settings tutorial when revisiting SETTINGS (if skipped during auto-show)
+  // Show settings tutorial when revisiting SETTINGS manually (if skipped during auto-show)
   useEffect(() => {
+    // If this was triggered by the auto-show navigating to SETTINGS, skip it
+    if (autoShowActiveRef.current) {
+      autoShowActiveRef.current = false;
+      return;
+    }
     if (currentView === 'SETTINGS' && currentUser) {
       const autoKey = `diem_creator_tutorial_auto_shown_${currentUser.id}`;
       const doneKey = `diem_creator_tutorial_done_${currentUser.id}`;
-      if (localStorage.getItem(autoKey) && !localStorage.getItem(doneKey) && !showTutorial) {
+      if (localStorage.getItem(autoKey) && !localStorage.getItem(doneKey)) {
         setShowTutorial(true);
         setTutorialStep(0);
         setSettingsTextTab('bio');
