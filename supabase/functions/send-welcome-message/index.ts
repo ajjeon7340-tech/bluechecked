@@ -45,15 +45,11 @@ Deno.serve(async (req) => {
   try {
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-    // Verify the requesting user
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) return errorResponse('Unauthorized', 401)
+    // Parse body for creatorId (sent explicitly from client)
+    const body = await req.json().catch(() => ({}))
+    const creatorId: string = body.creatorId
 
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: authError } = await adminClient.auth.getUser(token)
-    if (authError || !user) return errorResponse('Unauthorized', 401)
-
-    const creatorId = user.id
+    if (!creatorId) return errorResponse('Missing creatorId', 400)
     console.log('[welcome] creatorId:', creatorId)
 
     // Look up Diem account via profiles table (simpler than listing all auth users)

@@ -2144,6 +2144,7 @@ export const sendWelcomeMessage = async (): Promise<void> => {
         const { data: session } = await supabase.auth.getSession();
         if (!session.session) return;
         const res = await supabase.functions.invoke('send-welcome-message', {
+            body: { creatorId: session.session.user.id },
             headers: { Authorization: `Bearer ${session.session.access_token}` },
         });
         console.log('[welcome] result:', res.data);
