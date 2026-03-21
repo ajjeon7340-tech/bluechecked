@@ -2657,7 +2657,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         </div>
 
                         {(() => {
-                            const baseCents = topUpAmount;
+                            const TIER_CENTS: Record<number, number> = { 10: 50, 100: 100, 500: 500, 1000: 1000, 2500: 2500, 5000: 5000 };
+                            const baseCents = TIER_CENTS[topUpAmount] ?? topUpAmount;
                             const feeCents = Math.ceil((baseCents + 30) / (1 - 0.029) - baseCents);
                             const totalCents = baseCents + feeCents;
                             return (

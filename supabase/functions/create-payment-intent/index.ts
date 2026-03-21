@@ -13,7 +13,7 @@ const corsHeaders = {
 
 // Server-side credit tiers — client amount is validated against these
 const CREDIT_TIERS: Record<number, number> = {
-  10: 10,      // 10 credits = $0.10 = 10 cents (test tier)
+  10: 50,      // 10 credits = $0.50 = 50 cents (test tier, Stripe minimum)
   100: 100,    // 100 credits = $1.00 = 100 cents
   500: 500,    // 500 credits = $5.00 = 500 cents
   1000: 1000,  // 1000 credits = $10.00
