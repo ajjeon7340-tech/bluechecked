@@ -427,21 +427,25 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   // Group messages for List View (Simulating grouping by Creator)
   const conversationGroups = useMemo(() => {
       if (messages.length === 0) return [];
-      
-      const groups: Record<string, { creatorId: string, creatorName: string, creatorAvatarUrl?: string, latestMessage: Message, messageCount: number }> = {};
-      
+
+      const groups: Record<string, { creatorId: string, creatorName: string, creatorAvatarUrl?: string, latestMessage: Message, messageCount: number, isDiemMessage: boolean }> = {};
+
       messages.forEach(msg => {
           if (msg.content.startsWith('Purchased Product:')) return;
           if (msg.content.startsWith('Fan Tip:')) return;
 
+          // Diem→fan messages: fan is creator_id, Diem is sender
+          const isDiemMessage = msg.creatorId === currentUser?.id;
           const cId = msg.creatorId || 'unknown';
           if (!groups[cId]) {
               groups[cId] = {
                   creatorId: cId,
-                  creatorName: msg.creatorName || 'Creator',
-                  creatorAvatarUrl: msg.creatorAvatarUrl,
+                  // For Diem→fan messages, show Diem's name/avatar instead of the fan's own
+                  creatorName: isDiemMessage ? (msg.senderName || 'Diem') : (msg.creatorName || 'Creator'),
+                  creatorAvatarUrl: isDiemMessage ? msg.senderAvatarUrl : msg.creatorAvatarUrl,
                   latestMessage: msg,
-                  messageCount: 0
+                  messageCount: 0,
+                  isDiemMessage,
               };
           }
           groups[cId].messageCount++;
@@ -449,9 +453,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
               groups[cId].latestMessage = msg;
           }
       });
-      
+
       return Object.values(groups);
-  }, [messages]);
+  }, [messages, currentUser?.id]);
 
   const filteredGroups = useMemo(() => {
       return conversationGroups.filter(g => {
@@ -1852,7 +1856,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             </div>
                                             <p className="text-xs text-stone-500 line-clamp-2 mb-2 ml-11">{latestMsg.conversation[latestMsg.conversation.length - 1]?.content || latestMsg.content}</p>
                                             <div className="flex items-center justify-between ml-11">
-                                                {latestMsg.status === 'PENDING' ? (
+                                                {group.isDiemMessage ? (
+                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 animate-pulse">NEW</span>
+                                                ) : latestMsg.status === 'PENDING' ? (
                                                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${timeLeft.bg} ${timeLeft.color}`}>{timeLeft.text}</span>
                                                 ) : latestMsg.status === 'REPLIED' ? (
                                                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">REPLIED</span>

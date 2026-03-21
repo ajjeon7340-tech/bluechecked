@@ -261,6 +261,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Inbox tutorial
   const [showInboxTutorial, setShowInboxTutorial] = useState(false);
   const [inboxTutorialStep, setInboxTutorialStep] = useState(0);
+  const inboxTutorialRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null, null]);
 
   const TUTORIAL_STEPS = [
     { title: 'Your Status Message', desc: 'This appears on your public profile — it\'s the first thing fans see when they visit your page. Make it personal!', tab: 'bio' as const, highlight: 'bio' },
@@ -2773,12 +2774,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             const tl = getTimeLeft(activeMessage.expiresAt);
                                             return (
                                                 <>
-                                                    <div className={showInboxTutorial && inboxTutorialStep === 0 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-full' : ''}>
+                                                    <div ref={(el) => { inboxTutorialRefs.current[0] = el; }} className={showInboxTutorial && inboxTutorialStep === 0 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-full' : ''}>
                                                         <div className={`text-[10px] sm:text-xs font-semibold ${tl.color} ${tl.bg} px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1 border ${tl.border} whitespace-nowrap`}>
                                                             <Clock size={12} className={tl.iconColor} /> {tl.text}
                                                         </div>
                                                     </div>
-                                                    <div className={showInboxTutorial && inboxTutorialStep === 3 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-full' : ''}>
+                                                    <div ref={(el) => { inboxTutorialRefs.current[3] = el; }} className={showInboxTutorial && inboxTutorialStep === 3 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-full' : ''}>
                                                         <button
                                                             onClick={() => handleSendReply(true)}
                                                             disabled={((!replyText.trim() && replyAttachments.length === 0) && !hasManualCreatorReply) || isSendingReply || isRejecting}
@@ -2802,7 +2803,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 {t('creator.refunded')}
                                             </div>
                                         )}
-                                        <div className={showInboxTutorial && inboxTutorialStep === 4 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-lg' : ''}>
+                                        <div ref={(el) => { inboxTutorialRefs.current[4] = el; }} className={showInboxTutorial && inboxTutorialStep === 4 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-lg' : ''}>
                                             <button
                                                 onClick={() => leaveChatroom(activeMessage.senderEmail)}
                                                 className="p-1.5 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
@@ -3223,7 +3224,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <span className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded border border-green-100 font-medium whitespace-nowrap text-[10px] sm:text-xs">
                                                 <Coins size={12} className="flex-shrink-0" /> <span className="hidden sm:inline">Payment held in </span>escrow
                                             </span>
-                                            <div className={showInboxTutorial && inboxTutorialStep === 2 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-full' : ''}>
+                                            <div ref={(el) => { inboxTutorialRefs.current[2] = el; }} className={showInboxTutorial && inboxTutorialStep === 2 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-full' : ''}>
                                                 <button
                                                     onClick={() => replyFileInputRef.current?.click()}
                                                     disabled={isUploadingReplyAttachment || replyAttachments.length >= 3}
@@ -3272,7 +3273,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         />
 
                                         <div className="flex justify-end mt-2">
-                                            <div className={showInboxTutorial && inboxTutorialStep === 1 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-full' : ''}>
+                                            <div ref={(el) => { inboxTutorialRefs.current[1] = el; }} className={showInboxTutorial && inboxTutorialStep === 1 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-full' : ''}>
                                                 <button
                                                     onClick={() => handleSendReply(false)}
                                                     disabled={(!replyText.trim() && replyAttachments.length === 0) || isSendingReply || isRejecting}
@@ -4242,11 +4243,49 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           },
         ];
         const step = INBOX_TUTORIAL_STEPS[inboxTutorialStep];
+
+        // Compute card position anchored to the highlighted element
+        const CARD_W = 340;
+        const GAP = 12;
+        const targetEl = inboxTutorialRefs.current[inboxTutorialStep];
+        const rect = targetEl?.getBoundingClientRect();
+        let cardStyle: React.CSSProperties;
+        let arrowStyle: React.CSSProperties = {};
+        let showArrowAbove = false; // arrow at top of card pointing up toward element
+
+        if (rect) {
+          const centerX = rect.left + rect.width / 2;
+          const rawLeft = centerX - CARD_W / 2;
+          const clampedLeft = Math.max(8, Math.min(rawLeft, window.innerWidth - CARD_W - 8));
+          const arrowLeft = Math.max(16, Math.min(centerX - clampedLeft - 8, CARD_W - 32));
+
+          if (rect.bottom + GAP + 220 < window.innerHeight) {
+            // Place card BELOW the element
+            cardStyle = { top: rect.bottom + GAP, left: clampedLeft, width: CARD_W };
+            showArrowAbove = true;
+            arrowStyle = { left: arrowLeft };
+          } else {
+            // Place card ABOVE the element
+            cardStyle = { bottom: window.innerHeight - rect.top + GAP, left: clampedLeft, width: CARD_W };
+            arrowStyle = { left: arrowLeft };
+          }
+        } else {
+          // Fallback: bottom center
+          cardStyle = { bottom: 24, left: '50%', transform: 'translateX(-50%)', width: `min(${CARD_W}px, calc(100vw - 32px))` };
+        }
+
         return (
           <>
             <div className="fixed inset-0 bg-black/40 z-50" />
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[min(420px,calc(100vw-32px))] bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden">
-              <div className="h-1 bg-stone-100">
+            <div className="fixed z-[70] bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-visible" style={cardStyle}>
+              {/* Arrow pointing toward element */}
+              {rect && showArrowAbove && (
+                <div className="absolute -top-2 h-0 w-0 border-l-[8px] border-r-[8px] border-b-[8px] border-l-transparent border-r-transparent border-b-white" style={arrowStyle} />
+              )}
+              {rect && !showArrowAbove && (
+                <div className="absolute -bottom-2 h-0 w-0 border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-white" style={arrowStyle} />
+              )}
+              <div className="h-1 bg-stone-100 rounded-t-2xl overflow-hidden">
                 <div className="h-full bg-stone-900 transition-all duration-300" style={{ width: `${((inboxTutorialStep + 1) / INBOX_TUTORIAL_STEPS.length) * 100}%` }} />
               </div>
               <div className="p-5">
@@ -4258,7 +4297,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                   <span className="text-[11px] text-stone-400 font-medium shrink-0 ml-2">{inboxTutorialStep + 1} / {INBOX_TUTORIAL_STEPS.length}</span>
                 </div>
                 <p className="text-sm text-stone-500 leading-relaxed">{step.desc}</p>
-                {step.preview}
                 <div className="flex items-center justify-between mt-4">
                   <button onClick={handleInboxTutorialDone} className="text-xs text-stone-400 hover:text-stone-600 transition-colors">
                     Skip tutorial

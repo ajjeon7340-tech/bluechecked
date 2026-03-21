@@ -104,6 +104,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   // Setup tutorial state
   const [showSetupTutorial, setShowSetupTutorial] = useState(false);
   const [setupTutorialStep, setSetupTutorialStep] = useState(0);
+  const setupTutorialRefs = useRef<(HTMLDivElement | null)[]>(Array(9).fill(null));
 
   const SETUP_TUTORIAL_STEPS = [
     { emoji: '🌐', title: 'Choose Your Language',       desc: 'Pick the language you\'d like to use on Diem. This sets the language for your dashboard and messages. You can change it anytime in Settings.', tab: 'bio' as const, page: 1 },
@@ -580,7 +581,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
              </div>
 
              <div className="space-y-5">
-                <div className={showSetupTutorial && setupTutorialStep === 0 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-2 -m-2' : ''}>
+                <div ref={(el) => { setupTutorialRefs.current[0] = el; }} className={showSetupTutorial && setupTutorialStep === 0 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-2 -m-2' : ''}>
                    <label className="block text-sm font-medium text-stone-700 mb-2">Language</label>
                    <div className="flex flex-wrap gap-2">
                      {[
@@ -617,7 +618,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
                 {isCreator && (
                     <>
-                        <div className={showSetupTutorial && setupTutorialStep === 1 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
+                        <div ref={(el) => { setupTutorialRefs.current[1] = el; }} className={showSetupTutorial && setupTutorialStep === 1 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                             <label className="block text-sm font-medium text-stone-700 mb-1">Public Page ID</label>
                             <p className="text-xs text-stone-400 mb-2">This will be your unique public page address — choose carefully, it can't be changed later.</p>
                             <div className="flex items-center border border-stone-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-stone-500 transition-all">
@@ -642,11 +643,11 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                                 <MessageSquare size={16} className="text-stone-500" /> {t('auth.messageSettings')}
                             </h3>
                             <div className="grid grid-cols-2 gap-4">
-                                <div className={showSetupTutorial && setupTutorialStep === 2 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
+                                <div ref={(el) => { setupTutorialRefs.current[2] = el; }} className={showSetupTutorial && setupTutorialStep === 2 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                                     <label className="block text-sm font-medium text-stone-700 mb-1">Price per message (credits)</label>
                                     <input type="number" value={price} onChange={e => setPrice(Number(e.target.value))} className="w-full border border-stone-200 rounded-xl p-2 focus:ring-2 focus:ring-stone-500 outline-none transition-all" />
                                 </div>
-                                <div className={showSetupTutorial && setupTutorialStep === 3 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
+                                <div ref={(el) => { setupTutorialRefs.current[3] = el; }} className={showSetupTutorial && setupTutorialStep === 3 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                                     <label className="block text-sm font-medium text-stone-700 mb-1">{t('auth.replyTime')}</label>
                                     <select value={responseHours} onChange={e => setResponseHours(Number(e.target.value))} className="w-full border border-stone-200 rounded-xl p-2 bg-white focus:ring-2 focus:ring-stone-500 outline-none transition-all">
                                         <option value={24}>{t('auth.hours24')}</option>
@@ -657,7 +658,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                             </div>
 
                             {/* Bio / Instructions / Auto-Reply tab switcher */}
-                            <div className={showSetupTutorial && setupTutorialStep >= 4 && setupTutorialStep <= 6 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
+                            <div ref={(el) => { setupTutorialRefs.current[4] = setupTutorialRefs.current[5] = setupTutorialRefs.current[6] = el; }} className={showSetupTutorial && setupTutorialStep >= 4 && setupTutorialStep <= 6 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                                 <div className="flex bg-stone-100 rounded-xl p-1 mb-3 gap-0.5">
                                     {[
                                         { key: 'bio', label: 'Bio / About' },
@@ -701,7 +702,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                             </div>
                         </div>
 
-                        <div className={showSetupTutorial && setupTutorialStep === 7 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
+                        <div ref={(el) => { setupTutorialRefs.current[7] = el; }} className={showSetupTutorial && setupTutorialStep === 7 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                             <label className="block text-sm font-medium text-stone-700 mb-2">{t('auth.connectedPlatforms')}</label>
                             <p className="text-xs text-stone-500 mb-3">{t('auth.platformsDesc')}</p>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -776,7 +777,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
              )}
 
              {/* Add new link form */}
-             <div className={showSetupTutorial && setupTutorialStep === 8 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-2xl' : ''}>
+             <div ref={(el) => { setupTutorialRefs.current[8] = el; }} className={showSetupTutorial && setupTutorialStep === 8 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-2xl' : ''}>
              <div className="bg-stone-50 rounded-2xl border border-stone-200 p-4 space-y-3 mb-4">
                  <p className="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Add item</p>
 
@@ -889,15 +890,45 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
            8: true,
          };
          const canProceed = stepValidation[setupTutorialStep] ?? true;
+
+         // Dynamic positioning near the highlighted element
+         const CARD_W = 340;
+         const GAP = 12;
+         const targetEl = setupTutorialRefs.current[setupTutorialStep];
+         const rect = targetEl?.getBoundingClientRect();
+         let cardStyle: React.CSSProperties;
+         let arrowStyle: React.CSSProperties = {};
+         let showArrowAbove = false;
+
+         if (rect) {
+           const centerX = rect.left + rect.width / 2;
+           const rawLeft = centerX - CARD_W / 2;
+           const clampedLeft = Math.max(8, Math.min(rawLeft, window.innerWidth - CARD_W - 8));
+           const arrowLeft = Math.max(16, Math.min(centerX - clampedLeft - 8, CARD_W - 32));
+           if (rect.bottom + GAP + 240 < window.innerHeight) {
+             cardStyle = { top: rect.bottom + GAP, left: clampedLeft, width: CARD_W };
+             showArrowAbove = true;
+             arrowStyle = { left: arrowLeft };
+           } else {
+             cardStyle = { bottom: window.innerHeight - rect.top + GAP, left: clampedLeft, width: CARD_W };
+             arrowStyle = { left: arrowLeft };
+           }
+         } else {
+           cardStyle = { bottom: 24, left: '50%', transform: 'translateX(-50%)', width: `min(${CARD_W}px, calc(100vw - 32px))` };
+         }
+
          return (
            <>
              <div className="fixed inset-0 bg-black/40 z-50" />
-             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[min(400px,calc(100vw-32px))] bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden">
-               <div className="h-1 bg-stone-100">
-                 <div
-                   className="h-full bg-amber-400 transition-all duration-300"
-                   style={{ width: `${((setupTutorialStep + 1) / SETUP_TUTORIAL_STEPS.length) * 100}%` }}
-                 />
+             <div className="fixed z-[70] bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-visible" style={cardStyle}>
+               {rect && showArrowAbove && (
+                 <div className="absolute -top-2 h-0 w-0 border-l-[8px] border-r-[8px] border-b-[8px] border-l-transparent border-r-transparent border-b-white" style={arrowStyle} />
+               )}
+               {rect && !showArrowAbove && (
+                 <div className="absolute -bottom-2 h-0 w-0 border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-white" style={arrowStyle} />
+               )}
+               <div className="h-1 bg-stone-100 rounded-t-2xl overflow-hidden">
+                 <div className="h-full bg-amber-400 transition-all duration-300" style={{ width: `${((setupTutorialStep + 1) / SETUP_TUTORIAL_STEPS.length) * 100}%` }} />
                </div>
                <div className="p-5">
                  <div className="flex items-start justify-between mb-2">

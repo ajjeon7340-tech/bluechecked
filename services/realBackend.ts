@@ -641,6 +641,8 @@ const enrichCreatorProfile = async (data: any): Promise<CreatorProfile> => {
         products: data.products || [],
         platforms: data.platforms || [],
         isPremium: data.is_premium || false,
+        showLikes: data.show_likes !== false,
+        showRating: data.show_rating !== false,
         isDiemHighlighted: (data.links || []).find((l: any) => l.id === '__diem_config__')?.isPromoted || false,
     };
 };
@@ -798,7 +800,9 @@ export const updateCreatorProfile = async (profile: CreatorProfile): Promise<Cre
             platforms: profile.platforms,
             links: linksToSave,
             products: profile.products,
-            is_premium: profile.isPremium
+            is_premium: profile.isPremium,
+            show_likes: profile.showLikes ?? true,
+            show_rating: profile.showRating ?? true
         })
         .eq('id', session.session.user.id);
 
