@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from './Button';
 import { DiemLogo, CheckCircle2, Lock, GoogleLogo, InstagramLogo, Mail, User, MessageSquare, Camera, X, Plus, YouTubeLogo, XLogo, TikTokLogo, Twitch, Check, Phone, FileText, Heart, ExternalLink, Coins, Trash } from './Icons';
@@ -95,6 +95,34 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   const [regComplete, setRegComplete] = useState(false);
   const [completedUser, setCompletedUser] = useState<CurrentUser | null>(null);
   const [setupTextTab, setSetupTextTab] = useState<'bio' | 'instructions' | 'reply'>('bio');
+
+  // Setup tutorial state
+  const [showSetupTutorial, setShowSetupTutorial] = useState(false);
+  const [setupTutorialStep, setSetupTutorialStep] = useState(0);
+
+  const SETUP_TUTORIAL_STEPS = [
+    { emoji: '✍️', title: 'Your Status Message', desc: 'This is the first thing fans see on your public page. Write a short line about who you are and what you do — keep it personal!', tab: 'bio' as const },
+    { emoji: '📋', title: 'Request Instructions', desc: 'Shown to fans before they send you a Diem. Guide them on what to include so you can give your best response.', tab: 'instructions' as const },
+    { emoji: '💬', title: 'Auto-Reply', desc: 'Sent instantly when a fan pays, before you\'ve replied. A warm acknowledgment while they wait — e.g. "Thanks! I\'ll get back to you within 48 hours."', tab: 'reply' as const },
+  ];
+
+  useEffect(() => {
+    if (step === 'SETUP_PROFILE' && (tempUser?.role || role) === 'CREATOR') {
+      setSetupTutorialStep(0);
+      setSetupTextTab('bio');
+      setShowSetupTutorial(true);
+    }
+  }, [step]);
+
+  const handleSetupTutorialNext = () => {
+    const next = setupTutorialStep + 1;
+    if (next >= SETUP_TUTORIAL_STEPS.length) {
+      setShowSetupTutorial(false);
+      return;
+    }
+    setSetupTutorialStep(next);
+    setSetupTextTab(SETUP_TUTORIAL_STEPS[next].tab);
+  };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -478,7 +506,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                             </div>
 
                             {/* Bio / Instructions / Auto-Reply tab switcher */}
-                            <div>
+                            <div className={showSetupTutorial ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                                 <div className="flex bg-stone-100 rounded-xl p-1 mb-3 gap-0.5">
                                     {[
                                         { key: 'bio', label: 'Bio / About' },
@@ -716,6 +744,49 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
              )}
 
           </div>
+
+       {/* Setup Tutorial Overlay */}
+       {showSetupTutorial && setupPage === 1 && (
+         <>
+           <div className="fixed inset-0 bg-black/40 z-50" onClick={() => setShowSetupTutorial(false)} />
+           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[min(400px,calc(100vw-32px))] bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden">
+             <div className="h-1 bg-stone-100">
+               <div
+                 className="h-full bg-amber-400 transition-all duration-300"
+                 style={{ width: `${((setupTutorialStep + 1) / SETUP_TUTORIAL_STEPS.length) * 100}%` }}
+               />
+             </div>
+             <div className="p-5">
+               <div className="flex items-start justify-between mb-2">
+                 <div className="flex items-center gap-2">
+                   <span className="text-base">{SETUP_TUTORIAL_STEPS[setupTutorialStep].emoji}</span>
+                   <span className="font-bold text-stone-900 text-sm">{SETUP_TUTORIAL_STEPS[setupTutorialStep].title}</span>
+                 </div>
+                 <span className="text-[11px] text-stone-400 font-medium shrink-0 ml-2">{setupTutorialStep + 1} / {SETUP_TUTORIAL_STEPS.length}</span>
+               </div>
+               <p className="text-sm text-stone-500 leading-relaxed mb-4">{SETUP_TUTORIAL_STEPS[setupTutorialStep].desc}</p>
+               <div className="flex items-center justify-between">
+                 <button onClick={() => setShowSetupTutorial(false)} className="text-xs text-stone-400 hover:text-stone-600 transition-colors">
+                   Skip tutorial
+                 </button>
+                 <div className="flex items-center gap-3">
+                   <div className="flex gap-1">
+                     {SETUP_TUTORIAL_STEPS.map((_, i) => (
+                       <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === setupTutorialStep ? 'w-4 bg-amber-500' : i < setupTutorialStep ? 'w-1.5 bg-amber-200' : 'w-1.5 bg-stone-200'}`} />
+                     ))}
+                   </div>
+                   <button
+                     onClick={handleSetupTutorialNext}
+                     className="px-4 py-2 bg-stone-900 text-white text-sm font-semibold rounded-xl hover:bg-stone-700 transition-colors"
+                   >
+                     {setupTutorialStep < SETUP_TUTORIAL_STEPS.length - 1 ? 'Next →' : 'Got it ✓'}
+                   </button>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </>
+       )}
        </div>
     );
   }
