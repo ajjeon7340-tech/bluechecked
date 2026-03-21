@@ -102,10 +102,14 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   const [setupTutorialStep, setSetupTutorialStep] = useState(0);
 
   const SETUP_TUTORIAL_STEPS = [
-    { emoji: '✍️', title: 'Your Status Message', desc: 'This is the first thing fans see on your public page. Write a short line about who you are and what you do — keep it personal!', tab: 'bio' as const, page: 1 },
-    { emoji: '📋', title: 'Request Instructions', desc: 'Shown to fans before they send you a Diem. Guide them on what to include so you can give your best response.', tab: 'instructions' as const, page: 1 },
-    { emoji: '💬', title: 'Auto-Reply', desc: 'Sent instantly when a fan pays, before you\'ve replied. A warm acknowledgment while they wait — e.g. "Thanks! I\'ll get back to you within 48 hours."', tab: 'reply' as const, page: 1 },
-    { emoji: '🔗', title: 'Links & Products', desc: 'Add anything fans can tap on your profile: a website, social page, digital download, or a tip button. You can always add more later from Settings.', tab: 'bio' as const, page: 2 },
+    { emoji: '🔖', title: 'Your Public Page ID',       desc: 'This is your unique handle — fans visit your page at diem.com/@yourhandle. Choose carefully, it can\'t be changed later.', tab: 'bio' as const, page: 1 },
+    { emoji: '💰', title: 'Price per Message',          desc: 'Set how many credits a fan pays to send you a Diem. You can always adjust this from Settings later.', tab: 'bio' as const, page: 1 },
+    { emoji: '⏱️', title: 'Reply Time',                 desc: 'How long fans expect to wait for your reply. Setting a realistic time builds trust and keeps fans happy.', tab: 'bio' as const, page: 1 },
+    { emoji: '✍️', title: 'Your Status Message',       desc: 'The first thing fans see on your public page. Write a short line about who you are and what you do — keep it personal!', tab: 'bio' as const, page: 1 },
+    { emoji: '📋', title: 'Request Instructions',       desc: 'Shown to fans before they send you a Diem. Guide them on what to include so you can give your best response.', tab: 'instructions' as const, page: 1 },
+    { emoji: '💬', title: 'Auto-Reply',                 desc: 'Sent instantly when a fan pays, before you\'ve replied. A warm acknowledgment while they wait — e.g. "Thanks! I\'ll get back to you within 48 hours."', tab: 'reply' as const, page: 1 },
+    { emoji: '📱', title: 'Connected Platforms',        desc: 'Link your social accounts so fans can find you elsewhere. Tap any platform to connect it to your profile.', tab: 'bio' as const, page: 1 },
+    { emoji: '🔗', title: 'Links & Products',           desc: 'Add anything fans can tap on your profile: a website, digital download, or a tip button. You can always add more later from Settings.', tab: 'bio' as const, page: 2 },
   ];
 
   useEffect(() => {
@@ -124,7 +128,8 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
     }
     setSetupTutorialStep(next);
     const nextStep = SETUP_TUTORIAL_STEPS[next];
-    if (nextStep.page === 1) setSetupTextTab(nextStep.tab);
+    // Switch text tab when entering bio/instructions/reply steps
+    if (nextStep.page === 1 && [3, 4, 5].includes(next)) setSetupTextTab(nextStep.tab);
   };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -456,11 +461,6 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
              <div className="space-y-5">
                 <div>
-                   <label className="block text-sm font-medium text-stone-700 mb-1">{t('auth.displayName')}</label>
-                   <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder={t('auth.yourName')} className="w-full border border-stone-200 rounded-xl p-3 focus:ring-2 focus:ring-stone-500 outline-none transition-all" />
-                </div>
-
-                <div>
                    <label className="block text-sm font-medium text-stone-700 mb-2">Language</label>
                    <div className="flex flex-wrap gap-2">
                      {[
@@ -483,6 +483,11 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                    </div>
                 </div>
 
+                <div>
+                   <label className="block text-sm font-medium text-stone-700 mb-1">{t('auth.displayName')}</label>
+                   <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder={t('auth.yourName')} className="w-full border border-stone-200 rounded-xl p-3 focus:ring-2 focus:ring-stone-500 outline-none transition-all" />
+                </div>
+
                 {!isCreator && (
                 <div>
                    <label className="block text-sm font-medium text-stone-700 mb-1">{t('auth.bioAbout')}</label>
@@ -492,7 +497,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
                 {isCreator && (
                     <>
-                        <div>
+                        <div className={showSetupTutorial && setupTutorialStep === 0 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                             <label className="block text-sm font-medium text-stone-700 mb-1">Public Page ID</label>
                             <p className="text-xs text-stone-400 mb-2">This will be your unique public page address — choose carefully, it can't be changed later.</p>
                             <div className="flex items-center border border-stone-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-stone-500 transition-all">
@@ -517,11 +522,11 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                                 <MessageSquare size={16} className="text-stone-500" /> {t('auth.messageSettings')}
                             </h3>
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
+                                <div className={showSetupTutorial && setupTutorialStep === 1 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                                     <label className="block text-sm font-medium text-stone-700 mb-1">Price per message (credits)</label>
                                     <input type="number" value={price} onChange={e => setPrice(Number(e.target.value))} className="w-full border border-stone-200 rounded-xl p-2 focus:ring-2 focus:ring-stone-500 outline-none transition-all" />
                                 </div>
-                                <div>
+                                <div className={showSetupTutorial && setupTutorialStep === 2 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                                     <label className="block text-sm font-medium text-stone-700 mb-1">{t('auth.replyTime')}</label>
                                     <select value={responseHours} onChange={e => setResponseHours(Number(e.target.value))} className="w-full border border-stone-200 rounded-xl p-2 bg-white focus:ring-2 focus:ring-stone-500 outline-none transition-all">
                                         <option value={24}>{t('auth.hours24')}</option>
@@ -532,7 +537,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                             </div>
 
                             {/* Bio / Instructions / Auto-Reply tab switcher */}
-                            <div className={showSetupTutorial ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
+                            <div className={showSetupTutorial && setupTutorialStep >= 3 && setupTutorialStep <= 5 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                                 <div className="flex bg-stone-100 rounded-xl p-1 mb-3 gap-0.5">
                                     {[
                                         { key: 'bio', label: 'Bio / About' },
@@ -576,7 +581,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                             </div>
                         </div>
 
-                        <div>
+                        <div className={showSetupTutorial && setupTutorialStep === 6 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                             <label className="block text-sm font-medium text-stone-700 mb-2">{t('auth.connectedPlatforms')}</label>
                             <p className="text-xs text-stone-500 mb-3">{t('auth.platformsDesc')}</p>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -651,7 +656,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
              )}
 
              {/* Add new link form */}
-             <div className={showSetupTutorial && setupTutorialStep === 3 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-2xl' : ''}>
+             <div className={showSetupTutorial && setupTutorialStep === 7 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-2xl' : ''}>
              <div className="bg-stone-50 rounded-2xl border border-stone-200 p-4 space-y-3 mb-4">
                  <p className="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Add item</p>
 
