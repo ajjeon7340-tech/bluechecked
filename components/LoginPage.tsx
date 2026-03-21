@@ -496,33 +496,45 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                                     ))}
                                 </div>
                                 {setupTextTab === 'bio' && (
-                                    <textarea
-                                        value={bio}
-                                        onChange={e => setBio(e.target.value)}
-                                        placeholder={t('auth.creatorBioPlaceholder')}
-                                        className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all text-sm"
-                                    />
+                                    <>
+                                        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 mb-2">
+                                            <span className="text-base leading-none mt-0.5">✍️</span>
+                                            <p className="text-xs text-amber-800 leading-relaxed"><strong>Status message</strong> — This is the first thing fans see on your public page. Write a short line about who you are and what you do. Keep it personal!</p>
+                                        </div>
+                                        <textarea
+                                            value={bio}
+                                            onChange={e => setBio(e.target.value)}
+                                            placeholder={t('auth.creatorBioPlaceholder')}
+                                            className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all text-sm"
+                                        />
+                                    </>
                                 )}
                                 {setupTextTab === 'instructions' && (
                                     <>
+                                        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 mb-2">
+                                            <span className="text-base leading-none mt-0.5">📋</span>
+                                            <p className="text-xs text-amber-800 leading-relaxed"><strong>Request instructions</strong> — Shown to fans before they send you a Diem. Guide them on what to include so you can give your best response (e.g. topic, context, specific question).</p>
+                                        </div>
                                         <textarea
                                             value={intakeInstructions}
                                             onChange={e => setIntakeInstructions(e.target.value)}
                                             placeholder="Tell fans what to include in their message (e.g. your question, topic, context...)"
                                             className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all text-sm"
                                         />
-                                        <p className="text-[10px] text-stone-400 mt-1">Shown to fans before they send a request.</p>
                                     </>
                                 )}
                                 {setupTextTab === 'reply' && (
                                     <>
+                                        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 mb-2">
+                                            <span className="text-base leading-none mt-0.5">💬</span>
+                                            <p className="text-xs text-amber-800 leading-relaxed"><strong>Auto-reply</strong> — Sent automatically the moment a fan pays, before you've replied. A warm acknowledgment while they wait (e.g. "Thanks! I'll get back to you within 48 hours.").</p>
+                                        </div>
                                         <textarea
                                             value={welcomeMessage}
                                             onChange={e => setWelcomeMessage(e.target.value)}
                                             placeholder="Sent automatically when a fan submits a request (e.g. Thanks for reaching out! I'll get back to you within 48 hours.)"
                                             className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all text-sm"
                                         />
-                                        <p className="text-[10px] text-stone-400 mt-1">Sent automatically when a fan pays.</p>
                                     </>
                                 )}
                             </div>
@@ -569,6 +581,11 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
              <div className="mb-5">
                  <h2 className="text-2xl font-bold text-stone-900">Links & Products</h2>
                  <p className="text-stone-500 text-sm mt-1">Add links, digital products, or tip buttons to your profile. You can always edit these later.</p>
+             </div>
+
+             <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 mb-4">
+                 <span className="text-base leading-none mt-0.5">🔗</span>
+                 <p className="text-xs text-amber-800 leading-relaxed"><strong>Links & Products</strong> — Add anything fans can tap on your profile: a website, social page, digital download, or a tip button. You can add multiple items and rearrange them anytime in Settings.</p>
              </div>
 
              {/* Existing links */}
