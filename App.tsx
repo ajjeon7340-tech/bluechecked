@@ -72,7 +72,9 @@ function App() {
 
     } catch (err: any) {
       if (err.code === 'PROFILE_MISSING') {
-          handleProfileMissing();
+          const _sr = localStorage.getItem('diem_oauth_role') as UserRole | null;
+          if (_sr === 'CREATOR' || _sr === 'FAN') { setPendingOAuthRole(_sr); setOauthTermsScrolled(false); setShowOAuthTerms(true); }
+          else { setShowSignUpConfirm(true); }
           if (stopLoading) setIsLoading(false);
           return null;
       }
@@ -231,7 +233,9 @@ function App() {
             }
         } catch (err: any) {
             if (err.code === 'PROFILE_MISSING') {
-                handleProfileMissing();
+                const _sr = localStorage.getItem('diem_oauth_role') as UserRole | null;
+                if (_sr === 'CREATOR' || _sr === 'FAN') { setPendingOAuthRole(_sr); setOauthTermsScrolled(false); setShowOAuthTerms(true); }
+                else { setShowSignUpConfirm(true); }
             } else if (err.code === 'ROLE_MISMATCH') {
                 alert(err.message);
                 clearSessionCache();
@@ -352,19 +356,6 @@ function App() {
   const clearSessionCache = () => {
       localStorage.removeItem('diem_current_user');
       localStorage.removeItem('diem_cached_creator');
-  };
-
-  // Called whenever PROFILE_MISSING is caught: if a role was stored from social login,
-  // skip the role-select modal and jump straight to Terms. Otherwise show role-select.
-  const handleProfileMissing = () => {
-      const storedRole = localStorage.getItem('diem_oauth_role') as UserRole | null;
-      if (storedRole === 'CREATOR' || storedRole === 'FAN') {
-          setPendingOAuthRole(storedRole);
-          setOauthTermsScrolled(false);
-          setShowOAuthTerms(true);
-      } else {
-          setShowSignUpConfirm(true);
-      }
   };
 
   const handleLoginSuccess = async (user: CurrentUser) => {
