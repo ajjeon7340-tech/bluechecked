@@ -636,6 +636,7 @@ const enrichCreatorProfile = async (data: any): Promise<CreatorProfile> => {
         showRating: data.show_rating !== false,
         showBio: data.show_bio !== false,
         isDiemHighlighted: (data.links || []).find((l: any) => l.id === '__diem_config__')?.isPromoted || false,
+        diemButtonColor: (data.links || []).find((l: any) => l.id === '__diem_config__')?.buttonColor || undefined,
     };
 };
 
@@ -765,6 +766,7 @@ export const getCreatorProfileFast = async (creatorId?: string): Promise<Creator
         showRating: data.show_rating !== false,
         showBio: data.show_bio !== false,
         isDiemHighlighted: (data.links || []).find((l: any) => l.id === '__diem_config__')?.isPromoted || false,
+        diemButtonColor: (data.links || []).find((l: any) => l.id === '__diem_config__')?.buttonColor || undefined,
     };
 };
 
@@ -775,7 +777,7 @@ export const updateCreatorProfile = async (profile: CreatorProfile): Promise<Cre
     if (!session.session) throw new Error("Not logged in");
 
     const linksToSave = [
-        { id: '__diem_config__', title: '', url: '', isPromoted: profile.isDiemHighlighted || false },
+        { id: '__diem_config__', title: '', url: '', isPromoted: profile.isDiemHighlighted || false, ...(profile.diemButtonColor ? { buttonColor: profile.diemButtonColor } : {}) },
         ...(profile.linkSections || []).map(s => ({ id: `__section__${s.id}`, title: s.title, url: '', order: s.order })),
         ...(profile.linksSectionTitle ? [{ id: '__links_title__', title: profile.linksSectionTitle, url: '' }] : []),
         ...(profile.links || []),

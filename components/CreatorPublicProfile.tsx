@@ -682,7 +682,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                           e.stopPropagation();
                           currentUser ? handleOpenModal() : onLoginRequest();
                       }}
-                      className={`px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap z-20 transition-colors ${creator.isDiemHighlighted ? 'bg-indigo-500 text-white group-hover:bg-indigo-600' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
+                      className={`px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap z-20 transition-colors ${!creator.diemButtonColor ? (creator.isDiemHighlighted ? 'bg-indigo-500 text-white group-hover:bg-indigo-600' : 'bg-stone-100 text-stone-600 hover:bg-stone-200') : ''}`}
+                      style={creator.diemButtonColor ? { backgroundColor: creator.diemButtonColor, color: getContrastColor(creator.diemButtonColor) } : undefined}
                   >
                       {t('common.diem')}
                   </button>
@@ -708,8 +709,14 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         {groupLinksToShow.map((link) => {
                             const isProduct = link.type === 'DIGITAL_PRODUCT';
                             const isSupport = link.type === 'SUPPORT';
-                            const hasThumbnail = !!link.thumbnailUrl;
+                            const isEmoji = link.thumbnailUrl?.startsWith('data:emoji,');
+                            const hasThumbnail = !!link.thumbnailUrl && !isEmoji;
                             const accentColor = link.buttonColor;
+                            const shapeClass = link.iconShape === 'square' ? 'rounded-none' : link.iconShape === 'rounded' ? 'rounded-xl' : 'rounded-full';
+                            let faviconUrl: string | null = null;
+                            if (!link.thumbnailUrl && !isProduct && !isSupport && link.url) {
+                                try { faviconUrl = `https://www.google.com/s2/favicons?domain=${new URL(link.url.startsWith('http') ? link.url : `https://${link.url}`).hostname}&sz=64`; } catch { faviconUrl = null; }
+                            }
                             const btnStyle = accentColor ? { backgroundColor: accentColor, color: getContrastColor(accentColor) } : undefined;
                             const iconStyle = accentColor && !hasThumbnail ? { backgroundColor: `${accentColor}22`, color: accentColor } : undefined;
                             return (
@@ -748,9 +755,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 onClick={() => handleSupportClick(link.price)}
                                                 className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-pink-50/40 to-rose-50/20 border-pink-100 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300 hover:shadow-sm'}`}
                                             >
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : 'bg-pink-50 text-pink-400'}`} style={iconStyle}>
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${shapeClass} ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : isEmoji ? 'bg-stone-100' : 'bg-pink-50 text-pink-400'}`} style={iconStyle}>
                                                     {hasThumbnail ? (
                                                         <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
+                                                    ) : isEmoji ? (
+                                                        <span className="text-xl sm:text-2xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span>
                                                     ) : (
                                                         <>
                                                             <Heart size={20} className="sm:hidden" />
@@ -771,9 +780,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 onClick={() => handleProductClick(link)}
                                                 className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-purple-50/40 to-violet-50/20 border-purple-100 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300 hover:shadow-sm'}`}
                                             >
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : 'bg-purple-50 text-purple-400'}`} style={iconStyle}>
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${shapeClass} ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : isEmoji ? 'bg-stone-100' : 'bg-purple-50 text-purple-400'}`} style={iconStyle}>
                                                     {hasThumbnail ? (
                                                         <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
+                                                    ) : isEmoji ? (
+                                                        <span className="text-xl sm:text-2xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span>
                                                     ) : (
                                                         <>
                                                             <FileText size={20} className="sm:hidden" />
@@ -797,9 +808,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 onClick={() => logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'LINK', id: link.id, title: link.title, url: link.url })}
                                                 className={`block w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-stone-50 to-stone-100/40 border-stone-200 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300'}`}
                                             >
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : 'bg-stone-900 text-white'}`} style={iconStyle}>
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${shapeClass} ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : isEmoji ? 'bg-stone-100' : faviconUrl ? 'p-1.5 overflow-hidden bg-white border border-stone-100' : 'bg-stone-900 text-white'}`} style={iconStyle}>
                                                     {hasThumbnail ? (
                                                         <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
+                                                    ) : isEmoji ? (
+                                                        <span className="text-xl sm:text-2xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span>
+                                                    ) : faviconUrl ? (
+                                                        <img src={faviconUrl} className="w-full h-full object-contain" alt={link.title} onError={(e) => { (e.target as HTMLImageElement).style.display='none'; (e.target as HTMLImageElement).parentElement!.classList.add('bg-stone-900'); (e.target as HTMLImageElement).parentElement!.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'; }} />
                                                     ) : (
                                                         <>
                                                             <Sparkles size={20} className="sm:hidden" />

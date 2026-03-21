@@ -30,6 +30,7 @@ export interface AffiliateLink {
   type?: 'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT';
   price?: number; // In Credits
   thumbnailUrl?: string;
+  iconShape?: 'circle' | 'rounded' | 'square';
   sectionId?: string;
   buttonColor?: string;
 }
@@ -69,6 +70,7 @@ export interface CreatorProfile {
   platforms?: (string | { id: string; url: string })[];
   rankingTitle?: string;
   bannerGradient?: string;
+  diemButtonColor?: string;
   stats: {
     responseTimeAvg: string;
     replyRate: string;

@@ -241,6 +241,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   // Drag and Drop State for Links
   const [draggedLinkIndex, setDraggedLinkIndex] = useState<number | null>(null);
+  const [openIconPickerId, setOpenIconPickerId] = useState<string | null>(null);
 
   // Section State
   const [newSectionTitle, setNewSectionTitle] = useState('');
@@ -3580,6 +3581,32 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </button>
                             </div>
 
+                            {/* DIEM Button Color */}
+                            <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200">
+                                <p className="text-sm font-semibold text-stone-800 mb-1">DIEM Button Color</p>
+                                <p className="text-xs text-stone-400 mb-3">Choose the color of the "Diem" button on your public profile</p>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    {['#1c1917','#6366f1','#8b5cf6','#ec4899','#10b981','#0ea5e9','#f59e0b','#ef4444'].map(color => (
+                                        <button
+                                            key={color}
+                                            onClick={() => setEditedCreator({ ...editedCreator, diemButtonColor: editedCreator.diemButtonColor === color ? undefined : color })}
+                                            className="w-6 h-6 rounded-full transition-all flex-shrink-0"
+                                            style={{ backgroundColor: color, outline: editedCreator.diemButtonColor === color ? `2px solid ${color}` : '2px solid transparent', outlineOffset: '2px' }}
+                                        />
+                                    ))}
+                                    <label className="relative w-6 h-6 rounded-full border border-dashed border-stone-300 cursor-pointer flex items-center justify-center hover:border-stone-500 transition-colors flex-shrink-0" title="Custom color">
+                                        {editedCreator.diemButtonColor && !['#1c1917','#6366f1','#8b5cf6','#ec4899','#10b981','#0ea5e9','#f59e0b','#ef4444'].includes(editedCreator.diemButtonColor) && (
+                                            <span className="absolute inset-0 rounded-full" style={{ backgroundColor: editedCreator.diemButtonColor }} />
+                                        )}
+                                        <input type="color" className="absolute opacity-0 w-0 h-0" value={editedCreator.diemButtonColor || '#000000'} onChange={e => setEditedCreator({ ...editedCreator, diemButtonColor: e.target.value })} />
+                                        {(!editedCreator.diemButtonColor || ['#1c1917','#6366f1','#8b5cf6','#ec4899','#10b981','#0ea5e9','#f59e0b','#ef4444'].includes(editedCreator.diemButtonColor)) && <span className="text-[9px] text-stone-400 font-bold">+</span>}
+                                    </label>
+                                    {editedCreator.diemButtonColor && (
+                                        <button onClick={() => setEditedCreator({ ...editedCreator, diemButtonColor: undefined })} className="text-[10px] text-stone-400 hover:text-red-400 underline transition-colors">Reset</button>
+                                    )}
+                                </div>
+                            </div>
+
                             {/* Links & Products Section */}
                             <div ref={tutorialLinksRef} className={showTutorial && tutorialStep === 3 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                                 <label className="block text-sm font-medium text-stone-700 mb-2">Links & Products</label>
@@ -3683,18 +3710,43 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     <GripVertical size={16} />
                                                 </div>
                                                 
-                                                {/* Thumbnail Upload for Existing Link */}
-                                                <div className="relative group/thumb flex-shrink-0">
-                                                    {link.thumbnailUrl ? (
-                                                        <img src={link.thumbnailUrl} className="w-10 h-10 rounded-lg object-cover border border-stone-200 bg-white" />
-                                                    ) : (
-                                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center border ${isProduct ? 'bg-purple-100 text-purple-600 border-purple-200' : isSupport ? 'bg-pink-100 text-pink-600 border-pink-200' : 'bg-stone-100 text-stone-500 border-stone-200'}`}>
-                                                            {isProduct ? <FileText size={20}/> : isSupport ? <Heart size={20}/> : <LinkIcon size={20}/>}
+                                                {/* Thumbnail / Icon Picker for Existing Link */}
+                                                <div className="flex-shrink-0 relative">
+                                                    <div className="relative group/thumb">
+                                                        {link.thumbnailUrl?.startsWith('data:emoji,') ? (
+                                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center bg-stone-100 border border-stone-200 text-xl cursor-pointer`} onClick={() => setOpenIconPickerId(openIconPickerId === link.id ? null : link.id)}>
+                                                                {link.thumbnailUrl.replace('data:emoji,', '')}
+                                                            </div>
+                                                        ) : link.thumbnailUrl ? (
+                                                            <img src={link.thumbnailUrl} className="w-10 h-10 rounded-lg object-cover border border-stone-200 bg-white cursor-pointer" onClick={() => setOpenIconPickerId(openIconPickerId === link.id ? null : link.id)} />
+                                                        ) : (
+                                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center border cursor-pointer ${isProduct ? 'bg-purple-100 text-purple-600 border-purple-200' : isSupport ? 'bg-pink-100 text-pink-600 border-pink-200' : 'bg-stone-100 text-stone-500 border-stone-200'}`} onClick={() => setOpenIconPickerId(openIconPickerId === link.id ? null : link.id)}>
+                                                                {isProduct ? <FileText size={20}/> : isSupport ? <Heart size={20}/> : <LinkIcon size={20}/>}
+                                                            </div>
+                                                        )}
+                                                        <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 cursor-pointer transition-opacity" onClick={() => setOpenIconPickerId(openIconPickerId === link.id ? null : link.id)}>
+                                                            <Camera size={14} className="text-white"/>
+                                                        </div>
+                                                    </div>
+                                                    {openIconPickerId === link.id && (
+                                                        <div className="absolute z-20 mt-1 p-2 bg-white border border-stone-200 rounded-xl shadow-lg w-56">
+                                                            <div className="flex flex-wrap gap-1 mb-2">
+                                                                {['🔗','📺','📸','🎵','🎮','📝','💼','🛒','📧','💬','🌐','🎨','📱','🎬','🏆','🎯','🚀','✨','💡','🎁'].map(em => (
+                                                                    <button key={em} onClick={() => { handleUpdateLink(link.id, 'thumbnailUrl', `data:emoji,${em}`); setOpenIconPickerId(null); }} className="w-8 h-8 rounded-lg hover:bg-stone-100 flex items-center justify-center text-lg transition-colors">{em}</button>
+                                                                ))}
+                                                            </div>
+                                                            <div className="flex gap-1 pt-1 border-t border-stone-100">
+                                                                <button onClick={() => { document.getElementById(`thumb-${link.id}`)?.click(); setOpenIconPickerId(null); }} className="flex-1 px-2 py-1 text-[10px] bg-stone-100 hover:bg-stone-200 rounded-lg font-medium text-stone-600 flex items-center justify-center gap-1 transition-colors"><Camera size={10}/> Upload</button>
+                                                                {link.thumbnailUrl && <button onClick={() => { handleUpdateLink(link.id, 'thumbnailUrl', ''); setOpenIconPickerId(null); }} className="px-2 py-1 text-[10px] bg-red-50 hover:bg-red-100 rounded-lg font-medium text-red-500 transition-colors">Remove</button>}
+                                                            </div>
+                                                            {/* Shape Selector */}
+                                                            <div className="flex gap-1 pt-1 mt-1 border-t border-stone-100">
+                                                                {([['circle','●'],['rounded','▢'],['square','■']] as const).map(([shape, icon]) => (
+                                                                    <button key={shape} onClick={() => handleUpdateLink(link.id, 'iconShape', link.iconShape === shape ? undefined : shape)} className={`flex-1 py-1 text-[10px] rounded-lg font-medium transition-colors ${link.iconShape === shape || (!link.iconShape && shape === 'circle') ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>{icon}</button>
+                                                                ))}
+                                                            </div>
                                                         </div>
                                                     )}
-                                                    <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 cursor-pointer transition-opacity" onClick={() => document.getElementById(`thumb-${link.id}`)?.click()}>
-                                                        <Camera size={14} className="text-white"/>
-                                                    </div>
                                                     <input type="file" id={`thumb-${link.id}`} className="hidden" accept="image/*" onChange={(e) => handleLinkThumbnailUpload(e, link.id)} />
                                                 </div>
 
