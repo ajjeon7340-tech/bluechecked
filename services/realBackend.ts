@@ -2143,13 +2143,13 @@ export const sendWelcomeMessage = async (): Promise<void> => {
     try {
         const { data: session } = await supabase.auth.getSession();
         if (!session.session) return;
-        const res = await supabase.functions.invoke('send-welcome-message', {
-            body: { creatorId: session.session.user.id },
-            headers: { Authorization: `Bearer ${session.session.access_token}` },
+        const { error } = await supabase.rpc('send_welcome_message', {
+            creator_id: session.session.user.id,
         });
-        console.log('[welcome] result:', res.data);
+        if (error) console.warn('[welcome] RPC error:', error.message);
+        else console.log('[welcome] Welcome message sent');
     } catch (e: any) {
-        console.warn('[welcome] Failed to send welcome message:', e.message);
+        console.warn('[welcome] Failed:', e.message);
     }
 };
 
