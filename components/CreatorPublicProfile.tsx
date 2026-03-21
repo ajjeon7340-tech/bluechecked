@@ -10,7 +10,7 @@ interface Props {
   currentUser: CurrentUser | null;
   onMessageSent: () => void;
   onCreateOwn: () => void;
-  onLoginRequest: () => void;
+  onLoginRequest: (preferredRole?: 'FAN' | 'CREATOR') => void;
   onNavigateToDashboard: (creatorId?: string) => void;
   onRefreshData: () => Promise<void>;
   startTutorial?: boolean;
@@ -1512,7 +1512,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
               <p className="text-sm text-stone-500 leading-relaxed mb-4">{PROFILE_TUTORIAL_STEPS[tutorialStep].desc}</p>
               {tutorialStep === 1 && (
                 <button
-                  onClick={() => { setShowTutorial(false); onTutorialDone?.(); currentUser ? handleOpenModal() : onLoginRequest(); }}
+                  onClick={() => { setShowTutorial(false); onTutorialDone?.(); currentUser ? handleOpenModal() : onLoginRequest('FAN'); }}
                   className="w-full mb-3 px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-stone-900 text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
                   <MessageSquare size={15} /> Try Sending a Diem

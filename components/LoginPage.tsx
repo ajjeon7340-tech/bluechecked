@@ -10,6 +10,7 @@ interface Props {
   onLoginSuccess: (user: CurrentUser) => void;
   onBack: () => void;
   initialStep?: 'LOGIN' | 'SETUP_PROFILE' | 'RESET_PASSWORD';
+  initialRole?: 'CREATOR' | 'FAN';
   currentUser?: CurrentUser | null;
 }
 
@@ -21,10 +22,10 @@ const SUPPORTED_PLATFORMS = [
     { id: 'twitch', label: 'Twitch', icon: Twitch },
 ];
 
-export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep = 'LOGIN', currentUser }) => {
+export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep = 'LOGIN', initialRole, currentUser }) => {
   const { t } = useTranslation();
   const [isSignUp, setIsSignUp] = useState(false);
-  const [role, setRole] = useState<'CREATOR' | 'FAN'>(currentUser?.role || 'CREATOR');
+  const [role, setRole] = useState<'CREATOR' | 'FAN'>(initialRole || currentUser?.role || 'CREATOR');
   const [isForgotPassword, setIsForgotPassword] = useState(false);
 
   const [email, setEmail] = useState('');

@@ -28,6 +28,7 @@ function App() {
   const [showOAuthTerms, setShowOAuthTerms] = useState(false);
   const [oauthTermsScrolled, setOauthTermsScrolled] = useState(false);
   const [startProfileTutorial, setStartProfileTutorial] = useState(false);
+  const [pendingLoginRole, setPendingLoginRole] = useState<'CREATOR' | 'FAN'>('CREATOR');
 
   const currentUserRef = useRef<CurrentUser | null>(null);
   useEffect(() => {
@@ -469,12 +470,14 @@ function App() {
       )}
 
       {(currentPage === 'LOGIN' || isPasswordRecovery) && (
-        <LoginPage 
-          onLoginSuccess={handleLoginSuccess}
+        <LoginPage
+          onLoginSuccess={(user) => { setPendingLoginRole('CREATOR'); handleLoginSuccess(user); }}
           initialStep={isPasswordRecovery ? 'RESET_PASSWORD' : 'LOGIN'}
+          initialRole={pendingLoginRole}
           currentUser={currentUser}
           onBack={() => {
               setIsPasswordRecovery(false);
+              setPendingLoginRole('CREATOR');
               window.history.pushState({ page: 'LANDING' }, '', '/');
               setCurrentPage('LANDING');
           }}
@@ -527,13 +530,14 @@ function App() {
               setCurrentPage('LANDING');
             }
           }}
-          onLoginRequest={() => {
+          onLoginRequest={(preferredRole) => {
               if (creator) {
                   const handle = (creator.handle && creator.handle !== '@user')
                       ? creator.handle.replace('@', '')
                       : creator.displayName;
                   localStorage.setItem('diem_return_to_creator', handle);
               }
+              if (preferredRole) setPendingLoginRole(preferredRole);
               window.history.pushState({ page: 'LOGIN' }, '', '/login');
               setCurrentPage('LOGIN');
           }}
