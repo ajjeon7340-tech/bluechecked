@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n/config';
 import { CreatorProfile, Message, DashboardStats, MonthlyStat, AffiliateLink, LinkSection, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
-import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, sendWelcomeMessage, addCredits, Withdrawal, isBackendConfigured } from '../services/realBackend';
+import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, sendWelcomeMessage, Withdrawal, isBackendConfigured } from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { 
@@ -2068,20 +2068,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </p>
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* Test Credits (dev only) */}
-                            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-bottom-2">
-                                <div>
-                                    <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">🧪 Testing Only</p>
-                                    <p className="text-sm text-amber-600 mt-0.5">Add 10 free credits to test the platform</p>
-                                </div>
-                                <button
-                                    onClick={async () => { await addCredits(10); await onRefreshData(); }}
-                                    className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition-colors flex-shrink-0"
-                                >
-                                    + 10 Credits
-                                </button>
                             </div>
 
                             {/* Payout Method (Stripe) */}
