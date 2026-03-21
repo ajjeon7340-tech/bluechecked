@@ -105,17 +105,26 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   const [showSetupTutorial, setShowSetupTutorial] = useState(false);
   const [setupTutorialStep, setSetupTutorialStep] = useState(0);
   const setupTutorialRefs = useRef<(HTMLDivElement | null)[]>(Array(9).fill(null));
+  const [, setTutorialScrollTick] = useState(0);
+
+  // Re-render tutorial card on scroll so it follows the highlighted element
+  useEffect(() => {
+    if (!showSetupTutorial) return;
+    const onScroll = () => setTutorialScrollTick(n => n + 1);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [showSetupTutorial]);
 
   const SETUP_TUTORIAL_STEPS = [
-    { emoji: '🌐', title: 'Choose Your Language',       desc: 'Pick the language you\'d like to use on Diem. This sets the language for your dashboard and messages. You can change it anytime in Settings.', tab: 'bio' as const, page: 1 },
-    { emoji: '🔖', title: 'Your Public Page ID',        desc: 'This is your unique handle — fans visit your page at diem.com/@yourhandle. Choose carefully, it can\'t be changed later.', tab: 'bio' as const, page: 1 },
-    { emoji: '💰', title: 'Price per Message',          desc: 'Set how many credits a fan pays to send you a Diem. You can always adjust this from Settings later.', tab: 'bio' as const, page: 1 },
-    { emoji: '⏱️', title: 'Reply Time',                 desc: 'How long fans expect to wait for your reply. Setting a realistic time builds trust and keeps fans happy.', tab: 'bio' as const, page: 1 },
-    { emoji: '✍️', title: 'Your Status Message',       desc: 'The first thing fans see on your public page. Write a short line about who you are and what you do — keep it personal!', tab: 'bio' as const, page: 1 },
-    { emoji: '📋', title: 'Request Instructions',       desc: 'Shown to fans before they send you a Diem. Guide them on what to include so you can give your best response.', tab: 'instructions' as const, page: 1 },
-    { emoji: '💬', title: 'Auto-Reply',                 desc: 'Sent instantly when a fan pays, before you\'ve replied. A warm acknowledgment while they wait — e.g. "Thanks! I\'ll get back to you within 48 hours."', tab: 'reply' as const, page: 1 },
-    { emoji: '📱', title: 'Connected Platforms',        desc: 'Link your social accounts so fans can find you elsewhere. Tap any platform to connect it to your profile.', tab: 'bio' as const, page: 1 },
-    { emoji: '🔗', title: 'Links & Products',           desc: 'Add anything fans can tap on your profile: a website, digital download, or a tip button. You can always add more later from Settings.', tab: 'bio' as const, page: 2 },
+    { emoji: '🌐', title: t('tutorial.setup.language.title'),     desc: t('tutorial.setup.language.desc'),     tab: 'bio' as const, page: 1 },
+    { emoji: '🔖', title: t('tutorial.setup.handle.title'),       desc: t('tutorial.setup.handle.desc'),       tab: 'bio' as const, page: 1 },
+    { emoji: '💰', title: t('tutorial.setup.price.title'),        desc: t('tutorial.setup.price.desc'),        tab: 'bio' as const, page: 1 },
+    { emoji: '⏱️', title: t('tutorial.setup.replyTime.title'),   desc: t('tutorial.setup.replyTime.desc'),   tab: 'bio' as const, page: 1 },
+    { emoji: '✍️', title: t('tutorial.setup.status.title'),      desc: t('tutorial.setup.status.desc'),      tab: 'bio' as const, page: 1 },
+    { emoji: '📋', title: t('tutorial.setup.instructions.title'), desc: t('tutorial.setup.instructions.desc'), tab: 'instructions' as const, page: 1 },
+    { emoji: '💬', title: t('tutorial.setup.autoReply.title'),    desc: t('tutorial.setup.autoReply.desc'),    tab: 'reply' as const, page: 1 },
+    { emoji: '📱', title: t('tutorial.setup.platforms.title'),    desc: t('tutorial.setup.platforms.desc'),    tab: 'bio' as const, page: 1 },
+    { emoji: '🔗', title: t('tutorial.setup.links.title'),        desc: t('tutorial.setup.links.desc'),        tab: 'bio' as const, page: 2 },
   ];
 
   useEffect(() => {

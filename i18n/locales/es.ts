@@ -585,6 +585,26 @@ const es = {
     productPurchased: 'Compraste {{product}}',
     leaveConversation: '¿Salir de esta conversación? Se ocultará de tu bandeja de entrada pero no se eliminará.',
   },
+  tutorial: {
+    setup: {
+      language:     { title: 'Elige tu idioma',          desc: 'Selecciona el idioma que deseas usar en Diem. Esto configura el idioma de tu panel y mensajes. Puedes cambiarlo en cualquier momento en Configuración.' },
+      handle:       { title: 'ID de página pública',     desc: 'Este es tu identificador único — los fans visitan tu página en diem.com/@tuhandle. Elige cuidadosamente, no se puede cambiar después.' },
+      price:        { title: 'Precio por mensaje',       desc: 'Establece cuántos créditos paga un fan para enviarte un Diem. Siempre puedes ajustarlo desde Configuración.' },
+      replyTime:    { title: 'Tiempo de respuesta',      desc: 'Cuánto tiempo esperan los fans tu respuesta. Establecer un tiempo realista genera confianza y mantiene a los fans contentos.' },
+      status:       { title: 'Tu mensaje de estado',     desc: 'Lo primero que ven los fans en tu página pública. ¡Escribe una línea corta sobre quién eres y qué haces, hazlo personal!' },
+      instructions: { title: 'Instrucciones de solicitud', desc: 'Se muestra a los fans antes de enviarte un Diem. Guíalos sobre qué incluir para que puedas dar tu mejor respuesta.' },
+      autoReply:    { title: 'Respuesta automática',     desc: 'Se envía instantáneamente cuando un fan paga, antes de que respondas. Un cálido reconocimiento mientras esperan.' },
+      platforms:    { title: 'Plataformas conectadas',   desc: 'Vincula tus cuentas sociales para que los fans puedan encontrarte en otros lugares. Toca cualquier plataforma para conectarla.' },
+      links:        { title: 'Links & Productos',        desc: 'Agrega lo que los fans puedan tocar en tu perfil: un sitio web, descarga digital o un botón de propinas.' },
+    },
+    inbox: {
+      timer:   { title: 'Tiempo para responder',  desc: 'Mira el temporizador destacado en la parte superior derecha del chat. Muestra cuánto tiempo tienes para responder antes de que expire la sesión.' },
+      send:    { title: 'Envía tu respuesta',      desc: 'Mira el botón Enviar destacado en la parte inferior derecha. Escribe tu mensaje y toca Enviar. El fan paga una vez por sesión.' },
+      attach:  { title: 'Adjuntar un archivo',    desc: 'Mira el ícono de clip destacado junto a Enviar. Tócalo para adjuntar hasta 3 fotos o archivos.' },
+      collect: { title: 'Cobra tu dinero',         desc: 'Mira el botón Cobrar destacado en la parte superior derecha. Una vez que hayas respondido, tócalo para finalizar la sesión y mover los créditos a tu saldo.' },
+      exit:    { title: 'Salir del chat',          desc: 'Mira el botón de salida destacado en la parte superior derecha. Tócalo para volver a tu lista de mensajes. Tus respuestas siempre se guardan.' },
+    },
+  },
 };
 
 export default es;

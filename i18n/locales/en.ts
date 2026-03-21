@@ -707,6 +707,26 @@ const en = {
     leaveConversation: 'Leave this conversation? It will be hidden from your inbox but not deleted.',
     sessionOf: 'Session {{current}} of {{total}}',
   },
+  tutorial: {
+    setup: {
+      language:     { title: 'Choose Your Language',    desc: 'Pick the language you\'d like to use on Diem. This sets the language for your dashboard and messages. You can change it anytime in Settings.' },
+      handle:       { title: 'Your Public Page ID',     desc: 'This is your unique handle — fans visit your page at diem.com/@yourhandle. Choose carefully, it can\'t be changed later.' },
+      price:        { title: 'Price per Message',       desc: 'Set how many credits a fan pays to send you a Diem. You can always adjust this from Settings later.' },
+      replyTime:    { title: 'Reply Time',              desc: 'How long fans expect to wait for your reply. Setting a realistic time builds trust and keeps fans happy.' },
+      status:       { title: 'Your Status Message',     desc: 'The first thing fans see on your public page. Write a short line about who you are and what you do — keep it personal!' },
+      instructions: { title: 'Request Instructions',    desc: 'Shown to fans before they send you a Diem. Guide them on what to include so you can give your best response.' },
+      autoReply:    { title: 'Auto-Reply',              desc: 'Sent instantly when a fan pays, before you\'ve replied. A warm acknowledgment while they wait — e.g. "Thanks! I\'ll get back to you within 48 hours."' },
+      platforms:    { title: 'Connected Platforms',     desc: 'Link your social accounts so fans can find you elsewhere. Tap any platform to connect it to your profile.' },
+      links:        { title: 'Links & Products',        desc: 'Add anything fans can tap on your profile: a website, digital download, or a tip button. You can always add more later from Settings.' },
+    },
+    inbox: {
+      timer:   { title: 'Time Left to Reply',  desc: 'See the highlighted timer badge at the top right of the chat. It shows how long you have to respond. Reply before it runs out — otherwise credits go back to the fan.' },
+      send:    { title: 'Send Your Reply',      desc: 'See the highlighted Send button at the bottom right. Type your message and tap Send. You can send multiple messages — the fan pays once per session.' },
+      attach:  { title: 'Attach a File',        desc: 'See the highlighted paperclip icon next to Send. Tap it to attach up to 3 photos or files. Great for sharing screenshots or visual content.' },
+      collect: { title: 'Collect Your Money',   desc: 'See the highlighted Collect button at the top right. Once you\'ve replied, tap it to finalize the session and move the credits to your balance.' },
+      exit:    { title: 'Leaving the Chat',     desc: 'See the highlighted exit button at the top right. Tap it to go back to your inbox list. Your replies are always saved — you can return anytime.' },
+    },
+  },
 };
 
 export default en;

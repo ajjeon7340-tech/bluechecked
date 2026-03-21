@@ -262,6 +262,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [showInboxTutorial, setShowInboxTutorial] = useState(false);
   const [inboxTutorialStep, setInboxTutorialStep] = useState(0);
   const inboxTutorialRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null, null]);
+  const [, setInboxTutorialScrollTick] = useState(0);
 
   const TUTORIAL_STEPS = [
     { title: 'Your Status Message', desc: 'This appears on your public profile — it\'s the first thing fans see when they visit your page. Make it personal!', tab: 'bio' as const, highlight: 'bio' },
@@ -647,6 +648,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       setShowInboxTutorial(true);
     }
   }, [selectedSenderEmail, currentUser?.id]);
+
+  // Re-render inbox tutorial card on scroll so it follows the highlighted element
+  useEffect(() => {
+    if (!showInboxTutorial) return;
+    const onScroll = () => setInboxTutorialScrollTick(n => n + 1);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [showInboxTutorial]);
 
   const handleTutorialNext = () => {
     const nextStep = tutorialStep + 1;
@@ -4216,31 +4225,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       {/* Inbox Tutorial Overlay */}
       {showInboxTutorial && selectedSenderEmail === 'abe7340@gmail.com' && currentView === 'INBOX' && !!activeMessage && (() => {
         const INBOX_TUTORIAL_STEPS = [
-          {
-            emoji: '⏱️',
-            title: 'Time Left to Reply',
-            desc: "See the highlighted timer badge at the top right ↑ of the chat. It shows how long you have to respond. Reply before it runs out — otherwise the session expires and credits go back to the fan.",
-          },
-          {
-            emoji: '💬',
-            title: 'Send Your Reply',
-            desc: "See the highlighted Send button at the bottom right ↓. Type your message in the text box and tap Send. You can send multiple messages — the fan pays once per session.",
-          },
-          {
-            emoji: '📎',
-            title: 'Attach a File',
-            desc: "See the highlighted paperclip icon just to the left of Send ↓. Tap it to attach up to 3 photos or files. Great for sharing screenshots or visual content.",
-          },
-          {
-            emoji: '🪙',
-            title: 'Collect Your Money',
-            desc: "See the highlighted Collect button at the top right ↑. Once you've replied, tap it to finalize the session and move the credits to your balance. Then go to Finance → Withdraw.",
-          },
-          {
-            emoji: '🚪',
-            title: 'Leaving the Chat',
-            desc: "See the highlighted exit button at the top right corner ↑. Tap it to go back to your inbox list. Your replies are always saved — you can return anytime.",
-          },
+          { emoji: '⏱️', title: t('tutorial.inbox.timer.title'),   desc: t('tutorial.inbox.timer.desc') },
+          { emoji: '💬', title: t('tutorial.inbox.send.title'),    desc: t('tutorial.inbox.send.desc') },
+          { emoji: '📎', title: t('tutorial.inbox.attach.title'),  desc: t('tutorial.inbox.attach.desc') },
+          { emoji: '🪙', title: t('tutorial.inbox.collect.title'), desc: t('tutorial.inbox.collect.desc') },
+          { emoji: '🚪', title: t('tutorial.inbox.exit.title'),    desc: t('tutorial.inbox.exit.desc') },
         ];
         const step = INBOX_TUTORIAL_STEPS[inboxTutorialStep];
 
