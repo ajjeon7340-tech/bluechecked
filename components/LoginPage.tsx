@@ -479,7 +479,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
                             {/* Bio / Instructions / Auto-Reply tab switcher */}
                             <div>
-                                <div className="flex bg-white rounded-xl p-1 mb-3 gap-0.5 border border-stone-200">
+                                <div className="flex bg-stone-100 rounded-xl p-1 mb-3 gap-0.5">
                                     {[
                                         { key: 'bio', label: 'Bio / About' },
                                         { key: 'instructions', label: 'Request Instructions' },
@@ -489,7 +489,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                                             key={tab.key}
                                             type="button"
                                             onClick={() => setSetupTextTab(tab.key as typeof setupTextTab)}
-                                            className={`flex-1 py-1.5 text-[11px] font-semibold rounded-lg transition-all ${setupTextTab === tab.key ? 'bg-stone-900 text-white shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                                            className={`flex-1 py-1.5 text-[11px] font-semibold rounded-lg transition-all ${setupTextTab === tab.key ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
                                         >
                                             {tab.label}
                                         </button>
