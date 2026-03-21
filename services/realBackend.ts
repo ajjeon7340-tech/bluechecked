@@ -2163,6 +2163,31 @@ export const sendWelcomeMessage = async (lang = 'en'): Promise<void> => {
     }
 };
 
+const FAN_WELCOME_MESSAGES: Record<string, string> = {
+    en: `Hey! 👋 Welcome to Diem — great to have you here.\n\nHere's how it works: browse creators, pay to send one a message, and get a personal reply just for you. The creator has a set time to respond — if they don't reply in time, your credits are automatically refunded.\n\nHead to the Explore tab to find a creator you'd love to hear from. Good luck! 🚀`,
+    ko: `안녕하세요! 👋 Diem에 오신 것을 환영합니다.\n\n이렇게 작동해요: 크리에이터를 탐색하고, 크레딧을 지불해 메시지를 보내면, 당신만을 위한 개인 답장을 받을 수 있어요. 크리에이터가 정해진 시간 안에 답장하지 않으면 크레딧은 자동으로 환불됩니다.\n\n탐색 탭에서 원하는 크리에이터를 찾아보세요. 행운을 빕니다! 🚀`,
+    ja: `こんにちは！👋 Diemへようこそ。\n\n仕組みはこうです：クリエイターを探して、クレジットを支払ってメッセージを送ると、あなただけへの個人的な返信が届きます。クリエイターが期限内に返信しない場合、クレジットは自動的に返金されます。\n\n探索タブからお気に入りのクリエイターを見つけてみましょう。頑張ってください！🚀`,
+    zh: `你好！👋 欢迎来到 Diem。\n\n工作原理如下：浏览创作者，付费发送消息，获得专属个人回复。如果创作者在规定时间内未回复，积分将自动退还。\n\n前往探索标签，找到你想联系的创作者吧。祝你好运！🚀`,
+    es: `¡Hola! 👋 Bienvenido/a a Diem.\n\nAsí funciona: explora creadores, paga para enviarles un mensaje y recibe una respuesta personal solo para ti. Si el creador no responde a tiempo, tus créditos se devuelven automáticamente.\n\nVe a la pestaña Explorar para encontrar un creador con quien conectar. ¡Buena suerte! 🚀`,
+};
+
+export const sendFanWelcomeMessage = async (lang = 'en'): Promise<void> => {
+    if (!isConfigured) return;
+    try {
+        const { data: session } = await supabase.auth.getSession();
+        if (!session.session) return;
+        const content = FAN_WELCOME_MESSAGES[lang] ?? FAN_WELCOME_MESSAGES['en'];
+        const { error } = await supabase.rpc('send_fan_welcome_message', {
+            p_fan_id: session.session.user.id,
+            p_content: content,
+        });
+        if (error) console.warn('[fan-welcome] RPC error:', error.message);
+        else console.log('[fan-welcome] Welcome message sent in:', lang);
+    } catch (e: any) {
+        console.warn('[fan-welcome] Failed:', e.message);
+    }
+};
+
 export const connectStripeAccount = async (): Promise<string | null> => {
     if (!isConfigured) {
         console.log("[Stripe] Backend not configured, using mock mode (returning null URL)");

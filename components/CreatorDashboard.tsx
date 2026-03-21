@@ -637,6 +637,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     if (currentUser) sendWelcomeMessage(i18n.language);
   }, [currentUser?.id]);
 
+  // Show inbox tutorial the first time a creator visits INBOX
+  useEffect(() => {
+    if (currentView !== 'INBOX' || !currentUser) return;
+    const doneKey = `diem_creator_inbox_tutorial_done_${currentUser.id}`;
+    if (!localStorage.getItem(doneKey)) {
+      setInboxTutorialStep(0);
+      setShowInboxTutorial(true);
+    }
+  }, [currentView, currentUser?.id]);
+
   const handleTutorialNext = () => {
     const nextStep = tutorialStep + 1;
     if (nextStep >= TUTORIAL_STEPS.length) { handleTutorialDone(); return; }
@@ -4166,9 +4176,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       {showInboxTutorial && currentView === 'INBOX' && (() => {
         const INBOX_TUTORIAL_STEPS = [
           {
-            emoji: '📬',
-            title: 'Your Inbox',
-            desc: 'When a fan sends you a Diem, it appears here. Each session has a timer — reply before it expires to collect your credits.',
+            emoji: '⏱️',
+            title: 'You Have a Time Limit',
+            desc: "Each fan message has a countdown timer. You must reply before it expires — if you don't, the session ends and the credits are refunded to the fan.",
             preview: (
               <div className="mt-3 mb-1 rounded-xl border border-stone-200 bg-white overflow-hidden">
                 <div className="flex items-start gap-3 p-3">
@@ -4180,9 +4190,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                       <span className="text-sm font-semibold text-stone-900">Diem</span>
                       <span className="text-xs text-stone-400">Just now</span>
                     </div>
-                    <p className="text-xs text-stone-500 line-clamp-2">Hi! I'm your first fan. I'd love to know your best advice for getting started. What would you tell someone just beginning?</p>
+                    <p className="text-xs text-stone-500 line-clamp-2">Hey! Welcome to Diem — reply to this message to collect your first credits.</p>
                     <div className="flex items-center justify-between mt-1.5">
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">23h 59m left</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">⏱ 23h 59m left</span>
                       <span className="text-xs font-mono font-medium text-stone-700 flex items-center gap-1"><Coins size={10}/> 10</span>
                     </div>
                   </div>
@@ -4192,22 +4202,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           },
           {
             emoji: '💬',
-            title: 'Reply & Follow Up',
-            desc: "Open a message and type your reply at the bottom. You can send as many follow-up messages as you want — the conversation stays open. But fans can only send one message per session, so make your response count!",
+            title: 'How to Reply',
+            desc: "Tap a message to open the conversation, then type your reply at the bottom and hit Send. You can reply as many times as you like — the conversation stays open. But remember, fans only get one message per session, so make your reply count!",
             preview: null,
           },
           {
             emoji: '🪙',
-            title: 'Collect Your Credits',
-            desc: "After replying, hit Collect to add the credits to your balance. Credits stack up across all your fans, and you can withdraw to your bank anytime via Stripe.",
+            title: 'Collect Your Money',
+            desc: "Once you've replied, a Collect button appears. Tap it to claim the credits into your balance. Then go to Finance → Withdraw to send them to your bank via Stripe.",
             preview: (
               <div className="mt-3 mb-1 flex items-center gap-3 p-3 rounded-xl border border-emerald-100 bg-emerald-50">
                 <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
                   <Coins size={18} className="text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-emerald-800">Credits collected!</p>
-                  <p className="text-[11px] text-emerald-600">Tap <strong>Collect</strong> on replied messages to claim your credits.</p>
+                  <p className="text-xs font-semibold text-emerald-800">Reply → Collect → Withdraw</p>
+                  <p className="text-[11px] text-emerald-600 mt-0.5">That's the full cycle. Tap <strong>Collect</strong> after every reply to make sure your credits are claimed.</p>
                 </div>
               </div>
             ),

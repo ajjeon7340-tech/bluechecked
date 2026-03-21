@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { CurrentUser, Message, CreatorProfile } from '../types';
 import { Button } from './Button';
 import { DiemLogo, CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download, Smile, Verified } from './Icons';
-import { getMessages, getChatLines, invalidateChatLinesCache, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createCheckoutSession, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl, uploadProductFile } from '../services/realBackend';
+import { getMessages, getChatLines, invalidateChatLinesCache, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createCheckoutSession, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl, uploadProductFile, sendFanWelcomeMessage } from '../services/realBackend';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import i18n from '../i18n/config';
 
 interface Props {
   currentUser: CurrentUser | null;
@@ -257,6 +258,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
     }
   }, [currentUser]);
 
+  // Send welcome message to new fans — idempotent, skips if already sent
+  useEffect(() => {
+    if (currentUser?.role === 'FAN') sendFanWelcomeMessage(i18n.language);
+  }, [currentUser?.id]);
+
   // Handle return from Stripe Checkout
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -354,7 +360,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
     const allMessages = await getMessages();
     const myMessages = allMessages.filter(m =>
       m.senderEmail === (currentUser?.email || 'sarah@example.com') ||
-      currentUser?.email === 'google-user@example.com'
+      currentUser?.email === 'google-user@example.com' ||
+      (currentUser?.id && m.creatorId === currentUser.id)
     );
     myMessages.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     const freshMessages = myMessages.length > 0 ? myMessages : allMessages.slice(0, 2);
