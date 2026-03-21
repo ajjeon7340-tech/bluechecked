@@ -53,6 +53,7 @@ function App() {
       try {
         const creatorData = await getCreatorProfile(specificCreatorId);
         setCreator(creatorData);
+        localStorage.setItem('diem_cached_creator', JSON.stringify(creatorData));
         return creatorData;
       } catch (e: any) {
         // Only ignore error if we are NOT looking for a specific creator (i.e. app init)

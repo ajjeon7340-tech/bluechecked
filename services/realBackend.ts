@@ -769,6 +769,8 @@ export const getCreatorProfileFast = async (creatorId?: string): Promise<Creator
         products: data.products || [],
         platforms: data.platforms || [],
         isPremium: data.is_premium || false,
+        showLikes: data.show_likes !== false,
+        showRating: data.show_rating !== false,
         isDiemHighlighted: (data.links || []).find((l: any) => l.id === '__diem_config__')?.isPromoted || false,
     };
 };
