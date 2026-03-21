@@ -2144,7 +2144,7 @@ export const sendWelcomeMessage = async (): Promise<void> => {
         const { data: session } = await supabase.auth.getSession();
         if (!session.session) return;
         const { error } = await supabase.rpc('send_welcome_message', {
-            creator_id: session.session.user.id,
+            p_creator_id: session.session.user.id,
         });
         if (error) console.warn('[welcome] RPC error:', error.message);
         else console.log('[welcome] Welcome message sent');
