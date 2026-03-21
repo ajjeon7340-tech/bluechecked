@@ -685,7 +685,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
           {/* Guaranteed Reply + Ask Me Anything */}
           {!isCustomizeMode && (
-              <div ref={tutorialDiemBtnRef} className={showTutorial && tutorialStep === 1 ? 'ring-2 ring-amber-400 ring-offset-2 rounded-2xl' : ''}>
+              <div ref={tutorialDiemBtnRef} className={`w-full${showTutorial && tutorialStep === 1 ? ' ring-2 ring-amber-400 ring-offset-2 rounded-2xl' : ''}`}>
               <div
                   onClick={() => { currentUser ? handleOpenModal() : onLoginRequest(); }}
                   className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${creator.isDiemHighlighted ? 'bg-gradient-to-r from-indigo-50/40 to-blue-50/20 border-indigo-100 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300 hover:shadow-sm'}`}
