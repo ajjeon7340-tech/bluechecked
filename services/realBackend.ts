@@ -443,17 +443,8 @@ export const checkAndSyncSession = async (): Promise<CurrentUser | null> => {
 
     // 3. Handle First Time OAuth Login (Profile Creation)
     if (!profile) {
-        // Check for role intent from localStorage or URL
-        const storedRole = localStorage.getItem('diem_oauth_role');
-        const params = new URLSearchParams(window.location.search);
-        const urlRole = params.get('role');
-        
-        // If we have a role intent, we complete the signup automatically
-        if (storedRole || urlRole) {
-            return await completeOAuthSignup();
-        }
-
-        // Instead of auto-creating, we throw a specific error to prompt the user in the UI
+        // Always throw PROFILE_MISSING so the UI shows Terms before creating the account.
+        // The stored diem_oauth_role (if any) will be read by App.tsx to pre-select the role.
         const error: any = new Error("PROFILE_MISSING");
         error.code = 'PROFILE_MISSING';
         throw error;
