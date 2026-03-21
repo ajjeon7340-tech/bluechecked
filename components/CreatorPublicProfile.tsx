@@ -13,6 +13,8 @@ interface Props {
   onLoginRequest: () => void;
   onNavigateToDashboard: (creatorId?: string) => void;
   onRefreshData: () => Promise<void>;
+  startTutorial?: boolean;
+  onTutorialDone?: () => void;
 }
 
 const getContrastColor = (hex: string): string => {
@@ -35,14 +37,16 @@ const getResponseTimeTooltip = (status: string, t: (key: string) => string) => {
     return t('profile.responseTooltipDefault');
 };
 
-export const CreatorPublicProfile: React.FC<Props> = ({ 
-  creator, 
-  currentUser, 
-  onMessageSent, 
-  onCreateOwn, 
+export const CreatorPublicProfile: React.FC<Props> = ({
+  creator,
+  currentUser,
+  onMessageSent,
+  onCreateOwn,
   onLoginRequest,
   onNavigateToDashboard,
-  onRefreshData
+  onRefreshData,
+  startTutorial = false,
+  onTutorialDone,
 }) => {
   const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -56,6 +60,32 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const photoInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  // Profile Tutorial
+  const [tutorialStep, setTutorialStep] = useState(0);
+  const [showTutorial, setShowTutorial] = useState(startTutorial);
+  useEffect(() => { if (startTutorial) { setTutorialStep(0); setShowTutorial(true); } }, [startTutorial]);
+  const tutorialDiemBtnRef = useRef<HTMLDivElement>(null);
+  const tutorialLinksRef = useRef<HTMLDivElement>(null);
+
+  const PROFILE_TUTORIAL_STEPS = [
+    { emoji: '👋', title: 'Welcome to a Creator\'s Profile', desc: `This is ${creator.displayName}'s public page. You can see their bio, response time, and links. Every creator on Diem accepts personal messages from fans — that's what makes it special.` },
+    { emoji: '💬', title: 'Send a Diem Message', desc: `Tap the "Diem" button to send a personal message. Write your question or request, attach photos if needed, and pay the creator's fee. They have a limited time to reply.` },
+    { emoji: '⏱️', title: 'Guaranteed Reply or Refund', desc: `If the creator doesn't reply within their response window, you automatically get your credits back. No risk — your message is always worth sending.` },
+    { emoji: '🔗', title: 'Links & Products', desc: `Scroll down to see their links, digital downloads, and support options. You can buy products or send a tip right from their profile.` },
+    { emoji: '🚀', title: 'You\'re Ready!', desc: `That's everything! Browse creators on Explore, send Diems, and get personal replies. Let's go!` },
+  ];
+
+  const handleTutorialNext = () => {
+    if (tutorialStep < PROFILE_TUTORIAL_STEPS.length - 1) {
+      const next = tutorialStep + 1;
+      setTutorialStep(next);
+      if (next === 3) setTimeout(() => tutorialLinksRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+    } else {
+      setShowTutorial(false);
+      onTutorialDone?.();
+    }
+  };
 
   // Trending Status
   const [isTrending, setIsTrending] = useState(false);
@@ -655,6 +685,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
           {/* Guaranteed Reply + Ask Me Anything */}
           {!isCustomizeMode && (
+              <div ref={tutorialDiemBtnRef} className={showTutorial && tutorialStep === 1 ? 'ring-2 ring-amber-400 ring-offset-2 rounded-2xl' : ''}>
               <div
                   onClick={() => { currentUser ? handleOpenModal() : onLoginRequest(); }}
                   className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${creator.isDiemHighlighted ? 'bg-gradient-to-r from-indigo-50/40 to-blue-50/20 border-indigo-100 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300 hover:shadow-sm'}`}
@@ -688,10 +719,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       {t('common.diem')}
                   </button>
               </div>
+              </div>
           )}
 
           {/* 4. AFFILIATE LINKS & DIGITAL PRODUCTS */}
-          <div className="w-full space-y-6">
+          <div ref={tutorialLinksRef} className={`w-full space-y-6 ${showTutorial && tutorialStep === 3 ? 'ring-2 ring-amber-400 ring-offset-2 rounded-2xl p-1' : ''}`}>
                 {groupedLinks.map((group, groupIdx) => {
                     const groupLinksToShow = group.links;
                     if (groupLinksToShow.length === 0 && !isCustomizeMode) return null;
@@ -1458,6 +1490,55 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                 </div>
             </div>
         </div>
+      )}
+
+      {/* Profile Tutorial Overlay */}
+      {showTutorial && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-50" onClick={() => { setShowTutorial(false); onTutorialDone?.(); }} />
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[min(400px,calc(100vw-32px))] bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden">
+            {/* Progress bar */}
+            <div className="h-1 bg-stone-100">
+              <div className="h-full bg-amber-400 transition-all duration-300" style={{ width: `${((tutorialStep + 1) / PROFILE_TUTORIAL_STEPS.length) * 100}%` }} />
+            </div>
+            <div className="p-5">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">{PROFILE_TUTORIAL_STEPS[tutorialStep].emoji}</span>
+                  <span className="font-bold text-stone-900 text-sm">{PROFILE_TUTORIAL_STEPS[tutorialStep].title}</span>
+                </div>
+                <span className="text-[11px] text-stone-400 font-medium shrink-0 ml-2">{tutorialStep + 1} / {PROFILE_TUTORIAL_STEPS.length}</span>
+              </div>
+              <p className="text-sm text-stone-500 leading-relaxed mb-4">{PROFILE_TUTORIAL_STEPS[tutorialStep].desc}</p>
+              {tutorialStep === 1 && (
+                <button
+                  onClick={() => { setShowTutorial(false); onTutorialDone?.(); currentUser ? handleOpenModal() : onLoginRequest(); }}
+                  className="w-full mb-3 px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-stone-900 text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+                >
+                  <MessageSquare size={15} /> Try Sending a Diem
+                </button>
+              )}
+              <div className="flex items-center justify-between">
+                <button onClick={() => { setShowTutorial(false); onTutorialDone?.(); }} className="text-xs text-stone-400 hover:text-stone-600 transition-colors">
+                  Skip tutorial
+                </button>
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-1">
+                    {PROFILE_TUTORIAL_STEPS.map((_, i) => (
+                      <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === tutorialStep ? 'w-4 bg-amber-500' : i < tutorialStep ? 'w-1.5 bg-amber-200' : 'w-1.5 bg-stone-200'}`} />
+                    ))}
+                  </div>
+                  <button
+                    onClick={handleTutorialNext}
+                    className="px-4 py-2 bg-stone-900 text-white text-sm font-semibold rounded-xl hover:bg-stone-700 transition-colors"
+                  >
+                    {tutorialStep < PROFILE_TUTORIAL_STEPS.length - 1 ? 'Next →' : 'Got it ✓'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

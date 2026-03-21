@@ -6,7 +6,7 @@ import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { FanDashboard } from './components/FanDashboard';
 import { TermsOfService } from './components/TermsOfService';
-import { getCreatorProfile, getCreatorProfileByHandle, checkAndSyncSession, completeOAuthSignup, signOut, subscribeToAuthChanges } from './services/realBackend';
+import { getCreatorProfile, getCreatorProfileByHandle, checkAndSyncSession, completeOAuthSignup, signOut, subscribeToAuthChanges, getDiemPublicProfileId } from './services/realBackend';
 import { CreatorProfile, CurrentUser, UserRole } from './types';
 import { DiemLogo } from './components/Icons';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +27,7 @@ function App() {
   const [pendingOAuthRole, setPendingOAuthRole] = useState<UserRole | null>(null);
   const [showOAuthTerms, setShowOAuthTerms] = useState(false);
   const [oauthTermsScrolled, setOauthTermsScrolled] = useState(false);
+  const [startProfileTutorial, setStartProfileTutorial] = useState(false);
 
   const currentUserRef = useRef<CurrentUser | null>(null);
   useEffect(() => {
@@ -350,6 +351,27 @@ function App() {
           setIsLoading(false);
       } else {
           localStorage.setItem('diem_current_user', JSON.stringify(user));
+          // New fan: navigate to Diem's profile with tutorial
+          const tutorialDoneKey = `diem_fan_tutorial_done_${user.id}`;
+          const isNewFan = !localStorage.getItem(tutorialDoneKey);
+          if (isNewFan) {
+              const diemId = await getDiemPublicProfileId();
+              if (diemId) {
+                  setIsLoading(true);
+                  const profile = await loadCreatorData(diemId, false);
+                  if (profile) {
+                      const handle = (profile.handle && profile.handle !== '@user')
+                          ? profile.handle.replace('@', '')
+                          : profile.displayName;
+                      window.history.replaceState({ page: 'PROFILE', creatorId: diemId }, '', `/${handle}`);
+                      setStartProfileTutorial(true);
+                      setCurrentPage('PROFILE');
+                      setIsLoading(false);
+                      return;
+                  }
+                  setIsLoading(false);
+              }
+          }
           window.history.replaceState({ page: 'FAN_DASHBOARD' }, '', '');
           setCurrentPage('FAN_DASHBOARD');
       }
@@ -424,15 +446,24 @@ function App() {
               window.history.pushState({ page: 'LOGIN' }, '', '/login');
               setCurrentPage('LOGIN');
           }}
-          onDemoClick={() => {
-            if (creator) {
-                const handle = (creator.handle && creator.handle !== '@user') 
-                    ? creator.handle.replace('@', '') 
-                    : creator.displayName;
-                window.history.pushState({ page: 'PROFILE', creatorId: creator.id }, '', `/${handle}`);
+          onDemoClick={async () => {
+            const diemId = await getDiemPublicProfileId();
+            const targetId = diemId || creator?.id;
+            if (targetId) {
+                setIsLoading(true);
+                const profile = await loadCreatorData(targetId, false);
+                if (profile) {
+                    const handle = (profile.handle && profile.handle !== '@user')
+                        ? profile.handle.replace('@', '')
+                        : profile.displayName;
+                    window.history.pushState({ page: 'PROFILE', creatorId: targetId }, '', `/${handle}`);
+                }
+                setStartProfileTutorial(true);
                 setCurrentPage('PROFILE');
+                setIsLoading(false);
+            } else {
+                alert("No creators found. Please sign up as a creator first!");
             }
-            else alert("No creators found. Please sign up as a creator first!");
           }}
         />
       )}
@@ -466,9 +497,16 @@ function App() {
       )}
 
       {currentPage === 'PROFILE' && creator && (
-        <CreatorPublicProfile 
-          creator={creator} 
+        <CreatorPublicProfile
+          creator={creator}
           currentUser={currentUser}
+          startTutorial={startProfileTutorial}
+          onTutorialDone={() => {
+            setStartProfileTutorial(false);
+            if (currentUser) {
+              localStorage.setItem(`diem_fan_tutorial_done_${currentUser.id}`, '1');
+            }
+          }}
           onMessageSent={() => {
             setRefreshTrigger(p => p + 1);
             loadCreatorData(creator.id); // Refresh credits after sending

@@ -2209,6 +2209,15 @@ export const getDiemCreatorId = async (): Promise<string | null> => {
     }
 };
 
+export const getDiemPublicProfileId = async (): Promise<string | null> => {
+    if (!isConfigured) return null;
+    try {
+        const { data, error } = await supabase.rpc('get_diem_user_id');
+        if (error || !data) return null;
+        return data as string;
+    } catch { return null; }
+};
+
 export const connectStripeAccount = async (): Promise<string | null> => {
     if (!isConfigured) {
         console.log("[Stripe] Backend not configured, using mock mode (returning null URL)");
