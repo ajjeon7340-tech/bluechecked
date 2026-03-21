@@ -617,7 +617,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                   <div className="flex justify-center items-center flex-1 py-4">
                     <div key={stepAnimKeys[idx]} className="w-full max-w-[180px]">
                       {React.cloneElement(sketchIllustrations[idx] as React.ReactElement, {
-                        width: '100%', height: 'auto', style: { display: 'block' }
+                        width: '100%', height: undefined, style: { display: 'block', height: 'auto' }
                       })}
                     </div>
                   </div>
@@ -657,7 +657,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                           <div className="flex justify-center items-center flex-1 py-4">
                             <div className="w-full max-w-[180px]">
                               {React.cloneElement(sketchIllustrations[idx] as React.ReactElement, {
-                                width: '100%', height: 'auto', style: { display: 'block' }
+                                width: '100%', height: undefined, style: { display: 'block', height: 'auto' }
                               })}
                             </div>
                           </div>
