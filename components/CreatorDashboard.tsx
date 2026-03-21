@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n/config';
 import { CreatorProfile, Message, DashboardStats, MonthlyStat, AffiliateLink, LinkSection, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
 import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, sendWelcomeMessage, Withdrawal, isBackendConfigured } from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
@@ -633,7 +634,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   // Send welcome message on every load — idempotent, skips if already sent
   useEffect(() => {
-    if (currentUser) sendWelcomeMessage();
+    if (currentUser) sendWelcomeMessage(i18n.language);
   }, [currentUser?.id]);
 
   const handleTutorialNext = () => {

@@ -2138,16 +2138,26 @@ const callStripeConnect = async (body: Record<string, unknown>) => {
     return res.data;
 };
 
-export const sendWelcomeMessage = async (): Promise<void> => {
+const WELCOME_MESSAGES: Record<string, string> = {
+    en: `Hey! 👋 Welcome to Diem — I'm so glad you're here.\n\nHere's how it works: fans pay to send you a message, and you reply when you're ready. Once you reply and tap Collect, the credits hit your balance.\n\nYou can keep the conversation going as long as you like — reply as many times as you want. But remember, fans get one message per session, so your reply really matters to them.\n\nGo ahead and reply to this message to collect your first credits. Then head to Settings to set up your profile. Good luck! 🚀`,
+    ko: `안녕하세요! 👋 Diem에 오신 것을 환영합니다 — 함께하게 되어 정말 기뻐요.\n\n이렇게 작동해요: 팬들이 메시지를 보내기 위해 크레딧을 지불하고, 준비가 되면 답장을 보내면 됩니다. 답장하고 '수령' 버튼을 누르면 크레딧이 잔액에 적립됩니다.\n\n원하는 만큼 대화를 이어갈 수 있어요 — 몇 번이든 답장할 수 있습니다. 하지만 팬들은 세션당 한 번의 메시지만 보낼 수 있으니, 여러분의 답장이 그들에게 정말 소중합니다.\n\n이 메시지에 답장해서 첫 크레딧을 받아보세요. 그런 다음 설정에서 프로필을 완성해보세요. 행운을 빕니다! 🚀`,
+    ja: `こんにちは！👋 Diemへようこそ — ご参加いただけて嬉しいです。\n\n仕組みはこうです：ファンがメッセージを送るためにクレジットを支払い、準備ができたら返信します。返信して「受け取る」をタップすると、クレジットが残高に反映されます。\n\n何度でも返信できます — 会話を続けることができます。ただし、ファンはセッションあたり1つのメッセージしか送れないので、あなたの返信はとても大切です。\n\nこのメッセージに返信して最初のクレジットを受け取りましょう。その後、設定でプロフィールを整えてください。頑張ってください！🚀`,
+    zh: `你好！👋 欢迎来到 Diem — 很高兴你的加入。\n\n工作原理如下：粉丝付费向你发送消息，你准备好后回复即可。一旦你回复并点击"领取"，积分就会进入你的余额。\n\n你可以随时继续对话 — 想回复多少次都可以。但请记住，粉丝每次会话只能发一条消息，所以你的回复对他们来说非常重要。\n\n现在回复这条消息，领取你的第一批积分。然后前往设置完善你的个人资料。祝你好运！🚀`,
+    es: `¡Hola! 👋 Bienvenido/a a Diem — me alegra mucho que estés aquí.\n\nAsí funciona: los fans pagan para enviarte un mensaje, y tú respondes cuando estés listo/a. Una vez que respondas y toques Cobrar, los créditos llegarán a tu saldo.\n\nPuedes continuar la conversación todo lo que quieras — responde tantas veces como desees. Pero recuerda, los fans tienen un solo mensaje por sesión, así que tu respuesta les importa mucho.\n\nAdelante, responde a este mensaje para recibir tus primeros créditos. Luego ve a Configuración para completar tu perfil. ¡Buena suerte! 🚀`,
+};
+
+export const sendWelcomeMessage = async (lang = 'en'): Promise<void> => {
     if (!isConfigured) return;
     try {
         const { data: session } = await supabase.auth.getSession();
         if (!session.session) return;
+        const content = WELCOME_MESSAGES[lang] ?? WELCOME_MESSAGES['en'];
         const { error } = await supabase.rpc('send_welcome_message', {
             p_creator_id: session.session.user.id,
+            p_content: content,
         });
         if (error) console.warn('[welcome] RPC error:', error.message);
-        else console.log('[welcome] Welcome message sent');
+        else console.log('[welcome] Welcome message sent in:', lang);
     } catch (e: any) {
         console.warn('[welcome] Failed:', e.message);
     }
