@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { CurrentUser, Message, CreatorProfile } from '../types';
 import { Button } from './Button';
 import { DiemLogo, CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download, Smile, Verified } from './Icons';
-import { getMessages, getChatLines, invalidateChatLinesCache, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createCheckoutSession, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl, uploadProductFile, sendFanWelcomeMessage } from '../services/realBackend';
+import { getMessages, getChatLines, invalidateChatLinesCache, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createCheckoutSession, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl, uploadProductFile, sendFanWelcomeMessage, getDiemCreatorId } from '../services/realBackend';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import i18n from '../i18n/config';
 
@@ -129,7 +129,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       );
       await Promise.all(pendingMessages.map(m => cancelMessage(m.id).catch(() => {})));
 
-      const updated = { ...leftChatrooms, [creatorId]: Date.now() + 1000 };
+      // Use the latest server-side message timestamp as the cutoff so clock
+      // skew between client and Supabase doesn't cause the group to reappear.
+      const msgTimes = messages
+          .filter(m => m.creatorId === creatorId)
+          .map(m => new Date(m.createdAt).getTime());
+      const cutoff = msgTimes.length > 0 ? Math.max(...msgTimes) + 1000 : Date.now() + 1000;
+      const updated = { ...leftChatrooms, [creatorId]: cutoff };
       setLeftChatrooms(updated);
       localStorage.setItem('diem_fan_left_chatrooms', JSON.stringify(updated));
       setSelectedCreatorId(null);
@@ -1678,7 +1684,16 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                              </div>
 
                              <div className="space-y-3 pt-2">
-                                 <Button fullWidth className="h-12 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-stone-900/10" onClick={() => { setCurrentView('OVERVIEW'); setSelectedCreatorId(currentUser?.id ?? null); }}>
+                                 <Button fullWidth className="h-12 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-stone-900/10" onClick={async () => {
+                                     const diemChatLeft = !!(currentUser?.id && leftChatrooms[currentUser.id]);
+                                     if (diemChatLeft) {
+                                         const creatorId = await getDiemCreatorId();
+                                         if (creatorId) onBrowseCreators(creatorId);
+                                     } else {
+                                         setCurrentView('OVERVIEW');
+                                         setSelectedCreatorId(currentUser?.id ?? null);
+                                     }
+                                 }}>
                                     <MessageSquare size={18}/> {t('creator.contactSupport')}
                                  </Button>
                                  <Button fullWidth variant="secondary" className="h-12 rounded-xl flex items-center justify-center gap-2 bg-stone-50 hover:bg-stone-100 border border-stone-200">

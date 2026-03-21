@@ -2188,6 +2188,25 @@ export const sendFanWelcomeMessage = async (lang = 'en'): Promise<void> => {
     }
 };
 
+// Returns the Diem admin's user/creator ID by finding the sender of any Diem→fan welcome message.
+export const getDiemCreatorId = async (): Promise<string | null> => {
+    if (!isConfigured) return null;
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return null;
+        const { data } = await supabase
+            .from('messages')
+            .select('sender_id')
+            .eq('creator_id', session.user.id)
+            .neq('sender_id', session.user.id)
+            .limit(1)
+            .maybeSingle();
+        return data?.sender_id ?? null;
+    } catch {
+        return null;
+    }
+};
+
 export const connectStripeAccount = async (): Promise<string | null> => {
     if (!isConfigured) {
         console.log("[Stripe] Backend not configured, using mock mode (returning null URL)");
