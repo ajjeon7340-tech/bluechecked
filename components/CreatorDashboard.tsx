@@ -886,10 +886,29 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   }, [messages]);
 
   const stats = useMemo((): DashboardStats => {
-    const totalEarnings = incomingMessages
-      .filter(m => m.status === 'REPLIED')
+    const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    const replied = incomingMessages.filter(m => m.status === 'REPLIED');
+
+    // Credits earned from messages replied > 2 days ago
+    const availableEarnings = replied
+      .filter(m => m.replyAt && now - new Date(m.replyAt).getTime() >= TWO_DAYS_MS)
       .reduce((sum, m) => sum + m.amount, 0);
-    
+
+    // Credits still in 2-day hold
+    const holdEarnings = replied
+      .filter(m => !m.replyAt || now - new Date(m.replyAt).getTime() < TWO_DAYS_MS)
+      .reduce((sum, m) => sum + m.amount, 0);
+
+    // Earliest release time among held earnings (for UI hint)
+    const heldMessages = replied.filter(m => m.replyAt && now - new Date(m.replyAt).getTime() < TWO_DAYS_MS);
+    const nextReleaseAt = heldMessages.length > 0
+      ? new Date(Math.min(...heldMessages.map(m => new Date(m.replyAt!).getTime() + TWO_DAYS_MS)))
+      : null;
+
+    const totalEarnings = availableEarnings + holdEarnings;
+
     // Filter out products for message metrics
     const messageOnly = incomingMessages.filter(m => !m.content.startsWith('Purchased Product:') && !m.content.startsWith('Fan Tip:'));
 
@@ -909,16 +928,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     }
 
     const totalWithdrawn = withdrawals.reduce((sum, w) => sum + w.amount, 0);
-    const availableBalance = totalEarnings - totalWithdrawn;
+    const availableBalance = availableEarnings - totalWithdrawn;
 
     return {
       totalEarnings,
       pendingCount,
       responseRate,
-      // @ts-ignore - Adding temporary field to stats object
+      // @ts-ignore
       avgResponseTime,
       // @ts-ignore
       availableBalance,
+      // @ts-ignore
+      holdEarnings,
+      // @ts-ignore
+      nextReleaseAt,
       monthlyStats: []
     };
   }, [incomingMessages, historicalStats, withdrawals]);
@@ -2040,6 +2063,23 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 <span className="text-sm font-medium text-stone-400">{t('common.credits').toLowerCase()}</span>
                                             </div>
                                             <p className="text-[11px] text-emerald-600 mt-1.5 font-medium">{t('creator.readyToPayout')}</p>
+                                            {/* @ts-ignore */}
+                                            {stats.holdEarnings > 0 && (
+                                                <div className="mt-2 pt-2 border-t border-stone-100">
+                                                    <p className="text-[11px] text-amber-600 font-medium flex items-center gap-1">
+                                                        <span>⏳</span>
+                                                        {/* @ts-ignore */}
+                                                        {stats.holdEarnings.toLocaleString()} credits in 2-day hold
+                                                    </p>
+                                                    {/* @ts-ignore */}
+                                                    {stats.nextReleaseAt && (
+                                                        <p className="text-[10px] text-stone-400 mt-0.5">
+                                                            {/* @ts-ignore */}
+                                                            Next release: {new Date(stats.nextReleaseAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
                                         </>
                                     )}
                                 </div>

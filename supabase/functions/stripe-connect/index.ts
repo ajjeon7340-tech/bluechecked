@@ -226,6 +226,34 @@ Deno.serve(async (req) => {
         return errorResponse(`Insufficient credit balance (have: ${profile.credits || 0}, need: ${amount})`)
       }
 
+      // Enforce 2-day hold: only count earnings from messages replied > 2 days ago
+      const TWO_DAYS_AGO = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+      const { data: repliedMsgs, error: msgsError } = await adminClient
+        .from('messages')
+        .select('amount')
+        .eq('creator_id', user.id)
+        .eq('status', 'REPLIED')
+        .lt('reply_at', TWO_DAYS_AGO)
+
+      if (msgsError) {
+        console.error('[stripe-connect] Failed to fetch replied messages:', msgsError)
+        return errorResponse('Failed to verify available balance', 500)
+      }
+
+      const availableEarnings = (repliedMsgs || []).reduce((sum: number, m: { amount: number }) => sum + m.amount, 0)
+
+      const { data: withdrawalRows } = await adminClient
+        .from('withdrawals')
+        .select('amount')
+        .eq('creator_id', user.id)
+
+      const totalWithdrawn = (withdrawalRows || []).reduce((sum: number, w: { amount: number }) => sum + w.amount, 0)
+      const availableBalance = availableEarnings - totalWithdrawn
+
+      if (amount > availableBalance) {
+        return errorResponse(`Amount exceeds available balance after 2-day hold (available: ${availableBalance}, requested: ${amount})`)
+      }
+
       // Calculate fees
       const grossUsd = amount * CREDIT_TO_USD
       const platformFee = grossUsd * PLATFORM_FEE_RATE
