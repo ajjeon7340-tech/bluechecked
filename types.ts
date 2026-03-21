@@ -63,6 +63,7 @@ export interface CreatorProfile {
   likesCount: number;
   showLikes?: boolean;
   showRating?: boolean;
+  showBio?: boolean;
   isPremium?: boolean;
   isDiemHighlighted?: boolean;
   platforms?: (string | { id: string; url: string })[];

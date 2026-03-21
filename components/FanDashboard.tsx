@@ -1678,7 +1678,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                              </div>
 
                              <div className="space-y-3 pt-2">
-                                 <Button fullWidth className="h-12 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-stone-900/10">
+                                 <Button fullWidth className="h-12 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-stone-900/10" onClick={() => { setCurrentView('OVERVIEW'); setSelectedCreatorId(currentUser?.id ?? null); }}>
                                     <MessageSquare size={18}/> {t('creator.contactSupport')}
                                  </Button>
                                  <Button fullWidth variant="secondary" className="h-12 rounded-xl flex items-center justify-center gap-2 bg-stone-50 hover:bg-stone-100 border border-stone-200">
@@ -2693,6 +2693,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         <p className="text-center text-[10px] text-stone-400 mt-4 flex items-center justify-center gap-1">
                             <Lock size={10} /> Secure encrypted payment
                         </p>
+                        <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between gap-3">
+                            <div>
+                                <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">🧪 Testing Only</p>
+                                <p className="text-xs text-amber-600 mt-0.5">Add 10 free credits</p>
+                            </div>
+                            <button
+                                onClick={async () => { const u = await addCredits(10); if (u && onUpdateUser) onUpdateUser(u); }}
+                                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-colors flex-shrink-0"
+                            >
+                                + 10 Credits
+                            </button>
+                        </div>
                     </div>
                     )}
                 </div>

@@ -634,6 +634,7 @@ const enrichCreatorProfile = async (data: any): Promise<CreatorProfile> => {
         isPremium: data.is_premium || false,
         showLikes: data.show_likes !== false,
         showRating: data.show_rating !== false,
+        showBio: data.show_bio !== false,
         isDiemHighlighted: (data.links || []).find((l: any) => l.id === '__diem_config__')?.isPromoted || false,
     };
 };
@@ -762,6 +763,7 @@ export const getCreatorProfileFast = async (creatorId?: string): Promise<Creator
         isPremium: data.is_premium || false,
         showLikes: data.show_likes !== false,
         showRating: data.show_rating !== false,
+        showBio: data.show_bio !== false,
         isDiemHighlighted: (data.links || []).find((l: any) => l.id === '__diem_config__')?.isPromoted || false,
     };
 };
@@ -795,7 +797,8 @@ export const updateCreatorProfile = async (profile: CreatorProfile): Promise<Cre
             products: profile.products,
             is_premium: profile.isPremium,
             show_likes: profile.showLikes ?? true,
-            show_rating: profile.showRating ?? true
+            show_rating: profile.showRating ?? true,
+            show_bio: profile.showBio ?? true
         })
         .eq('id', session.session.user.id);
 
