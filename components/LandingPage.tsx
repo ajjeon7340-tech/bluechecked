@@ -871,31 +871,31 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
               <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-[2.5rem] p-8">
                 <div className="grid gap-3">
                   {/* Digital Product card */}
-                  <div className="w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden bg-gradient-to-r from-purple-50/40 to-violet-50/20 border-purple-100 shadow-sm">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform bg-purple-50 text-purple-400">
+                  <div className="w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 relative overflow-hidden bg-gradient-to-r from-purple-50/40 to-violet-50/20 border-purple-100 shadow-sm">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-purple-50 text-purple-400">
                       <FileText size={20} className="sm:hidden" />
                       <FileText size={24} className="hidden sm:block" />
                     </div>
                     <div className="flex-1 relative z-10 min-w-0 text-left">
-                      <h4 className="font-semibold sm:font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">30-Day Fitness Plan</h4>
+                      <h4 className="font-semibold sm:font-bold text-stone-900 text-sm sm:text-base truncate">30-Day Fitness Plan</h4>
                       <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">Digital Download</p>
                     </div>
-                    <div className="px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap bg-purple-400 text-white hover:bg-purple-500">
+                    <div className="px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap bg-purple-400 text-white">
                       Buy
                     </div>
                   </div>
 
                   {/* Support / Tip card */}
-                  <div className="w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden bg-gradient-to-r from-pink-50/40 to-rose-50/20 border-pink-100 shadow-sm">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform bg-pink-50 text-pink-400">
+                  <div className="w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 relative overflow-hidden bg-gradient-to-r from-pink-50/40 to-rose-50/20 border-pink-100 shadow-sm">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-pink-50 text-pink-400">
                       <Heart size={20} className="sm:hidden" />
                       <Heart size={24} className="hidden sm:block" />
                     </div>
                     <div className="flex-1 relative z-10 min-w-0 text-left">
-                      <h4 className="font-semibold sm:font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">Support My Work</h4>
+                      <h4 className="font-semibold sm:font-bold text-stone-900 text-sm sm:text-base truncate">Support My Work</h4>
                       <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">Send a tip</p>
                     </div>
-                    <div className="px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap bg-pink-300 text-white hover:bg-pink-400">
+                    <div className="px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap bg-pink-300 text-white">
                       <Heart size={12} /> Tip
                     </div>
                   </div>
