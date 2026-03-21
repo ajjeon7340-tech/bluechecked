@@ -611,17 +611,17 @@ function App() {
                 <p className="text-xs text-center text-stone-400">Scroll to the bottom to enable "I Agree"</p>
               )}
               <button
-                onClick={() => { if (oauthTermsScrolled && pendingOAuthRole) { setShowOAuthTerms(false); handleConfirmSignUp(pendingOAuthRole); } }}
+                onClick={() => { if (oauthTermsScrolled && pendingOAuthRole) { setShowOAuthTerms(false); setShowSignUpConfirm(false); handleConfirmSignUp(pendingOAuthRole); } }}
                 disabled={!oauthTermsScrolled || isLoading}
                 className={`w-full py-3 rounded-xl text-sm font-bold transition-colors ${oauthTermsScrolled && !isLoading ? 'bg-stone-900 text-white hover:bg-stone-700' : 'bg-stone-100 text-stone-400 cursor-not-allowed'}`}
               >
                 {isLoading ? 'Creating account…' : 'I Agree & Continue'}
               </button>
               <button
-                onClick={() => { setShowOAuthTerms(false); setPendingOAuthRole(null); }}
+                onClick={async () => { setShowOAuthTerms(false); setPendingOAuthRole(null); await handleCancelSignUp(); }}
                 className="w-full py-2 text-xs text-stone-400 hover:text-stone-600 transition-colors"
               >
-                Decline — go back
+                Decline — I do not agree
               </button>
             </div>
           </div>
