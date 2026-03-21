@@ -756,47 +756,64 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
           </div>
 
        {/* Setup Tutorial Overlay */}
-       {showSetupTutorial && SETUP_TUTORIAL_STEPS[setupTutorialStep]?.page === setupPage && (
-         <>
-           <div className="fixed inset-0 bg-black/40 z-50" onClick={() => setShowSetupTutorial(false)} />
-           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[min(400px,calc(100vw-32px))] bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden">
-             <div className="h-1 bg-stone-100">
-               <div
-                 className="h-full bg-amber-400 transition-all duration-300"
-                 style={{ width: `${((setupTutorialStep + 1) / SETUP_TUTORIAL_STEPS.length) * 100}%` }}
-               />
-             </div>
-             <div className="p-5">
-               <div className="flex items-start justify-between mb-2">
-                 <div className="flex items-center gap-2">
-                   <span className="text-base">{SETUP_TUTORIAL_STEPS[setupTutorialStep].emoji}</span>
-                   <span className="font-bold text-stone-900 text-sm">{SETUP_TUTORIAL_STEPS[setupTutorialStep].title}</span>
-                 </div>
-                 <span className="text-[11px] text-stone-400 font-medium shrink-0 ml-2">{setupTutorialStep + 1} / {SETUP_TUTORIAL_STEPS.length}</span>
+       {showSetupTutorial && SETUP_TUTORIAL_STEPS[setupTutorialStep]?.page === setupPage && (() => {
+         const stepValidation: Record<number, boolean> = {
+           0: handle.trim().length > 0,
+           1: true,
+           2: true,
+           3: bio.trim().length > 0,
+           4: intakeInstructions.trim().length > 0,
+           5: welcomeMessage.trim().length > 0,
+           6: true,
+           7: true,
+         };
+         const canProceed = stepValidation[setupTutorialStep] ?? true;
+         return (
+           <>
+             <div className="fixed inset-0 bg-black/40 z-50" />
+             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[min(400px,calc(100vw-32px))] bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden">
+               <div className="h-1 bg-stone-100">
+                 <div
+                   className="h-full bg-amber-400 transition-all duration-300"
+                   style={{ width: `${((setupTutorialStep + 1) / SETUP_TUTORIAL_STEPS.length) * 100}%` }}
+                 />
                </div>
-               <p className="text-sm text-stone-500 leading-relaxed mb-4">{SETUP_TUTORIAL_STEPS[setupTutorialStep].desc}</p>
-               <div className="flex items-center justify-between">
-                 <button onClick={() => setShowSetupTutorial(false)} className="text-xs text-stone-400 hover:text-stone-600 transition-colors">
-                   Skip tutorial
-                 </button>
-                 <div className="flex items-center gap-3">
-                   <div className="flex gap-1">
-                     {SETUP_TUTORIAL_STEPS.map((_, i) => (
-                       <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === setupTutorialStep ? 'w-4 bg-amber-500' : i < setupTutorialStep ? 'w-1.5 bg-amber-200' : 'w-1.5 bg-stone-200'}`} />
-                     ))}
+               <div className="p-5">
+                 <div className="flex items-start justify-between mb-2">
+                   <div className="flex items-center gap-2">
+                     <span className="text-base">{SETUP_TUTORIAL_STEPS[setupTutorialStep].emoji}</span>
+                     <span className="font-bold text-stone-900 text-sm">{SETUP_TUTORIAL_STEPS[setupTutorialStep].title}</span>
                    </div>
-                   <button
-                     onClick={handleSetupTutorialNext}
-                     className="px-4 py-2 bg-stone-900 text-white text-sm font-semibold rounded-xl hover:bg-stone-700 transition-colors"
-                   >
-                     {setupTutorialStep < SETUP_TUTORIAL_STEPS.length - 1 ? 'Next →' : 'Got it ✓'}
+                   <span className="text-[11px] text-stone-400 font-medium shrink-0 ml-2">{setupTutorialStep + 1} / {SETUP_TUTORIAL_STEPS.length}</span>
+                 </div>
+                 <p className="text-sm text-stone-500 leading-relaxed mb-1">{SETUP_TUTORIAL_STEPS[setupTutorialStep].desc}</p>
+                 {!canProceed && (
+                   <p className="text-xs text-amber-600 font-medium mb-3">Please fill this in to continue.</p>
+                 )}
+                 {canProceed && <div className="mb-3" />}
+                 <div className="flex items-center justify-between">
+                   <button onClick={() => setShowSetupTutorial(false)} className="text-xs text-stone-400 hover:text-stone-600 transition-colors">
+                     Skip tutorial
                    </button>
+                   <div className="flex items-center gap-3">
+                     <div className="flex gap-1">
+                       {SETUP_TUTORIAL_STEPS.map((_, i) => (
+                         <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === setupTutorialStep ? 'w-4 bg-amber-500' : i < setupTutorialStep ? 'w-1.5 bg-amber-200' : 'w-1.5 bg-stone-200'}`} />
+                       ))}
+                     </div>
+                     <button
+                       onClick={canProceed ? handleSetupTutorialNext : undefined}
+                       className={`px-4 py-2 text-sm font-semibold rounded-xl transition-colors ${canProceed ? 'bg-stone-900 text-white hover:bg-stone-700' : 'bg-stone-200 text-stone-400 cursor-not-allowed'}`}
+                     >
+                       {setupTutorialStep < SETUP_TUTORIAL_STEPS.length - 1 ? 'Next →' : 'Got it ✓'}
+                     </button>
+                   </div>
                  </div>
                </div>
              </div>
-           </div>
-         </>
-       )}
+           </>
+         );
+       })()}
        </div>
     );
   }
