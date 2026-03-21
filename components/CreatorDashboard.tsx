@@ -175,6 +175,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [editedCreator, setEditedCreator] = useState<CreatorProfile>(creator);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
+  const [pendingNavigateView, setPendingNavigateView] = useState<DashboardView | null>(null);
   
   // Link Editing State
   const [newLinkTitle, setNewLinkTitle] = useState('');
@@ -266,6 +267,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [, setInboxTutorialScrollTick] = useState(0);
 
   const TUTORIAL_STEPS = [
+    { title: 'Profile Photo', desc: 'Add a profile photo so fans know who they\'re talking to. Tap "Upload" to choose one from your device — a clear, friendly photo works best!', tab: null, highlight: 'avatar' },
     { title: 'Your Status Message', desc: 'This appears on your public profile — it\'s the first thing fans see when they visit your page. Make it personal!', tab: 'bio' as const, highlight: 'bio' },
     { title: 'Request Instructions', desc: 'Shown to fans before they send you a Diem request. Guide them on what context to include so you can give the best answer.', tab: 'instructions' as const, highlight: 'instructions' },
     { title: 'Auto-Reply Message', desc: 'Sent automatically the moment a fan pays — a warm acknowledgment while you prepare your response.', tab: 'reply' as const, highlight: 'reply' },
@@ -664,8 +666,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setTutorialStep(nextStep);
     const tab = TUTORIAL_STEPS[nextStep].tab;
     if (tab) setSettingsTextTab(tab);
-    if (nextStep === 3) setTimeout(() => tutorialLinksRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
-    if (nextStep === 4) setTimeout(() => tutorialSectionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+    if (nextStep === 4) setTimeout(() => tutorialLinksRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+    if (nextStep === 5) setTimeout(() => tutorialSectionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
   };
 
   const handleTutorialSkip = () => {
@@ -1165,11 +1167,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     return JSON.stringify(editedCreator) !== JSON.stringify(creator);
   };
 
-  const handleNavigate = (view: DashboardView) => {
-    if (hasUnsavedChanges() && view !== 'SETTINGS') {
-      if (!window.confirm(t('creator.leaveConversation'))) return;
-      setEditedCreator(creator);
-    }
+  const executeNavigate = (view: DashboardView) => {
     if (view === 'NOTIFICATIONS') {
       setLastReadTime(Date.now());
       localStorage.setItem('diem_creator_last_read_time', Date.now().toString());
@@ -1177,7 +1175,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     } else if (view === 'REVIEWS') {
         setReviewsPage(1);
     }
-    
+
     const path = view === 'OVERVIEW' ? '/dashboard' : `/dashboard/${view.toLowerCase()}`;
     window.history.pushState({ page: 'DASHBOARD' }, '', path);
 
@@ -1185,6 +1183,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setSelectedSenderEmail(null);
     setShowInboxTutorial(false);
     setIsSidebarOpen(false);
+  };
+
+  const handleNavigate = (view: DashboardView) => {
+    if (hasUnsavedChanges() && view !== 'SETTINGS') {
+      setPendingNavigateView(view);
+      return;
+    }
+    executeNavigate(view);
   };
 
   const handleSaveProfile = async () => {
@@ -3394,7 +3400,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         <div className="space-y-6">
                             {/* ... Profile Settings Form (Unchanged) ... */}
                             {/* Avatar Edit */}
-                            <div className="flex items-start gap-4 sm:gap-6">
+                            <div className={`flex items-start gap-4 sm:gap-6 ${showTutorial && tutorialStep === 0 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-3 -m-3' : ''}`}>
                                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-stone-100 flex-shrink-0 overflow-hidden border border-stone-200">
                                     <img
                                         src={editedCreator.avatarUrl || DEFAULT_AVATAR}
@@ -3410,14 +3416,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     <div className="flex flex-col sm:flex-row gap-2">
                                         {editedCreator.avatarUrl ? (
                                             <div className="flex items-center gap-2 w-full px-3 py-2 border border-stone-300 rounded-lg bg-stone-50 text-stone-500 text-sm min-w-0">
-                                                <span className="truncate flex-1">
-                                                    {avatarFileName || (editedCreator.avatarUrl.startsWith('data:') ? "Uploaded Image" : "Current Photo")}
+                                                <span className="truncate flex-1 font-medium text-stone-700">
+                                                    {editedCreator.displayName || 'Display Name'}
                                                 </span>
                                                 <button onClick={() => { setEditedCreator({...editedCreator, avatarUrl: ''}); setAvatarFileName(''); }} className="text-red-500 hover:text-red-700 flex-shrink-0"><X size={14}/></button>
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-2 w-full px-3 py-2 border border-stone-300 rounded-lg bg-stone-50 text-stone-400 text-sm italic">
-                                                No image selected
+                                                {editedCreator.displayName || 'No image selected'}
                                             </div>
                                         )}
                                         <button
@@ -3454,7 +3460,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </p>
                             </div>
                             {/* Bio / Instructions / Auto-Reply tab switcher */}
-                            <div className={showTutorial && tutorialStep <= 2 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
+                            <div className={showTutorial && tutorialStep >= 1 && tutorialStep <= 3 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                                 <div className="flex bg-stone-100 rounded-xl p-1 mb-3 gap-0.5">
                                     {[
                                         { key: 'bio', label: 'Bio / About' },
@@ -3608,11 +3614,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             </div>
 
                             {/* Links & Products Section */}
-                            <div ref={tutorialLinksRef} className={showTutorial && tutorialStep === 3 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
+                            <div ref={tutorialLinksRef} className={showTutorial && tutorialStep === 4 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                                 <label className="block text-sm font-medium text-stone-700 mb-2">Links & Products</label>
 
                                 {/* Section Management */}
-                                <div ref={tutorialSectionsRef} className={`mb-4 p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-3${showTutorial && tutorialStep === 4 ? ' ring-2 ring-amber-400' : ''}`}>
+                                <div ref={tutorialSectionsRef} className={`mb-4 p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-3${showTutorial && tutorialStep === 5 ? ' ring-2 ring-amber-400' : ''}`}>
                                     <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Custom Sections</span>
                                     {(editedCreator.linkSections || []).length > 0 && (
                                         <div className="flex flex-col gap-1.5">
@@ -4279,6 +4285,50 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
         </div>
       )}
       {/* Onboarding Tutorial Overlay */}
+      {/* Unsaved Changes Modal */}
+      {pendingNavigateView && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <div className="w-10 h-10 bg-amber-100 rounded-2xl flex items-center justify-center mb-4">
+              <span className="text-lg">⚠️</span>
+            </div>
+            <h3 className="text-base font-bold text-stone-900 mb-1">Unsaved Changes</h3>
+            <p className="text-sm text-stone-500 mb-5">You have unsaved changes to your profile. What would you like to do?</p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={async () => {
+                  await handleSaveProfile();
+                  const dest = pendingNavigateView;
+                  setPendingNavigateView(null);
+                  executeNavigate(dest);
+                }}
+                disabled={isSavingProfile}
+                className="w-full px-4 py-2.5 bg-stone-900 hover:bg-stone-700 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isSavingProfile ? <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"/> Saving…</> : 'Save & Continue'}
+              </button>
+              <button
+                onClick={() => {
+                  const dest = pendingNavigateView;
+                  setPendingNavigateView(null);
+                  setEditedCreator(creator);
+                  executeNavigate(dest!);
+                }}
+                className="w-full px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-sm font-semibold rounded-xl transition-colors"
+              >
+                Discard & Leave
+              </button>
+              <button
+                onClick={() => setPendingNavigateView(null)}
+                className="w-full px-4 py-2 text-stone-400 hover:text-stone-600 text-sm transition-colors"
+              >
+                Stay on Page
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showTutorial && currentView === 'SETTINGS' && (
         <>
           {/* Backdrop */}
@@ -4296,13 +4346,21 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-base">
-                    {['✍️', '📋', '💬', '🔗', '📂'][tutorialStep]}
+                    {['📸', '✍️', '📋', '💬', '🔗', '📂'][tutorialStep]}
                   </span>
                   <span className="font-bold text-stone-900 text-sm">{TUTORIAL_STEPS[tutorialStep].title}</span>
                 </div>
                 <span className="text-[11px] text-stone-400 font-medium shrink-0 ml-2">{tutorialStep + 1} / {TUTORIAL_STEPS.length}</span>
               </div>
               <p className="text-sm text-stone-500 leading-relaxed mb-4">{TUTORIAL_STEPS[tutorialStep].desc}</p>
+              {tutorialStep === 0 && (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full mb-3 px-4 py-2 bg-amber-400 hover:bg-amber-500 text-stone-900 text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+                >
+                  <Camera size={15} /> Upload Photo Now
+                </button>
+              )}
               <div className="flex items-center justify-between">
                 <button onClick={handleTutorialSkip} className="text-xs text-stone-400 hover:text-stone-600 transition-colors">
                   Skip tutorial
