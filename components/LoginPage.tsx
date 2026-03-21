@@ -35,8 +35,12 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   const [isSocialLoading, setIsSocialLoading] = useState(false);
   const [showResend, setShowResend] = useState(false);
 
+  // Terms of Service State
+  const [termsScrolled, setTermsScrolled] = useState(false);
+  const [pendingSignup, setPendingSignup] = useState<{ identifier: string; password: string; fullName: string; role: 'CREATOR' | 'FAN' } | null>(null);
+
   // Setup / Onboarding State
-  const [step, setStep] = useState<'LOGIN' | 'SETUP_PROFILE' | 'RESET_PASSWORD'>(initialStep);
+  const [step, setStep] = useState<'LOGIN' | 'TERMS' | 'SETUP_PROFILE' | 'RESET_PASSWORD'>(initialStep);
   const [setupPage, setSetupPage] = useState(1);
   const [tempUser, setTempUser] = useState<CurrentUser | null>(currentUser || null);
 
@@ -102,7 +106,8 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   const [setupTutorialStep, setSetupTutorialStep] = useState(0);
 
   const SETUP_TUTORIAL_STEPS = [
-    { emoji: '🔖', title: 'Your Public Page ID',       desc: 'This is your unique handle — fans visit your page at diem.com/@yourhandle. Choose carefully, it can\'t be changed later.', tab: 'bio' as const, page: 1 },
+    { emoji: '🌐', title: 'Choose Your Language',       desc: 'Pick the language you\'d like to use on Diem. This sets the language for your dashboard and messages. You can change it anytime in Settings.', tab: 'bio' as const, page: 1 },
+    { emoji: '🔖', title: 'Your Public Page ID',        desc: 'This is your unique handle — fans visit your page at diem.com/@yourhandle. Choose carefully, it can\'t be changed later.', tab: 'bio' as const, page: 1 },
     { emoji: '💰', title: 'Price per Message',          desc: 'Set how many credits a fan pays to send you a Diem. You can always adjust this from Settings later.', tab: 'bio' as const, page: 1 },
     { emoji: '⏱️', title: 'Reply Time',                 desc: 'How long fans expect to wait for your reply. Setting a realistic time builds trust and keeps fans happy.', tab: 'bio' as const, page: 1 },
     { emoji: '✍️', title: 'Your Status Message',       desc: 'The first thing fans see on your public page. Write a short line about who you are and what you do — keep it personal!', tab: 'bio' as const, page: 1 },
@@ -129,42 +134,62 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
     setSetupTutorialStep(next);
     const nextStep = SETUP_TUTORIAL_STEPS[next];
     // Switch text tab when entering bio/instructions/reply steps
-    if (nextStep.page === 1 && [3, 4, 5].includes(next)) setSetupTextTab(nextStep.tab);
+    if (nextStep.page === 1 && [4, 5, 6].includes(next)) setSetupTextTab(nextStep.tab);
   };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isSignUp) {
+        // Show Terms of Service before creating the account
+        setPendingSignup({ identifier: email.trim(), password, fullName: fullName.trim(), role });
+        setTermsScrolled(false);
+        setStep('TERMS');
+        return;
+    }
+
     setIsLoading(true);
-
     try {
-        // Determine Identifier
-        const identifier = email.trim();
-
-        // Only pass name if signing up. This tells the backend to use the SignUp flow.
-        const user = await loginUser(role, identifier, password, 'EMAIL', isSignUp ? fullName.trim() : undefined);
-
-        if (isSignUp) {
-            setTempUser(user);
-            setDisplayName(fullName); // Pre-fill display name
-            setStep('SETUP_PROFILE');
-        } else {
-            onLoginSuccess(user);
+        const user = await loginUser(role, email.trim(), password, 'EMAIL');
+        onLoginSuccess(user);
+    } catch (error: any) {
+        console.error("Login Error:", error);
+        let msg = error.message || t('auth.loginFailed');
+        if (msg.includes("timed out") || error.name === 'AuthRetryableFetchError' || error.status === 504) {
+            msg = t('auth.connectionTimeout');
         }
+        alert(msg);
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  const handleAgreeAndSignUp = async () => {
+    if (!pendingSignup) return;
+    setIsLoading(true);
+    try {
+        const user = await loginUser(pendingSignup.role, pendingSignup.identifier, pendingSignup.password, 'EMAIL', pendingSignup.fullName);
+        setTempUser(user);
+        setDisplayName(pendingSignup.fullName);
+        setStep('SETUP_PROFILE');
     } catch (error: any) {
         if (error.message === "CONFIRMATION_REQUIRED") {
             alert(t('auth.confirmationSent'));
-            setIsSignUp(false); // Switch back to login mode so they are ready to sign in after clicking link
+            setStep('LOGIN');
+            setIsSignUp(false);
             setShowResend(true);
         } else {
-            console.error("Login Error:", error);
+            console.error("Sign up error:", error);
             let msg = error.message || t('auth.loginFailed');
             if (msg.includes("timed out") || error.name === 'AuthRetryableFetchError' || error.status === 504) {
                 msg = t('auth.connectionTimeout');
             }
             alert(msg);
+            setStep('LOGIN');
         }
     } finally {
         setIsLoading(false);
+        setPendingSignup(null);
     }
   };
 
@@ -337,6 +362,101 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
       }
   };
 
+  if (step === 'TERMS') {
+    return (
+      <div className="min-h-screen bg-[#FAFAF9] flex flex-col items-center justify-center p-4 font-sans">
+        <div className="w-full max-w-lg bg-white rounded-3xl shadow-xl shadow-stone-200/50 border border-stone-100 overflow-hidden flex flex-col" style={{ maxHeight: '90vh' }}>
+          <div className="p-6 border-b border-stone-100">
+            <div className="flex items-center gap-2 mb-1">
+              <FileText size={18} className="text-stone-700" />
+              <h2 className="text-lg font-bold text-stone-900">Terms of Service</h2>
+            </div>
+            <p className="text-xs text-stone-500">Please read and scroll to the bottom to agree.</p>
+          </div>
+
+          <div
+            className="flex-1 overflow-y-auto p-6 text-sm text-stone-700 space-y-4"
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) setTermsScrolled(true);
+            }}
+          >
+            <div>
+              <p className="font-semibold text-stone-900 mb-1">Welcome to Diem</p>
+              <p>By creating an account, you agree to the following Terms of Service. Please read them carefully before proceeding.</p>
+            </div>
+
+            <div>
+              <p className="font-semibold text-stone-900 mb-1">1. Prohibited Content</p>
+              <p>You may <strong>not</strong> post, send, request, or solicit any of the following:</p>
+              <ul className="mt-2 space-y-1 list-disc list-inside text-stone-600">
+                <li>Adult, sexual, or explicit content of any kind</li>
+                <li>Content involving minors in any sexual or inappropriate context</li>
+                <li>Hate speech, harassment, or content targeting individuals based on race, religion, gender, or sexuality</li>
+                <li>Threats of violence or content that promotes self-harm</li>
+                <li>Spam, scams, or deceptive content</li>
+                <li>Content that infringes on intellectual property rights</li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="font-semibold text-stone-900 mb-1">2. Creator Responsibilities</p>
+              <p>Creators agree to respond honestly and in good faith. Misrepresenting yourself, your services, or your identity is prohibited. Creators must fulfill paid requests within the stated reply window or fans will receive a full refund.</p>
+            </div>
+
+            <div>
+              <p className="font-semibold text-stone-900 mb-1">3. Fan Responsibilities</p>
+              <p>Fans agree to send messages in good faith. Sending abusive, harassing, or inappropriate content to creators is grounds for immediate account suspension.</p>
+            </div>
+
+            <div>
+              <p className="font-semibold text-stone-900 mb-1">4. Payments & Refunds</p>
+              <p>All transactions are held in escrow until the creator replies or the reply window expires. If a creator does not reply in time, the fan is automatically refunded. Diem does not issue refunds for completed interactions unless fraudulent activity is confirmed.</p>
+            </div>
+
+            <div>
+              <p className="font-semibold text-stone-900 mb-1">5. Account Termination</p>
+              <p>Diem reserves the right to suspend or permanently ban accounts that violate these terms, with or without prior notice. Illegal activity will be reported to relevant authorities.</p>
+            </div>
+
+            <div>
+              <p className="font-semibold text-stone-900 mb-1">6. Privacy</p>
+              <p>We collect and use your data as described in our Privacy Policy. We do not sell your personal information to third parties.</p>
+            </div>
+
+            <div>
+              <p className="font-semibold text-stone-900 mb-1">7. Changes to Terms</p>
+              <p>We may update these terms from time to time. Continued use of the platform after changes constitutes acceptance of the new terms.</p>
+            </div>
+
+            <div className="pt-2 border-t border-stone-100">
+              <p className="text-xs text-stone-400">Last updated: March 2026. For questions, contact support@diem.app.</p>
+            </div>
+          </div>
+
+          <div className="p-5 border-t border-stone-100 space-y-2">
+            {!termsScrolled && (
+              <p className="text-xs text-center text-stone-400">Scroll to the bottom to enable "I Agree"</p>
+            )}
+            <button
+              onClick={() => { if (termsScrolled) handleAgreeAndSignUp(); }}
+              disabled={!termsScrolled || isLoading}
+              className={`w-full py-3 rounded-xl text-sm font-bold transition-colors ${termsScrolled && !isLoading ? 'bg-stone-900 text-white hover:bg-stone-700' : 'bg-stone-100 text-stone-400 cursor-not-allowed'}`}
+            >
+              {isLoading ? 'Creating account…' : 'I Agree & Continue'}
+            </button>
+            <button
+              onClick={() => { setStep('LOGIN'); setPendingSignup(null); setTermsScrolled(false); }}
+              className="w-full py-2 text-xs text-stone-400 hover:text-stone-600 transition-colors"
+            >
+              Decline — go back to login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (step === 'RESET_PASSWORD') {
       return (
           <div className="min-h-screen bg-[#FAFAF9] relative flex flex-col items-center justify-center p-4 font-sans">
@@ -460,7 +580,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
              </div>
 
              <div className="space-y-5">
-                <div>
+                <div className={showSetupTutorial && setupTutorialStep === 0 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-2 -m-2' : ''}>
                    <label className="block text-sm font-medium text-stone-700 mb-2">Language</label>
                    <div className="flex flex-wrap gap-2">
                      {[
@@ -497,7 +617,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
                 {isCreator && (
                     <>
-                        <div className={showSetupTutorial && setupTutorialStep === 0 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
+                        <div className={showSetupTutorial && setupTutorialStep === 1 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                             <label className="block text-sm font-medium text-stone-700 mb-1">Public Page ID</label>
                             <p className="text-xs text-stone-400 mb-2">This will be your unique public page address — choose carefully, it can't be changed later.</p>
                             <div className="flex items-center border border-stone-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-stone-500 transition-all">
@@ -522,11 +642,11 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                                 <MessageSquare size={16} className="text-stone-500" /> {t('auth.messageSettings')}
                             </h3>
                             <div className="grid grid-cols-2 gap-4">
-                                <div className={showSetupTutorial && setupTutorialStep === 1 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
+                                <div className={showSetupTutorial && setupTutorialStep === 2 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                                     <label className="block text-sm font-medium text-stone-700 mb-1">Price per message (credits)</label>
                                     <input type="number" value={price} onChange={e => setPrice(Number(e.target.value))} className="w-full border border-stone-200 rounded-xl p-2 focus:ring-2 focus:ring-stone-500 outline-none transition-all" />
                                 </div>
-                                <div className={showSetupTutorial && setupTutorialStep === 2 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
+                                <div className={showSetupTutorial && setupTutorialStep === 3 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                                     <label className="block text-sm font-medium text-stone-700 mb-1">{t('auth.replyTime')}</label>
                                     <select value={responseHours} onChange={e => setResponseHours(Number(e.target.value))} className="w-full border border-stone-200 rounded-xl p-2 bg-white focus:ring-2 focus:ring-stone-500 outline-none transition-all">
                                         <option value={24}>{t('auth.hours24')}</option>
@@ -537,7 +657,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                             </div>
 
                             {/* Bio / Instructions / Auto-Reply tab switcher */}
-                            <div className={showSetupTutorial && setupTutorialStep >= 3 && setupTutorialStep <= 5 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
+                            <div className={showSetupTutorial && setupTutorialStep >= 4 && setupTutorialStep <= 6 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                                 <div className="flex bg-stone-100 rounded-xl p-1 mb-3 gap-0.5">
                                     {[
                                         { key: 'bio', label: 'Bio / About' },
@@ -581,7 +701,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                             </div>
                         </div>
 
-                        <div className={showSetupTutorial && setupTutorialStep === 6 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
+                        <div className={showSetupTutorial && setupTutorialStep === 7 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
                             <label className="block text-sm font-medium text-stone-700 mb-2">{t('auth.connectedPlatforms')}</label>
                             <p className="text-xs text-stone-500 mb-3">{t('auth.platformsDesc')}</p>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -656,7 +776,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
              )}
 
              {/* Add new link form */}
-             <div className={showSetupTutorial && setupTutorialStep === 7 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-2xl' : ''}>
+             <div className={showSetupTutorial && setupTutorialStep === 8 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-2xl' : ''}>
              <div className="bg-stone-50 rounded-2xl border border-stone-200 p-4 space-y-3 mb-4">
                  <p className="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Add item</p>
 
@@ -758,14 +878,15 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
        {/* Setup Tutorial Overlay */}
        {showSetupTutorial && SETUP_TUTORIAL_STEPS[setupTutorialStep]?.page === setupPage && (() => {
          const stepValidation: Record<number, boolean> = {
-           0: handle.trim().length > 0,
-           1: true,
+           0: true,
+           1: handle.trim().length > 0,
            2: true,
-           3: bio.trim().length > 0,
-           4: intakeInstructions.trim().length > 0,
-           5: welcomeMessage.trim().length > 0,
-           6: true,
+           3: true,
+           4: bio.trim().length > 0,
+           5: intakeInstructions.trim().length > 0,
+           6: welcomeMessage.trim().length > 0,
            7: true,
+           8: true,
          };
          const canProceed = stepValidation[setupTutorialStep] ?? true;
          return (

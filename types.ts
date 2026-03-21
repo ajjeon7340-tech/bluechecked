@@ -61,6 +61,8 @@ export interface CreatorProfile {
   linksSectionTitle?: string;
   products: Product[];
   likesCount: number;
+  showLikes?: boolean;
+  showRating?: boolean;
   isPremium?: boolean;
   isDiemHighlighted?: boolean;
   platforms?: (string | { id: string; url: string })[];

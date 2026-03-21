@@ -553,8 +553,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         </div>{/* close relative avatar container */}
 
                         {/* Likes & Rating (Moved below avatar) */}
-                        {!isCustomizeMode && (
+                        {!isCustomizeMode && ((creator.showLikes ?? true) || (creator.showRating ?? true)) && (
                             <div className="flex items-center gap-2 -mt-5 relative z-20">
+                                {(creator.showLikes ?? true) && (
                                 <button
                                     onClick={handleLike}
                                     className={`flex items-center justify-center gap-1 bg-white px-3 py-1.5 rounded-full border border-stone-100 text-xs font-bold shadow-sm transition-colors ${hasLiked ? 'text-pink-600 border-pink-100' : 'text-stone-500 hover:text-pink-600 hover:bg-pink-50'}`}
@@ -562,7 +563,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                     <Heart size={14} className={hasLiked ? "fill-current" : ""} />
                                     <span>{likes}</span>
                                 </button>
+                                )}
 
+                                {(creator.showRating ?? true) && (
                                 <div className="relative group/tooltip flex items-center justify-center gap-1 bg-white px-3 py-1.5 rounded-full border border-stone-100 text-xs font-bold text-stone-500 shadow-sm cursor-help">
                                     <Star size={14} className="text-yellow-400 fill-yellow-400" />
                                     <span className="text-stone-700">{creator.stats.averageRating.toFixed(1)}</span>
@@ -578,6 +581,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-stone-900"></div>
                                     </div>
                                 </div>
+                                )}
                             </div>
                         )}
                         </div>

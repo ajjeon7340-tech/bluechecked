@@ -637,15 +637,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     if (currentUser) sendWelcomeMessage(i18n.language);
   }, [currentUser?.id]);
 
-  // Show inbox tutorial the first time a creator visits INBOX
+  // Show inbox tutorial the first time a creator opens the Diem welcome message
   useEffect(() => {
-    if (currentView !== 'INBOX' || !currentUser) return;
+    if (!currentUser || selectedSenderEmail !== 'abe7340@gmail.com') return;
     const doneKey = `diem_creator_inbox_tutorial_done_${currentUser.id}`;
     if (!localStorage.getItem(doneKey)) {
       setInboxTutorialStep(0);
       setShowInboxTutorial(true);
     }
-  }, [currentView, currentUser?.id]);
+  }, [selectedSenderEmail, currentUser?.id]);
 
   const handleTutorialNext = () => {
     const nextStep = tutorialStep + 1;
@@ -671,7 +671,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   };
 
   const handleInboxTutorialNext = () => {
-    const INBOX_STEPS = 3;
+    const INBOX_STEPS = 5;
     if (inboxTutorialStep + 1 >= INBOX_STEPS) {
       handleInboxTutorialDone();
     } else {
@@ -1149,6 +1149,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
     setCurrentView(view);
     setSelectedSenderEmail(null);
+    setShowInboxTutorial(false);
     setIsSidebarOpen(false);
   };
 
@@ -2772,18 +2773,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             const tl = getTimeLeft(activeMessage.expiresAt);
                                             return (
                                                 <>
-                                                    <div className={`text-[10px] sm:text-xs font-semibold ${tl.color} ${tl.bg} px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1 border ${tl.border} whitespace-nowrap`}>
-                                                        <Clock size={12} className={tl.iconColor} /> {tl.text}
+                                                    <div className={showInboxTutorial && inboxTutorialStep === 0 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-full' : ''}>
+                                                        <div className={`text-[10px] sm:text-xs font-semibold ${tl.color} ${tl.bg} px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1 border ${tl.border} whitespace-nowrap`}>
+                                                            <Clock size={12} className={tl.iconColor} /> {tl.text}
+                                                        </div>
                                                     </div>
-                                                    <button
-                                                        onClick={() => handleSendReply(true)}
-                                                        disabled={((!replyText.trim() && replyAttachments.length === 0) && !hasManualCreatorReply) || isSendingReply || isRejecting}
-                                                        className="h-7 px-3 rounded-full bg-stone-900 text-white hover:bg-stone-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 font-semibold text-[10px] sm:text-xs group whitespace-nowrap"
-                                                        title="Complete & Collect"
-                                                    >
-                                                        <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
-                                                        <span>Collect {activeMessage.amount}</span>
-                                                    </button>
+                                                    <div className={showInboxTutorial && inboxTutorialStep === 3 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-full' : ''}>
+                                                        <button
+                                                            onClick={() => handleSendReply(true)}
+                                                            disabled={((!replyText.trim() && replyAttachments.length === 0) && !hasManualCreatorReply) || isSendingReply || isRejecting}
+                                                            className="h-7 px-3 rounded-full bg-stone-900 text-white hover:bg-stone-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 font-semibold text-[10px] sm:text-xs group whitespace-nowrap"
+                                                            title="Complete & Collect"
+                                                        >
+                                                            <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
+                                                            <span>Collect {activeMessage.amount}</span>
+                                                        </button>
+                                                    </div>
                                                 </>
                                             );
                                         })()}
@@ -2797,13 +2802,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 {t('creator.refunded')}
                                             </div>
                                         )}
-                                        <button
-                                            onClick={() => leaveChatroom(activeMessage.senderEmail)}
-                                            className="p-1.5 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                            title={t('creator.leaveConversationTitle')}
-                                        >
-                                            <LogOut size={16} />
-                                        </button>
+                                        <div className={showInboxTutorial && inboxTutorialStep === 4 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-lg' : ''}>
+                                            <button
+                                                onClick={() => leaveChatroom(activeMessage.senderEmail)}
+                                                className="p-1.5 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                title={t('creator.leaveConversationTitle')}
+                                            >
+                                                <LogOut size={16} />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -3216,14 +3223,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <span className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded border border-green-100 font-medium whitespace-nowrap text-[10px] sm:text-xs">
                                                 <Coins size={12} className="flex-shrink-0" /> <span className="hidden sm:inline">Payment held in </span>escrow
                                             </span>
-                                            <button
-                                                onClick={() => replyFileInputRef.current?.click()}
-                                                disabled={isUploadingReplyAttachment || replyAttachments.length >= 3}
-                                                className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-colors disabled:opacity-30"
-                                                title={replyAttachments.length >= 3 ? 'Max 3 photos' : 'Attach photos (max 3)'}
-                                            >
-                                                {isUploadingReplyAttachment ? <div className="w-4 h-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" /> : <Paperclip size={16} />}
-                                            </button>
+                                            <div className={showInboxTutorial && inboxTutorialStep === 2 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-full' : ''}>
+                                                <button
+                                                    onClick={() => replyFileInputRef.current?.click()}
+                                                    disabled={isUploadingReplyAttachment || replyAttachments.length >= 3}
+                                                    className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-colors disabled:opacity-30"
+                                                    title={replyAttachments.length >= 3 ? 'Max 3 photos' : 'Attach photos (max 3)'}
+                                                >
+                                                    {isUploadingReplyAttachment ? <div className="w-4 h-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" /> : <Paperclip size={16} />}
+                                                </button>
+                                            </div>
                                             <input type="file" ref={replyFileInputRef} className="hidden" accept="image/*" multiple onChange={handleReplyFileChange} />
                                         </div>
 
@@ -3263,14 +3272,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         />
 
                                         <div className="flex justify-end mt-2">
-                                            <button
-                                                onClick={() => handleSendReply(false)}
-                                                disabled={(!replyText.trim() && replyAttachments.length === 0) || isSendingReply || isRejecting}
-                                                className="h-9 px-4 rounded-full bg-stone-600 text-white hover:bg-stone-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold text-xs"
-                                                title="Send reply (Keep Pending)"
-                                            >
-                                                Send <Send size={14} />
-                                            </button>
+                                            <div className={showInboxTutorial && inboxTutorialStep === 1 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-full' : ''}>
+                                                <button
+                                                    onClick={() => handleSendReply(false)}
+                                                    disabled={(!replyText.trim() && replyAttachments.length === 0) || isSendingReply || isRejecting}
+                                                    className="h-9 px-4 rounded-full bg-stone-600 text-white hover:bg-stone-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold text-xs"
+                                                    title="Send reply (Keep Pending)"
+                                                >
+                                                    Send <Send size={14} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -3887,6 +3898,35 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             </div>
                         </div>
 
+                        {/* Profile Display Toggles */}
+                        <div className="mt-6 border-t border-stone-100 pt-6 space-y-3">
+                            <h4 className="text-sm font-semibold text-stone-700">Profile Display</h4>
+                            <div className="flex items-center justify-between py-2">
+                                <div>
+                                    <p className="text-sm font-medium text-stone-800">Show Likes</p>
+                                    <p className="text-xs text-stone-400">Display the heart / like count on your public profile</p>
+                                </div>
+                                <button
+                                    onClick={() => setEditedCreator({ ...editedCreator, showLikes: !(editedCreator.showLikes ?? true) })}
+                                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${(editedCreator.showLikes ?? true) ? 'bg-stone-900' : 'bg-stone-200'}`}
+                                >
+                                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${(editedCreator.showLikes ?? true) ? 'translate-x-5' : 'translate-x-0'}`} />
+                                </button>
+                            </div>
+                            <div className="flex items-center justify-between py-2">
+                                <div>
+                                    <p className="text-sm font-medium text-stone-800">Show Star Rating</p>
+                                    <p className="text-xs text-stone-400">Display your average star rating on your public profile</p>
+                                </div>
+                                <button
+                                    onClick={() => setEditedCreator({ ...editedCreator, showRating: !(editedCreator.showRating ?? true) })}
+                                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${(editedCreator.showRating ?? true) ? 'bg-stone-900' : 'bg-stone-200'}`}
+                                >
+                                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${(editedCreator.showRating ?? true) ? 'translate-x-5' : 'translate-x-0'}`} />
+                                </button>
+                            </div>
+                        </div>
+
                         <div className="mt-8 flex justify-center">
                             <Button onClick={handleSaveProfile} isLoading={isSavingProfile} className="px-8">Save Changes</Button>
                         </div>
@@ -4173,60 +4213,38 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       )}
 
       {/* Inbox Tutorial Overlay */}
-      {showInboxTutorial && currentView === 'INBOX' && (() => {
+      {showInboxTutorial && selectedSenderEmail === 'abe7340@gmail.com' && currentView === 'INBOX' && !!activeMessage && (() => {
         const INBOX_TUTORIAL_STEPS = [
           {
             emoji: '⏱️',
-            title: 'You Have a Time Limit',
-            desc: "Each fan message has a countdown timer. You must reply before it expires — if you don't, the session ends and the credits are refunded to the fan.",
-            preview: (
-              <div className="mt-3 mb-1 rounded-xl border border-stone-200 bg-white overflow-hidden">
-                <div className="flex items-start gap-3 p-3">
-                  <div className="w-9 h-9 rounded-full bg-stone-900 flex items-center justify-center flex-shrink-0">
-                    <DiemLogo size={18} className="text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center mb-0.5">
-                      <span className="text-sm font-semibold text-stone-900">Diem</span>
-                      <span className="text-xs text-stone-400">Just now</span>
-                    </div>
-                    <p className="text-xs text-stone-500 line-clamp-2">Hey! Welcome to Diem — reply to this message to collect your first credits.</p>
-                    <div className="flex items-center justify-between mt-1.5">
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">⏱ 23h 59m left</span>
-                      <span className="text-xs font-mono font-medium text-stone-700 flex items-center gap-1"><Coins size={10}/> 10</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ),
+            title: 'Time Left to Reply',
+            desc: "See the highlighted timer badge at the top right ↑ of the chat. It shows how long you have to respond. Reply before it runs out — otherwise the session expires and credits go back to the fan.",
           },
           {
             emoji: '💬',
-            title: 'How to Reply',
-            desc: "Tap a message to open the conversation, then type your reply at the bottom and hit Send. You can reply as many times as you like — the conversation stays open. But remember, fans only get one message per session, so make your reply count!",
-            preview: null,
+            title: 'Send Your Reply',
+            desc: "See the highlighted Send button at the bottom right ↓. Type your message in the text box and tap Send. You can send multiple messages — the fan pays once per session.",
+          },
+          {
+            emoji: '📎',
+            title: 'Attach a File',
+            desc: "See the highlighted paperclip icon just to the left of Send ↓. Tap it to attach up to 3 photos or files. Great for sharing screenshots or visual content.",
           },
           {
             emoji: '🪙',
             title: 'Collect Your Money',
-            desc: "Once you've replied, a Collect button appears. Tap it to claim the credits into your balance. Then go to Finance → Withdraw to send them to your bank via Stripe.",
-            preview: (
-              <div className="mt-3 mb-1 flex items-center gap-3 p-3 rounded-xl border border-emerald-100 bg-emerald-50">
-                <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                  <Coins size={18} className="text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-emerald-800">Reply → Collect → Withdraw</p>
-                  <p className="text-[11px] text-emerald-600 mt-0.5">That's the full cycle. Tap <strong>Collect</strong> after every reply to make sure your credits are claimed.</p>
-                </div>
-              </div>
-            ),
+            desc: "See the highlighted Collect button at the top right ↑. Once you've replied, tap it to finalize the session and move the credits to your balance. Then go to Finance → Withdraw.",
+          },
+          {
+            emoji: '🚪',
+            title: 'Leaving the Chat',
+            desc: "See the highlighted exit button at the top right corner ↑. Tap it to go back to your inbox list. Your replies are always saved — you can return anytime.",
           },
         ];
         const step = INBOX_TUTORIAL_STEPS[inboxTutorialStep];
         return (
           <>
-            <div className="fixed inset-0 bg-black/40 z-50" onClick={handleInboxTutorialDone} />
+            <div className="fixed inset-0 bg-black/40 z-50" />
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[min(420px,calc(100vw-32px))] bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden">
               <div className="h-1 bg-stone-100">
                 <div className="h-full bg-stone-900 transition-all duration-300" style={{ width: `${((inboxTutorialStep + 1) / INBOX_TUTORIAL_STEPS.length) * 100}%` }} />
