@@ -871,8 +871,8 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
               <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-[2.5rem] p-8">
                 <div className="grid gap-3">
                   {/* Digital Product card */}
-                  <div className="w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 relative overflow-hidden bg-gradient-to-r from-purple-50/40 to-violet-50/20 border-purple-100 shadow-sm">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-purple-50 text-purple-400">
+                  <div className="w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden bg-gradient-to-r from-purple-50/40 to-violet-50/20 border-purple-100 shadow-sm">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform bg-purple-50 text-purple-400">
                       <FileText size={20} className="sm:hidden" />
                       <FileText size={24} className="hidden sm:block" />
                     </div>
@@ -886,8 +886,8 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                   </div>
 
                   {/* Support / Tip card */}
-                  <div className="w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 relative overflow-hidden bg-gradient-to-r from-pink-50/40 to-rose-50/20 border-pink-100 shadow-sm">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-pink-50 text-pink-400">
+                  <div className="w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden bg-gradient-to-r from-pink-50/40 to-rose-50/20 border-pink-100 shadow-sm">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform bg-pink-50 text-pink-400">
                       <Heart size={20} className="sm:hidden" />
                       <Heart size={24} className="hidden sm:block" />
                     </div>
