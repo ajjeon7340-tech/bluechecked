@@ -254,7 +254,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
   const [tutorialIsRevisit, setTutorialIsRevisit] = useState(false);
-  const autoShowActiveRef = useRef(false); // prevents settings-revisit effect from interfering with auto-show
   const tutorialLinksRef = useRef<HTMLDivElement>(null);
   const tutorialSectionsRef = useRef<HTMLDivElement>(null);
 
@@ -614,29 +613,21 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       loadTrendData();
   }, [trendTimeFrame, trendDate]);
 
-  // Tutorial logic: single effect to avoid race conditions between auto-show and revisit
+  // Show tutorial the first time a creator visits Profile Settings (including Google OAuth new accounts)
   useEffect(() => {
-    if (!currentUser) return;
-    const autoKey = `diem_creator_tutorial_auto_shown_${currentUser.id}`;
-    const doneKey = `diem_creator_tutorial_done_${currentUser.id}`;
-    const isDone = !!localStorage.getItem(doneKey);
-    const wasAutoShown = !!localStorage.getItem(autoKey);
-
-    if (!isDone && !wasAutoShown) {
-      // First account creation — auto-show
-      localStorage.setItem(autoKey, '1');
-      autoShowActiveRef.current = true;
-      setCurrentView('SETTINGS');
-      setSettingsTextTab('bio');
-      setTutorialStep(0);
-      setTutorialIsRevisit(false);
-      setShowTutorial(true);
-    } else if (!isDone && wasAutoShown && currentView === 'SETTINGS' && !autoShowActiveRef.current) {
-      // Revisit from settings after having skipped the auto-show
-      setTutorialStep(0);
-      setSettingsTextTab('bio');
-      setTutorialIsRevisit(true);
-      setShowTutorial(true);
+    if (currentView !== 'SETTINGS' || !currentUser) return;
+    const shownKey = `diem_tutorial_shown_${currentUser.id}`;
+    const doneKey = `diem_tutorial_done_${currentUser.id}`;
+    if (!localStorage.getItem(doneKey)) {
+      const shownCount = parseInt(localStorage.getItem(shownKey) || '0');
+      // Show tutorial on 1st and 2nd visit to settings (skip marks done on 2nd)
+      if (shownCount < 2) {
+        localStorage.setItem(shownKey, String(shownCount + 1));
+        setTutorialIsRevisit(shownCount >= 1);
+        setTutorialStep(0);
+        setSettingsTextTab('bio');
+        setShowTutorial(true);
+      }
     }
   }, [currentView, currentUser?.id]);
 
@@ -644,17 +635,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   useEffect(() => {
     if (currentUser) sendWelcomeMessage();
   }, [currentUser?.id]);
-
-  // Show inbox tutorial on first INBOX visit
-  useEffect(() => {
-    if (currentView === 'INBOX' && currentUser) {
-      const key = `diem_creator_inbox_tutorial_done_${currentUser.id}`;
-      if (!localStorage.getItem(key)) {
-        setShowInboxTutorial(true);
-        setInboxTutorialStep(0);
-      }
-    }
-  }, [currentView, currentUser?.id]);
 
   const handleTutorialNext = () => {
     const nextStep = tutorialStep + 1;
@@ -667,15 +647,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   };
 
   const handleTutorialSkip = () => {
-    // If this is the revisit from settings (second chance), mark as done
+    // On the second showing, skip = done
     if (tutorialIsRevisit && currentUser) {
-      localStorage.setItem(`diem_creator_tutorial_done_${currentUser.id}`, '1');
+      localStorage.setItem(`diem_tutorial_done_${currentUser.id}`, '1');
     }
     setShowTutorial(false);
   };
 
   const handleTutorialDone = () => {
-    if (currentUser) localStorage.setItem(`diem_creator_tutorial_done_${currentUser.id}`, '1');
+    if (currentUser) localStorage.setItem(`diem_tutorial_done_${currentUser.id}`, '1');
     setShowTutorial(false);
   };
 
