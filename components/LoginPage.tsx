@@ -379,9 +379,9 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
           <div className="p-6 border-b border-stone-100">
             <div className="flex items-center gap-2 mb-1">
               <FileText size={18} className="text-stone-700" />
-              <h2 className="text-lg font-bold text-stone-900">Terms of Service</h2>
+              <h2 className="text-lg font-bold text-stone-900">{t('terms.title')}</h2>
             </div>
-            <p className="text-xs text-stone-500">Please read and scroll to the bottom to agree.</p>
+            <p className="text-xs text-stone-500">{t('terms.readScroll')}</p>
           </div>
 
           <div
@@ -392,74 +392,74 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
             }}
           >
             <div>
-              <p className="font-semibold text-stone-900 mb-1">Welcome to Diem</p>
-              <p>By creating an account, you agree to the following Terms of Service. Please read them carefully before proceeding.</p>
+              <p className="font-semibold text-stone-900 mb-1">{t('terms.welcomeTitle')}</p>
+              <p>{t('terms.welcomeBody')}</p>
             </div>
 
             <div>
-              <p className="font-semibold text-stone-900 mb-1">1. Prohibited Content</p>
-              <p>You may <strong>not</strong> post, send, request, or solicit any of the following:</p>
+              <p className="font-semibold text-stone-900 mb-1">{t('terms.s1title')}</p>
+              <p>{t('terms.s1body')}</p>
               <ul className="mt-2 space-y-1 list-disc list-inside text-stone-600">
-                <li>Adult, sexual, or explicit content of any kind</li>
-                <li>Content involving minors in any sexual or inappropriate context</li>
-                <li>Hate speech, harassment, or content targeting individuals based on race, religion, gender, or sexuality</li>
-                <li>Threats of violence or content that promotes self-harm</li>
-                <li>Spam, scams, or deceptive content</li>
-                <li>Content that infringes on intellectual property rights</li>
+                <li>{t('terms.s1i1')}</li>
+                <li>{t('terms.s1i2')}</li>
+                <li>{t('terms.s1i3')}</li>
+                <li>{t('terms.s1i4')}</li>
+                <li>{t('terms.s1i5')}</li>
+                <li>{t('terms.s1i6')}</li>
               </ul>
             </div>
 
             <div>
-              <p className="font-semibold text-stone-900 mb-1">2. Creator Responsibilities</p>
-              <p>Creators agree to respond honestly and in good faith. Misrepresenting yourself, your services, or your identity is prohibited. Creators must fulfill paid requests within the stated reply window or fans will receive a full refund.</p>
+              <p className="font-semibold text-stone-900 mb-1">{t('terms.s2title')}</p>
+              <p>{t('terms.s2body')}</p>
             </div>
 
             <div>
-              <p className="font-semibold text-stone-900 mb-1">3. Fan Responsibilities</p>
-              <p>Fans agree to send messages in good faith. Sending abusive, harassing, or inappropriate content to creators is grounds for immediate account suspension.</p>
+              <p className="font-semibold text-stone-900 mb-1">{t('terms.s3title')}</p>
+              <p>{t('terms.s3body')}</p>
             </div>
 
             <div>
-              <p className="font-semibold text-stone-900 mb-1">4. Payments & Refunds</p>
-              <p>All transactions are held in escrow until the creator replies or the reply window expires. If a creator does not reply in time, the fan is automatically refunded. Diem does not issue refunds for completed interactions unless fraudulent activity is confirmed.</p>
+              <p className="font-semibold text-stone-900 mb-1">{t('terms.s4title')}</p>
+              <p>{t('terms.s4body')}</p>
             </div>
 
             <div>
-              <p className="font-semibold text-stone-900 mb-1">5. Account Termination</p>
-              <p>Diem reserves the right to suspend or permanently ban accounts that violate these terms, with or without prior notice. Illegal activity will be reported to relevant authorities.</p>
+              <p className="font-semibold text-stone-900 mb-1">{t('terms.s5title')}</p>
+              <p>{t('terms.s5body')}</p>
             </div>
 
             <div>
-              <p className="font-semibold text-stone-900 mb-1">6. Privacy</p>
-              <p>We collect and use your data as described in our Privacy Policy. We do not sell your personal information to third parties.</p>
+              <p className="font-semibold text-stone-900 mb-1">{t('terms.s6title')}</p>
+              <p>{t('terms.s6body')}</p>
             </div>
 
             <div>
-              <p className="font-semibold text-stone-900 mb-1">7. Changes to Terms</p>
-              <p>We may update these terms from time to time. Continued use of the platform after changes constitutes acceptance of the new terms.</p>
+              <p className="font-semibold text-stone-900 mb-1">{t('terms.s7title')}</p>
+              <p>{t('terms.s7body')}</p>
             </div>
 
             <div className="pt-2 border-t border-stone-100">
-              <p className="text-xs text-stone-400">Last updated: March 2026. For questions, contact support@diem.app.</p>
+              <p className="text-xs text-stone-400">{t('terms.footer')}</p>
             </div>
           </div>
 
           <div className="p-5 border-t border-stone-100 space-y-2">
             {!termsScrolled && (
-              <p className="text-xs text-center text-stone-400">Scroll to the bottom to enable "I Agree"</p>
+              <p className="text-xs text-center text-stone-400">{t('terms.scrollToEnable')}</p>
             )}
             <button
               onClick={() => { if (termsScrolled) handleAgreeAndSignUp(); }}
               disabled={!termsScrolled || isLoading}
               className={`w-full py-3 rounded-xl text-sm font-bold transition-colors ${termsScrolled && !isLoading ? 'bg-stone-900 text-white hover:bg-stone-700' : 'bg-stone-100 text-stone-400 cursor-not-allowed'}`}
             >
-              {isLoading ? 'Creating account…' : 'I Agree & Continue'}
+              {isLoading ? t('terms.creating') : t('terms.agree')}
             </button>
             <button
               onClick={() => { setStep('LOGIN'); setPendingSignup(null); setTermsScrolled(false); }}
               className="w-full py-2 text-xs text-stone-400 hover:text-stone-600 transition-colors"
             >
-              Decline — go back to login
+              {t('terms.decline')}
             </button>
           </div>
         </div>
