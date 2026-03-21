@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n/config';
 import { Button } from './Button';
 import { DiemLogo, CheckCircle2, Lock, GoogleLogo, InstagramLogo, Mail, User, MessageSquare, Camera, X, Plus, YouTubeLogo, XLogo, TikTokLogo, Twitch, Check, Phone, FileText, Heart, ExternalLink, Coins, Trash } from './Icons';
 import { CurrentUser, AffiliateLink, LinkSection } from '../types';
@@ -101,9 +102,10 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
   const [setupTutorialStep, setSetupTutorialStep] = useState(0);
 
   const SETUP_TUTORIAL_STEPS = [
-    { emoji: '✍️', title: 'Your Status Message', desc: 'This is the first thing fans see on your public page. Write a short line about who you are and what you do — keep it personal!', tab: 'bio' as const },
-    { emoji: '📋', title: 'Request Instructions', desc: 'Shown to fans before they send you a Diem. Guide them on what to include so you can give your best response.', tab: 'instructions' as const },
-    { emoji: '💬', title: 'Auto-Reply', desc: 'Sent instantly when a fan pays, before you\'ve replied. A warm acknowledgment while they wait — e.g. "Thanks! I\'ll get back to you within 48 hours."', tab: 'reply' as const },
+    { emoji: '✍️', title: 'Your Status Message', desc: 'This is the first thing fans see on your public page. Write a short line about who you are and what you do — keep it personal!', tab: 'bio' as const, page: 1 },
+    { emoji: '📋', title: 'Request Instructions', desc: 'Shown to fans before they send you a Diem. Guide them on what to include so you can give your best response.', tab: 'instructions' as const, page: 1 },
+    { emoji: '💬', title: 'Auto-Reply', desc: 'Sent instantly when a fan pays, before you\'ve replied. A warm acknowledgment while they wait — e.g. "Thanks! I\'ll get back to you within 48 hours."', tab: 'reply' as const, page: 1 },
+    { emoji: '🔗', title: 'Links & Products', desc: 'Add anything fans can tap on your profile: a website, social page, digital download, or a tip button. You can always add more later from Settings.', tab: 'bio' as const, page: 2 },
   ];
 
   useEffect(() => {
@@ -121,7 +123,8 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
       return;
     }
     setSetupTutorialStep(next);
-    setSetupTextTab(SETUP_TUTORIAL_STEPS[next].tab);
+    const nextStep = SETUP_TUTORIAL_STEPS[next];
+    if (nextStep.page === 1) setSetupTextTab(nextStep.tab);
   };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -457,6 +460,29 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                    <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder={t('auth.yourName')} className="w-full border border-stone-200 rounded-xl p-3 focus:ring-2 focus:ring-stone-500 outline-none transition-all" />
                 </div>
 
+                <div>
+                   <label className="block text-sm font-medium text-stone-700 mb-2">Language</label>
+                   <div className="flex flex-wrap gap-2">
+                     {[
+                       { code: 'en', label: 'English', flag: '🇺🇸' },
+                       { code: 'ko', label: '한국어', flag: '🇰🇷' },
+                       { code: 'ja', label: '日本語', flag: '🇯🇵' },
+                       { code: 'zh', label: '中文', flag: '🇨🇳' },
+                       { code: 'es', label: 'Español', flag: '🇪🇸' },
+                     ].map(lang => (
+                       <button
+                         key={lang.code}
+                         type="button"
+                         onClick={() => i18n.changeLanguage(lang.code)}
+                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${i18n.language === lang.code ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'}`}
+                       >
+                         <span>{lang.flag}</span>
+                         <span>{lang.label}</span>
+                       </button>
+                     ))}
+                   </div>
+                </div>
+
                 {!isCreator && (
                 <div>
                    <label className="block text-sm font-medium text-stone-700 mb-1">{t('auth.bioAbout')}</label>
@@ -524,46 +550,28 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                                     ))}
                                 </div>
                                 {setupTextTab === 'bio' && (
-                                    <>
-                                        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 mb-2">
-                                            <span className="text-base leading-none mt-0.5">✍️</span>
-                                            <p className="text-xs text-amber-800 leading-relaxed"><strong>Status message</strong> — This is the first thing fans see on your public page. Write a short line about who you are and what you do. Keep it personal!</p>
-                                        </div>
-                                        <textarea
-                                            value={bio}
-                                            onChange={e => setBio(e.target.value)}
-                                            placeholder={t('auth.creatorBioPlaceholder')}
-                                            className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all text-sm"
-                                        />
-                                    </>
+                                    <textarea
+                                        value={bio}
+                                        onChange={e => setBio(e.target.value)}
+                                        placeholder={t('auth.creatorBioPlaceholder')}
+                                        className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all text-sm"
+                                    />
                                 )}
                                 {setupTextTab === 'instructions' && (
-                                    <>
-                                        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 mb-2">
-                                            <span className="text-base leading-none mt-0.5">📋</span>
-                                            <p className="text-xs text-amber-800 leading-relaxed"><strong>Request instructions</strong> — Shown to fans before they send you a Diem. Guide them on what to include so you can give your best response (e.g. topic, context, specific question).</p>
-                                        </div>
-                                        <textarea
-                                            value={intakeInstructions}
-                                            onChange={e => setIntakeInstructions(e.target.value)}
-                                            placeholder="Tell fans what to include in their message (e.g. your question, topic, context...)"
-                                            className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all text-sm"
-                                        />
-                                    </>
+                                    <textarea
+                                        value={intakeInstructions}
+                                        onChange={e => setIntakeInstructions(e.target.value)}
+                                        placeholder="Tell fans what to include in their message (e.g. your question, topic, context...)"
+                                        className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all text-sm"
+                                    />
                                 )}
                                 {setupTextTab === 'reply' && (
-                                    <>
-                                        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 mb-2">
-                                            <span className="text-base leading-none mt-0.5">💬</span>
-                                            <p className="text-xs text-amber-800 leading-relaxed"><strong>Auto-reply</strong> — Sent automatically the moment a fan pays, before you've replied. A warm acknowledgment while they wait (e.g. "Thanks! I'll get back to you within 48 hours.").</p>
-                                        </div>
-                                        <textarea
-                                            value={welcomeMessage}
-                                            onChange={e => setWelcomeMessage(e.target.value)}
-                                            placeholder="Sent automatically when a fan submits a request (e.g. Thanks for reaching out! I'll get back to you within 48 hours.)"
-                                            className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all text-sm"
-                                        />
-                                    </>
+                                    <textarea
+                                        value={welcomeMessage}
+                                        onChange={e => setWelcomeMessage(e.target.value)}
+                                        placeholder="Sent automatically when a fan submits a request (e.g. Thanks for reaching out! I'll get back to you within 48 hours.)"
+                                        className="w-full border border-stone-200 rounded-xl p-3 h-24 focus:ring-2 focus:ring-stone-500 outline-none resize-none transition-all text-sm"
+                                    />
                                 )}
                             </div>
                         </div>
@@ -611,11 +619,6 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                  <p className="text-stone-500 text-sm mt-1">Add links, digital products, or tip buttons to your profile. You can always edit these later.</p>
              </div>
 
-             <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 mb-4">
-                 <span className="text-base leading-none mt-0.5">🔗</span>
-                 <p className="text-xs text-amber-800 leading-relaxed"><strong>Links & Products</strong> — Add anything fans can tap on your profile: a website, social page, digital download, or a tip button. You can add multiple items and rearrange them anytime in Settings.</p>
-             </div>
-
              {/* Existing links */}
              {regLinks.length > 0 && (
                  <div className="space-y-2 mb-4">
@@ -648,6 +651,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
              )}
 
              {/* Add new link form */}
+             <div className={showSetupTutorial && setupTutorialStep === 3 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-2xl' : ''}>
              <div className="bg-stone-50 rounded-2xl border border-stone-200 p-4 space-y-3 mb-4">
                  <p className="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Add item</p>
 
@@ -710,6 +714,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
                      <Plus size={14}/> Add {regNewLinkType === 'DIGITAL_PRODUCT' ? 'Product' : regNewLinkType === 'SUPPORT' ? 'Tip Button' : 'Link'}
                  </button>
              </div>
+             </div>
 
              {/* Section management */}
              <div className="bg-stone-50 rounded-2xl border border-stone-200 p-4 space-y-2 mb-6">
@@ -746,7 +751,7 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
           </div>
 
        {/* Setup Tutorial Overlay */}
-       {showSetupTutorial && setupPage === 1 && (
+       {showSetupTutorial && SETUP_TUTORIAL_STEPS[setupTutorialStep]?.page === setupPage && (
          <>
            <div className="fixed inset-0 bg-black/40 z-50" onClick={() => setShowSetupTutorial(false)} />
            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[min(400px,calc(100vw-32px))] bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden">
