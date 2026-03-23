@@ -472,6 +472,9 @@ const en = {
     daily: 'Daily',
     weekly: 'Weekly',
     monthly: 'Monthly',
+    sort: 'Sort',
+    sortLatest: 'Latest',
+    sortSessions: 'Sessions',
     // Finance extras
     financeCredits: 'Finance & Credits',
     activityStatistics: 'Activity Statistics',
@@ -485,6 +488,7 @@ const en = {
     transferDays: 'Transfers typically take 1-3 business days.',
     payoutMethod: 'Payout Method',
     stripeConnectedDesc: 'Connected to Stripe. Automatic payouts enabled.',
+    stripeConnectedLast4: 'Connected to Stripe (•••• {{last4}}). Automatic payouts enabled.',
     stripeLinkDesc: 'Link your bank account via Stripe to receive payouts.',
     connected: 'Connected',
     connectStripeBtn: 'Connect Stripe',
@@ -710,6 +714,11 @@ const en = {
     productPurchased: 'You purchased {{product}}',
     leaveConversation: 'Leave this conversation? It will be hidden from your inbox but not deleted.',
     sessionOf: 'Session {{current}} of {{total}}',
+    creditsAdded: '{{count}} Credits Added!',
+    walletToppedUp: 'Your wallet has been topped up.',
+    creditsUsed: 'credits used',
+    heldInEscrow: 'held in escrow',
+    creditsReturned: 'credits returned',
   },
   tutorial: {
     setup: {

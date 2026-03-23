@@ -1562,13 +1562,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                             <Coins size={14} /> {msg.status === 'REPLIED' ? `-${msg.amount}` : msg.amount}
                                                         </span>
                                                         {msg.status === 'REPLIED' && (
-                                                            <span className="text-[10px] text-stone-400 block mt-0.5">credits used</span>
+                                                            <span className="text-[10px] text-stone-400 block mt-0.5">{t('fan.creditsUsed')}</span>
                                                         )}
                                                         {msg.status === 'PENDING' && (
-                                                            <span className="text-[10px] text-amber-500 block mt-0.5">held in escrow</span>
+                                                            <span className="text-[10px] text-amber-500 block mt-0.5">{t('fan.heldInEscrow')}</span>
                                                         )}
                                                         {isRefunded && (
-                                                            <span className="text-[10px] text-stone-400 block mt-0.5">credits returned</span>
+                                                            <span className="text-[10px] text-stone-400 block mt-0.5">{t('fan.creditsReturned')}</span>
                                                         )}
                                                     </td>
                                                 </tr>
@@ -1876,9 +1876,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 ) : latestMsg.status === 'PENDING' ? (
                                                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${timeLeft.bg} ${timeLeft.color}`}>{timeLeft.text}</span>
                                                 ) : latestMsg.status === 'REPLIED' ? (
-                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">REPLIED</span>
+                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">{t('creator.replied')}</span>
                                                 ) : (
-                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">{latestMsg.status === 'EXPIRED' ? 'EXPIRED' : 'CANCELLED'}</span>
+                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">{latestMsg.status === 'EXPIRED' ? t('creator.expired') : t('creator.cancelled')}</span>
                                                 )}
                                                 <span className="text-xs font-mono font-medium text-stone-700 flex items-center gap-1"><Coins size={10}/> {group.messageCount}</span>
                                             </div>
@@ -1963,7 +1963,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                         <div className="flex-1 overflow-y-auto bg-white" ref={scrollRef}>
                              {/* Session Pagination - full width */}
                              {threadMessages.length > 0 && (
-                                 <div className="flex items-center justify-between px-4 py-2 bg-stone-50 border-b border-stone-100 sticky top-0 z-30">
+                                 <div className="flex items-center justify-between px-4 py-2 bg-stone-50 border-b border-stone-100 sticky top-0 z-10">
                                      <button
                                          onClick={() => setChatSessionIndex(effectiveSessionIndex - 1)}
                                          disabled={effectiveSessionIndex <= 0}
@@ -2578,12 +2578,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             return (
                         <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
                             <div className="px-4 sm:px-6 py-4 border-b border-stone-100 flex items-center justify-between">
-                                <h3 className="text-sm font-bold text-stone-900">All Notifications</h3>
+                                <h3 className="text-sm font-bold text-stone-900">{t('fan.allNotifications')}</h3>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xs text-stone-500">{notifications.length} items</span>
+                                    <span className="text-xs text-stone-500">{t('creator.items', { count: notifications.length })}</span>
                                     {notifications.length > 0 && (
                                         <button onClick={handleClearAllNotifications} className="text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors flex items-center gap-1">
-                                            <Trash size={12} /> Clear All
+                                            <Trash size={12} /> {t('fan.clearAll')}
                                         </button>
                                     )}
                                 </div>
@@ -2591,19 +2591,19 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             {/* Mobile: all items, no pagination */}
                             <div className="md:hidden divide-y divide-stone-100">
                                 {displayedNotifications.length === 0 ? (
-                                    <div className="p-10 text-center text-stone-400 text-sm">No notifications yet.</div>
+                                    <div className="p-10 text-center text-stone-400 text-sm">{t('fan.noNotifications')}</div>
                                 ) : displayedNotifications.map(renderRow)}
                             </div>
                             {/* Desktop: paginated */}
                             <div className="hidden md:block divide-y divide-stone-100">
                                 {displayedDesktop.length === 0 ? (
-                                    <div className="p-12 text-center text-stone-400 text-sm">No notifications yet.</div>
+                                    <div className="p-12 text-center text-stone-400 text-sm">{t('fan.noNotifications')}</div>
                                 ) : displayedDesktop.map(renderRow)}
                             </div>
                             {totalPages > 1 && (
                                 <div className="hidden md:flex px-6 py-4 border-t border-stone-100 items-center justify-center gap-4">
                                     <button onClick={() => setNotificationPage(p => Math.max(1, p - 1))} disabled={notificationPage === 1} className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"><ChevronLeft size={16} /></button>
-                                    <span className="text-xs font-bold text-stone-600">Page {notificationPage} of {totalPages}</span>
+                                    <span className="text-xs font-bold text-stone-600">{t('common.page', { current: notificationPage, total: totalPages })}</span>
                                     <button onClick={() => setNotificationPage(p => Math.min(totalPages, p + 1))} disabled={notificationPage === totalPages} className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"><ChevronRight size={16} /></button>
                                 </div>
                             )}
@@ -2643,19 +2643,19 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 <line x1="135" y1="50" x2="143" y2="48" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1} style={{ animation: 'fd-sketch 0.2s ease forwards 1.95s' }} />
                             </svg>
                             <div style={{ animation: 'fd-pop 0.4s ease forwards 2.0s', opacity: 0 }}>
-                                <p className="text-xl font-black text-stone-900">{lastTopUpAmount.toLocaleString()} Credits Added!</p>
-                                <p className="text-stone-400 text-sm mt-1">Your wallet has been topped up.</p>
+                                <p className="text-xl font-black text-stone-900">{t('fan.creditsAdded', { count: lastTopUpAmount.toLocaleString() })}</p>
+                                <p className="text-stone-400 text-sm mt-1">{t('fan.walletToppedUp')}</p>
                             </div>
                         </div>
                     ) : (
                     <div className="p-8">
                         <div className="text-center mb-6">
-                            <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-1">Available Balance</div>
+                            <div className="text-stone-500 text-xs font-bold uppercase tracking-wider mb-1">{t('fan.availableBalance')}</div>
                             <div className="text-4xl font-black text-stone-900 mb-4 flex justify-center items-baseline gap-1">
                                 {currentUser?.credits?.toLocaleString() || 0}
-                                <span className="text-sm font-bold text-stone-400 uppercase">Credits</span>
+                                <span className="text-sm font-bold text-stone-400 uppercase">{t('common.credits')}</span>
                             </div>
-                            <h3 className="font-bold text-lg text-stone-800">Add Credits</h3>
+                            <h3 className="font-bold text-lg text-stone-800">{t('fan.addCredits')}</h3>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 mb-6">
@@ -2666,7 +2666,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                 className={`p-3 rounded-xl border text-center transition-all ${topUpAmount === amt ? 'bg-stone-900 border-stone-900 text-white' : 'bg-white border-stone-200 hover:border-stone-300 text-stone-900'}`}
                                 >
                                     <div className="font-bold text-lg">{amt}</div>
-                                    <div className={`text-[10px] font-semibold uppercase ${topUpAmount === amt ? 'text-stone-400' : 'text-stone-400'}`}>{amt === 10 ? 'Test' : 'Credits'}</div>
+                                    <div className={`text-[10px] font-semibold uppercase ${topUpAmount === amt ? 'text-stone-400' : 'text-stone-400'}`}>{amt === 10 ? 'Test' : t('common.credits')}</div>
                                 </button>
                             ))}
                         </div>
@@ -2679,18 +2679,18 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             return (
                                 <div className="bg-stone-50 p-4 rounded-xl mb-6 border border-stone-100 space-y-2">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-sm text-stone-500">{topUpAmount.toLocaleString()} Credits</span>
+                                        <span className="text-sm text-stone-500">{topUpAmount.toLocaleString()} {t('common.credits')}</span>
                                         <span className="text-sm font-medium text-stone-700">${(baseCents / 100).toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-sm text-stone-500">Processing Fee</span>
+                                        <span className="text-sm text-stone-500">{t('fan.processingFee')}</span>
                                         <span className="text-sm font-medium text-stone-700">${(feeCents / 100).toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between items-center text-xs text-stone-400">
-                                        <span>+ Tax (calculated at checkout)</span>
+                                        <span>{t('fan.taxAtCheckout')}</span>
                                     </div>
                                     <div className="border-t border-stone-200 pt-2 flex justify-between items-center">
-                                        <span className="text-sm font-bold text-stone-700">Subtotal</span>
+                                        <span className="text-sm font-bold text-stone-700">{t('fan.subtotal')}</span>
                                         <span className="font-black text-stone-900 text-xl">${(totalCents / 100).toFixed(2)}</span>
                                     </div>
                                 </div>
@@ -2704,10 +2704,10 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             isLoading={isProcessingTopUp}
                             className="bg-stone-900 text-white rounded-xl h-12 font-bold shadow-lg shadow-stone-900/20"
                         >
-                            Pay & Add Credits
+                            {t('fan.payAddCredits')}
                         </Button>
                         <p className="text-center text-[10px] text-stone-400 mt-4 flex items-center justify-center gap-1">
-                            <Lock size={10} /> Secure encrypted payment
+                            <Lock size={10} /> {t('fan.securePayment')}
                         </p>
                     </div>
                     )}
