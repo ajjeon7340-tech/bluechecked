@@ -2974,10 +2974,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         <div className="flex items-center justify-between mb-2 ml-1">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-semibold text-sm text-stone-900"><ResponsiveName name={msg.senderName} /></span>
+                                                                {msg.senderEmail === 'abe7340@gmail.com' ? (
+                                                                <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
+                                                                    <Verified size={10} />
+                                                                    <span className="text-[9px] font-semibold uppercase tracking-wide">ADMIN</span>
+                                                                </div>
+                                                                ) : (
                                                                 <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
                                                                     <User size={10} className="fill-current" />
                                                                     <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.fan')}</span>
                                                                 </div>
+                                                                )}
                                                                 <span className="text-xs font-medium text-stone-400">• {new Date(firstChat.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
                                                             </div>
                                                         </div>
@@ -3096,6 +3103,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                             <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full overflow-visible">
                                                                                 <Verified size={12} />
                                                                                 <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.creator')}</span>
+                                                                            </div>
+                                                                        ) : msg.senderEmail === 'abe7340@gmail.com' ? (
+                                                                            <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
+                                                                                <Verified size={10} />
+                                                                                <span className="text-[9px] font-semibold uppercase tracking-wide">ADMIN</span>
                                                                             </div>
                                                                         ) : (
                                                                             <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
