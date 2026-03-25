@@ -313,6 +313,8 @@ export const loginUser = async (role: UserRole, identifier: string, password?: s
     } else {
         // Check Role Mismatch for existing profile
         if (profile.role !== role) {
+            // Sign out first to prevent stale session from triggering auto-navigation
+            await supabase.auth.signOut();
             throw new Error(`This account already exists as a ${profile.role}. Please sign in as a ${profile.role}.`);
         }
     }
@@ -637,6 +639,7 @@ const enrichCreatorProfile = async (data: any): Promise<CreatorProfile> => {
         showBio: data.show_bio !== false,
         isDiemHighlighted: (data.links || []).find((l: any) => l.id === '__diem_config__')?.isPromoted || false,
         diemButtonColor: (data.links || []).find((l: any) => l.id === '__diem_config__')?.buttonColor || undefined,
+        profileFont: data.profile_font || 'inter',
     };
 };
 
@@ -767,6 +770,7 @@ export const getCreatorProfileFast = async (creatorId?: string): Promise<Creator
         showBio: data.show_bio !== false,
         isDiemHighlighted: (data.links || []).find((l: any) => l.id === '__diem_config__')?.isPromoted || false,
         diemButtonColor: (data.links || []).find((l: any) => l.id === '__diem_config__')?.buttonColor || undefined,
+        profileFont: data.profile_font || 'inter',
     };
 };
 
@@ -800,7 +804,8 @@ export const updateCreatorProfile = async (profile: CreatorProfile): Promise<Cre
             is_premium: profile.isPremium,
             show_likes: profile.showLikes ?? true,
             show_rating: profile.showRating ?? true,
-            show_bio: profile.showBio ?? true
+            show_bio: profile.showBio ?? true,
+            profile_font: profile.profileFont || 'inter'
         })
         .eq('id', session.session.user.id);
 
@@ -841,6 +846,7 @@ export const getMessages = async (): Promise<Message[]> => {
 
 const fetchMessagesFromDb = async (userId: string): Promise<Message[]> => {
     // Fire-and-forget expiration processing (doesn't block message list)
+    // Uses status guard to prevent double-refund: only updates if still PENDING
     const now = new Date().toISOString();
     supabase
         .from('messages')
@@ -851,11 +857,22 @@ const fetchMessagesFromDb = async (userId: string): Promise<Message[]> => {
         .then(({ data: expiredMessages }) => {
             if (expiredMessages && expiredMessages.length > 0) {
                 Promise.all(expiredMessages.map(async (msg) => {
+                    // Atomically mark as EXPIRED first — only succeeds if still PENDING (prevents double-refund)
+                    const { data: updated, error: updateErr } = await supabase
+                        .from('messages')
+                        .update({ status: 'EXPIRED' })
+                        .eq('id', msg.id)
+                        .eq('status', 'PENDING')
+                        .select('id')
+                        .single();
+
+                    if (updateErr || !updated) return; // Already processed by another call
+
+                    // Refund sender
                     const { data: sender } = await supabase.from('profiles').select('credits').eq('id', msg.sender_id).single();
                     if (sender) {
                         await supabase.from('profiles').update({ credits: sender.credits + msg.amount }).eq('id', msg.sender_id);
                     }
-                    await supabase.from('messages').update({ status: 'EXPIRED' }).eq('id', msg.id);
                 })).catch(console.error);
             }
         }).catch(console.error);
@@ -923,10 +940,18 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
 
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) throw new Error("Must be logged in");
-    
+
     const userId = session.session.user.id;
     const isProductPurchase = content.startsWith('Purchased Product:');
     const isTip = content.startsWith('Fan Tip:');
+
+    // Validate amount — prevent negative, zero, or non-finite values
+    if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount)) {
+        throw new Error("Invalid transaction amount.");
+    }
+    if (amount > 100000) {
+        throw new Error("Transaction amount exceeds maximum allowed.");
+    }
 
     // 1. Check Balance
     const { data: profile } = await supabase.from('profiles').select('credits').eq('id', userId).single();
@@ -972,15 +997,30 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
     if (!creatorProfile) throw new Error("Creator not found");
     const responseWindow = creatorProfile.response_window_hours || 48;
 
-    // 3. Perform Transaction (Ideally this should be a Postgres Function/RPC for atomicity)
-    // A. Deduct Credits
-    await supabase.from('profiles').update({ credits: profile.credits - amount }).eq('id', userId);
+    // 3. Perform Transaction — atomic deduction with .gte() guard to prevent race condition overdraw
+    // A. Deduct Credits (will fail if balance dropped below amount between check and update)
+    const { data: deductResult, error: deductError } = await supabase
+        .from('profiles')
+        .update({ credits: profile.credits - amount })
+        .eq('id', userId)
+        .gte('credits', amount)
+        .select('credits')
+        .single();
 
-    // If product purchase, immediately transfer credits to creator (since it's instant delivery)
+    if (deductError || !deductResult) {
+        throw new Error("Insufficient credits. Please top up.");
+    }
+
+    // If product purchase or tip, immediately transfer credits to creator (since it's instant delivery)
     if (isProductPurchase || isTip) {
          const { data: creator } = await supabase.from('profiles').select('credits').eq('id', creatorId).single();
          if (creator) {
-             await supabase.from('profiles').update({ credits: creator.credits + amount }).eq('id', creatorId);
+             const { error: creditError } = await supabase.from('profiles').update({ credits: creator.credits + amount }).eq('id', creatorId);
+             if (creditError) {
+                 // Rollback sender deduction if creator credit fails
+                 await supabase.from('profiles').update({ credits: deductResult.credits + amount }).eq('id', userId);
+                 throw new Error("Transaction failed. Credits have been refunded.");
+             }
          }
     }
 
@@ -1131,28 +1171,28 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
         }
     }
 
-    // 2. Status update for complete replies (single update fires subscription once)
+    // 2. Status update for complete replies — atomic guard prevents double-payout
     if (isComplete) {
-        const { error: msgError } = await supabase.from('messages').update({
+        const { data: statusUpdate, error: msgError } = await supabase.from('messages').update({
             status: 'REPLIED',
             reply_at: new Date().toISOString(),
             is_read: false,
             updated_at: new Date().toISOString()
-        }).eq('id', messageId);
-        if (msgError) throw msgError;
-    }
+        })
+        .eq('id', messageId)
+        .eq('status', 'PENDING')
+        .select('id, amount')
+        .single();
 
-    // 3. Credit transfer for complete replies
-    if (isComplete) {
-        
-        // Add credits to creator
-        const { data: creator } = await supabase.from('profiles').select('credits').eq('id', session.session.user.id).single();
-        if (creator) {
-             // Retrieve message amount to add
-             const { data: msg } = await supabase.from('messages').select('amount').eq('id', messageId).single();
-             if (msg) {
-                 await supabase.from('profiles').update({ credits: creator.credits + msg.amount }).eq('id', session.session.user.id);
-             }
+        if (msgError || !statusUpdate) {
+            // Message already replied or processed — skip credit transfer
+            console.warn('Message already processed, skipping credit transfer for:', messageId);
+        } else {
+            // 3. Credit transfer for complete replies (only if status transition succeeded)
+            const { data: creator } = await supabase.from('profiles').select('credits').eq('id', session.session.user.id).single();
+            if (creator && statusUpdate.amount > 0) {
+                await supabase.from('profiles').update({ credits: creator.credits + statusUpdate.amount }).eq('id', session.session.user.id);
+            }
         }
 
         // Send Email Notification to Fan
@@ -1276,16 +1316,24 @@ export const cancelMessage = async (messageId: string): Promise<void> => {
     const { data: msg } = await supabase.from('messages').select('*').eq('id', messageId).single();
     if (!msg) return;
 
-    // 2. Refund Sender
+    // 2. Atomically mark as CANCELLED (only if still PENDING — prevents double-refund)
     if (msg.status === 'PENDING') {
+        const { data: updated, error: cancelErr } = await supabase
+            .from('messages')
+            .update({ status: 'CANCELLED' })
+            .eq('id', messageId)
+            .eq('status', 'PENDING')
+            .select('id')
+            .single();
+
+        if (cancelErr || !updated) return; // Already processed
+
+        // 3. Refund Sender
         const { data: sender } = await supabase.from('profiles').select('credits').eq('id', msg.sender_id).single();
         if (sender) {
             await supabase.from('profiles').update({ credits: sender.credits + msg.amount }).eq('id', msg.sender_id);
         }
     }
-
-    // 3. Mark Cancelled
-    await supabase.from('messages').update({ status: 'CANCELLED' }).eq('id', messageId);
 };
 
 export const markMessageAsRead = async (messageId: string): Promise<void> => {
@@ -1895,20 +1943,35 @@ export const sendFanAppreciation = async (messageId: string, text: string): Prom
     // Fetch sender name for email
     const { data: senderProfile } = await supabase.from('profiles').select('display_name').eq('id', userId).single();
     
-    // Deduct credits (50) for the tip
+    // Deduct credits (50) for the tip — atomic with .gte() guard
     const { data: profile } = await supabase.from('profiles').select('credits').eq('id', userId).single();
     if (!profile || profile.credits < 50) {
         throw new Error("Insufficient credits to send appreciation (50 credits).");
     }
-    
-    await supabase.from('profiles').update({ credits: profile.credits - 50 }).eq('id', userId);
-    
+
+    const { data: deductResult, error: deductErr } = await supabase
+        .from('profiles')
+        .update({ credits: profile.credits - 50 })
+        .eq('id', userId)
+        .gte('credits', 50)
+        .select('credits')
+        .single();
+
+    if (deductErr || !deductResult) {
+        throw new Error("Insufficient credits to send appreciation (50 credits).");
+    }
+
     // Add credits to creator
     const { data: msg } = await supabase.from('messages').select('creator_id').eq('id', messageId).single();
     if (msg) {
          const { data: creator } = await supabase.from('profiles').select('credits').eq('id', msg.creator_id).single();
          if (creator) {
-             await supabase.from('profiles').update({ credits: creator.credits + 50 }).eq('id', msg.creator_id);
+             const { error: creditErr } = await supabase.from('profiles').update({ credits: creator.credits + 50 }).eq('id', msg.creator_id);
+             if (creditErr) {
+                 // Rollback sender deduction
+                 await supabase.from('profiles').update({ credits: deductResult.credits + 50 }).eq('id', userId);
+                 throw new Error("Failed to send appreciation. Credits have been refunded.");
+             }
          }
     }
 

@@ -71,6 +71,7 @@ export interface CreatorProfile {
   rankingTitle?: string;
   bannerGradient?: string;
   diemButtonColor?: string;
+  profileFont?: 'inter' | 'playfair' | 'space-grotesk' | 'dm-serif';
   stats: {
     responseTimeAvg: string;
     replyRate: string;

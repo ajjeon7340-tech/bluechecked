@@ -170,6 +170,11 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
             msg = t('auth.connectionTimeout');
         }
         alert(msg);
+        // If role mismatch, redirect back to landing to prevent stuck loading state
+        if (msg.includes('already exists as a')) {
+            onBack();
+            return;
+        }
     } finally {
         setIsLoading(false);
     }

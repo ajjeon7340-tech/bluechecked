@@ -36,6 +36,10 @@ async function verifyStripeSignature(payload: string, sigHeader: string, secret:
 }
 
 async function addCreditsToUser(userId: string, credits: number) {
+  if (!Number.isFinite(credits) || credits <= 0) {
+    throw new Error('Invalid credit amount')
+  }
+
   const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
 
   const { data: profile, error: fetchError } = await supabase
@@ -113,9 +117,30 @@ Deno.serve(async (req) => {
         return new Response('Missing metadata', { status: 400 })
       }
 
+      // Idempotency check — prevent double-crediting on webhook retry
+      const supabaseClient = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
+      const { count } = await supabaseClient
+        .from('processed_webhooks')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', event.id)
+
+      if (count && count > 0) {
+        console.log(`Webhook ${event.id} already processed, skipping`)
+        return new Response(JSON.stringify({ received: true, duplicate: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+
       // Only credit if payment was successful
       if (session.payment_status === 'paid') {
         await addCreditsToUser(userId, credits)
+
+        // Record processed webhook for idempotency
+        await supabaseClient
+          .from('processed_webhooks')
+          .insert({ event_id: event.id, user_id: userId, credits, processed_at: new Date().toISOString() })
+          .catch((err: unknown) => console.warn('Failed to record webhook idempotency:', err))
       } else {
         console.log(`Checkout session ${session.id} payment_status: ${session.payment_status}, skipping credit`)
       }

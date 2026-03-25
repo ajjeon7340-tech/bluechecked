@@ -3483,6 +3483,34 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none"
                                 />
                             </div>
+                            {/* Profile Font Selector */}
+                            <div>
+                                <label className="block text-sm font-medium text-stone-700 mb-2">Profile Font</label>
+                                <p className="text-[10px] text-stone-400 mb-2">Choose a font style for your public profile page.</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {([
+                                        { id: 'inter', label: 'Inter', style: 'font-sans', sample: 'Clean & Modern' },
+                                        { id: 'playfair', label: 'Playfair Display', style: "font-['Playfair_Display',serif]", sample: 'Elegant & Classic' },
+                                        { id: 'space-grotesk', label: 'Space Grotesk', style: "font-['Space_Grotesk',sans-serif]", sample: 'Tech & Bold' },
+                                        { id: 'dm-serif', label: 'DM Serif Text', style: "font-['DM_Serif_Text',serif]", sample: 'Warm & Editorial' },
+                                    ] as const).map(font => (
+                                        <button
+                                            key={font.id}
+                                            type="button"
+                                            onClick={() => setEditedCreator({...editedCreator, profileFont: font.id})}
+                                            className={`p-3 rounded-xl border text-left transition-all ${
+                                                (editedCreator.profileFont || 'inter') === font.id
+                                                    ? 'bg-stone-50 border-stone-900 ring-1 ring-stone-900'
+                                                    : 'bg-white border-stone-200 hover:border-stone-300'
+                                            }`}
+                                        >
+                                            <span className={`block text-base font-semibold text-stone-900 mb-0.5 ${font.style}`}>{font.label}</span>
+                                            <span className={`block text-xs text-stone-400 ${font.style}`}>{font.sample}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-stone-700 mb-1">User ID (Handle)</label>
                                 <input 

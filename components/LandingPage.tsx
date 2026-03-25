@@ -58,8 +58,8 @@ const getFeaturedConversations = (t: (key: string) => string) => [
     gradient: 'from-emerald-100 to-teal-50',
     time: t('landing.conv3Time'),
     fullThread: [
-        { role: 'FAN', content: t('landing.conv3Thread1'), image: '/stock-chart.png', time: t('landing.conv3Thread1Time') },
-        { role: 'CREATOR', content: t('landing.conv3Thread2'), attachment: { name: 'David_Portfolio_Strategy.pdf', type: 'PDF' }, time: t('landing.conv3Thread2Time') }
+        { role: 'FAN', content: t('landing.conv3Thread1'), time: t('landing.conv3Thread1Time') },
+        { role: 'CREATOR', content: t('landing.conv3Thread2'), attachment: { name: 'David_Relationship_Advice.pdf', type: 'PDF' }, time: t('landing.conv3Thread2Time') }
     ]
   },
 ];
@@ -341,8 +341,14 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
       </section>
 
       {/* How It Works */}
-      <section ref={howItWorksRef} className="py-28 bg-gradient-to-b from-stone-50 to-[#FAFAF9]">
-        <div className="max-w-6xl mx-auto px-6">
+      <section ref={howItWorksRef} className="py-28 bg-gradient-to-b from-stone-50 to-[#FAFAF9] relative">
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true" style={{
+          backgroundImage: 'linear-gradient(to right, rgba(168,162,158,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,162,158,0.08) 1px, transparent 1px)',
+          backgroundSize: '64px 64px',
+          maskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 100%)',
+        }} />
+        <div className="max-w-6xl mx-auto px-6 relative">
           <div className="text-center mb-20">
             <p className="text-xs font-bold text-stone-400 uppercase tracking-[0.18em] mb-4">{t('landing.simpleTransparent')}</p>
             <h2 className="text-3xl sm:text-5xl font-semibold text-stone-900 tracking-tight mb-4">
@@ -666,6 +672,121 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Link Management - Business Hub */}
+      <section className="py-24 bg-[#FAFAF9] border-t border-stone-100">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left: Visual — grouped link sections */}
+            <div className="relative order-2 lg:order-1">
+              <div className="bg-gradient-to-br from-stone-100 to-stone-50 rounded-[2.5rem] p-8">
+                {/* Section Header */}
+                <div className="mb-4">
+                  <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3">My Links</div>
+                </div>
+
+                {/* Section: Resources */}
+                <div className="mb-4">
+                  <div className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <div className="h-px flex-1 bg-stone-200"></div>
+                    <span>Resources</span>
+                    <div className="h-px flex-1 bg-stone-200"></div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="w-full p-3 rounded-xl border bg-white border-stone-200 flex items-center gap-3 shadow-sm">
+                      <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center flex-shrink-0"><FileText size={14} /></div>
+                      <span className="text-sm font-semibold text-stone-900 flex-1">Free Starter Guide</span>
+                      <span className="text-[10px] font-medium text-stone-400">PDF</span>
+                    </div>
+                    <div className="w-full p-3 rounded-xl border bg-white border-stone-200 flex items-center gap-3 shadow-sm">
+                      <div className="w-8 h-8 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center flex-shrink-0"><FileText size={14} /></div>
+                      <span className="text-sm font-semibold text-stone-900 flex-1">Pro Masterclass</span>
+                      <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">500 Credits</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: Social */}
+                <div className="mb-4">
+                  <div className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <div className="h-px flex-1 bg-stone-200"></div>
+                    <span>Social</span>
+                    <div className="h-px flex-1 bg-stone-200"></div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="w-full p-3 rounded-xl border bg-white border-stone-200 flex items-center gap-3 shadow-sm">
+                      <div className="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center flex-shrink-0"><ExternalLink size={14} /></div>
+                      <span className="text-sm font-semibold text-stone-900 flex-1">YouTube Channel</span>
+                      <span className="text-[10px] font-medium text-stone-400">Link</span>
+                    </div>
+                    <div className="w-full p-3 rounded-xl border bg-white border-stone-200 flex items-center gap-3 shadow-sm">
+                      <div className="w-8 h-8 rounded-full bg-pink-50 text-pink-500 flex items-center justify-center flex-shrink-0"><Heart size={14} /></div>
+                      <span className="text-sm font-semibold text-stone-900 flex-1">Support My Work</span>
+                      <span className="text-[10px] font-bold text-pink-600 bg-pink-50 px-2 py-0.5 rounded-full">Tip</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: Business */}
+                <div>
+                  <div className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <div className="h-px flex-1 bg-stone-200"></div>
+                    <span>Business</span>
+                    <div className="h-px flex-1 bg-stone-200"></div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="w-full p-3 rounded-xl border bg-white border-stone-200 flex items-center gap-3 shadow-sm">
+                      <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0"><Mail size={14} /></div>
+                      <span className="text-sm font-semibold text-stone-900 flex-1">Business Inquiries</span>
+                      <span className="text-[10px] font-medium text-stone-400">Email</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Text */}
+            <div className="space-y-8 order-1 lg:order-2">
+              <div>
+                <p className="text-sm font-medium text-stone-500 uppercase tracking-wider mb-4">{t('landing.linkHubLabel')}</p>
+                <h2 className="text-3xl sm:text-4xl font-semibold text-stone-900 tracking-tight leading-tight">
+                  {t('landing.linkHubTitle1')}
+                  <br />
+                  {t('landing.linkHubTitle2')}
+                </h2>
+              </div>
+
+              <p className="text-lg text-stone-500 leading-relaxed">
+                {t('landing.linkHubDesc')}
+              </p>
+
+              <div className="space-y-4">
+                {[
+                  t('landing.linkHubFeature1'),
+                  t('landing.linkHubFeature2'),
+                  t('landing.linkHubFeature3'),
+                  t('landing.linkHubFeature4')
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0">
+                      <Check size={14} className="text-stone-600" />
+                    </div>
+                    <span className="text-stone-700">{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={onLoginClick}
+                className="bg-stone-900 text-white px-6 py-3 rounded-full font-medium hover:bg-stone-800 transition-all inline-flex items-center gap-2 group"
+              >
+                {t('landing.buildYourHub')}
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </button>
             </div>
           </div>
         </div>
