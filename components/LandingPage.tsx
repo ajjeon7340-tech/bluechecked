@@ -114,10 +114,21 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
           animation: float-gentle 6s ease-in-out infinite;
         }
         @keyframes lp-sketch { to { stroke-dashoffset: 0; } }
+        .hero-grid {
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(to right, rgba(168,162,158,0.08) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(168,162,158,0.08) 1px, transparent 1px);
+          background-size: 64px 64px;
+          mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 100%);
+          -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 100%);
+          pointer-events: none;
+        }
       `}</style>
 
       {/* Navigation - Minimal & Warm */}
-      <nav className="max-w-6xl mx-auto px-6 py-8 flex items-center justify-between">
+      <nav className="max-w-6xl mx-auto px-6 py-8 flex items-center justify-between relative z-10">
         <div className="flex items-center gap-2.5 cursor-pointer select-none" onClick={() => window.location.reload()}>
           <DiemLogo size={24} className="text-stone-800" />
         </div>
@@ -139,8 +150,9 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
       </nav>
 
       {/* Hero - Intimate & Editorial */}
-      <section className="max-w-6xl mx-auto px-6 pt-16 pb-24 lg:pt-24 lg:pb-32">
-        <div className="max-w-3xl mx-auto text-center space-y-8">
+      <section className="relative max-w-6xl mx-auto px-6 pt-16 pb-24 lg:pt-24 lg:pb-32">
+        <div className="hero-grid" aria-hidden="true" />
+        <div className="relative max-w-3xl mx-auto text-center space-y-8">
           {/* Soft Badge */}
           <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-100 text-amber-700 px-4 py-2 rounded-full text-sm font-medium">
             <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse-soft"></span>
