@@ -1898,7 +1898,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                       {/* Detail Column */}
                       <div className={`flex-1 flex flex-col bg-[#FAF9F6] ${!selectedCreatorId ? 'hidden md:flex' : 'flex'}`}>
                         {!selectedCreatorId ? (
-                            <div className="flex-1 flex flex-col items-center justify-center text-stone-400">
+                            <div className="flex-1 flex flex-col items-center justify-center text-stone-400 relative">
+                                <div className="absolute inset-0 pointer-events-none" aria-hidden="true" style={{
+                                    backgroundImage: 'linear-gradient(to right, rgba(168,162,158,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,162,158,0.08) 1px, transparent 1px)',
+                                    backgroundSize: '64px 64px',
+                                    maskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 100%)',
+                                    WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 100%)',
+                                }} />
                                 <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mb-4">
                                     <MessageSquare size={32} className="text-stone-300" />
                                 </div>
@@ -1906,6 +1912,12 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             </div>
                         ) : (
                      <div className="h-full flex flex-col bg-[#FAF9F6] relative overflow-hidden">
+                        <div className="absolute inset-0 pointer-events-none z-0" aria-hidden="true" style={{
+                            backgroundImage: 'linear-gradient(to right, rgba(168,162,158,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,162,158,0.08) 1px, transparent 1px)',
+                            backgroundSize: '64px 64px',
+                            maskImage: 'radial-gradient(ellipse 80% 70% at 50% 50%, black 10%, transparent 100%)',
+                            WebkitMaskImage: 'radial-gradient(ellipse 80% 70% at 50% 50%, black 10%, transparent 100%)',
+                        }} />
                         {/* Celebration Overlay */}
                         {showReadCelebration && (
                             <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
