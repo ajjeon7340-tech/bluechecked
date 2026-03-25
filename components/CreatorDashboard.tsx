@@ -743,7 +743,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // When a thread is selected, only hydrate the active message immediately (others hydrate on demand)
   useEffect(() => {
     if (!selectedSenderEmail) return;
-    const threadMsgs = messages.filter(m => m.creatorId === creator.id && m.senderEmail === selectedSenderEmail);
+    const threadMsgs = messages.filter(m =>
+        (m.creatorId === creator.id && m.senderEmail === selectedSenderEmail) ||
+        (m.senderEmail === currentUser?.email && m.creatorId === selectedSenderEmail)
+    );
     if (threadMsgs.length === 0) return;
     const pending = [...threadMsgs].reverse().find(m => m.status === 'PENDING');
     const target = pending || threadMsgs[threadMsgs.length - 1];
@@ -857,22 +860,27 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       }
   };
 
-  // Filter messages to only show incoming requests (where I am the creator)
-  const incomingMessages = useMemo(() => messages.filter(m => m.creatorId === creator.id), [messages, creator.id]);
+  // Filter messages: incoming requests (where I am the creator) + outgoing messages I sent (e.g. welcome messages)
+  const incomingMessages = useMemo(() => messages.filter(m => m.creatorId === creator.id || m.senderEmail === currentUser?.email), [messages, creator.id, currentUser?.email]);
 
-  // Group messages by Sender for Inbox List
+  // Group messages by counterpart for Inbox List
+  // For incoming messages (I am creator_id): group by sender
+  // For outgoing messages (I am sender): group by recipient (creator)
   const conversationGroups = useMemo(() => {
       if (incomingMessages.length === 0) return [];
-      
+
       const groups: Record<string, { senderEmail: string, senderName: string, latestMessage: Message, messageCount: number }> = {};
-      
+
       incomingMessages.forEach(msg => {
           if (msg.content.startsWith('Purchased Product:')) return;
           if (msg.content.startsWith('Fan Tip:')) return;
 
-          const email = msg.senderEmail;
+          // For outgoing messages (I sent this), group by recipient
+          const isOutgoing = msg.senderEmail === currentUser?.email && msg.creatorId !== creator.id;
+          const email = isOutgoing ? (msg.creatorId || 'unknown') : msg.senderEmail;
+          const name = isOutgoing ? (msg.creatorName || 'User') : msg.senderName;
           if (!groups[email]) {
-              groups[email] = { senderEmail: email, senderName: msg.senderName, latestMessage: msg, messageCount: 0 };
+              groups[email] = { senderEmail: email, senderName: name, latestMessage: msg, messageCount: 0 };
           }
           groups[email].messageCount++;
           if (new Date(msg.createdAt).getTime() > new Date(groups[email].latestMessage.createdAt).getTime()) {
@@ -1028,12 +1036,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     }
   };
 
-  // Thread messages for the selected sender
+  // Thread messages for the selected sender/recipient
   const threadMessages = useMemo(() => {
       if (!selectedSenderEmail) return [];
       const leftAt = leftChatrooms[selectedSenderEmail];
       return incomingMessages
-          .filter(m => m.senderEmail === selectedSenderEmail && !m.content.startsWith('Purchased Product:') && !m.content.startsWith('Fan Tip:'))
+          .filter(m => {
+              if (m.content.startsWith('Purchased Product:') || m.content.startsWith('Fan Tip:')) return false;
+              // Match by senderEmail (incoming) or creatorId (outgoing welcome messages)
+              return m.senderEmail === selectedSenderEmail || (m.senderEmail === currentUser?.email && m.creatorId === selectedSenderEmail);
+          })
           .filter(m => !leftAt || new Date(m.createdAt).getTime() >= leftAt)
           .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }, [incomingMessages, selectedSenderEmail, leftChatrooms]);
