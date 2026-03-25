@@ -1110,23 +1110,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
     const isSupportMode = selectedSenderEmail === 'abe7340@gmail.com';
 
-    // Support mode (non-collect): forward message to Diem's inbox instead of the normal reply flow.
-    // The "Collect" button (isComplete=true) still uses the normal flow to claim the welcome gift credits.
-    if (isSupportMode && !isComplete) {
-        if (!replyText.trim()) return;
-        setIsSendingReply(true);
-        try {
-            await sendSupportMessage(replyText);
-            setReplyText('');
-        } catch (error) {
-            console.error("Failed to send support message:", error);
-            alert(t('creator.failedSaveProfile'));
-        } finally {
-            setIsSendingReply(false);
-        }
-        return;
-    }
-
     if (isComplete) {
         if (!window.confirm(t('creator.confirmWithdraw'))) {
             return;
