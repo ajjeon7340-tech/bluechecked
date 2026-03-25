@@ -2837,7 +2837,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </button>
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2 min-w-0">
-                                                <h3 className="font-bold text-stone-900 truncate"><ResponsiveName name={activeMessage.senderName} /></h3>
+                                                <h3 className="font-bold text-stone-900 truncate"><ResponsiveName name={activeMessage.creatorId !== creator.id ? (activeMessage.creatorName || 'User') : activeMessage.senderName} /></h3>
                                                 {activeMessage.status === 'PENDING' && (
                                                     <button 
                                                         onClick={(e) => handleReject(e)}
@@ -2942,6 +2942,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     {threadMessages.slice(effectiveSessionIndex, effectiveSessionIndex + 1).map((msg) => {
                                         const isPending = msg.status === 'PENDING';
                                         const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
+                                        // For outgoing messages (admin sent welcome), roles are inverted
+                                        const isOutgoing = msg.creatorId !== creator.id;
 
                                         // Sort conversation by timestamp
                                         const sortedConversation = [...msg.conversation].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
@@ -3064,7 +3066,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                                 {/* 2. Subsequent Messages (Replies & Appreciation) */}
                                                 {restChats.map((chat, idx) => {
-                                                    const isCreator = chat.role === 'CREATOR';
+                                                    // For outgoing messages, invert: CREATOR role = the other person, FAN role = me
+                                                    const isCreator = isOutgoing ? chat.role === 'FAN' : chat.role === 'CREATOR';
                                                     const isLast = idx === restChats.length - 1;
                                                     const showLine = !isLast;
 
@@ -3075,7 +3078,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             {showLine && (
                                                                 <div className="absolute left-[17px] top-11 -bottom-1 w-0.5 bg-stone-200"></div>
                                                             )}
-                                                            <div className={`w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ${(isCreator ? creator.avatarUrl : msg.senderAvatarUrl) ? 'cursor-pointer' : ''}`} onClick={() => { const url = isCreator ? creator.avatarUrl : msg.senderAvatarUrl; if (url) setEnlargedImage(url); }}>
+                                                            {(() => {
+                                                                const otherAvatar = isOutgoing ? msg.creatorAvatarUrl : msg.senderAvatarUrl;
+                                                                const otherName = isOutgoing ? msg.creatorName : msg.senderName;
+                                                                const avatarUrl = isCreator ? creator.avatarUrl : otherAvatar;
+                                                                const avatarName = isCreator ? creator.displayName : otherName;
+                                                                return (
+                                                            <div className={`w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ${avatarUrl ? 'cursor-pointer' : ''}`} onClick={() => { if (avatarUrl) setEnlargedImage(avatarUrl); }}>
                                                                 {isCreator ? (
                                                                     creator.avatarUrl ? (
                                                                         <img src={creator.avatarUrl} alt={creator.displayName} className="w-full h-full object-cover" />
@@ -3083,13 +3092,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                         <div className="w-full h-full bg-stone-100 flex items-center justify-center"><Verified size={22} /></div>
                                                                     )
                                                                 ) : (
-                                                                    msg.senderAvatarUrl ? (
-                                                                        <img src={msg.senderAvatarUrl} alt={msg.senderName} className="w-full h-full object-cover" />
+                                                                    avatarUrl ? (
+                                                                        <img src={avatarUrl} alt={avatarName} className="w-full h-full object-cover" />
                                                                     ) : (
                                                                         <div className="w-full h-full bg-stone-200 flex items-center justify-center"><User size={16} className="text-stone-500" /></div>
                                                                     )
                                                                 )}
                                                             </div>
+                                                                );
+                                                            })()}
                                                         </div>
 
                                                         {/* Right: Content */}
@@ -3097,7 +3108,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             <div className="flex items-center justify-between mb-2 ml-1">
                                                                 <div className="flex items-center gap-2">
                                                                         <span className="font-semibold text-sm text-stone-900">
-                                                                            {isCreator ? (creator.displayName || 'You') : msg.senderName}
+                                                                            {isCreator ? (creator.displayName || 'You') : (isOutgoing ? (msg.creatorName || 'User') : msg.senderName)}
                                                                         </span>
                                                                         {isCreator ? (
                                                                             <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full overflow-visible">
