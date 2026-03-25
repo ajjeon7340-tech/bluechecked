@@ -26,7 +26,7 @@ export const invalidateChatLinesCache = (messageId: string) => { _chatLinesCache
 
 // Cached Diem admin user ID
 let _diemAdminId: string | null = null;
-const getDiemAdminId = async (): Promise<string | null> => {
+export const getDiemAdminId = async (): Promise<string | null> => {
     if (_diemAdminId) return _diemAdminId;
     try {
         const { data } = await supabase.rpc('get_diem_user_id');
@@ -127,7 +127,10 @@ const mapDbMessageToAppMessage = (m: any, currentUserId: string): Message => {
                 content: content,
                 timestamp: line.created_at,
                 attachmentUrl: attachmentUrl,
-                isEdited: line.updated_at && line.updated_at !== line.created_at
+                isEdited: line.updated_at && line.updated_at !== line.created_at,
+                senderId: line.sender_id,
+                senderName: line.sender?.display_name || undefined,
+                senderAvatarUrl: line.sender?.avatar_url || undefined,
             };
         });
     }
@@ -919,7 +922,7 @@ export const getChatLines = async (messageId: string): Promise<ChatMessage[]> =>
 
     const { data, error } = await supabase
         .from('chat_lines')
-        .select('*')
+        .select('*, sender:profiles!sender_id(display_name, avatar_url)')
         .eq('message_id', messageId)
         .order('created_at', { ascending: true });
 
@@ -939,6 +942,9 @@ export const getChatLines = async (messageId: string): Promise<ChatMessage[]> =>
             timestamp: line.created_at,
             attachmentUrl: attachmentUrl ?? undefined,
             isEdited: line.updated_at && line.updated_at !== line.created_at,
+            senderId: line.sender_id,
+            senderName: line.sender?.display_name || undefined,
+            senderAvatarUrl: line.sender?.avatar_url || undefined,
         };
     });
 

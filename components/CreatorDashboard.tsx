@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n/config';
 import { CreatorProfile, Message, DashboardStats, MonthlyStat, AffiliateLink, LinkSection, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
-import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, sendWelcomeMessage, sendSupportMessage, Withdrawal, isBackendConfigured } from '../services/realBackend';
+import { getMessages, getChatLines, getDiemAdminId, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, sendWelcomeMessage, sendSupportMessage, Withdrawal, isBackendConfigured } from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { 
@@ -143,6 +143,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [detailedStats, setDetailedStats] = useState<DetailedStat[]>([]);
   const [financialStats, setFinancialStats] = useState<DetailedFinancialStat[]>([]);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
+
+  // Diem admin ID — used to identify admin-sent chat lines regardless of role
+  const [diemAdminId, setDiemAdminId] = useState<string | null>(null);
+  useEffect(() => { getDiemAdminId().then(id => setDiemAdminId(id)); }, []);
 
   // Inbox Filter
   const [inboxFilter, setInboxFilter] = useState<InboxFilter>('ALL');
@@ -3066,8 +3070,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                                 {/* 2. Subsequent Messages (Replies & Appreciation) */}
                                                 {restChats.map((chat, idx) => {
-                                                    // For outgoing messages, invert: CREATOR role = the other person, FAN role = me
-                                                    const isCreator = isOutgoing ? chat.role === 'FAN' : chat.role === 'CREATOR';
+                                                    // Use actual sender_id to identify who sent this line
+                                                    const isAdminMsg = !!diemAdminId && chat.senderId === diemAdminId;
+                                                    // For outgoing messages, invert roles — but admin is always admin regardless
+                                                    const isCreator = !isAdminMsg && (isOutgoing ? chat.role === 'FAN' : chat.role === 'CREATOR');
                                                     const isLast = idx === restChats.length - 1;
                                                     const showLine = !isLast;
 
@@ -3079,8 +3085,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 <div className="absolute left-[17px] top-11 -bottom-1 w-0.5 bg-stone-200"></div>
                                                             )}
                                                             {(() => {
-                                                                const otherAvatar = isOutgoing ? msg.creatorAvatarUrl : msg.senderAvatarUrl;
-                                                                const otherName = isOutgoing ? msg.creatorName : msg.senderName;
+                                                                const otherAvatar = isAdminMsg ? (chat.senderAvatarUrl || undefined) : (isOutgoing ? msg.creatorAvatarUrl : msg.senderAvatarUrl);
+                                                                const otherName = isAdminMsg ? (chat.senderName || 'Diem Official') : (isOutgoing ? msg.creatorName : msg.senderName);
                                                                 const avatarUrl = isCreator ? creator.avatarUrl : otherAvatar;
                                                                 const avatarName = isCreator ? creator.displayName : otherName;
                                                                 return (
@@ -3108,12 +3114,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             <div className="flex items-center justify-between mb-2 ml-1">
                                                                 <div className="flex items-center gap-2">
                                                                         <span className="font-semibold text-sm text-stone-900">
-                                                                            {isCreator ? (creator.displayName || 'You') : (isOutgoing ? (msg.creatorName || 'User') : msg.senderName)}
+                                                                            {isCreator ? (creator.displayName || 'You') : isAdminMsg ? (chat.senderName || 'Diem Official') : (isOutgoing ? (msg.creatorName || 'User') : msg.senderName)}
                                                                         </span>
                                                                         {isCreator ? (
                                                                             <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full overflow-visible">
                                                                                 <Verified size={12} />
                                                                                 <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.creator')}</span>
+                                                                            </div>
+                                                                        ) : isAdminMsg ? (
+                                                                            <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
+                                                                                <Verified size={10} />
+                                                                                <span className="text-[9px] font-semibold uppercase tracking-wide">ADMIN</span>
                                                                             </div>
                                                                         ) : msg.senderEmail === 'abe7340@gmail.com' ? (
                                                                             <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
@@ -3130,7 +3141,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     </div>
                                                                 </div>
 
-                                                            <div className={`${isCreator ? 'bg-stone-50' : 'bg-white'} p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60`}>
+                                                            <div className={`${isCreator ? 'bg-stone-50' : isAdminMsg ? 'bg-amber-50/40' : 'bg-white'} p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60`}>
                                                                 {/* Content */}
                                                                 {editingChatId === chat.id ? (
                                                                     <div className="space-y-3">

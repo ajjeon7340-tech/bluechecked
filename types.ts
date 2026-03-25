@@ -87,6 +87,9 @@ export interface ChatMessage {
   timestamp: string;
   attachmentUrl?: string;
   isEdited?: boolean;
+  senderId?: string;
+  senderName?: string;
+  senderAvatarUrl?: string;
 }
 
 export interface Message {
