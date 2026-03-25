@@ -82,7 +82,7 @@ export interface CreatorProfile {
 
 export interface ChatMessage {
   id: string;
-  role: 'CREATOR' | 'FAN';
+  role: 'CREATOR' | 'FAN' | 'ADMIN';
   content: string;
   timestamp: string;
   attachmentUrl?: string;
