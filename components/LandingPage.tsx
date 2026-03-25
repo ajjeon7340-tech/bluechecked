@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from './Button';
 import { LanguageSwitcher } from './LanguageSwitcher';
-import { DiemLogo, CheckCircle2, MessageSquare, ArrowRight, Clock, Sparkles, User, Heart, Lock, Check, ShoppingBag, FileText, Coins, X, Download, Verified, ExternalLink } from './Icons';
+import { DiemLogo, CheckCircle2, MessageSquare, ArrowRight, Clock, Sparkles, User, Heart, Lock, Check, ShoppingBag, FileText, Coins, X, Download, Verified, ExternalLink, Mail } from './Icons';
 interface Props {
   onLoginClick: () => void;
   onDemoClick: () => void;
