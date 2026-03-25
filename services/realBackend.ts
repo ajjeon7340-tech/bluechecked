@@ -24,6 +24,17 @@ const CHAT_LINES_TTL = 300000; // 5 minutes (invalidated on reply/edit)
 export const invalidateMsgCache = () => { _msgCache = null; _msgCacheRefreshing = false; };
 export const invalidateChatLinesCache = (messageId: string) => { _chatLinesCache.delete(messageId); };
 
+// Cached Diem admin user ID
+let _diemAdminId: string | null = null;
+const getDiemAdminId = async (): Promise<string | null> => {
+    if (_diemAdminId) return _diemAdminId;
+    try {
+        const { data } = await supabase.rpc('get_diem_user_id');
+        if (data) _diemAdminId = data as string;
+        return _diemAdminId;
+    } catch { return null; }
+};
+
 const getColorForSource = (source: string) => {
     const s = source.toLowerCase();
     if (s.includes('youtube')) return '#FF0000';
@@ -945,23 +956,64 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
     const isProductPurchase = content.startsWith('Purchased Product:');
     const isTip = content.startsWith('Fan Tip:');
 
+    // Check if sending to the Diem admin — special handling (no credits, reuse thread)
+    const adminId = await getDiemAdminId();
+    const isToAdmin = creatorId === adminId;
+
+    if (isToAdmin) {
+        // Find existing thread with admin (either direction)
+        const { data: existingThread } = await supabase
+            .from('messages')
+            .select('id')
+            .or(`and(sender_id.eq.${userId},creator_id.eq.${creatorId}),and(sender_id.eq.${creatorId},creator_id.eq.${userId})`)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (existingThread) {
+            // Add as chat_line to existing thread instead of creating a new session
+            await supabase.from('chat_lines').insert({
+                message_id: existingThread.id,
+                sender_id: userId,
+                role: 'FAN',
+                content,
+            });
+            await supabase.from('messages').update({
+                is_read: false,
+                updated_at: new Date().toISOString(),
+            }).eq('id', existingThread.id);
+
+            invalidateMsgCache();
+            invalidateChatLinesCache(existingThread.id);
+
+            // Return the updated message
+            const { data: message } = await supabase
+                .from('messages')
+                .select(`*, sender:profiles!sender_id(display_name, email, avatar_url), creator:profiles!creator_id(display_name, avatar_url)`)
+                .eq('id', existingThread.id)
+                .single();
+            return mapDbMessageToAppMessage(message, userId);
+        }
+        // No existing thread — fall through to create one (first contact with admin)
+    }
+
     // Validate amount — prevent negative, zero, or non-finite values
-    if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount)) {
+    if (!isToAdmin && (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount))) {
         throw new Error("Invalid transaction amount.");
     }
-    if (amount > 100000) {
+    if (!isToAdmin && amount > 100000) {
         throw new Error("Transaction amount exceeds maximum allowed.");
     }
 
-    // 1. Check Balance
+    // 1. Check Balance (skip for admin messages)
     const { data: profile } = await supabase.from('profiles').select('credits').eq('id', userId).single();
-    if (!profile || profile.credits < amount) {
+    if (!isToAdmin && (!profile || profile.credits < amount)) {
         throw new Error("Insufficient credits. Please top up.");
     }
 
     // Check for existing pending request
-    // Skip check if this is a product purchase
-    if (!isProductPurchase && !isTip) {
+    // Skip check if this is a product purchase or message to admin
+    if (!isProductPurchase && !isTip && !isToAdmin) {
         const { data: pendingMessages } = await supabase
             .from('messages')
             .select('id, content')
@@ -970,10 +1022,10 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
             .eq('status', 'PENDING');
 
         if (pendingMessages && pendingMessages.length > 0) {
-            // Only block if there is a pending REGULAR message. 
+            // Only block if there is a pending REGULAR message.
             // Pending product purchases should not block new regular messages.
             const hasPendingRegularMessage = pendingMessages.some(m => !m.content || !m.content.startsWith('Purchased Product:'));
-            
+
             if (hasPendingRegularMessage) {
                 throw new Error("You already have a pending request with this creator. Please wait for a reply.");
             }
@@ -1125,14 +1177,20 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
     if (!session.session) throw new Error("Not logged in");
 
     // Check status before replying
-    const { data: msgCheck } = await supabase.from('messages').select('status, expires_at').eq('id', messageId).single();
+    const { data: msgCheck } = await supabase.from('messages').select('status, expires_at, sender_id, creator_id').eq('id', messageId).single();
     if (!msgCheck) throw new Error("Message not found");
-    
-    if (msgCheck.status !== 'PENDING') {
-         throw new Error(`Cannot reply. Message is ${msgCheck.status}`);
-    }
-    if (new Date(msgCheck.expires_at) < new Date()) {
-        throw new Error("Message has expired and cannot be replied to.");
+
+    // Allow continuing conversation on admin threads regardless of status
+    const adminId = await getDiemAdminId();
+    const isAdminThread = msgCheck.sender_id === adminId || msgCheck.creator_id === adminId;
+
+    if (!isAdminThread) {
+        if (msgCheck.status !== 'PENDING') {
+             throw new Error(`Cannot reply. Message is ${msgCheck.status}`);
+        }
+        if (new Date(msgCheck.expires_at) < new Date()) {
+            throw new Error("Message has expired and cannot be replied to.");
+        }
     }
 
     // 1. Add Chat Line
@@ -1169,6 +1227,13 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
         if (!isComplete) {
             await supabase.from('messages').update({ is_read: false, updated_at: new Date().toISOString() }).eq('id', messageId);
         }
+    }
+
+    // For admin threads, just update the message timestamp — no status change or credit transfer
+    if (isAdminThread) {
+        await supabase.from('messages').update({ is_read: false, updated_at: new Date().toISOString() }).eq('id', messageId);
+        invalidateMsgCache();
+        return;
     }
 
     // 2. Status update for complete replies — atomic guard prevents double-payout
@@ -2288,18 +2353,47 @@ export const sendSupportMessage = async (content: string): Promise<void> => {
     try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) throw new Error('Not logged in');
-        const { data: diemId, error: rpcError } = await supabase.rpc('get_diem_user_id');
-        if (rpcError || !diemId) throw new Error('Support unavailable');
-        const { error } = await supabase.from('messages').insert({
-            sender_id: session.user.id,
-            creator_id: diemId,
-            content,
-            amount: 0,
-            status: 'PENDING',
-            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-            is_read: false,
-        });
-        if (error) throw error;
+        const diemId = await getDiemAdminId();
+        if (!diemId) throw new Error('Support unavailable');
+        const userId = session.user.id;
+
+        // Find existing thread with admin (either direction)
+        const { data: existingThread } = await supabase
+            .from('messages')
+            .select('id')
+            .or(`and(sender_id.eq.${userId},creator_id.eq.${diemId}),and(sender_id.eq.${diemId},creator_id.eq.${userId})`)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (existingThread) {
+            // Add as chat_line to existing thread
+            await supabase.from('chat_lines').insert({
+                message_id: existingThread.id,
+                sender_id: userId,
+                role: 'FAN',
+                content,
+            });
+            await supabase.from('messages').update({
+                is_read: false,
+                updated_at: new Date().toISOString(),
+            }).eq('id', existingThread.id);
+            invalidateMsgCache();
+            invalidateChatLinesCache(existingThread.id);
+        } else {
+            // No existing thread — create one
+            const { error } = await supabase.from('messages').insert({
+                sender_id: userId,
+                creator_id: diemId,
+                content,
+                amount: 0,
+                status: 'PENDING',
+                expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+                is_read: false,
+            });
+            if (error) throw error;
+            invalidateMsgCache();
+        }
     } catch (e: any) {
         console.error('[support] Failed to send support message:', e.message);
         throw e;
