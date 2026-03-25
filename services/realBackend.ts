@@ -122,21 +122,26 @@ const mapDbMessageToAppMessage = (m: any, currentUserId: string): Message => {
     }
 
     // 2. Check if the initial message (stored in parent row) is already in chat_lines
-    const initialMsg: ChatMessage = {
-        id: `${m.id}-init`,
-        role: 'FAN',
-        content: m.content,
-        timestamp: m.created_at,
-        attachmentUrl: m.attachment_url
-    };
+    // Skip synthetic initial message for welcome sessions (empty content, admin-initiated)
+    if (m.content && m.content.trim()) {
+        const initialMsg: ChatMessage = {
+            id: `${m.id}-init`,
+            role: 'FAN',
+            content: m.content,
+            timestamp: m.created_at,
+            attachmentUrl: m.attachment_url
+        };
 
-    const hasInitial = lines.some(l =>
-        l.role === 'FAN' &&
-        (l.content?.trim() === m.content?.trim() ||
-          Math.abs(new Date(l.timestamp).getTime() - new Date(m.created_at).getTime()) < 8000)
-    );
+        const hasInitial = lines.some(l =>
+            l.role === 'FAN' &&
+            (l.content?.trim() === m.content?.trim() ||
+              Math.abs(new Date(l.timestamp).getTime() - new Date(m.created_at).getTime()) < 8000)
+        );
 
-    conversation = hasInitial ? lines : [initialMsg, ...lines];
+        conversation = hasInitial ? lines : [initialMsg, ...lines];
+    } else {
+        conversation = lines;
+    }
 
     // 3. Sort & Deduplicate (trimmed content, within 5s window)
     conversation.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
