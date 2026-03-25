@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n/config';
 import { CreatorProfile, Message, DashboardStats, MonthlyStat, AffiliateLink, LinkSection, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
-import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, sendWelcomeMessage, Withdrawal, isBackendConfigured } from '../services/realBackend';
+import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, sendWelcomeMessage, sendSupportMessage, Withdrawal, isBackendConfigured } from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { 
@@ -1095,7 +1095,26 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const handleSendReply = async (isComplete: boolean) => {
     if (!activeMessage) return;
-    
+
+    const isSupportMode = selectedSenderEmail === 'abe7340@gmail.com';
+
+    // Support mode (non-collect): forward message to Diem's inbox instead of the normal reply flow.
+    // The "Collect" button (isComplete=true) still uses the normal flow to claim the welcome gift credits.
+    if (isSupportMode && !isComplete) {
+        if (!replyText.trim()) return;
+        setIsSendingReply(true);
+        try {
+            await sendSupportMessage(replyText);
+            setReplyText('');
+        } catch (error) {
+            console.error("Failed to send support message:", error);
+            alert(t('creator.failedSaveProfile'));
+        } finally {
+            setIsSendingReply(false);
+        }
+        return;
+    }
+
     if (isComplete) {
         if (!window.confirm(t('creator.confirmWithdraw'))) {
             return;

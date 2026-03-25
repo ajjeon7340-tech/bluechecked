@@ -2218,6 +2218,31 @@ export const getDiemPublicProfileId = async (): Promise<string | null> => {
     } catch { return null; }
 };
 
+// Creates a support message directly in the Diem account's inbox so the support
+// team can see and respond to it. Used when a creator or fan contacts support.
+export const sendSupportMessage = async (content: string): Promise<void> => {
+    if (!isConfigured) return MockBackend.sendSupportMessage(content);
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error('Not logged in');
+        const { data: diemId, error: rpcError } = await supabase.rpc('get_diem_user_id');
+        if (rpcError || !diemId) throw new Error('Support unavailable');
+        const { error } = await supabase.from('messages').insert({
+            sender_id: session.user.id,
+            creator_id: diemId,
+            content,
+            amount: 0,
+            status: 'PENDING',
+            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            is_read: false,
+        });
+        if (error) throw error;
+    } catch (e: any) {
+        console.error('[support] Failed to send support message:', e.message);
+        throw e;
+    }
+};
+
 export const connectStripeAccount = async (): Promise<string | null> => {
     if (!isConfigured) {
         console.log("[Stripe] Backend not configured, using mock mode (returning null URL)");

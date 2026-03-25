@@ -838,3 +838,7 @@ export const requestWithdrawal = async (amount: number): Promise<Withdrawal> => 
 export const getWithdrawalHistory = async (): Promise<Withdrawal[]> => {
     return [...withdrawals].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
+
+export const sendSupportMessage = async (_content: string): Promise<void> => {
+    // No-op in mock mode — no real Diem inbox to deliver to.
+};
