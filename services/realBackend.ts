@@ -964,18 +964,20 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
         // Find existing thread with admin (either direction)
         const { data: existingThread } = await supabase
             .from('messages')
-            .select('id')
+            .select('id, creator_id')
             .or(`and(sender_id.eq.${userId},creator_id.eq.${creatorId}),and(sender_id.eq.${creatorId},creator_id.eq.${userId})`)
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();
 
         if (existingThread) {
+            // Role depends on which side of the thread the current user is on
+            const adminMsgRole: 'CREATOR' | 'FAN' = existingThread.creator_id === userId ? 'CREATOR' : 'FAN';
             // Add as chat_line to existing thread instead of creating a new session
             await supabase.from('chat_lines').insert({
                 message_id: existingThread.id,
                 sender_id: userId,
-                role: 'FAN',
+                role: adminMsgRole,
                 content,
             });
             await supabase.from('messages').update({
@@ -1194,11 +1196,15 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
     }
 
     // 1. Add Chat Line
+    // Role is determined by which side of the thread the replier is on:
+    // the creator_id side uses 'CREATOR', the sender_id side uses 'FAN'.
+    const replyRole: 'CREATOR' | 'FAN' = session.session.user.id === msgCheck.creator_id ? 'CREATOR' : 'FAN';
+
     if (replyText.trim() || attachmentUrl) {
         const payload: any = {
             message_id: messageId,
             sender_id: session.session.user.id,
-            role: 'CREATOR',
+            role: replyRole,
             content: replyText
         };
         if (attachmentUrl) {
@@ -1206,7 +1212,7 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
         }
 
         const { error: chatError } = await supabase.from('chat_lines').insert(payload);
-        
+
         if (chatError) {
             // Fallback for missing column (PGRST204)
             if ((chatError.code === 'PGRST204' || chatError.code === '42703') && attachmentUrl) {
@@ -1214,7 +1220,7 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
                  const { error: retryError } = await supabase.from('chat_lines').insert({
                     message_id: messageId,
                     sender_id: session.session.user.id,
-                    role: 'CREATOR',
+                    role: replyRole,
                     content: fallbackContent
                  });
                  if (retryError) throw retryError;
@@ -2360,18 +2366,20 @@ export const sendSupportMessage = async (content: string): Promise<void> => {
         // Find existing thread with admin (either direction)
         const { data: existingThread } = await supabase
             .from('messages')
-            .select('id')
+            .select('id, creator_id')
             .or(`and(sender_id.eq.${userId},creator_id.eq.${diemId}),and(sender_id.eq.${diemId},creator_id.eq.${userId})`)
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();
 
         if (existingThread) {
+            // Role depends on which side of the thread the current user is on
+            const supportMsgRole: 'CREATOR' | 'FAN' = existingThread.creator_id === userId ? 'CREATOR' : 'FAN';
             // Add as chat_line to existing thread
             await supabase.from('chat_lines').insert({
                 message_id: existingThread.id,
                 sender_id: userId,
-                role: 'FAN',
+                role: supportMsgRole,
                 content,
             });
             await supabase.from('messages').update({
