@@ -7,7 +7,13 @@ interface Props {
 
 export const TermsOfService: React.FC<Props> = ({ onBack }) => {
   return (
-    <div className="min-h-screen bg-[#FAFAF9] font-sans text-stone-900">
+    <div className="min-h-screen bg-[#FAFAF9] font-sans text-stone-900 relative">
+      <div className="absolute inset-0 pointer-events-none z-0" aria-hidden="true" style={{
+        backgroundImage: 'linear-gradient(to right, rgba(168,162,158,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,162,158,0.08) 1px, transparent 1px)',
+        backgroundSize: '64px 64px',
+        maskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 100%)',
+        WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 100%)',
+      }} />
       <nav className="max-w-6xl mx-auto px-6 py-8 flex items-center justify-between">
         <div className="flex items-center gap-2.5 cursor-pointer" onClick={onBack}>
           <DiemLogo size={24} />

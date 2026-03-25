@@ -1583,7 +1583,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   );
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] flex flex-col font-sans text-stone-900 overflow-hidden">
+    <div className="min-h-screen bg-[#FAF9F6] flex flex-col font-sans text-stone-900 overflow-hidden relative">
+      <div className="absolute inset-0 pointer-events-none z-0" aria-hidden="true" style={{
+        backgroundImage: 'linear-gradient(to right, rgba(168,162,158,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,162,158,0.08) 1px, transparent 1px)',
+        backgroundSize: '64px 64px',
+        maskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 100%)',
+        WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 100%)',
+      }} />
       {!isBackendConfigured() && (
         <div className="bg-amber-500 text-white text-[11px] font-bold px-4 py-1.5 text-center z-50 tracking-wide w-full shrink-0">
           MOCK DATA — not connected to real backend

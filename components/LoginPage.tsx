@@ -1024,6 +1024,12 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess, onBack, initialStep
 
   return (
     <div className="min-h-screen bg-[#FAFAF9] relative flex flex-col items-center justify-center p-4 font-sans">
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true" style={{
+        backgroundImage: 'linear-gradient(to right, rgba(168,162,158,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,162,158,0.08) 1px, transparent 1px)',
+        backgroundSize: '64px 64px',
+        maskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 100%)',
+        WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 100%)',
+      }} />
       <div className="relative z-10 w-full max-w-md">
         <div
           onClick={onBack}

@@ -1091,7 +1091,13 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] flex font-sans text-stone-900 overflow-hidden">
+    <div className="min-h-screen bg-[#FAF9F6] flex font-sans text-stone-900 overflow-hidden relative">
+      <div className="absolute inset-0 pointer-events-none z-0" aria-hidden="true" style={{
+        backgroundImage: 'linear-gradient(to right, rgba(168,162,158,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,162,158,0.08) 1px, transparent 1px)',
+        backgroundSize: '64px 64px',
+        maskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 100%)',
+        WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 100%)',
+      }} />
         {/* Inject Animation Styles Globally for the Component */}
         <style>{`
             @keyframes sprinkle-fall {
