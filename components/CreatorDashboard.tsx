@@ -2955,6 +2955,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
                                         // For outgoing messages (admin sent welcome), roles are inverted
                                         const isOutgoing = msg.creatorId !== creator.id;
+                                        // True when either party in this thread is the admin account
+                                        const isAdminThread = msg.senderEmail === 'abe7340@gmail.com' || msg.creatorEmail === 'abe7340@gmail.com';
 
                                         // Sort conversation by timestamp
                                         const sortedConversation = [...msg.conversation].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
@@ -2993,7 +2995,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     <Verified size={10} />
                                                                     <span className="text-[9px] font-semibold uppercase tracking-wide">ADMIN</span>
                                                                 </div>
-                                                            ) : isOutgoing ? (
+                                                            ) : (isOutgoing || isAdminThread) ? (
                                                                 <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full overflow-visible">
                                                                     <Verified size={12} />
                                                                     <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.creator')}</span>
@@ -3137,7 +3139,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                                     <span className="text-[9px] font-semibold uppercase tracking-wide">ADMIN</span>
                                                                                 </div>
                                                                             );
-                                                                            if (isCreator) return (
+                                                                            // In admin threads the non-admin party is always a creator
+                                                                            if (isCreator || isAdminThread) return (
                                                                                 <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full overflow-visible">
                                                                                     <Verified size={12} />
                                                                                     <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.creator')}</span>
