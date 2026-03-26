@@ -1197,9 +1197,26 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
     const { data: msgCheck } = await supabase.from('messages').select('status, expires_at, sender_id, creator_id').eq('id', messageId).single();
     if (!msgCheck) throw new Error("Message not found");
 
-    // Allow continuing conversation on admin threads regardless of status
     const adminId = await getDiemAdminId();
     const isAdminThread = msgCheck.sender_id === adminId || msgCheck.creator_id === adminId;
+
+    // If the admin session is already closed, start a fresh one instead of appending to it
+    if (isAdminThread && msgCheck.status === 'REPLIED') {
+        const currentUserId = session.session.user.id;
+        const otherPartyId = msgCheck.creator_id === currentUserId ? msgCheck.sender_id : msgCheck.creator_id;
+        const { error: newMsgError } = await supabase.from('messages').insert({
+            sender_id: currentUserId,
+            creator_id: otherPartyId,
+            content: replyText,
+            amount: 0,
+            status: 'PENDING',
+            expires_at: new Date(Date.now() + 365 * 24 * 3600000).toISOString(),
+            is_read: false,
+        });
+        if (newMsgError) throw newMsgError;
+        invalidateMsgCache();
+        return;
+    }
 
     if (!isAdminThread) {
         if (msgCheck.status !== 'PENDING') {
