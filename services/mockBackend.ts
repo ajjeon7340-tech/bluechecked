@@ -313,11 +313,14 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
     if (msgIndex === -1) return;
 
     const msg = messages[msgIndex];
-    
+
     if (replyText.trim()) {
+        // Mirror real backend logic: role depends on whether current user is the creator_id.
+        // This ensures correct display in both incoming (fan→creator) and outgoing (admin welcome→user) threads.
+        const replyRole: 'CREATOR' | 'FAN' = currentUser && msg.creatorId === currentUser.id ? 'CREATOR' : 'FAN';
         const newPart: ChatMessage = {
             id: `c${Date.now()}`,
-            role: 'CREATOR',
+            role: replyRole,
             content: replyText,
             timestamp: new Date().toISOString()
         };
