@@ -2917,7 +2917,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <div className="flex-1 overflow-y-auto bg-white" ref={scrollRef}>
                                     {/* Session Pagination - full width */}
                                     {threadMessages.length > 0 && (
-                                        <div className="flex items-center justify-between px-4 py-2 bg-stone-50 border-b border-stone-100 sticky top-0 z-10">
+                                        <div className="flex items-center justify-between px-4 py-2 bg-stone-50 border-b border-stone-100 sticky top-0 z-20">
                                             <button
                                                 onClick={() => setChatSessionIndex(effectiveSessionIndex - 1)}
                                                 disabled={effectiveSessionIndex <= 0}
