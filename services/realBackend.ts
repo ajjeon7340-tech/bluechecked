@@ -956,46 +956,10 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
     const isProductPurchase = content.startsWith('Purchased Product:');
     const isTip = content.startsWith('Fan Tip:');
 
-    // Check if sending to the Diem admin — special handling (no credits, reuse thread)
+    // Check if sending to the Diem admin — special handling (no credits)
     const adminId = await getDiemAdminId();
     const isToAdmin = creatorId === adminId;
 
-    if (isToAdmin) {
-        // Find existing thread with admin (either direction)
-        const { data: existingThread } = await supabase
-            .from('messages')
-            .select('id')
-            .or(`and(sender_id.eq.${userId},creator_id.eq.${creatorId}),and(sender_id.eq.${creatorId},creator_id.eq.${userId})`)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-        if (existingThread) {
-            // Add as chat_line to existing thread instead of creating a new session
-            await supabase.from('chat_lines').insert({
-                message_id: existingThread.id,
-                sender_id: userId,
-                role: 'FAN',
-                content,
-            });
-            await supabase.from('messages').update({
-                is_read: false,
-                updated_at: new Date().toISOString(),
-            }).eq('id', existingThread.id);
-
-            invalidateMsgCache();
-            invalidateChatLinesCache(existingThread.id);
-
-            // Return the updated message
-            const { data: message } = await supabase
-                .from('messages')
-                .select(`*, sender:profiles!sender_id(display_name, email, avatar_url), creator:profiles!creator_id(display_name, avatar_url)`)
-                .eq('id', existingThread.id)
-                .single();
-            return mapDbMessageToAppMessage(message, userId);
-        }
-        // No existing thread — fall through to create one (first contact with admin)
-    }
 
     // Validate amount — prevent negative, zero, or non-finite values
     if (!isToAdmin && (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount))) {
