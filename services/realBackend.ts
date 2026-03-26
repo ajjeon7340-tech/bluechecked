@@ -1191,8 +1191,13 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
     invalidateMsgCache();
     invalidateChatLinesCache(messageId);
 
-    const { data: session } = await supabase.auth.getSession();
-    if (!session.session) throw new Error("Not logged in");
+    let { data: session } = await supabase.auth.getSession();
+    if (!session.session) {
+        // Token may have expired — try a silent refresh before giving up
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        if (!refreshed.session) throw new Error("Not logged in");
+        session = refreshed;
+    }
 
     // Check status before replying
     const { data: msgCheck } = await supabase.from('messages').select('status, expires_at, sender_id, creator_id').eq('id', messageId).single();

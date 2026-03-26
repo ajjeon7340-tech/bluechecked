@@ -3343,8 +3343,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     </div>
                                 </div>
 
-                                {/* Reply Input Area — always show for admin threads */}
-                                {(activeMessage.status === 'PENDING' || selectedSenderEmail === 'abe7340@gmail.com') && (
+                                {/* Reply Input Area — always show for admin threads (either side) */}
+                                {(activeMessage.status === 'PENDING' || selectedSenderEmail === 'abe7340@gmail.com' || currentUser?.email === 'abe7340@gmail.com') && (
                                     <div className="p-3 sm:p-4 bg-white border-t border-stone-200/60 z-20">
                                         <input type="file" ref={replyFileInputRef} className="hidden" accept="image/*" multiple onChange={handleReplyFileChange} />
 
