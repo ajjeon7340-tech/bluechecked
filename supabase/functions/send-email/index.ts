@@ -18,7 +18,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { creatorId, to, subject, html } = await req.json()
+    const payload = await req.json()
+    console.log("Received payload:", payload)
+    const { creatorId, to, subject, html } = payload
     let recipientEmail = to
 
     // If email is missing (due to RLS on client), fetch it using Service Role

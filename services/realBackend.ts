@@ -1195,10 +1195,15 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
 
     // 1. Add Chat Line
     if (replyText.trim() || attachmentUrl) {
+        // If the current user is the original sender (e.g. Diem Official replying to a welcome
+        // message they sent), use 'FAN' so the reply displays on the correct side in both views.
+        const currentUserId = session.session.user.id;
+        const replyRole = msgCheck.creator_id === currentUserId ? 'CREATOR' : 'FAN';
+
         const payload: any = {
             message_id: messageId,
-            sender_id: session.session.user.id,
-            role: 'CREATOR',
+            sender_id: currentUserId,
+            role: replyRole,
             content: replyText
         };
         if (attachmentUrl) {
@@ -1206,15 +1211,15 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
         }
 
         const { error: chatError } = await supabase.from('chat_lines').insert(payload);
-        
+
         if (chatError) {
             // Fallback for missing column (PGRST204)
             if ((chatError.code === 'PGRST204' || chatError.code === '42703') && attachmentUrl) {
                  const fallbackContent = `${replyText.trim()}\n\nAttachment`;
                  const { error: retryError } = await supabase.from('chat_lines').insert({
                     message_id: messageId,
-                    sender_id: session.session.user.id,
-                    role: 'CREATOR',
+                    sender_id: currentUserId,
+                    role: replyRole,
                     content: fallbackContent
                  });
                  if (retryError) throw retryError;
