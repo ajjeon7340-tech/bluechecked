@@ -167,6 +167,7 @@ const mapDbMessageToAppMessage = (m: any, currentUserId: string): Message => {
         amount: m.amount,
         creatorId: m.creator_id,
         creatorName: m.creator?.display_name || 'Creator',
+        creatorEmail: m.creator?.email,
         creatorAvatarUrl: m.creator?.avatar_url || DEFAULT_AVATAR,
         createdAt: m.created_at,
         expiresAt: m.expires_at,
@@ -894,7 +895,7 @@ const fetchMessagesFromDb = async (userId: string): Promise<Message[]> => {
         .select(`
             *,
             sender:profiles!sender_id(display_name, email, avatar_url),
-            creator:profiles!creator_id(display_name, avatar_url)
+            creator:profiles!creator_id(display_name, email, avatar_url)
         `)
         .or(`sender_id.eq.${userId},creator_id.eq.${userId}`)
         .order('created_at', { ascending: false })

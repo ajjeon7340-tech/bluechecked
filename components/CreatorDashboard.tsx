@@ -875,9 +875,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           if (msg.content.startsWith('Purchased Product:')) return;
           if (msg.content.startsWith('Fan Tip:')) return;
 
-          // For outgoing messages (I sent this), group by recipient
+          // For outgoing messages (I sent this), group by recipient email
           const isOutgoing = msg.senderEmail === currentUser?.email && msg.creatorId !== creator.id;
-          const email = isOutgoing ? (msg.creatorId || 'unknown') : msg.senderEmail;
+          const email = isOutgoing ? (msg.creatorEmail || msg.creatorId || 'unknown') : msg.senderEmail;
           const name = isOutgoing ? (msg.creatorName || 'User') : msg.senderName;
           if (!groups[email]) {
               groups[email] = { senderEmail: email, senderName: name, latestMessage: msg, messageCount: 0 };
@@ -1043,8 +1043,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       return incomingMessages
           .filter(m => {
               if (m.content.startsWith('Purchased Product:') || m.content.startsWith('Fan Tip:')) return false;
-              // Match by senderEmail (incoming) or creatorId (outgoing welcome messages)
-              return m.senderEmail === selectedSenderEmail || (m.senderEmail === currentUser?.email && m.creatorId === selectedSenderEmail);
+              // Match by senderEmail (incoming) or creatorEmail/creatorId (outgoing admin messages)
+              return m.senderEmail === selectedSenderEmail || (m.senderEmail === currentUser?.email && (m.creatorEmail === selectedSenderEmail || m.creatorId === selectedSenderEmail));
           })
           .filter(m => !leftAt || new Date(m.createdAt).getTime() >= leftAt)
           .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());

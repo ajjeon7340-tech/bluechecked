@@ -99,6 +99,7 @@ export interface Message {
   amount: number; // In Credits
   creatorId?: string;
   creatorName?: string;
+  creatorEmail?: string;
   creatorAvatarUrl?: string;
   createdAt: string; 
   expiresAt: string; 
