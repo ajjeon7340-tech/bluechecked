@@ -651,7 +651,6 @@ const enrichCreatorProfile = async (data: any): Promise<CreatorProfile> => {
         showBio: data.show_bio !== false,
         isDiemHighlighted: (data.links || []).find((l: any) => l.id === '__diem_config__')?.isPromoted || false,
         diemButtonColor: (data.links || []).find((l: any) => l.id === '__diem_config__')?.buttonColor || undefined,
-        profileFont: data.profile_font || 'inter',
     };
 };
 
@@ -782,7 +781,6 @@ export const getCreatorProfileFast = async (creatorId?: string): Promise<Creator
         showBio: data.show_bio !== false,
         isDiemHighlighted: (data.links || []).find((l: any) => l.id === '__diem_config__')?.isPromoted || false,
         diemButtonColor: (data.links || []).find((l: any) => l.id === '__diem_config__')?.buttonColor || undefined,
-        profileFont: data.profile_font || 'inter',
     };
 };
 
@@ -817,7 +815,6 @@ export const updateCreatorProfile = async (profile: CreatorProfile): Promise<Cre
             show_likes: profile.showLikes ?? true,
             show_rating: profile.showRating ?? true,
             show_bio: profile.showBio ?? true,
-            profile_font: profile.profileFont || 'inter'
         })
         .eq('id', session.session.user.id);
 

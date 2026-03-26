@@ -745,7 +745,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     if (!selectedSenderEmail) return;
     const threadMsgs = messages.filter(m =>
         (m.creatorId === creator.id && m.senderEmail === selectedSenderEmail) ||
-        (m.senderEmail === currentUser?.email && m.creatorId === selectedSenderEmail)
+        (m.senderEmail === currentUser?.email && (m.creatorEmail === selectedSenderEmail || m.creatorId === selectedSenderEmail))
     );
     if (threadMsgs.length === 0) return;
     const pending = [...threadMsgs].reverse().find(m => m.status === 'PENDING');
@@ -2988,14 +2988,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             <span className="font-semibold text-sm text-stone-900">
                                                                 <ResponsiveName name={isOutgoing ? (creator.displayName || 'You') : msg.senderName} />
                                                             </span>
-                                                            {isOutgoing ? (
-                                                                <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
-                                                                    <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.creator')}</span>
-                                                                </div>
-                                                            ) : msg.senderEmail === 'abe7340@gmail.com' ? (
+                                                            {msg.senderEmail === 'abe7340@gmail.com' ? (
                                                                 <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
                                                                     <Verified size={10} />
                                                                     <span className="text-[9px] font-semibold uppercase tracking-wide">ADMIN</span>
+                                                                </div>
+                                                            ) : isOutgoing ? (
+                                                                <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full overflow-visible">
+                                                                    <Verified size={12} />
+                                                                    <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.creator')}</span>
                                                                 </div>
                                                             ) : (
                                                                 <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
@@ -3125,22 +3126,30 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                         <span className="font-semibold text-sm text-stone-900">
                                                                             {isCreator ? (creator.displayName || 'You') : (isOutgoing ? (msg.creatorName || 'User') : msg.senderName)}
                                                                         </span>
-                                                                        {isCreator ? (
-                                                                            <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full overflow-visible">
-                                                                                <Verified size={12} />
-                                                                                <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.creator')}</span>
-                                                                            </div>
-                                                                        ) : msg.senderEmail === 'abe7340@gmail.com' ? (
-                                                                            <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
-                                                                                <Verified size={10} />
-                                                                                <span className="text-[9px] font-semibold uppercase tracking-wide">ADMIN</span>
-                                                                            </div>
-                                                                        ) : (
-                                                                            <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
-                                                                                <User size={10} className="fill-current" />
-                                                                                <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.fan')}</span>
-                                                                            </div>
-                                                                        )}
+                                                                        {(() => {
+                                                                            // Determine if THIS chat line was sent by the admin account
+                                                                            const isAdminChatLine =
+                                                                                (chat.role === 'FAN' && msg.senderEmail === 'abe7340@gmail.com') ||
+                                                                                (chat.role === 'CREATOR' && msg.creatorEmail === 'abe7340@gmail.com');
+                                                                            if (isAdminChatLine) return (
+                                                                                <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
+                                                                                    <Verified size={10} />
+                                                                                    <span className="text-[9px] font-semibold uppercase tracking-wide">ADMIN</span>
+                                                                                </div>
+                                                                            );
+                                                                            if (isCreator) return (
+                                                                                <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full overflow-visible">
+                                                                                    <Verified size={12} />
+                                                                                    <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.creator')}</span>
+                                                                                </div>
+                                                                            );
+                                                                            return (
+                                                                                <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                                                                                    <User size={10} className="fill-current" />
+                                                                                    <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.fan')}</span>
+                                                                                </div>
+                                                                            );
+                                                                        })()}
                                                                         <span className="text-xs font-medium text-stone-400">• {new Date(chat.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
                                                                     </div>
                                                                 </div>
