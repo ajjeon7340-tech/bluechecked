@@ -1137,7 +1137,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
     try {
         const combinedAttachment = replyAttachments.length > 0 ? replyAttachments.join('|||') : null;
+        const wasSessionClosed = activeMessage.status !== 'PENDING';
         await replyToMessage(activeMessage.id, replyText, isComplete, combinedAttachment);
+
+        // If the session was already closed, a new one was created — jump to it
+        if (wasSessionClosed) {
+            setChatSessionIndex(Infinity);
+        }
 
         // Kick off hydration immediately (fire-and-forget — subscription also does a background sync)
         invalidateChatLinesCache(activeMessage.id);
@@ -2978,22 +2984,26 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                                                     {/* Right: Content */}
                                                     <div className="flex-1 min-w-0 pb-2">
-                                                        <div className="flex items-center justify-between mb-2 ml-1">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="font-semibold text-sm text-stone-900"><ResponsiveName name={msg.senderName} /></span>
-                                                                {msg.senderEmail === 'abe7340@gmail.com' ? (
+                                                        <div className="flex items-center gap-2 mb-2 ml-1">
+                                                            <span className="font-semibold text-sm text-stone-900">
+                                                                <ResponsiveName name={isOutgoing ? (creator.displayName || 'You') : msg.senderName} />
+                                                            </span>
+                                                            {isOutgoing ? (
+                                                                <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                                                                    <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.creator')}</span>
+                                                                </div>
+                                                            ) : msg.senderEmail === 'abe7340@gmail.com' ? (
                                                                 <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
                                                                     <Verified size={10} />
                                                                     <span className="text-[9px] font-semibold uppercase tracking-wide">ADMIN</span>
                                                                 </div>
-                                                                ) : (
+                                                            ) : (
                                                                 <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
                                                                     <User size={10} className="fill-current" />
                                                                     <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.fan')}</span>
                                                                 </div>
-                                                                )}
-                                                                <span className="text-xs font-medium text-stone-400">• {new Date(firstChat.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
-                                                            </div>
+                                                            )}
+                                                            <span className="text-xs font-medium text-stone-400">• {new Date(firstChat.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
                                                         </div>
 
                                                         <div className="bg-white p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
