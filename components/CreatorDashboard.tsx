@@ -778,7 +778,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     if (silent) {
       const openEmail = selectedSenderEmailRef.current;
       if (openEmail) {
-        const threadMsgs = msgs.filter(m => m.creatorId === creator.id && m.senderEmail === openEmail);
+        const threadMsgs = msgs.filter(m => {
+          if (m.content.startsWith('Purchased Product:') || m.content.startsWith('Fan Tip:')) return false;
+          const isIncoming = m.creatorId === creator.id && m.senderEmail === openEmail;
+          const isOutgoing = m.senderEmail === currentUser?.email && (m.creatorEmail === openEmail || m.creatorId === openEmail);
+          return isIncoming || isOutgoing;
+        });
         threadMsgs.forEach(msg => {
           invalidateChatLinesCache(msg.id);
           hydrateConversation(msg);
