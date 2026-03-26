@@ -961,17 +961,18 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
     const isToAdmin = creatorId === adminId;
 
     if (isToAdmin) {
-        // Find existing thread with admin (either direction)
+        // Find the most recent PENDING thread with admin (either direction)
         const { data: existingThread } = await supabase
             .from('messages')
-            .select('id')
+            .select('id, status')
             .or(`and(sender_id.eq.${userId},creator_id.eq.${creatorId}),and(sender_id.eq.${creatorId},creator_id.eq.${userId})`)
+            .eq('status', 'PENDING')
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();
 
         if (existingThread) {
-            // Add as chat_line to existing thread instead of creating a new session
+            // Add as chat_line to the open session — no credit charge
             await supabase.from('chat_lines').insert({
                 message_id: existingThread.id,
                 sender_id: userId,
@@ -986,7 +987,6 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
             invalidateMsgCache();
             invalidateChatLinesCache(existingThread.id);
 
-            // Return the updated message
             const { data: message } = await supabase
                 .from('messages')
                 .select(`*, sender:profiles!sender_id(display_name, email, avatar_url), creator:profiles!creator_id(display_name, avatar_url)`)
@@ -994,7 +994,24 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
                 .single();
             return mapDbMessageToAppMessage(message, userId);
         }
-        // No existing thread — fall through to create one (first contact with admin)
+
+        // No open session — create a new one with no credit charge
+        const { data: message, error: msgError } = await supabase
+            .from('messages')
+            .insert({
+                sender_id: userId,
+                creator_id: creatorId,
+                content,
+                amount: 0,
+                status: 'PENDING',
+                expires_at: new Date(Date.now() + 365 * 24 * 3600000).toISOString(),
+                is_read: false,
+            })
+            .select(`*, sender:profiles!sender_id(display_name, email, avatar_url), creator:profiles!creator_id(display_name, avatar_url)`)
+            .single();
+        if (msgError) throw msgError;
+        invalidateMsgCache();
+        return mapDbMessageToAppMessage(message, userId);
     }
 
     // Validate amount — prevent negative, zero, or non-finite values
@@ -1234,9 +1251,69 @@ export const replyToMessage = async (messageId: string, replyText: string, isCom
         }
     }
 
-    // For admin threads, just update the message timestamp — no status change or credit transfer
+    // For admin threads: honour session completion and send email — no credit transfer
     if (isAdminThread) {
-        await supabase.from('messages').update({ is_read: false, updated_at: new Date().toISOString() }).eq('id', messageId);
+        if (isComplete) {
+            await supabase.from('messages').update({
+                status: 'REPLIED',
+                reply_at: new Date().toISOString(),
+                is_read: false,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', messageId)
+            .eq('status', 'PENDING');
+        } else {
+            await supabase.from('messages').update({ is_read: false, updated_at: new Date().toISOString() }).eq('id', messageId);
+        }
+
+        // Send email notification to the other party when there is new content
+        if (replyText.trim() || attachmentUrl) {
+            const currentUserId = session.session.user.id;
+            const isCurrentUserCreator = msgCheck.creator_id === currentUserId;
+            const { data: fullMsg } = await supabase
+                .from('messages')
+                .select('sender:profiles!sender_id(email, display_name), creator:profiles!creator_id(email, display_name)')
+                .eq('id', messageId)
+                .single();
+
+            if (fullMsg) {
+                const recipientEmail = isCurrentUserCreator
+                    ? (fullMsg.sender as any)?.email
+                    : (fullMsg.creator as any)?.email;
+                const recipientName = isCurrentUserCreator
+                    ? ((fullMsg.sender as any)?.display_name || 'Diem')
+                    : ((fullMsg.creator as any)?.display_name || 'Creator');
+                const replierName = isCurrentUserCreator
+                    ? ((fullMsg.creator as any)?.display_name || 'Creator')
+                    : 'Diem Official';
+
+                if (recipientEmail) {
+                    supabase.functions.invoke('send-email', {
+                        body: {
+                            to: recipientEmail,
+                            subject: `${replierName} replied to your message`,
+                            html: `
+                                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                                    <h1 style="color: #4f46e5;">New Reply</h1>
+                                    <p>Hi <strong>${recipientName}</strong>,</p>
+                                    <p><strong>${replierName}</strong> replied to your message.</p>
+                                    <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                                        <p style="margin: 0; font-style: italic;">"${replyText || 'Check the dashboard for the attachment.'}"</p>
+                                    </div>
+                                    <a href="${getSiteUrl()}" style="background: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">View Dashboard</a>
+                                </div>
+                            `
+                        },
+                        headers: {
+                            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+                        }
+                    }).then(({ error }) => {
+                        if (error) console.error('[Email] Admin thread notification failed:', error);
+                    });
+                }
+            }
+        }
+
         invalidateMsgCache();
         return;
     }
