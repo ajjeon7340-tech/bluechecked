@@ -743,7 +743,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                           e.stopPropagation();
                           currentUser ? handleOpenModal() : onLoginRequest();
                       }}
-                      className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 flex-shrink-0 whitespace-nowrap min-w-[60px] sm:min-w-[72px] z-20 transition-colors ${!creator.diemButtonColor ? (creator.isDiemHighlighted ? 'bg-indigo-500 text-white group-hover:bg-indigo-600' : 'bg-stone-100 text-stone-600 hover:bg-stone-200') : ''}`}
+                      className={`w-20 h-9 px-3 py-0 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 flex-shrink-0 whitespace-nowrap z-20 transition-colors ${!creator.diemButtonColor ? (creator.isDiemHighlighted ? 'bg-indigo-500 text-white group-hover:bg-indigo-600' : 'bg-stone-100 text-stone-600 hover:bg-stone-200') : ''}`}
                       style={creator.diemButtonColor ? { backgroundColor: creator.diemButtonColor, color: getContrastColor(creator.diemButtonColor) } : undefined}
                   >
                       {t('common.diem')}
@@ -833,7 +833,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                     <h4 className="font-semibold sm:font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
                                                     <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">{t('profile.sendTip')}{link.isPromoted ? ` · ${t('common.recommended')}` : ''}</p>
                                                 </div>
-                                                <div className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 flex-shrink-0 whitespace-nowrap min-w-[60px] sm:min-w-[72px] transition-colors ${!btnStyle ? (link.isPromoted ? 'bg-pink-400 text-white group-hover:bg-pink-500' : 'bg-stone-100 text-stone-600 hover:bg-stone-200') : ''}`} style={btnStyle}>
+                                                <div className={`w-20 h-9 px-3 py-0 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 flex-shrink-0 whitespace-nowrap transition-colors ${!btnStyle ? (link.isPromoted ? 'bg-pink-400 text-white group-hover:bg-pink-500' : 'bg-stone-100 text-stone-600 hover:bg-stone-200') : ''}`} style={btnStyle}>
                                                     <Heart size={12} /> {t('profile.tip')}
                                                 </div>
                                             </button>
@@ -858,7 +858,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                     <h4 className="font-semibold sm:font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
                                                     <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">{t('profile.digitalDownload')}{link.isPromoted ? ` · ${t('common.recommended')}` : ''}</p>
                                                 </div>
-                                                <div className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 flex-shrink-0 whitespace-nowrap min-w-[60px] sm:min-w-[72px] transition-colors ${!btnStyle ? (link.isPromoted ? 'bg-purple-500 text-white group-hover:bg-purple-600' : 'bg-stone-100 text-stone-600 hover:bg-stone-200') : ''}`} style={btnStyle}>
+                                                <div className={`w-20 h-9 px-3 py-0 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 flex-shrink-0 whitespace-nowrap transition-colors ${!btnStyle ? (link.isPromoted ? 'bg-purple-500 text-white group-hover:bg-purple-600' : 'bg-stone-100 text-stone-600 hover:bg-stone-200') : ''}`} style={btnStyle}>
                                                     {t('common.buy')}
                                                 </div>
                                             </button>
@@ -890,7 +890,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                     <p className="text-[10px] text-stone-400 mt-0.5 font-medium truncate">{t('profile.externalLink')}{link.isPromoted ? ` · ${t('common.recommended')}` : ''}</p>
                                                 </div>
 
-                                                <div className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 flex-shrink-0 whitespace-nowrap min-w-[60px] sm:min-w-[72px] transition-colors ${!btnStyle ? (link.isPromoted ? 'bg-stone-900 text-white group-hover:bg-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200') : ''}`} style={btnStyle}>
+                                                <div className={`w-20 h-9 px-3 py-0 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 flex-shrink-0 whitespace-nowrap transition-colors ${!btnStyle ? (link.isPromoted ? 'bg-stone-900 text-white group-hover:bg-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200') : ''}`} style={btnStyle}>
                                                     {link.isPromoted ? t('common.visit') : t('common.open')} <ExternalLink size={12} />
                                                 </div>
                                             </a>
@@ -1442,6 +1442,33 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       >
                         {t('common.continue')}
                       </Button>
+
+                      {/* Supporters list */}
+                      {supporters.length > 0 && (
+                          <div className="pt-2 border-t border-stone-100">
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Recent supporters</p>
+                              <div className="space-y-2">
+                                  {supporters.slice(0, 5).map((s, i) => (
+                                      <div key={i} className="flex items-center gap-2">
+                                          {s.senderAvatarUrl ? (
+                                              <img src={s.senderAvatarUrl} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt={s.senderName} />
+                                          ) : (
+                                              <div className="w-7 h-7 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-stone-500">
+                                                  {s.isAnonymous ? '?' : s.senderName[0]?.toUpperCase()}
+                                              </div>
+                                          )}
+                                          <div className="flex-1 min-w-0">
+                                              <p className="text-xs font-semibold text-stone-700 truncate">{s.isAnonymous ? 'Anonymous' : s.senderName}</p>
+                                              {s.message && <p className="text-[10px] text-stone-400 truncate">{s.message}</p>}
+                                          </div>
+                                          <span className="text-[10px] font-bold text-stone-500 flex items-center gap-0.5 flex-shrink-0">
+                                              <Coins size={10} />{s.amount}
+                                          </span>
+                                      </div>
+                                  ))}
+                              </div>
+                          </div>
+                      )}
                   </div>
               )}
 
