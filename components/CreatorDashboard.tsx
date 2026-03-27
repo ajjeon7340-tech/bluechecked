@@ -874,7 +874,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const conversationGroups = useMemo(() => {
       if (incomingMessages.length === 0) return [];
 
-      const groups: Record<string, { senderEmail: string, senderName: string, latestMessage: Message, messageCount: number }> = {};
+      const groups: Record<string, { senderEmail: string, senderName: string, latestMessage: Message, messageCount: number, sessionCount: number }> = {};
 
       incomingMessages.forEach(msg => {
           if (msg.content.startsWith('Purchased Product:')) return;
@@ -885,8 +885,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           const email = isOutgoing ? (msg.creatorEmail || msg.creatorId || 'unknown') : msg.senderEmail;
           const name = isOutgoing ? (msg.creatorName || 'User') : msg.senderName;
           if (!groups[email]) {
-              groups[email] = { senderEmail: email, senderName: name, latestMessage: msg, messageCount: 0 };
+              groups[email] = { senderEmail: email, senderName: name, latestMessage: msg, messageCount: 0, sessionCount: 0 };
           }
+          groups[email].sessionCount++;
           if (msg.status === 'PENDING' && !isOutgoing) groups[email].messageCount++;
           if (new Date(msg.createdAt).getTime() > new Date(groups[email].latestMessage.createdAt).getTime()) {
               groups[email].latestMessage = msg;
@@ -1489,7 +1490,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           return false;
       });
       if (inboxSortOrder === 'COUNT') {
-          return [...filtered].sort((a, b) => b.messageCount - a.messageCount);
+          return [...filtered].sort((a, b) => b.sessionCount - a.sessionCount);
       }
       return filtered;
   }, [conversationGroups, inboxFilter, leftChatrooms, inboxSortOrder]);
