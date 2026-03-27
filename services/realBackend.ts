@@ -652,6 +652,7 @@ const enrichCreatorProfile = async (data: any): Promise<CreatorProfile> => {
         isDiemHighlighted: (data.links || []).find((l: any) => l.id === '__diem_config__')?.isPromoted || false,
         diemButtonColor: (data.links || []).find((l: any) => l.id === '__diem_config__')?.buttonColor || undefined,
         profileFont: (data.links || []).find((l: any) => l.id === '__diem_config__')?.profileFont || 'inter',
+        bannerGradient: (data.links || []).find((l: any) => l.id === '__diem_config__')?.bannerGradient || undefined,
     };
 };
 
@@ -783,6 +784,7 @@ export const getCreatorProfileFast = async (creatorId?: string): Promise<Creator
         isDiemHighlighted: (data.links || []).find((l: any) => l.id === '__diem_config__')?.isPromoted || false,
         diemButtonColor: (data.links || []).find((l: any) => l.id === '__diem_config__')?.buttonColor || undefined,
         profileFont: (data.links || []).find((l: any) => l.id === '__diem_config__')?.profileFont || 'inter',
+        bannerGradient: (data.links || []).find((l: any) => l.id === '__diem_config__')?.bannerGradient || undefined,
     };
 };
 
@@ -793,7 +795,7 @@ export const updateCreatorProfile = async (profile: CreatorProfile): Promise<Cre
     if (!session.session) throw new Error("Not logged in");
 
     const linksToSave = [
-        { id: '__diem_config__', title: '', url: '', isPromoted: profile.isDiemHighlighted || false, ...(profile.diemButtonColor ? { buttonColor: profile.diemButtonColor } : {}), ...(profile.profileFont ? { profileFont: profile.profileFont } : {}) },
+        { id: '__diem_config__', title: '', url: '', isPromoted: profile.isDiemHighlighted || false, ...(profile.diemButtonColor ? { buttonColor: profile.diemButtonColor } : {}), ...(profile.profileFont ? { profileFont: profile.profileFont } : {}), ...(profile.bannerGradient ? { bannerGradient: profile.bannerGradient } : {}) },
         ...(profile.linkSections || []).map(s => ({ id: `__section__${s.id}`, title: s.title, url: '', order: s.order })),
         ...(profile.linksSectionTitle ? [{ id: '__links_title__', title: profile.linksSectionTitle, url: '' }] : []),
         ...(profile.links || []),

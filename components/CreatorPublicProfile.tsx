@@ -542,7 +542,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
           {/* 1. PROFILE INFO & STATS */}
           <div className="w-full">
-             <div className="bg-white rounded-2xl border border-stone-200/60 relative transition-all">
+             <div className="rounded-2xl border border-stone-200/60 relative transition-all" style={{ backgroundColor: creator.bannerGradient || '#ffffff' }}>
                 <div className="px-4 py-3 flex justify-between items-center">
                     <div
                       onClick={onCreateOwn}

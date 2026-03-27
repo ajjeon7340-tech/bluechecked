@@ -3494,29 +3494,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <label className="block text-sm font-medium text-stone-700 mb-1">Profile Photo</label>
-                                    <div className="flex flex-col sm:flex-row gap-2">
-                                        {editedCreator.avatarUrl ? (
-                                            <div className="flex items-center gap-2 w-full px-3 py-2 border border-stone-300 rounded-lg bg-stone-50 text-stone-500 text-sm min-w-0">
-                                                <span className="truncate flex-1 font-medium text-stone-700">
-                                                    {editedCreator.displayName || 'Display Name'}
-                                                </span>
-                                                <button onClick={() => { setEditedCreator({...editedCreator, avatarUrl: ''}); setAvatarFileName(''); }} className="text-red-500 hover:text-red-700 flex-shrink-0"><X size={14}/></button>
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center gap-2 w-full px-3 py-2 border border-stone-300 rounded-lg bg-stone-50 text-stone-400 text-sm italic">
-                                                {editedCreator.displayName || 'No image selected'}
-                                            </div>
-                                        )}
-                                        <button
-                                            onClick={() => fileInputRef.current?.click()}
-                                            className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0"
-                                        >
-                                            <Camera size={16} /> Upload
-                                        </button>
-                                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarFileChange} />
-                                    </div>
-                                    <p className="text-[10px] text-stone-400 mt-1">Upload from desktop.</p>
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
+                                    >
+                                        <Camera size={16} /> Upload
+                                    </button>
+                                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarFileChange} />
                                 </div>
                             </div>
 
@@ -3554,6 +3538,38 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <span className={`block text-xs text-stone-400 ${font.style}`}>{font.sample}</span>
                                         </button>
                                     ))}
+                                </div>
+                            </div>
+
+                            {/* Card Color */}
+                            <div>
+                                <label className="block text-sm font-medium text-stone-700 mb-2">Card Color</label>
+                                <p className="text-[10px] text-stone-400 mb-2">Choose a background color for your public profile card.</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {[
+                                        { label: 'White', value: undefined, bg: '#ffffff', border: '#e7e5e4' },
+                                        { label: 'Stone', value: '#f5f4f2', bg: '#f5f4f2', border: '#d6d3d1' },
+                                        { label: 'Slate', value: '#f1f5f9', bg: '#f1f5f9', border: '#cbd5e1' },
+                                        { label: 'Rose', value: '#fff1f2', bg: '#fff1f2', border: '#fecdd3' },
+                                        { label: 'Amber', value: '#fffbeb', bg: '#fffbeb', border: '#fde68a' },
+                                        { label: 'Emerald', value: '#ecfdf5', bg: '#ecfdf5', border: '#a7f3d0' },
+                                        { label: 'Sky', value: '#f0f9ff', bg: '#f0f9ff', border: '#bae6fd' },
+                                        { label: 'Violet', value: '#f5f3ff', bg: '#f5f3ff', border: '#ddd6fe' },
+                                        { label: 'Black', value: '#1c1917', bg: '#1c1917', border: '#44403c' },
+                                    ].map(opt => {
+                                        const current = editedCreator.bannerGradient;
+                                        const isSelected = opt.value === undefined ? !current : current === opt.value;
+                                        return (
+                                            <button
+                                                key={opt.label}
+                                                type="button"
+                                                title={opt.label}
+                                                onClick={() => setEditedCreator({...editedCreator, bannerGradient: opt.value})}
+                                                className={`w-8 h-8 rounded-full transition-all border-2 ${isSelected ? 'scale-110 ring-2 ring-offset-2 ring-stone-500' : 'hover:scale-105'}`}
+                                                style={{ backgroundColor: opt.bg, borderColor: opt.border }}
+                                            />
+                                        );
+                                    })}
                                 </div>
                             </div>
 
