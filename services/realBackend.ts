@@ -2450,6 +2450,56 @@ export const getDiemPublicProfileId = async (): Promise<string | null> => {
     } catch { return null; }
 };
 
+export interface Supporter {
+    senderName: string;
+    senderAvatarUrl?: string;
+    amount: number;
+    message: string;
+    createdAt: string;
+    isAnonymous: boolean;
+}
+
+export const getSupporters = async (creatorId: string): Promise<Supporter[]> => {
+    if (!isConfigured) return [];
+    try {
+        // Try RPC first (needs get_creator_supporters function in DB)
+        const { data: rpcData, error: rpcError } = await supabase.rpc('get_creator_supporters', { target_creator_id: creatorId });
+        if (!rpcError && rpcData) {
+            return (rpcData as any[]).map(r => ({
+                senderName: r.is_anonymous ? 'Anonymous' : (r.sender_name || 'Someone'),
+                senderAvatarUrl: r.is_anonymous ? undefined : (r.sender_avatar || undefined),
+                amount: r.amount,
+                message: r.message || '',
+                createdAt: r.created_at,
+                isAnonymous: r.is_anonymous,
+            }));
+        }
+        // Fallback: direct query (works only if RLS allows it)
+        const { data, error } = await supabase
+            .from('messages')
+            .select('amount, content, created_at, sender:profiles!sender_id(display_name, avatar_url)')
+            .eq('creator_id', creatorId)
+            .like('content', 'Fan Tip:%')
+            .order('created_at', { ascending: false })
+            .limit(50);
+        if (error || !data) return [];
+        return data.map((m: any) => {
+            const isAnon = m.content.startsWith('Fan Tip: [anon]');
+            const rawMsg = m.content
+                .replace('Fan Tip: [anon] ', '')
+                .replace('Fan Tip: ', '');
+            return {
+                senderName: isAnon ? 'Anonymous' : (m.sender?.display_name || 'Someone'),
+                senderAvatarUrl: isAnon ? undefined : (m.sender?.avatar_url || undefined),
+                amount: m.amount,
+                message: rawMsg === 'Just a token of appreciation!' ? '' : rawMsg,
+                createdAt: m.created_at,
+                isAnonymous: isAnon,
+            };
+        });
+    } catch { return []; }
+};
+
 // Creates a support message directly in the Diem account's inbox so the support
 // team can see and respond to it. Used when a creator or fan contacts support.
 export const sendSupportMessage = async (content: string): Promise<void> => {

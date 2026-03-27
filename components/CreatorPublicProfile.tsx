@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { CreatorProfile, CurrentUser, AffiliateLink, Product } from '../types';
 import { DiemLogo, CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share, Image as ImageIcon, TrendingUp } from './Icons';
 import { Button } from './Button';
-import { sendMessage, updateCreatorProfile, addCredits, createCheckoutSession, isBackendConfigured, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus, getSecureDownloadUrl, logAnalyticsEvent, getCreatorTrendingStatus } from '../services/realBackend';
+import { sendMessage, updateCreatorProfile, addCredits, createCheckoutSession, isBackendConfigured, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus, getSecureDownloadUrl, logAnalyticsEvent, getCreatorTrendingStatus, getSupporters, Supporter } from '../services/realBackend';
 
 interface Props {
   creator: CreatorProfile;
@@ -101,7 +101,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
   // Support / Tip State
   const [supportAmount, setSupportAmount] = useState(100);
+  const [supportMinAmount, setSupportMinAmount] = useState(100);
   const [supportMessage, setSupportMessage] = useState('');
+  const [supportIsAnonymous, setSupportIsAnonymous] = useState(false);
+  const [supporters, setSupporters] = useState<Supporter[]>([]);
+  const [loadingSupporters, setLoadingSupporters] = useState(false);
 
   // Customization State (disabled — editing done from dashboard)
   const isCustomizeMode = false;
@@ -153,6 +157,17 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     setImgError(false);
   }, [editedCreator.avatarUrl]);
 
+  // Fetch supporters on load
+  useEffect(() => {
+    const hasSupportLink = creator.links.some(l => l.type === 'SUPPORT');
+    if (!hasSupportLink) return;
+    setLoadingSupporters(true);
+    getSupporters(creator.id).then(list => {
+        setSupporters(list);
+        setLoadingSupporters(false);
+    });
+  }, [creator.id]);
+
   const handleOpenModal = () => {
     if (!isCustomizeMode) {
       setGeneralMessage('');
@@ -172,8 +187,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
   const handleSupportClick = (defaultAmount?: number) => {
       if (isCustomizeMode) return;
-      setSupportAmount(defaultAmount || 100);
+      const min = defaultAmount || 100;
+      setSupportMinAmount(min);
+      setSupportAmount(min);
       setSupportMessage('');
+      setSupportIsAnonymous(false);
       setStep('support_confirm');
       setIsModalOpen(true);
   };
@@ -271,10 +289,15 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const handleSupportPayment = async () => {
       setIsSubmitting(true);
       try {
-        await sendMessage(creator.id, name, email, `Fan Tip: ${supportMessage || 'Just a token of appreciation!'}`, supportAmount);
+        const msgContent = supportIsAnonymous
+            ? `Fan Tip: [anon] ${supportMessage || 'Just a token of appreciation!'}`
+            : `Fan Tip: ${supportMessage || 'Just a token of appreciation!'}`;
+        await sendMessage(creator.id, name, email, msgContent, supportAmount);
         logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'TIP', amount: supportAmount });
         setIsSubmitting(false);
         setStep('support_success');
+        // Refresh supporter list
+        getSupporters(creator.id).then(setSupporters);
       } catch (e: any) {
           setIsSubmitting(false);
           if (e.message.includes("Insufficient")) {
@@ -895,6 +918,38 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                     );
                 })}
           </div>
+
+          {/* 5. SUPPORTER LIST */}
+          {supporters.length > 0 && (
+              <div className="w-full">
+                  <div className="bg-white rounded-2xl border border-stone-200/60 p-5 space-y-4">
+                      <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
+                          <Heart size={14} className="text-pink-400 fill-pink-400" /> Supporters
+                      </h3>
+                      <div className="space-y-3">
+                          {supporters.map((s, i) => (
+                              <div key={i} className="flex items-start gap-3">
+                                  <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden bg-stone-100 flex items-center justify-center">
+                                      {s.senderAvatarUrl && !s.isAnonymous ? (
+                                          <img src={s.senderAvatarUrl} alt={s.senderName} className="w-full h-full object-cover" />
+                                      ) : (
+                                          <User size={14} className="text-stone-400" />
+                                      )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2">
+                                          <span className="text-sm font-semibold text-stone-800">{s.senderName}</span>
+                                          <span className="text-xs font-bold text-pink-600 flex items-center gap-0.5"><Coins size={10}/> {s.amount}</span>
+                                      </div>
+                                      {s.message && <p className="text-xs text-stone-500 mt-0.5 line-clamp-2">{s.message}</p>}
+                                  </div>
+                                  <span className="text-[10px] text-stone-400 flex-shrink-0">{new Date(s.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                              </div>
+                          ))}
+                      </div>
+                  </div>
+              </div>
+          )}
       </div>
 
       {/* Message & Payment Modal */}
@@ -1311,39 +1366,69 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
               {/* --- SUPPORT / TIP FLOW --- */}
               {step === 'support_confirm' && (
-                  <div className="space-y-6">
+                  <div className="space-y-5">
                       <div className="text-center">
                           <div className="w-16 h-16 bg-pink-50 rounded-full flex items-center justify-center mx-auto mb-4 text-pink-500">
                               <Heart size={32} className="fill-pink-500" />
                           </div>
                           <h4 className="font-bold text-stone-900 text-lg">{t('profile.supportCreator', { name: creator.displayName })}</h4>
-                          <p className="text-stone-500 text-sm">{t('profile.selectTipAmount')}</p>
+                          <p className="text-stone-500 text-sm">Minimum: <span className="font-semibold text-stone-700 inline-flex items-center gap-0.5"><Coins size={12}/> {supportMinAmount}</span></p>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                          {[100, 300, 500, 1000].map(amt => (
-                              <button 
-                                key={amt}
-                                onClick={() => setSupportAmount(amt)}
-                                className={`p-4 rounded-xl border text-center transition-all ${supportAmount === amt ? 'bg-pink-50 border-pink-500 ring-1 ring-pink-500 text-pink-700' : 'bg-white border-stone-200 hover:border-stone-300'}`}
-                              >
-                                  <div className="font-black text-xl mb-1 flex items-center justify-center gap-1"><Coins size={16}/> {amt}</div>
-                              </button>
-                          ))}
+                      {/* Amount selector */}
+                      <div className="bg-stone-50 rounded-2xl p-4 text-center">
+                          <div className="flex items-center justify-center gap-4 mb-3">
+                              <button
+                                  onClick={() => setSupportAmount(a => Math.max(supportMinAmount, a - 50))}
+                                  className="w-9 h-9 rounded-full bg-white border border-stone-200 flex items-center justify-center text-xl font-bold text-stone-600 hover:bg-stone-100 transition-colors disabled:opacity-30"
+                                  disabled={supportAmount <= supportMinAmount}
+                              >−</button>
+                              <div className="font-black text-4xl text-stone-900 tracking-tight flex items-center gap-1.5">
+                                  <Coins size={24} className="text-stone-400" />{supportAmount}
+                              </div>
+                              <button
+                                  onClick={() => setSupportAmount(a => a + 50)}
+                                  className="w-9 h-9 rounded-full bg-white border border-stone-200 flex items-center justify-center text-xl font-bold text-stone-600 hover:bg-stone-100 transition-colors"
+                              >+</button>
+                          </div>
+                          <div className="flex justify-center gap-2">
+                              {[50, 100, 500].map(add => (
+                                  <button
+                                      key={add}
+                                      onClick={() => setSupportAmount(a => a + add)}
+                                      className="px-3 py-1 text-xs font-bold rounded-full bg-pink-100 text-pink-700 hover:bg-pink-200 transition-colors"
+                                  >+{add}</button>
+                              ))}
+                          </div>
                       </div>
 
+                      {/* Message */}
                       <div>
                           <label className="block text-sm font-bold text-stone-900 mb-2">{t('profile.messageOptional')}</label>
-                          <textarea 
-                              className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none h-24 resize-none text-sm"
+                          <textarea
+                              className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none h-20 resize-none text-sm"
                               placeholder={t('profile.saySomethingNice')}
                               value={supportMessage}
                               onChange={e => setSupportMessage(e.target.value)}
                           />
                       </div>
 
-                      <Button 
-                        fullWidth 
+                      {/* Anonymous toggle */}
+                      <button
+                          onClick={() => setSupportIsAnonymous(a => !a)}
+                          className="w-full flex items-center justify-between px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl hover:bg-stone-100 transition-colors"
+                      >
+                          <div className="flex items-center gap-2 text-sm font-medium text-stone-700">
+                              <User size={15} />
+                              {supportIsAnonymous ? 'Remain anonymous' : 'Show my name publicly'}
+                          </div>
+                          <div className={`w-10 h-6 rounded-full transition-colors flex items-center px-0.5 ${supportIsAnonymous ? 'bg-stone-400' : 'bg-pink-500'}`}>
+                              <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${supportIsAnonymous ? 'translate-x-0' : 'translate-x-4'}`} />
+                          </div>
+                      </button>
+
+                      <Button
+                        fullWidth
                         onClick={() => setStep('support_payment')}
                         className="bg-stone-900 hover:bg-stone-800 text-white rounded-2xl h-14 font-bold text-lg"
                       >
