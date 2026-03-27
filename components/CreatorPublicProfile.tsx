@@ -1383,6 +1383,32 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                           <p className="text-stone-500 text-sm">Minimum: <span className="font-semibold text-stone-700 inline-flex items-center gap-0.5"><Coins size={12}/> {supportMinAmount}</span></p>
                       </div>
 
+                      {/* Supporters list */}
+                      {supporters.length > 0 && (
+                          <div className="bg-stone-50 rounded-2xl p-3">
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Recent supporters</p>
+                              <div className="space-y-2">
+                                  {supporters.slice(0, 5).map((s, i) => (
+                                      <div key={i} className="flex items-center gap-2">
+                                          {s.senderAvatarUrl ? (
+                                              <img src={s.senderAvatarUrl} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt={s.senderName} />
+                                          ) : (
+                                              <div className="w-7 h-7 rounded-full bg-stone-200 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-stone-500">
+                                                  {s.isAnonymous ? '?' : s.senderName[0]?.toUpperCase()}
+                                              </div>
+                                          )}
+                                          <div className="flex-1 min-w-0">
+                                              <p className="text-xs font-semibold text-stone-700 truncate">{s.isAnonymous ? 'Anonymous' : s.senderName}</p>
+                                          </div>
+                                          <span className="text-[10px] font-bold text-stone-500 flex items-center gap-0.5 flex-shrink-0">
+                                              <Coins size={10} />{s.amount}
+                                          </span>
+                                      </div>
+                                  ))}
+                              </div>
+                          </div>
+                      )}
+
                       {/* Amount selector */}
                       <div className="bg-stone-50 rounded-2xl p-4 text-center">
                           <div className="flex items-center justify-center gap-4 mb-3">
@@ -1410,17 +1436,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                           </div>
                       </div>
 
-                      {/* Message */}
-                      <div>
-                          <label className="block text-sm font-bold text-stone-900 mb-2">{t('profile.messageOptional')}</label>
-                          <textarea
-                              className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none h-20 resize-none text-sm"
-                              placeholder={t('profile.saySomethingNice')}
-                              value={supportMessage}
-                              onChange={e => setSupportMessage(e.target.value)}
-                          />
-                      </div>
-
                       {/* Anonymous toggle */}
                       <button
                           onClick={() => setSupportIsAnonymous(a => !a)}
@@ -1442,33 +1457,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       >
                         {t('common.continue')}
                       </Button>
-
-                      {/* Supporters list */}
-                      {supporters.length > 0 && (
-                          <div className="pt-2 border-t border-stone-100">
-                              <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Recent supporters</p>
-                              <div className="space-y-2">
-                                  {supporters.slice(0, 5).map((s, i) => (
-                                      <div key={i} className="flex items-center gap-2">
-                                          {s.senderAvatarUrl ? (
-                                              <img src={s.senderAvatarUrl} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt={s.senderName} />
-                                          ) : (
-                                              <div className="w-7 h-7 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-stone-500">
-                                                  {s.isAnonymous ? '?' : s.senderName[0]?.toUpperCase()}
-                                              </div>
-                                          )}
-                                          <div className="flex-1 min-w-0">
-                                              <p className="text-xs font-semibold text-stone-700 truncate">{s.isAnonymous ? 'Anonymous' : s.senderName}</p>
-                                              {s.message && <p className="text-[10px] text-stone-400 truncate">{s.message}</p>}
-                                          </div>
-                                          <span className="text-[10px] font-bold text-stone-500 flex items-center gap-0.5 flex-shrink-0">
-                                              <Coins size={10} />{s.amount}
-                                          </span>
-                                      </div>
-                                  ))}
-                              </div>
-                          </div>
-                      )}
                   </div>
               )}
 
