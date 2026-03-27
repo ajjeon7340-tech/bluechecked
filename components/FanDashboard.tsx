@@ -454,7 +454,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                   isDiemMessage,
               };
           }
-          groups[cId].messageCount++;
+          if (msg.status === 'REPLIED' && !msg.isRead) groups[cId].messageCount++;
           if (new Date(msg.createdAt) > new Date(groups[cId].latestMessage.createdAt)) {
               groups[cId].latestMessage = msg;
           }
@@ -1886,7 +1886,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                 ) : (
                                                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">{latestMsg.status === 'EXPIRED' ? t('creator.expired') : t('creator.cancelled')}</span>
                                                 )}
-                                                <span className="text-xs font-mono font-medium text-stone-700 flex items-center gap-1"><Coins size={10}/> {group.messageCount}</span>
+                                                {group.messageCount > 0 && <span className="text-xs font-mono font-medium text-stone-700 flex items-center gap-1"><Bell size={10}/> {group.messageCount}</span>}
                                             </div>
                                         </div>
                                     )

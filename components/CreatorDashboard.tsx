@@ -10,7 +10,7 @@ import {
   Clock, CheckCircle2, AlertCircle, DollarSign, Sparkles, ChevronLeft, LogOut, 
   ExternalLink, User, Settings, Plus, Trash, X, Camera, Paperclip, Send, DiemLogo,
   Home, BarChart3, Wallet, Users, Bell, Search, Menu, ChevronDown, ChevronUp, Ban, Check,
-  Heart, Star, Eye, TrendingUp, MessageSquare, ArrowRight, Lock, 
+  Heart, Star, Eye, TrendingUp, MessageSquare, MessageCircle, ArrowRight, Lock,
   InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Download, ShoppingBag, FileText, PieChart as PieIcon, LayoutGrid, MonitorPlay, Link as LinkIcon, Calendar, ChevronRight, Coins, CreditCard
   , MousePointerClick, GripVertical, Smile, Pencil, RefreshCw, Verified
 } from './Icons';
@@ -887,7 +887,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           if (!groups[email]) {
               groups[email] = { senderEmail: email, senderName: name, latestMessage: msg, messageCount: 0 };
           }
-          groups[email].messageCount++;
+          if (msg.status === 'PENDING') groups[email].messageCount++;
           if (new Date(msg.createdAt).getTime() > new Date(groups[email].latestMessage.createdAt).getTime()) {
               groups[email].latestMessage = msg;
           }
@@ -2683,7 +2683,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 ) : (
                                                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">{latestMsg.status === 'EXPIRED' ? t('creator.expired') : t('creator.cancelled')}</span>
                                                 )}
-                                                <span className="text-xs font-mono font-medium text-stone-700 flex items-center gap-1"><Coins size={10}/> {group.messageCount}</span>
+                                                {group.messageCount > 0 && <span className="text-xs font-mono font-medium text-stone-700 flex items-center gap-1"><MessageCircle size={10}/> {group.messageCount}</span>}
                                             </div>
                                         </div>
                                     )
