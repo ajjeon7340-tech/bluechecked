@@ -1345,9 +1345,15 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       </div>
 
                       {/* Supporters list */}
-                      {supporters.length > 0 && (
-                          <div className="bg-stone-50 rounded-2xl p-3">
-                              <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Recent supporters</p>
+                      <div className="bg-stone-50 rounded-2xl p-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Recent supporters</p>
+                          {loadingSupporters ? (
+                              <div className="flex items-center justify-center py-3">
+                                  <div className="w-4 h-4 border-2 border-pink-300 border-t-pink-500 rounded-full animate-spin" />
+                              </div>
+                          ) : supporters.length === 0 ? (
+                              <p className="text-xs text-stone-400 text-center py-2">Be the first to support {creator.displayName}! 💛</p>
+                          ) : (
                               <div className="space-y-2">
                                   {supporters.slice(0, 5).map((s, i) => (
                                       <div key={i} className="flex items-center gap-2">
@@ -1367,8 +1373,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       </div>
                                   ))}
                               </div>
-                          </div>
-                      )}
+                          )}
+                      </div>
 
                       {/* Amount selector */}
                       <div className="bg-stone-50 rounded-2xl p-4 text-center">
