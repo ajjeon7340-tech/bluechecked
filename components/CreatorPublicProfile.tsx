@@ -919,34 +919,42 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                 })}
           </div>
 
-          {/* 5. SUPPORTER LIST */}
-          {supporters.length > 0 && (
+          {/* 5. SUPPORTER LIST — shown whenever creator has a support link */}
+          {creator.links.some(l => l.type === 'SUPPORT') && (
               <div className="w-full">
                   <div className="bg-white rounded-2xl border border-stone-200/60 p-5 space-y-4">
                       <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
                           <Heart size={14} className="text-pink-400 fill-pink-400" /> Supporters
                       </h3>
-                      <div className="space-y-3">
-                          {supporters.map((s, i) => (
-                              <div key={i} className="flex items-start gap-3">
-                                  <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden bg-stone-100 flex items-center justify-center">
-                                      {s.senderAvatarUrl && !s.isAnonymous ? (
-                                          <img src={s.senderAvatarUrl} alt={s.senderName} className="w-full h-full object-cover" />
-                                      ) : (
-                                          <User size={14} className="text-stone-400" />
-                                      )}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2">
-                                          <span className="text-sm font-semibold text-stone-800">{s.senderName}</span>
-                                          <span className="text-xs font-bold text-pink-600 flex items-center gap-0.5"><Coins size={10}/> {s.amount}</span>
+                      {loadingSupporters ? (
+                          <div className="flex items-center justify-center py-4">
+                              <div className="w-5 h-5 border-2 border-pink-300 border-t-pink-500 rounded-full animate-spin" />
+                          </div>
+                      ) : supporters.length === 0 ? (
+                          <p className="text-sm text-stone-400 text-center py-3">Be the first to support {creator.displayName}! 💛</p>
+                      ) : (
+                          <div className="space-y-3">
+                              {supporters.map((s, i) => (
+                                  <div key={i} className="flex items-start gap-3">
+                                      <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden bg-stone-100 flex items-center justify-center">
+                                          {s.senderAvatarUrl && !s.isAnonymous ? (
+                                              <img src={s.senderAvatarUrl} alt={s.senderName} className="w-full h-full object-cover" />
+                                          ) : (
+                                              <User size={14} className="text-stone-400" />
+                                          )}
                                       </div>
-                                      {s.message && <p className="text-xs text-stone-500 mt-0.5 line-clamp-2">{s.message}</p>}
+                                      <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2">
+                                              <span className="text-sm font-semibold text-stone-800">{s.senderName}</span>
+                                              <span className="text-xs font-bold text-pink-600 flex items-center gap-0.5"><Coins size={10}/> {s.amount}</span>
+                                          </div>
+                                          {s.message && <p className="text-xs text-stone-500 mt-0.5 line-clamp-2">"{s.message}"</p>}
+                                      </div>
+                                      <span className="text-[10px] text-stone-400 flex-shrink-0">{new Date(s.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                                   </div>
-                                  <span className="text-[10px] text-stone-400 flex-shrink-0">{new Date(s.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-                              </div>
-                          ))}
-                      </div>
+                              ))}
+                          </div>
+                      )}
                   </div>
               </div>
           )}
