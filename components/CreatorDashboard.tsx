@@ -887,7 +887,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           if (!groups[email]) {
               groups[email] = { senderEmail: email, senderName: name, latestMessage: msg, messageCount: 0 };
           }
-          if (msg.status === 'PENDING') groups[email].messageCount++;
+          if (msg.status === 'PENDING' && !isOutgoing) groups[email].messageCount++;
           if (new Date(msg.createdAt).getTime() > new Date(groups[email].latestMessage.createdAt).getTime()) {
               groups[email].latestMessage = msg;
           }
@@ -928,7 +928,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     // Filter out products for message metrics
     const messageOnly = incomingMessages.filter(m => !m.content.startsWith('Purchased Product:') && !m.content.startsWith('Fan Tip:'));
 
-    const pendingCount = messageOnly.filter(m => m.status === 'PENDING').length;
+    const pendingCount = messageOnly.filter(m => m.status === 'PENDING' && m.creatorId === creator.id).length;
     const repliedCount = messageOnly.filter(m => m.status === 'REPLIED').length;
     const expiredCount = messageOnly.filter(m => m.status === 'EXPIRED').length;
     const totalProcessed = repliedCount + expiredCount;
