@@ -651,6 +651,7 @@ const enrichCreatorProfile = async (data: any): Promise<CreatorProfile> => {
         showBio: data.show_bio !== false,
         isDiemHighlighted: (data.links || []).find((l: any) => l.id === '__diem_config__')?.isPromoted || false,
         diemButtonColor: (data.links || []).find((l: any) => l.id === '__diem_config__')?.buttonColor || undefined,
+        profileFont: (data.links || []).find((l: any) => l.id === '__diem_config__')?.profileFont || 'inter',
     };
 };
 
@@ -781,6 +782,7 @@ export const getCreatorProfileFast = async (creatorId?: string): Promise<Creator
         showBio: data.show_bio !== false,
         isDiemHighlighted: (data.links || []).find((l: any) => l.id === '__diem_config__')?.isPromoted || false,
         diemButtonColor: (data.links || []).find((l: any) => l.id === '__diem_config__')?.buttonColor || undefined,
+        profileFont: (data.links || []).find((l: any) => l.id === '__diem_config__')?.profileFont || 'inter',
     };
 };
 
@@ -791,7 +793,7 @@ export const updateCreatorProfile = async (profile: CreatorProfile): Promise<Cre
     if (!session.session) throw new Error("Not logged in");
 
     const linksToSave = [
-        { id: '__diem_config__', title: '', url: '', isPromoted: profile.isDiemHighlighted || false, ...(profile.diemButtonColor ? { buttonColor: profile.diemButtonColor } : {}) },
+        { id: '__diem_config__', title: '', url: '', isPromoted: profile.isDiemHighlighted || false, ...(profile.diemButtonColor ? { buttonColor: profile.diemButtonColor } : {}), ...(profile.profileFont ? { profileFont: profile.profileFont } : {}) },
         ...(profile.linkSections || []).map(s => ({ id: `__section__${s.id}`, title: s.title, url: '', order: s.order })),
         ...(profile.linksSectionTitle ? [{ id: '__links_title__', title: profile.linksSectionTitle, url: '' }] : []),
         ...(profile.links || []),
