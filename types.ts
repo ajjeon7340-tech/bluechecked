@@ -72,6 +72,7 @@ export interface CreatorProfile {
   bannerGradient?: string;
   diemButtonColor?: string;
   profileFont?: 'inter' | 'playfair' | 'space-grotesk' | 'dm-serif';
+  cornerRadius?: 'sharp' | 'soft' | 'rounded' | 'pill';
   stats: {
     responseTimeAvg: string;
     replyRate: string;

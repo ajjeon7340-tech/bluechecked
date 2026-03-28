@@ -3541,6 +3541,35 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
                             </div>
 
+                            {/* Corner Roundness */}
+                            <div>
+                                <label className="block text-sm font-medium text-stone-700 mb-2">Corner Style</label>
+                                <p className="text-[10px] text-stone-400 mb-2">Controls the roundness of link blocks on your public profile.</p>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {([
+                                        { id: 'sharp', label: 'Sharp', radius: '0px' },
+                                        { id: 'soft', label: 'Soft', radius: '8px' },
+                                        { id: 'rounded', label: 'Rounded', radius: '16px' },
+                                        { id: 'pill', label: 'Pill', radius: '999px' },
+                                    ] as const).map(opt => (
+                                        <button
+                                            key={opt.id}
+                                            type="button"
+                                            onClick={() => setEditedCreator({...editedCreator, cornerRadius: opt.id})}
+                                            className={`p-3 flex flex-col items-center gap-2 border transition-all ${
+                                                (editedCreator.cornerRadius || 'rounded') === opt.id
+                                                    ? 'bg-stone-50 border-stone-900 ring-1 ring-stone-900'
+                                                    : 'bg-white border-stone-200 hover:border-stone-300'
+                                            }`}
+                                            style={{ borderRadius: '12px' }}
+                                        >
+                                            <div className="w-8 h-5 bg-stone-200" style={{ borderRadius: opt.radius }} />
+                                            <span className="text-[10px] text-stone-500 font-medium">{opt.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             {/* Card Color */}
                             <div>
                                 <label className="block text-sm font-medium text-stone-700 mb-2">Card Color</label>
