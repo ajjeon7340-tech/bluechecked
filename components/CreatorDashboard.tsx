@@ -3545,9 +3545,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             <div>
                                 <label className="block text-sm font-medium text-stone-700 mb-2">Corner Style</label>
                                 <p className="text-[10px] text-stone-400 mb-2">Controls the roundness of link blocks on your public profile.</p>
-                                <div className="grid grid-cols-4 gap-2">
+                                <div className="grid grid-cols-3 gap-2">
                                     {([
-                                        { id: 'sharp', label: 'Sharp', radius: '0px' },
                                         { id: 'soft', label: 'Soft', radius: '8px' },
                                         { id: 'rounded', label: 'Rounded', radius: '16px' },
                                         { id: 'pill', label: 'Pill', radius: '999px' },

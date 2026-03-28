@@ -523,7 +523,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     : { backgroundColor: '#ffffff', borderColor: 'rgb(231 229 228 / 0.6)' };
 
   const cornerRadiusValue = {
-    'sharp': '0px',
     'soft': '8px',
     'rounded': '16px',
     'pill': '999px',
@@ -572,7 +571,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
           {/* 1. PROFILE INFO & STATS */}
           <div className="w-full">
-             <div className="rounded-2xl border border-stone-200/60 relative transition-all" style={{ backgroundColor: creator.bannerGradient || '#ffffff' }}>
+             <div className="border border-stone-200/60 relative transition-all" style={{ backgroundColor: creator.bannerGradient || '#ffffff', borderRadius: cornerRadiusValue }}>
                 <div className="px-4 py-3 flex justify-between items-center">
                     <div
                       onClick={onCreateOwn}
