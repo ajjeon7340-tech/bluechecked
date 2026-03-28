@@ -798,8 +798,39 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                             const hasThumbnail = !!link.thumbnailUrl && !isEmoji;
                             const accentColor = link.buttonColor;
                             const shapeClass = link.iconShape === 'square' ? 'rounded-none' : link.iconShape === 'rounded' ? 'rounded-xl' : 'rounded-full';
-                            let faviconUrl: string | null = null;
+                            // Detect platform from URL to use branded icon
+                            const PLATFORM_DOMAINS: { pattern: RegExp; id: string }[] = [
+                                { pattern: /youtube\.com|youtu\.be/, id: 'youtube' },
+                                { pattern: /instagram\.com/, id: 'instagram' },
+                                { pattern: /tiktok\.com/, id: 'tiktok' },
+                                { pattern: /x\.com|twitter\.com/, id: 'x' },
+                                { pattern: /threads\.net/, id: 'threads' },
+                                { pattern: /facebook\.com|fb\.com/, id: 'facebook' },
+                                { pattern: /twitch\.tv/, id: 'twitch' },
+                                { pattern: /discord\.com|discord\.gg/, id: 'discord' },
+                                { pattern: /linkedin\.com/, id: 'linkedin' },
+                                { pattern: /snapchat\.com/, id: 'snapchat' },
+                                { pattern: /pinterest\.com/, id: 'pinterest' },
+                                { pattern: /reddit\.com/, id: 'reddit' },
+                                { pattern: /t\.me|telegram\.me/, id: 'telegram' },
+                                { pattern: /wa\.me|whatsapp\.com/, id: 'whatsapp' },
+                                { pattern: /open\.spotify\.com|spotify\.com/, id: 'spotify' },
+                                { pattern: /soundcloud\.com/, id: 'soundcloud' },
+                                { pattern: /patreon\.com/, id: 'patreon' },
+                                { pattern: /onlyfans\.com/, id: 'onlyfans' },
+                                { pattern: /substack\.com/, id: 'substack' },
+                                { pattern: /beehiiv\.com/, id: 'beehiiv' },
+                                { pattern: /github\.com/, id: 'github' },
+                            ];
+                            let detectedPlatform: string | null = null;
                             if (!link.thumbnailUrl && !isProduct && !isSupport && link.url) {
+                                try {
+                                    const hostname = new URL(link.url.startsWith('http') ? link.url : `https://${link.url}`).hostname;
+                                    detectedPlatform = PLATFORM_DOMAINS.find(p => p.pattern.test(hostname))?.id || null;
+                                } catch { /* invalid url */ }
+                            }
+                            let faviconUrl: string | null = null;
+                            if (!link.thumbnailUrl && !isProduct && !isSupport && link.url && !detectedPlatform) {
                                 try { faviconUrl = `https://www.google.com/s2/favicons?domain=${new URL(link.url.startsWith('http') ? link.url : `https://${link.url}`).hostname}&sz=64`; } catch { faviconUrl = null; }
                             }
                             const btnStyle = accentColor ? { backgroundColor: accentColor, color: getContrastColor(accentColor) } : undefined;
@@ -896,11 +927,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 className={`block w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-stone-50 to-stone-100/40 border-stone-200 shadow-sm' : 'hover:border-stone-300'}`}
                                                 style={!link.isPromoted ? linkBlockStyle : undefined}
                                             >
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${shapeClass} ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : isEmoji ? 'bg-stone-100' : faviconUrl ? 'p-1.5 overflow-hidden bg-white border border-stone-100' : 'bg-stone-900 text-white'}`} style={iconStyle}>
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${shapeClass} ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : isEmoji ? 'bg-stone-100' : detectedPlatform ? 'bg-transparent' : faviconUrl ? 'p-1.5 overflow-hidden bg-white border border-stone-100' : 'bg-stone-900 text-white'}`} style={iconStyle}>
                                                     {hasThumbnail ? (
                                                         <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
                                                     ) : isEmoji ? (
                                                         <span className="text-xl sm:text-2xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span>
+                                                    ) : detectedPlatform ? (
+                                                        getPlatformIcon(detectedPlatform)
                                                     ) : faviconUrl ? (
                                                         <img src={faviconUrl} className="w-full h-full object-contain" alt={link.title} onError={(e) => { (e.target as HTMLImageElement).style.display='none'; (e.target as HTMLImageElement).parentElement!.classList.add('bg-stone-900'); (e.target as HTMLImageElement).parentElement!.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'; }} />
                                                     ) : (

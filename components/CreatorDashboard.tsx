@@ -32,27 +32,15 @@ type DashboardView = 'OVERVIEW' | 'INBOX' | 'FINANCE' | 'ANALYTICS' | 'STATISTIC
 type InboxFilter = 'ALL' | 'PENDING' | 'REPLIED' | 'REJECTED';
 
 const SUPPORTED_PLATFORMS = [
-    { id: 'youtube', label: 'YouTube', icon: YouTubeLogo },
+    { id: 'youtube',   label: 'YouTube',   icon: YouTubeLogo },
     { id: 'instagram', label: 'Instagram', icon: InstagramLogo },
-    { id: 'tiktok', label: 'TikTok', icon: TikTokLogo },
-    { id: 'x', label: 'X', icon: XLogo },
-    { id: 'threads', label: 'Threads', icon: ThreadsLogo },
-    { id: 'facebook', label: 'Facebook', icon: FacebookLogo },
-    { id: 'twitch', label: 'Twitch', icon: Twitch },
-    { id: 'discord', label: 'Discord', icon: DiscordLogo },
-    { id: 'linkedin', label: 'LinkedIn', icon: LinkedInLogo },
-    { id: 'snapchat', label: 'Snapchat', icon: SnapchatLogo },
-    { id: 'pinterest', label: 'Pinterest', icon: PinterestLogo },
-    { id: 'reddit', label: 'Reddit', icon: RedditLogo },
-    { id: 'telegram', label: 'Telegram', icon: TelegramLogo },
-    { id: 'whatsapp', label: 'WhatsApp', icon: WhatsAppLogo },
-    { id: 'spotify', label: 'Spotify', icon: SpotifyLogo },
-    { id: 'soundcloud', label: 'SoundCloud', icon: SoundCloudLogo },
-    { id: 'patreon', label: 'Patreon', icon: PatreonLogo },
-    { id: 'onlyfans', label: 'OnlyFans', icon: OnlyFansLogo },
-    { id: 'substack', label: 'Substack', icon: SubstackLogo },
-    { id: 'beehiiv', label: 'Beehiiv', icon: BeehiivLogo },
-    { id: 'github', label: 'GitHub', icon: GitHubLogo },
+    { id: 'tiktok',   label: 'TikTok',    icon: TikTokLogo },
+    { id: 'x',        label: 'X',         icon: XLogo },
+    { id: 'threads',  label: 'Threads',   icon: ThreadsLogo },
+    { id: 'facebook', label: 'Facebook',  icon: FacebookLogo },
+    { id: 'twitch',   label: 'Twitch',    icon: Twitch },
+    { id: 'discord',  label: 'Discord',   icon: DiscordLogo },
+    { id: 'linkedin', label: 'LinkedIn',  icon: LinkedInLogo },
 ];
 
 const getResponseCategory = (hours: number, t?: (key: string) => string) => {
