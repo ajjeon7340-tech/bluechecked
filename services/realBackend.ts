@@ -133,16 +133,18 @@ const mapDbMessageToAppMessage = (m: any, currentUserId: string): Message => {
     }
 
     // 2. Check if the initial message (stored in parent row) is already in chat_lines
+    // If Diem admin sent this message (not the current user), it should appear as incoming (CREATOR role)
+    const initialRole: 'FAN' | 'CREATOR' = m.sender_id === currentUserId ? 'FAN' : 'CREATOR';
     const initialMsg: ChatMessage = {
         id: `${m.id}-init`,
-        role: 'FAN',
+        role: initialRole,
         content: m.content,
         timestamp: m.created_at,
         attachmentUrl: m.attachment_url
     };
 
     const hasInitial = lines.some(l =>
-        l.role === 'FAN' &&
+        l.role === initialRole &&
         (l.content?.trim() === m.content?.trim() ||
           Math.abs(new Date(l.timestamp).getTime() - new Date(m.created_at).getTime()) < 8000)
     );
