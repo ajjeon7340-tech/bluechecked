@@ -107,7 +107,14 @@ async function insertWelcomeMessage(
     return jsonResponse({ alreadySent: true })
   }
 
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+  // Use creator's configured response window (fallback: 48h)
+  const { data: creatorProfile } = await adminClient
+    .from('profiles')
+    .select('response_window_hours')
+    .eq('id', creatorId)
+    .maybeSingle()
+  const responseWindowHours = creatorProfile?.response_window_hours || 48
+  const expiresAt = new Date(Date.now() + responseWindowHours * 60 * 60 * 1000).toISOString()
 
   const { error: insertError } = await adminClient
     .from('messages')

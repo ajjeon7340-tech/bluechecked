@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CreatorProfile, CurrentUser, AffiliateLink, Product } from '../types';
-import { DiemLogo, CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share, Image as ImageIcon, TrendingUp } from './Icons';
+import { DiemLogo, CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share, Image as ImageIcon, TrendingUp, LinkedInLogo, FacebookLogo, SnapchatLogo, PinterestLogo, DiscordLogo, TelegramLogo, WhatsAppLogo, RedditLogo, ThreadsLogo, PatreonLogo, SpotifyLogo, SoundCloudLogo, GitHubLogo, SubstackLogo, BeehiivLogo, OnlyFansLogo } from './Icons';
 import { Button } from './Button';
 import { sendMessage, updateCreatorProfile, addCredits, createCheckoutSession, isBackendConfigured, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus, getSecureDownloadUrl, logAnalyticsEvent, getCreatorTrendingStatus, getSupporters, Supporter } from '../services/realBackend';
 
@@ -469,13 +469,31 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
   // Helper to get platform icon
   const getPlatformIcon = (platform: string) => {
+      const cls = "w-4 h-4 sm:w-5 sm:h-5";
+      const clsSm = "w-3.5 h-3.5 sm:w-4 sm:h-4";
       switch(platform.toLowerCase()) {
-          case 'youtube': return <YouTubeLogo className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF0000]" />;
-          case 'instagram': return <InstagramLogo className="w-4 h-4 sm:w-5 sm:h-5 text-[#E4405F]" />;
-          case 'x': return <XLogo className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black" />;
-          case 'tiktok': return <TikTokLogo className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black" />;
-          case 'twitch': return <Twitch size={16} className="sm:!w-[18px] sm:!h-[18px] text-[#9146FF]" />;
-          default: return <Sparkles size={16} className="sm:!w-[18px] sm:!h-[18px] text-stone-400" />;
+          case 'youtube':    return <YouTubeLogo className={`${cls} text-[#FF0000]`} />;
+          case 'instagram':  return <InstagramLogo className={`${cls} text-[#E4405F]`} />;
+          case 'x':          return <XLogo className={`${clsSm} text-black`} />;
+          case 'tiktok':     return <TikTokLogo className={`${clsSm} text-black`} />;
+          case 'twitch':     return <Twitch size={16} className="sm:!w-[18px] sm:!h-[18px] text-[#9146FF]" />;
+          case 'threads':    return <ThreadsLogo className={`${cls} text-black`} />;
+          case 'facebook':   return <FacebookLogo className={`${cls} text-[#1877F2]`} />;
+          case 'discord':    return <DiscordLogo className={`${cls} text-[#5865F2]`} />;
+          case 'linkedin':   return <LinkedInLogo className={`${clsSm} text-[#0A66C2]`} />;
+          case 'snapchat':   return <SnapchatLogo className={`${clsSm} text-[#FFFC00]`} />;
+          case 'pinterest':  return <PinterestLogo className={`${cls} text-[#E60023]`} />;
+          case 'reddit':     return <RedditLogo className={`${cls} text-[#FF4500]`} />;
+          case 'telegram':   return <TelegramLogo className={`${cls} text-[#26A5E4]`} />;
+          case 'whatsapp':   return <WhatsAppLogo className={`${cls} text-[#25D366]`} />;
+          case 'spotify':    return <SpotifyLogo className={`${cls} text-[#1DB954]`} />;
+          case 'soundcloud': return <SoundCloudLogo className={`${cls} text-[#FF5500]`} />;
+          case 'patreon':    return <PatreonLogo className={`${clsSm} text-[#FF424D]`} />;
+          case 'onlyfans':   return <OnlyFansLogo className={`${cls} text-[#00AFF0]`} />;
+          case 'substack':   return <SubstackLogo className={`${clsSm} text-[#FF6719]`} />;
+          case 'beehiiv':    return <BeehiivLogo className={`${clsSm} text-[#F5C518]`} />;
+          case 'github':     return <GitHubLogo className={`${clsSm} text-black`} />;
+          default:           return <Sparkles size={16} className="sm:!w-[18px] sm:!h-[18px] text-stone-400" />;
       }
   };
 
@@ -500,17 +518,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     'dm-serif': "font-['DM_Serif_Text',serif]",
   }[creator.profileFont || 'inter'] || 'font-sans';
 
-  const BLOCK_STYLES: Record<string, { backgroundColor: string; borderColor: string }> = {
-    '#f5f4f2': { backgroundColor: '#eae7e4', borderColor: 'rgba(0,0,0,0.12)' },
-    '#f1f5f9': { backgroundColor: '#dde5ef', borderColor: 'rgba(0,0,0,0.12)' },
-    '#fff1f2': { backgroundColor: '#ffdde0', borderColor: 'rgba(0,0,0,0.10)' },
-    '#fffbeb': { backgroundColor: '#fef0c0', borderColor: 'rgba(0,0,0,0.10)' },
-    '#ecfdf5': { backgroundColor: '#c9f5e1', borderColor: 'rgba(0,0,0,0.10)' },
-    '#f0f9ff': { backgroundColor: '#d9effd', borderColor: 'rgba(0,0,0,0.10)' },
-    '#f5f3ff': { backgroundColor: '#e8e3fd', borderColor: 'rgba(0,0,0,0.10)' },
-    '#1c1917': { backgroundColor: '#2c2522', borderColor: 'rgba(255,255,255,0.10)' },
-  };
-  const linkBlockStyle = creator.bannerGradient ? BLOCK_STYLES[creator.bannerGradient] : { backgroundColor: '#ffffff', borderColor: 'rgb(231 229 228 / 0.6)' };
+  const linkBlockStyle = creator.bannerGradient
+    ? { backgroundColor: creator.bannerGradient, borderColor: creator.bannerGradient === '#1c1917' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' }
+    : { backgroundColor: '#ffffff', borderColor: 'rgb(231 229 228 / 0.6)' };
 
   return (
     <div className={`min-h-screen ${profileFontClass} text-stone-900 pb-20 selection:bg-stone-200 selection:text-stone-900 relative bg-[#FAF9F6]`}>

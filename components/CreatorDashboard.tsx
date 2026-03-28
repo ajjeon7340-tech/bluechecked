@@ -6,13 +6,16 @@ import { CreatorProfile, Message, DashboardStats, MonthlyStat, AffiliateLink, Li
 import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, sendWelcomeMessage, sendSupportMessage, Withdrawal, isBackendConfigured } from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
 import { LanguageSwitcher } from './LanguageSwitcher';
-import { 
-  Clock, CheckCircle2, AlertCircle, DollarSign, Sparkles, ChevronLeft, LogOut, 
+import {
+  Clock, CheckCircle2, AlertCircle, DollarSign, Sparkles, ChevronLeft, LogOut,
   ExternalLink, User, Settings, Plus, Trash, X, Camera, Paperclip, Send, DiemLogo,
   Home, BarChart3, Wallet, Users, Bell, Search, Menu, ChevronDown, ChevronUp, Ban, Check,
   Heart, Star, Eye, TrendingUp, MessageSquare, ArrowRight, Lock,
-  InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Download, ShoppingBag, FileText, PieChart as PieIcon, LayoutGrid, MonitorPlay, Link as LinkIcon, Calendar, ChevronRight, Coins, CreditCard
-  , MousePointerClick, GripVertical, Smile, Pencil, RefreshCw, Verified
+  InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Download, ShoppingBag, FileText, PieChart as PieIcon, LayoutGrid, MonitorPlay, Link as LinkIcon, Calendar, ChevronRight, Coins, CreditCard,
+  MousePointerClick, GripVertical, Smile, Pencil, RefreshCw, Verified,
+  LinkedInLogo, FacebookLogo, SnapchatLogo, PinterestLogo, DiscordLogo, TelegramLogo,
+  WhatsAppLogo, RedditLogo, ThreadsLogo, PatreonLogo, SpotifyLogo, SoundCloudLogo,
+  GitHubLogo, SubstackLogo, BeehiivLogo, OnlyFansLogo,
 } from './Icons';
 import { Button } from './Button';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid, PieChart, Pie, Cell, Legend, ComposedChart, Line } from 'recharts';
@@ -31,9 +34,25 @@ type InboxFilter = 'ALL' | 'PENDING' | 'REPLIED' | 'REJECTED';
 const SUPPORTED_PLATFORMS = [
     { id: 'youtube', label: 'YouTube', icon: YouTubeLogo },
     { id: 'instagram', label: 'Instagram', icon: InstagramLogo },
-    { id: 'x', label: 'X (Twitter)', icon: XLogo },
     { id: 'tiktok', label: 'TikTok', icon: TikTokLogo },
+    { id: 'x', label: 'X', icon: XLogo },
+    { id: 'threads', label: 'Threads', icon: ThreadsLogo },
+    { id: 'facebook', label: 'Facebook', icon: FacebookLogo },
     { id: 'twitch', label: 'Twitch', icon: Twitch },
+    { id: 'discord', label: 'Discord', icon: DiscordLogo },
+    { id: 'linkedin', label: 'LinkedIn', icon: LinkedInLogo },
+    { id: 'snapchat', label: 'Snapchat', icon: SnapchatLogo },
+    { id: 'pinterest', label: 'Pinterest', icon: PinterestLogo },
+    { id: 'reddit', label: 'Reddit', icon: RedditLogo },
+    { id: 'telegram', label: 'Telegram', icon: TelegramLogo },
+    { id: 'whatsapp', label: 'WhatsApp', icon: WhatsAppLogo },
+    { id: 'spotify', label: 'Spotify', icon: SpotifyLogo },
+    { id: 'soundcloud', label: 'SoundCloud', icon: SoundCloudLogo },
+    { id: 'patreon', label: 'Patreon', icon: PatreonLogo },
+    { id: 'onlyfans', label: 'OnlyFans', icon: OnlyFansLogo },
+    { id: 'substack', label: 'Substack', icon: SubstackLogo },
+    { id: 'beehiiv', label: 'Beehiiv', icon: BeehiivLogo },
+    { id: 'github', label: 'GitHub', icon: GitHubLogo },
 ];
 
 const getResponseCategory = (hours: number, t?: (key: string) => string) => {
