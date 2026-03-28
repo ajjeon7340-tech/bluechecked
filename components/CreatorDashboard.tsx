@@ -259,7 +259,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   // Settings text tab state
   const [settingsTextTab, setSettingsTextTab] = useState<'bio' | 'instructions' | 'reply'>('bio');
-  const [settingsMainTab, setSettingsMainTab] = useState<'general' | 'style'>('general');
+  const [settingsMainTab, setSettingsMainTab] = useState<'general' | 'links' | 'style'>('general');
 
   // Onboarding tutorial (settings)
   const [showTutorial, setShowTutorial] = useState(false);
@@ -279,8 +279,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     { title: 'Your Status Message', desc: 'This appears on your public profile — it\'s the first thing fans see when they visit your page. Make it personal!', tab: 'bio' as const, highlight: 'bio' },
     { title: 'Request Instructions', desc: 'Shown to fans before they send you a Diem request. Guide them on what context to include so you can give the best answer.', tab: 'instructions' as const, highlight: 'instructions' },
     { title: 'Auto-Reply Message', desc: 'Sent automatically the moment a fan pays — a warm acknowledgment while you prepare your response.', tab: 'reply' as const, highlight: 'reply' },
-    { title: 'Links & Products', desc: 'Share links to your social profiles, website, or resources. You can also upload digital products fans can purchase directly.', tab: null, highlight: 'links' },
-    { title: 'Custom Sections', desc: 'Group your links under named sections like "My Work" or "Resources". Type a section name and hit Add to create one.', tab: null, highlight: 'sections' },
+    { title: 'Links & Products', desc: 'Switch to the Links tab to add links to your social profiles, website, or resources. You can also upload digital products fans can purchase directly.', tab: null, highlight: 'links' },
+    { title: 'Custom Sections', desc: 'Still in the Links tab — group your links under named sections like "My Work" or "Resources". Type a section name and hit Add to create one.', tab: null, highlight: 'sections' },
   ] as const;
 
   const handleAddSection = () => {
@@ -674,6 +674,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setTutorialStep(nextStep);
     const tab = TUTORIAL_STEPS[nextStep].tab;
     if (tab) setSettingsTextTab(tab);
+    if (nextStep === 4 || nextStep === 5) setSettingsMainTab('links');
     if (nextStep === 4) setTimeout(() => tutorialLinksRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
     if (nextStep === 5) setTimeout(() => tutorialSectionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
   };
@@ -3514,9 +3515,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 />
                             </div>
 
-                            {/* Main tab switcher: General | Style */}
+                            {/* Main tab switcher: General | Links | Style */}
                             <div className="flex bg-stone-100 rounded-xl p-1 gap-0.5">
-                                {([{ key: 'general', label: 'General' }, { key: 'style', label: 'Style' }] as const).map(tab => (
+                                {([{ key: 'general', label: 'General' }, { key: 'links', label: 'Links' }, { key: 'style', label: 'Style' }] as const).map(tab => (
                                     <button
                                         key={tab.key}
                                         onClick={() => setSettingsMainTab(tab.key)}
@@ -3785,6 +3786,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     )}
                                 </div>
                             </div>
+                            </>)}
+
+                            {/* LINKS TAB */}
+                            {settingsMainTab === 'links' && (<>
 
                             {/* Links & Products Section */}
                             <div ref={tutorialLinksRef} className={showTutorial && tutorialStep === 4 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>

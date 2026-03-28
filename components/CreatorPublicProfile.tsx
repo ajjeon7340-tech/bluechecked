@@ -778,7 +778,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                           e.stopPropagation();
                           currentUser ? handleOpenModal() : onLoginRequest();
                       }}
-                      className={`w-20 h-9 px-3 py-0 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 flex-shrink-0 whitespace-nowrap z-20 transition-colors ${!creator.diemButtonColor ? (creator.isDiemHighlighted ? 'bg-indigo-500 text-white group-hover:bg-indigo-600' : 'bg-stone-100 text-stone-600 hover:bg-stone-200') : ''}`}
+                      className={`w-20 h-9 px-3 py-0 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 flex-shrink-0 whitespace-nowrap z-20 transition-colors ${!creator.diemButtonColor ? (creator.isDiemHighlighted ? 'bg-indigo-500 text-white group-hover:bg-indigo-600' : 'bg-stone-900 text-white hover:bg-stone-700') : ''}`}
                       style={creator.diemButtonColor ? { backgroundColor: creator.diemButtonColor, color: getContrastColor(creator.diemButtonColor) } : undefined}
                   >
                       {t('common.diem')}
