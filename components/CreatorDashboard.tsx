@@ -259,6 +259,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   // Settings text tab state
   const [settingsTextTab, setSettingsTextTab] = useState<'bio' | 'instructions' | 'reply'>('bio');
+  const [settingsMainTab, setSettingsMainTab] = useState<'general' | 'style'>('general');
 
   // Onboarding tutorial (settings)
   const [showTutorial, setShowTutorial] = useState(false);
@@ -3487,8 +3488,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         <h3 className="text-lg font-bold text-stone-900 mb-6 border-b border-stone-100 pb-2">Profile Settings</h3>
                         
                         <div className="space-y-6">
-                            {/* ... Profile Settings Form (Unchanged) ... */}
-                            {/* Avatar Edit */}
+                            {/* Avatar + Display Name — always visible above tabs */}
                             <div className={`flex items-center gap-4 ${showTutorial && tutorialStep === 0 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-3 -m-3' : ''}`}>
                                 <div
                                     className="relative w-14 h-14 rounded-full bg-stone-100 flex-shrink-0 overflow-hidden border border-stone-200 cursor-pointer group"
@@ -3513,94 +3513,113 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     className="flex-1 px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none"
                                 />
                             </div>
-                            {/* Profile Font Selector */}
-                            <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-2">Profile Font</label>
-                                <p className="text-[10px] text-stone-400 mb-2">Choose a font style for your public profile page.</p>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {([
-                                        { id: 'inter', label: 'Inter', style: 'font-sans', sample: 'Clean & Modern' },
-                                        { id: 'playfair', label: 'Playfair Display', style: "font-['Playfair_Display',serif]", sample: 'Elegant & Classic' },
-                                        { id: 'space-grotesk', label: 'Space Grotesk', style: "font-['Space_Grotesk',sans-serif]", sample: 'Tech & Bold' },
-                                        { id: 'dm-serif', label: 'DM Serif Text', style: "font-['DM_Serif_Text',serif]", sample: 'Warm & Editorial' },
-                                    ] as const).map(font => (
-                                        <button
-                                            key={font.id}
-                                            type="button"
-                                            onClick={() => setEditedCreator({...editedCreator, profileFont: font.id})}
-                                            className={`p-3 rounded-xl border text-left transition-all ${
-                                                (editedCreator.profileFont || 'inter') === font.id
-                                                    ? 'bg-stone-50 border-stone-900 ring-1 ring-stone-900'
-                                                    : 'bg-white border-stone-200 hover:border-stone-300'
-                                            }`}
-                                        >
-                                            <span className={`block text-base font-semibold text-stone-900 mb-0.5 ${font.style}`}>{font.label}</span>
-                                            <span className={`block text-xs text-stone-400 ${font.style}`}>{font.sample}</span>
-                                        </button>
-                                    ))}
-                                </div>
+
+                            {/* Main tab switcher: General | Style */}
+                            <div className="flex bg-stone-100 rounded-xl p-1 gap-0.5">
+                                {([{ key: 'general', label: 'General' }, { key: 'style', label: 'Style' }] as const).map(tab => (
+                                    <button
+                                        key={tab.key}
+                                        onClick={() => setSettingsMainTab(tab.key)}
+                                        className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${settingsMainTab === tab.key ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
                             </div>
 
-                            {/* Corner Roundness */}
-                            <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-2">Corner Style</label>
-                                <p className="text-[10px] text-stone-400 mb-2">Controls the roundness of link blocks on your public profile.</p>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {([
-                                        { id: 'soft', label: 'Soft', radius: '8px' },
-                                        { id: 'rounded', label: 'Rounded', radius: '16px' },
-                                        { id: 'pill', label: 'Pill', radius: '999px' },
-                                    ] as const).map(opt => (
-                                        <button
-                                            key={opt.id}
-                                            type="button"
-                                            onClick={() => setEditedCreator({...editedCreator, cornerRadius: opt.id})}
-                                            className={`p-3 flex flex-col items-center gap-2 border transition-all ${
-                                                (editedCreator.cornerRadius || 'rounded') === opt.id
-                                                    ? 'bg-stone-50 border-stone-900 ring-1 ring-stone-900'
-                                                    : 'bg-white border-stone-200 hover:border-stone-300'
-                                            }`}
-                                            style={{ borderRadius: '12px' }}
-                                        >
-                                            <div className="w-8 h-5 bg-stone-200" style={{ borderRadius: opt.radius }} />
-                                            <span className="text-[10px] text-stone-500 font-medium">{opt.label}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Card Color */}
-                            <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-2">Card Color</label>
-                                <p className="text-[10px] text-stone-400 mb-2">Choose a background color for your public profile card.</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {[
-                                        { label: 'White', value: undefined, bg: '#ffffff', border: '#e7e5e4' },
-                                        { label: 'Stone', value: '#f5f4f2', bg: '#f5f4f2', border: '#d6d3d1' },
-                                        { label: 'Slate', value: '#f1f5f9', bg: '#f1f5f9', border: '#cbd5e1' },
-                                        { label: 'Rose', value: '#fff1f2', bg: '#fff1f2', border: '#fecdd3' },
-                                        { label: 'Amber', value: '#fffbeb', bg: '#fffbeb', border: '#fde68a' },
-                                        { label: 'Emerald', value: '#ecfdf5', bg: '#ecfdf5', border: '#a7f3d0' },
-                                        { label: 'Sky', value: '#f0f9ff', bg: '#f0f9ff', border: '#bae6fd' },
-                                        { label: 'Violet', value: '#f5f3ff', bg: '#f5f3ff', border: '#ddd6fe' },
-                                        { label: 'Black', value: '#1c1917', bg: '#1c1917', border: '#44403c' },
-                                    ].map(opt => {
-                                        const current = editedCreator.bannerGradient;
-                                        const isSelected = opt.value === undefined ? !current : current === opt.value;
-                                        return (
+                            {/* STYLE TAB */}
+                            {settingsMainTab === 'style' && (<>
+                                {/* Profile Font Selector */}
+                                <div>
+                                    <label className="block text-sm font-medium text-stone-700 mb-2">Profile Font</label>
+                                    <p className="text-[10px] text-stone-400 mb-2">Choose a font style for your public profile page.</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {([
+                                            { id: 'inter', label: 'Inter', style: 'font-sans', sample: 'Clean & Modern' },
+                                            { id: 'playfair', label: 'Playfair Display', style: "font-['Playfair_Display',serif]", sample: 'Elegant & Classic' },
+                                            { id: 'space-grotesk', label: 'Space Grotesk', style: "font-['Space_Grotesk',sans-serif]", sample: 'Tech & Bold' },
+                                            { id: 'dm-serif', label: 'DM Serif Text', style: "font-['DM_Serif_Text',serif]", sample: 'Warm & Editorial' },
+                                        ] as const).map(font => (
                                             <button
-                                                key={opt.label}
+                                                key={font.id}
                                                 type="button"
-                                                title={opt.label}
-                                                onClick={() => setEditedCreator({...editedCreator, bannerGradient: opt.value})}
-                                                className={`w-8 h-8 rounded-full transition-all border-2 ${isSelected ? 'scale-110 ring-2 ring-offset-2 ring-stone-500' : 'hover:scale-105'}`}
-                                                style={{ backgroundColor: opt.bg, borderColor: opt.border }}
-                                            />
-                                        );
-                                    })}
+                                                onClick={() => setEditedCreator({...editedCreator, profileFont: font.id})}
+                                                className={`p-3 rounded-xl border text-left transition-all ${
+                                                    (editedCreator.profileFont || 'inter') === font.id
+                                                        ? 'bg-stone-50 border-stone-900 ring-1 ring-stone-900'
+                                                        : 'bg-white border-stone-200 hover:border-stone-300'
+                                                }`}
+                                            >
+                                                <span className={`block text-base font-semibold text-stone-900 mb-0.5 ${font.style}`}>{font.label}</span>
+                                                <span className={`block text-xs text-stone-400 ${font.style}`}>{font.sample}</span>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
 
+                                {/* Corner Roundness */}
+                                <div>
+                                    <label className="block text-sm font-medium text-stone-700 mb-2">Corner Style</label>
+                                    <p className="text-[10px] text-stone-400 mb-2">Controls the roundness of cards and link blocks on your profile.</p>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {([
+                                            { id: 'soft', label: 'Soft', radius: '8px' },
+                                            { id: 'rounded', label: 'Rounded', radius: '16px' },
+                                            { id: 'pill', label: 'Pill', radius: '999px' },
+                                        ] as const).map(opt => (
+                                            <button
+                                                key={opt.id}
+                                                type="button"
+                                                onClick={() => setEditedCreator({...editedCreator, cornerRadius: opt.id})}
+                                                className={`p-3 flex flex-col items-center gap-2 border transition-all ${
+                                                    (editedCreator.cornerRadius || 'rounded') === opt.id
+                                                        ? 'bg-stone-50 border-stone-900 ring-1 ring-stone-900'
+                                                        : 'bg-white border-stone-200 hover:border-stone-300'
+                                                }`}
+                                                style={{ borderRadius: '12px' }}
+                                            >
+                                                <div className="w-8 h-5 bg-stone-200" style={{ borderRadius: opt.radius }} />
+                                                <span className="text-[10px] text-stone-500 font-medium">{opt.label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Card Color */}
+                                <div>
+                                    <label className="block text-sm font-medium text-stone-700 mb-2">Card Color</label>
+                                    <p className="text-[10px] text-stone-400 mb-2">Choose a background color for your public profile card.</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {[
+                                            { label: 'White', value: undefined, bg: '#ffffff', border: '#e7e5e4' },
+                                            { label: 'Stone', value: '#f5f4f2', bg: '#f5f4f2', border: '#d6d3d1' },
+                                            { label: 'Slate', value: '#f1f5f9', bg: '#f1f5f9', border: '#cbd5e1' },
+                                            { label: 'Rose', value: '#fff1f2', bg: '#fff1f2', border: '#fecdd3' },
+                                            { label: 'Amber', value: '#fffbeb', bg: '#fffbeb', border: '#fde68a' },
+                                            { label: 'Emerald', value: '#ecfdf5', bg: '#ecfdf5', border: '#a7f3d0' },
+                                            { label: 'Sky', value: '#f0f9ff', bg: '#f0f9ff', border: '#bae6fd' },
+                                            { label: 'Violet', value: '#f5f3ff', bg: '#f5f3ff', border: '#ddd6fe' },
+                                            { label: 'Black', value: '#1c1917', bg: '#1c1917', border: '#44403c' },
+                                        ].map(opt => {
+                                            const current = editedCreator.bannerGradient;
+                                            const isSelected = opt.value === undefined ? !current : current === opt.value;
+                                            return (
+                                                <button
+                                                    key={opt.label}
+                                                    type="button"
+                                                    title={opt.label}
+                                                    onClick={() => setEditedCreator({...editedCreator, bannerGradient: opt.value})}
+                                                    className={`w-8 h-8 rounded-full transition-all border-2 ${isSelected ? 'scale-110 ring-2 ring-offset-2 ring-stone-500' : 'hover:scale-105'}`}
+                                                    style={{ backgroundColor: opt.bg, borderColor: opt.border }}
+                                                />
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </>)}
+
+                            {/* GENERAL TAB */}
+                            {settingsMainTab === 'general' && (<>
                             <div>
                                 <label className="block text-sm font-medium text-stone-700 mb-1">User ID (Handle)</label>
                                 <input 
@@ -4158,10 +4177,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     </Button>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Profile Display Toggles */}
-                        <div className="mt-6 border-t border-stone-100 pt-6 space-y-3">
+                            {/* Profile Display Toggles */}
+                            <div className="border-t border-stone-100 pt-6 space-y-3">
                             <h4 className="text-sm font-semibold text-stone-700">Profile Display</h4>
                             <div className="flex items-center justify-between py-2">
                                 <div>
@@ -4199,6 +4217,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${(editedCreator.showBio ?? true) ? 'translate-x-5' : 'translate-x-0'}`} />
                                 </button>
                             </div>
+                        </div>
+                            </>)}
                         </div>
 
                         <div className="mt-8 flex justify-center">
