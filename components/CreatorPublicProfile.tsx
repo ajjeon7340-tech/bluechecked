@@ -500,6 +500,18 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     'dm-serif': "font-['DM_Serif_Text',serif]",
   }[creator.profileFont || 'inter'] || 'font-sans';
 
+  const BLOCK_STYLES: Record<string, { backgroundColor: string; borderColor: string }> = {
+    '#f5f4f2': { backgroundColor: '#eae7e4', borderColor: 'rgba(0,0,0,0.12)' },
+    '#f1f5f9': { backgroundColor: '#dde5ef', borderColor: 'rgba(0,0,0,0.12)' },
+    '#fff1f2': { backgroundColor: '#ffdde0', borderColor: 'rgba(0,0,0,0.10)' },
+    '#fffbeb': { backgroundColor: '#fef0c0', borderColor: 'rgba(0,0,0,0.10)' },
+    '#ecfdf5': { backgroundColor: '#c9f5e1', borderColor: 'rgba(0,0,0,0.10)' },
+    '#f0f9ff': { backgroundColor: '#d9effd', borderColor: 'rgba(0,0,0,0.10)' },
+    '#f5f3ff': { backgroundColor: '#e8e3fd', borderColor: 'rgba(0,0,0,0.10)' },
+    '#1c1917': { backgroundColor: '#2c2522', borderColor: 'rgba(255,255,255,0.10)' },
+  };
+  const linkBlockStyle = creator.bannerGradient ? BLOCK_STYLES[creator.bannerGradient] : { backgroundColor: '#ffffff', borderColor: 'rgb(231 229 228 / 0.6)' };
+
   return (
     <div className={`min-h-screen ${profileFontClass} text-stone-900 pb-20 selection:bg-stone-200 selection:text-stone-900 relative bg-[#FAF9F6]`}>
       <style>{`
@@ -718,7 +730,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
               <div ref={tutorialDiemBtnRef} className={`w-full${showTutorial && tutorialStep === 1 ? ' ring-2 ring-amber-400 ring-offset-2 rounded-2xl' : ''}`}>
               <div
                   onClick={() => { currentUser ? handleOpenModal() : onLoginRequest(); }}
-                  className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${creator.isDiemHighlighted ? 'bg-gradient-to-r from-indigo-50/40 to-blue-50/20 border-indigo-100 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300 hover:shadow-sm'}`}
+                  className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${creator.isDiemHighlighted ? 'bg-gradient-to-r from-indigo-50/40 to-blue-50/20 border-indigo-100 shadow-sm' : 'hover:border-stone-300 hover:shadow-sm'}`}
+                  style={!creator.isDiemHighlighted ? linkBlockStyle : undefined}
               >
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
                       <img src="/favicon.svg" alt="Diem" className="w-full h-full object-cover" />
@@ -815,7 +828,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         isSupport ? (
                                             <button
                                                 onClick={() => handleSupportClick(link.price)}
-                                                className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-pink-50/40 to-rose-50/20 border-pink-100 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300 hover:shadow-sm'}`}
+                                                className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-pink-50/40 to-rose-50/20 border-pink-100 shadow-sm' : 'hover:border-stone-300 hover:shadow-sm'}`}
+                                                style={!link.isPromoted ? linkBlockStyle : undefined}
                                             >
                                                 <div className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${shapeClass} ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : isEmoji ? 'bg-stone-100' : 'bg-pink-50 text-pink-400'}`} style={iconStyle}>
                                                     {hasThumbnail ? (
@@ -840,7 +854,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                         ) : isProduct ? (
                                             <button
                                                 onClick={() => handleProductClick(link)}
-                                                className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-purple-50/40 to-violet-50/20 border-purple-100 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300 hover:shadow-sm'}`}
+                                                className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-purple-50/40 to-violet-50/20 border-purple-100 shadow-sm' : 'hover:border-stone-300 hover:shadow-sm'}`}
+                                                style={!link.isPromoted ? linkBlockStyle : undefined}
                                             >
                                                 <div className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${shapeClass} ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : isEmoji ? 'bg-stone-100' : 'bg-purple-50 text-purple-400'}`} style={iconStyle}>
                                                     {hasThumbnail ? (
@@ -868,7 +883,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 onClick={() => logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'LINK', id: link.id, title: link.title, url: link.url })}
-                                                className={`block w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-stone-50 to-stone-100/40 border-stone-200 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300'}`}
+                                                className={`block w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-stone-50 to-stone-100/40 border-stone-200 shadow-sm' : 'hover:border-stone-300'}`}
+                                                style={!link.isPromoted ? linkBlockStyle : undefined}
                                             >
                                                 <div className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${shapeClass} ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : isEmoji ? 'bg-stone-100' : faviconUrl ? 'p-1.5 overflow-hidden bg-white border border-stone-100' : 'bg-stone-900 text-white'}`} style={iconStyle}>
                                                     {hasThumbnail ? (
