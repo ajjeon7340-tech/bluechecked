@@ -3501,26 +3501,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         <div className="space-y-6">
                             {/* ... Profile Settings Form (Unchanged) ... */}
                             {/* Avatar Edit */}
-                            <div className={`flex items-start gap-4 sm:gap-6 ${showTutorial && tutorialStep === 0 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-3 -m-3' : ''}`}>
-                                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-stone-100 flex-shrink-0 overflow-hidden border border-stone-200">
+                            <div className={`flex items-center gap-4 ${showTutorial && tutorialStep === 0 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-3 -m-3' : ''}`}>
+                                <div className="w-14 h-14 rounded-full bg-stone-100 flex-shrink-0 overflow-hidden border border-stone-200">
                                     <img
                                         src={editedCreator.avatarUrl || DEFAULT_AVATAR}
                                         alt="Avatar Preview"
                                         className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                            e.currentTarget.src = DEFAULT_AVATAR;
-                                        }}
+                                        onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR; }}
                                     />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <button
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
-                                    >
-                                        <Camera size={16} /> Upload
-                                    </button>
-                                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarFileChange} />
-                                </div>
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
+                                >
+                                    <Camera size={16} /> Upload
+                                </button>
+                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarFileChange} />
                             </div>
 
                             <div>
