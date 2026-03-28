@@ -527,6 +527,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     'rounded': '16px',
     'pill': '999px',
   }[creator.cornerRadius || 'rounded'] || '16px';
+  const cardCornerRadiusValue = {
+    'soft': '8px',
+    'rounded': '16px',
+    'pill': '24px',
+  }[creator.cornerRadius || 'rounded'] || '16px';
   const linkBlockStyleWithRadius = { ...linkBlockStyle, borderRadius: cornerRadiusValue };
 
   return (
@@ -571,7 +576,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
           {/* 1. PROFILE INFO & STATS */}
           <div className="w-full">
-             <div className="border border-stone-200/60 relative transition-all" style={{ backgroundColor: creator.bannerGradient || '#ffffff', borderRadius: cornerRadiusValue }}>
+             <div className="border border-stone-200/60 relative transition-all" style={{ backgroundColor: creator.bannerGradient || '#ffffff', borderRadius: cardCornerRadiusValue }}>
                 <div className="px-4 py-3 flex justify-between items-center">
                     <div
                       onClick={onCreateOwn}

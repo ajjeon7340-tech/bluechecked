@@ -2353,27 +2353,27 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             {currentView === 'ANALYTICS' && (
                 <div className="max-w-6xl mx-auto animate-in fade-in relative min-h-[80vh] overflow-x-hidden">
                     {/* Header - Always visible */}
-                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-6 sm:mb-8">
-                        <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap justify-between items-center gap-3 mb-6 sm:mb-8">
+                        <div className="flex items-center gap-2 min-w-0">
                             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0"><Menu size={24} /></button>
-                            <div>
-                                <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.analyticsOverview')}</h2>
+                            <div className="min-w-0">
+                                <h2 className="text-xl sm:text-2xl font-bold text-stone-900 truncate">{t('creator.analyticsOverview')}</h2>
                                 <p className="text-stone-500 text-xs sm:text-sm">{t('creator.performanceMetrics')}</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                             <div className="flex items-center gap-1 bg-stone-100 rounded-xl p-1">
                                 {(['1D', '7D', '30D', 'ALL'] as const).map(r => (
                                     <button
                                         key={r}
                                         onClick={() => setAnalyticsRange(r)}
-                                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${analyticsRange === r ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                                        className={`px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all ${analyticsRange === r ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
                                     >
-                                        {r === '1D' ? 'Today' : r === '7D' ? '7 Days' : r === '30D' ? '30 Days' : 'All Time'}
+                                        {r === '1D' ? 'Today' : r === '7D' ? '7D' : r === '30D' ? '30D' : 'All'}
                                     </button>
                                 ))}
                             </div>
-                            <button className="px-3 py-1.5 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm hover:bg-stone-50">{t('creator.exportReport')}</button>
+                            <button className="hidden sm:block px-3 py-1.5 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 shadow-sm hover:bg-stone-50">{t('creator.exportReport')}</button>
                             <TopNav hideBurger />
                         </div>
                     </div>
