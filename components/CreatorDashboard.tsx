@@ -3490,30 +3490,27 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             {/* ... Profile Settings Form (Unchanged) ... */}
                             {/* Avatar Edit */}
                             <div className={`flex items-center gap-4 ${showTutorial && tutorialStep === 0 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-3 -m-3' : ''}`}>
-                                <div className="w-14 h-14 rounded-full bg-stone-100 flex-shrink-0 overflow-hidden border border-stone-200">
+                                <div
+                                    className="relative w-14 h-14 rounded-full bg-stone-100 flex-shrink-0 overflow-hidden border border-stone-200 cursor-pointer group"
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
                                     <img
                                         src={editedCreator.avatarUrl || DEFAULT_AVATAR}
                                         alt="Avatar Preview"
                                         className="w-full h-full object-cover"
                                         onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR; }}
                                     />
+                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                                        <Camera size={18} className="text-white" />
+                                    </div>
                                 </div>
-                                <button
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
-                                >
-                                    <Camera size={16} /> Upload
-                                </button>
                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarFileChange} />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-1">Display Name</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={editedCreator.displayName}
                                     onChange={e => setEditedCreator({...editedCreator, displayName: e.target.value})}
-                                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none"
+                                    placeholder="Display Name"
+                                    className="flex-1 px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none"
                                 />
                             </div>
                             {/* Profile Font Selector */}
