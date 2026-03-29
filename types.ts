@@ -73,6 +73,7 @@ export interface CreatorProfile {
   diemEnabled?: boolean;
   diemButtonColor?: string;
   diemIcon?: string;
+  diemIconShape?: 'circle' | 'rounded' | 'square';
   profileFont?: 'inter' | 'playfair' | 'space-grotesk' | 'dm-serif';
   cornerRadius?: 'soft' | 'rounded' | 'pill';
   stats: {

@@ -755,15 +755,21 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                   className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${creator.isDiemHighlighted ? 'bg-gradient-to-r from-indigo-50/40 to-blue-50/20 border-indigo-100 shadow-sm' : 'hover:border-stone-300 hover:shadow-sm'}`}
                   style={!creator.isDiemHighlighted ? linkBlockStyleWithRadius : undefined}
               >
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden bg-white border border-stone-100">
-                      {creator.diemIcon?.startsWith('data:emoji,') ? (
-                          <span className="text-2xl">{creator.diemIcon.replace('data:emoji,', '')}</span>
-                      ) : creator.diemIcon ? (
-                          <img src={creator.diemIcon} alt="Diem" className="w-full h-full object-cover" />
-                      ) : (
-                          <img src="/favicon.svg" alt="Diem" className="w-full h-full object-cover" />
-                      )}
-                  </div>
+                  {(() => {
+                      const ds = creator.diemIconShape;
+                      const dsc = ds === 'square' ? 'rounded-none' : ds === 'rounded' ? 'rounded-xl' : 'rounded-full';
+                      return (
+                      <div className={`w-10 h-10 sm:w-12 sm:h-12 ${dsc} flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden bg-white border border-stone-100`}>
+                          {creator.diemIcon?.startsWith('data:emoji,') ? (
+                              <span className="text-2xl">{creator.diemIcon.replace('data:emoji,', '')}</span>
+                          ) : creator.diemIcon ? (
+                              <img src={creator.diemIcon} alt="Diem" className="w-full h-full object-cover" />
+                          ) : (
+                              <img src="/favicon.svg" alt="Diem" className="w-full h-full object-cover" />
+                          )}
+                      </div>
+                      );
+                  })()}
                   <div className="flex-1 relative z-10 min-w-0 text-left">
                       <div className="flex items-center gap-2">
                           <h4 className="font-semibold sm:font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors">DIEM</h4>

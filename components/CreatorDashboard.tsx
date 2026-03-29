@@ -3769,20 +3769,26 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <p className="text-xs text-stone-400 mb-3">Customize the icon shown on the DIEM block</p>
                                 <div className="flex items-center gap-3">
                                     <div className="relative flex-shrink-0">
-                                        <div className="relative group/diemthumb cursor-pointer" onClick={() => setDiemIconPickerOpen(!diemIconPickerOpen)}>
-                                            {editedCreator.diemIcon?.startsWith('data:emoji,') ? (
-                                                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-stone-100 border border-stone-200 text-xl">{editedCreator.diemIcon.replace('data:emoji,', '')}</div>
-                                            ) : editedCreator.diemIcon ? (
-                                                <img src={editedCreator.diemIcon} className="w-10 h-10 rounded-full object-cover border border-stone-200 bg-white" />
-                                            ) : (
-                                                <div className="w-10 h-10 rounded-full overflow-hidden border border-stone-200 bg-white">
-                                                    <img src="/favicon.svg" className="w-full h-full object-cover" />
+                                        {(() => {
+                                            const ds = editedCreator.diemIconShape;
+                                            const dsc = ds === 'square' ? 'rounded-none' : ds === 'rounded' ? 'rounded-xl' : 'rounded-full';
+                                            return (
+                                            <div className="relative group/diemthumb cursor-pointer" onClick={() => setDiemIconPickerOpen(!diemIconPickerOpen)}>
+                                                {editedCreator.diemIcon?.startsWith('data:emoji,') ? (
+                                                    <div className={`w-10 h-10 ${dsc} flex items-center justify-center bg-stone-100 border border-stone-200 text-xl`}>{editedCreator.diemIcon.replace('data:emoji,', '')}</div>
+                                                ) : editedCreator.diemIcon ? (
+                                                    <img src={editedCreator.diemIcon} className={`w-10 h-10 ${dsc} object-cover border border-stone-200 bg-white`} />
+                                                ) : (
+                                                    <div className={`w-10 h-10 ${dsc} overflow-hidden border border-stone-200 bg-white`}>
+                                                        <img src="/favicon.svg" className="w-full h-full object-cover" />
+                                                    </div>
+                                                )}
+                                                <div className={`absolute inset-0 bg-black/50 ${dsc} flex items-center justify-center opacity-0 group-hover/diemthumb:opacity-100 transition-opacity`}>
+                                                    <Camera size={14} className="text-white"/>
                                                 </div>
-                                            )}
-                                            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover/diemthumb:opacity-100 transition-opacity">
-                                                <Camera size={14} className="text-white"/>
                                             </div>
-                                        </div>
+                                            );
+                                        })()}
                                         {diemIconPickerOpen && (
                                             <>
                                             <div className="fixed inset-0 z-10" onClick={() => setDiemIconPickerOpen(false)} />
@@ -3795,6 +3801,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 <div className="flex gap-1 pt-1 border-t border-stone-100">
                                                     <button onClick={() => { document.getElementById('diem-icon-upload')?.click(); setDiemIconPickerOpen(false); }} className="flex-1 px-2 py-1 text-[10px] bg-stone-100 hover:bg-stone-200 rounded-lg font-medium text-stone-600 flex items-center justify-center gap-1 transition-colors"><Camera size={10}/> Upload</button>
                                                     <button onClick={() => { setEditedCreator({ ...editedCreator, diemIcon: undefined }); setDiemIconPickerOpen(false); }} className="px-2 py-1 text-[10px] bg-red-50 hover:bg-red-100 rounded-lg font-medium text-red-500 transition-colors">Reset</button>
+                                                </div>
+                                                {/* Shape Selector */}
+                                                <div className="flex gap-1 pt-1 mt-1 border-t border-stone-100">
+                                                    {([['circle','●'],['rounded','▢'],['square','■']] as const).map(([shape, icon]) => (
+                                                        <button key={shape} onClick={() => setEditedCreator({ ...editedCreator, diemIconShape: shape })} className={`flex-1 py-1 text-[10px] rounded-lg font-medium transition-colors ${(editedCreator.diemIconShape || 'circle') === shape ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>{icon}</button>
+                                                    ))}
                                                 </div>
                                             </div>
                                             </>
