@@ -748,15 +748,21 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           </div>
 
           {/* Guaranteed Reply + Ask Me Anything */}
-          {!isCustomizeMode && (
+          {!isCustomizeMode && creator.diemEnabled !== false && (
               <div ref={tutorialDiemBtnRef} className={`w-full${showTutorial && tutorialStep === 1 ? ' ring-2 ring-amber-400 ring-offset-2 rounded-2xl' : ''}`}>
               <div
                   onClick={() => { currentUser ? handleOpenModal() : onLoginRequest(); }}
                   className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${creator.isDiemHighlighted ? 'bg-gradient-to-r from-indigo-50/40 to-blue-50/20 border-indigo-100 shadow-sm' : 'hover:border-stone-300 hover:shadow-sm'}`}
                   style={!creator.isDiemHighlighted ? linkBlockStyleWithRadius : undefined}
               >
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
-                      <img src="/favicon.svg" alt="Diem" className="w-full h-full object-cover" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden bg-white border border-stone-100">
+                      {creator.diemIcon?.startsWith('data:emoji,') ? (
+                          <span className="text-2xl">{creator.diemIcon.replace('data:emoji,', '')}</span>
+                      ) : creator.diemIcon ? (
+                          <img src={creator.diemIcon} alt="Diem" className="w-full h-full object-cover" />
+                      ) : (
+                          <img src="/favicon.svg" alt="Diem" className="w-full h-full object-cover" />
+                      )}
                   </div>
                   <div className="flex-1 relative z-10 min-w-0 text-left">
                       <div className="flex items-center gap-2">
@@ -796,7 +802,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                     if (group.id === null && sortedSections.length > 0 && groupLinksToShow.length === 0 && !isCustomizeMode) return null;
                     return (
                     <div key={group.id ?? 'default'} className="space-y-3">
-                        <div className="flex justify-between items-end">
+                        <div className="flex justify-center items-end">
                             <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
                                 <Tag size={14} /> {group.title ?? (creator.linksSectionTitle || t('profile.featuredLinks'))}
                             </h3>
@@ -809,7 +815,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                             const isEmoji = link.thumbnailUrl?.startsWith('data:emoji,');
                             const hasThumbnail = !!link.thumbnailUrl && !isEmoji;
                             const accentColor = link.buttonColor;
-                            const shapeClass = link.iconShape === 'square' ? 'rounded-none' : link.iconShape === 'rounded' ? 'rounded-xl' : 'rounded-full';
+                            const shapeClass = link.iconShape === 'circle' ? 'rounded-full' : link.iconShape === 'rounded' ? 'rounded-xl' : 'rounded-none';
                             // Detect platform from URL to use branded icon
                             const PLATFORM_DOMAINS: { pattern: RegExp; id: string }[] = [
                                 { pattern: /youtube\.com|youtu\.be/, id: 'youtube' },

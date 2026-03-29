@@ -70,7 +70,9 @@ export interface CreatorProfile {
   platforms?: (string | { id: string; url: string })[];
   rankingTitle?: string;
   bannerGradient?: string;
+  diemEnabled?: boolean;
   diemButtonColor?: string;
+  diemIcon?: string;
   profileFont?: 'inter' | 'playfair' | 'space-grotesk' | 'dm-serif';
   cornerRadius?: 'soft' | 'rounded' | 'pill';
   stats: {

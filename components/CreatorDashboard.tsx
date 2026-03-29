@@ -250,6 +250,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Drag and Drop State for Links
   const [draggedLinkIndex, setDraggedLinkIndex] = useState<number | null>(null);
   const [openIconPickerId, setOpenIconPickerId] = useState<string | null>(null);
+  const [diemIconPickerOpen, setDiemIconPickerOpen] = useState(false);
 
   // Section State
   const [newSectionTitle, setNewSectionTitle] = useState('');
@@ -3742,6 +3743,74 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <p className="text-[10px] text-stone-400 mt-2">These icons will appear on your public profile.</p>
                             </div>
                             
+                            {/* Enable DIEM Feature Toggle */}
+                            <div className="flex items-center justify-between p-4 bg-stone-50 rounded-2xl border border-stone-200">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${editedCreator.diemEnabled !== false ? 'bg-emerald-100 text-emerald-600' : 'bg-white text-stone-400 border border-stone-200'}`}>
+                                        <MessageSquare size={16} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-stone-800">Enable DIEM Feature</p>
+                                        <p className="text-xs text-stone-400">Show the DIEM messaging block on your public profile</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setEditedCreator({ ...editedCreator, diemEnabled: editedCreator.diemEnabled === false ? true : false })}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none flex-shrink-0 ${editedCreator.diemEnabled !== false ? 'bg-emerald-500' : 'bg-stone-200'}`}
+                                >
+                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${editedCreator.diemEnabled !== false ? 'translate-x-6' : 'translate-x-1'}`} />
+                                </button>
+                            </div>
+
+                            {editedCreator.diemEnabled !== false && (<>
+                            {/* DIEM Icon */}
+                            <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200">
+                                <p className="text-sm font-semibold text-stone-800 mb-1">DIEM Icon</p>
+                                <p className="text-xs text-stone-400 mb-3">Customize the icon shown on the DIEM block</p>
+                                <div className="flex items-center gap-3">
+                                    <div className="relative flex-shrink-0">
+                                        <div className="relative group/diemthumb cursor-pointer" onClick={() => setDiemIconPickerOpen(!diemIconPickerOpen)}>
+                                            {editedCreator.diemIcon?.startsWith('data:emoji,') ? (
+                                                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-stone-100 border border-stone-200 text-xl">{editedCreator.diemIcon.replace('data:emoji,', '')}</div>
+                                            ) : editedCreator.diemIcon ? (
+                                                <img src={editedCreator.diemIcon} className="w-10 h-10 rounded-full object-cover border border-stone-200 bg-white" />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full overflow-hidden border border-stone-200 bg-white">
+                                                    <img src="/favicon.svg" className="w-full h-full object-cover" />
+                                                </div>
+                                            )}
+                                            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover/diemthumb:opacity-100 transition-opacity">
+                                                <Camera size={14} className="text-white"/>
+                                            </div>
+                                        </div>
+                                        {diemIconPickerOpen && (
+                                            <>
+                                            <div className="fixed inset-0 z-10" onClick={() => setDiemIconPickerOpen(false)} />
+                                            <div className="absolute z-20 mt-1 p-2 bg-white border border-stone-200 rounded-xl shadow-lg w-56">
+                                                <div className="flex flex-wrap gap-1 mb-2">
+                                                    {['🔗','📺','📸','🎵','🎮','📝','💼','🛒','📧','💬','🌐','🎨','📱','🎬','🏆','🎯','🚀','✨','💡','🎁'].map(em => (
+                                                        <button key={em} onClick={() => { setEditedCreator({ ...editedCreator, diemIcon: `data:emoji,${em}` }); setDiemIconPickerOpen(false); }} className="w-8 h-8 rounded-lg hover:bg-stone-100 flex items-center justify-center text-lg transition-colors">{em}</button>
+                                                    ))}
+                                                </div>
+                                                <div className="flex gap-1 pt-1 border-t border-stone-100">
+                                                    <button onClick={() => { document.getElementById('diem-icon-upload')?.click(); setDiemIconPickerOpen(false); }} className="flex-1 px-2 py-1 text-[10px] bg-stone-100 hover:bg-stone-200 rounded-lg font-medium text-stone-600 flex items-center justify-center gap-1 transition-colors"><Camera size={10}/> Upload</button>
+                                                    <button onClick={() => { setEditedCreator({ ...editedCreator, diemIcon: undefined }); setDiemIconPickerOpen(false); }} className="px-2 py-1 text-[10px] bg-red-50 hover:bg-red-100 rounded-lg font-medium text-red-500 transition-colors">Reset</button>
+                                                </div>
+                                            </div>
+                                            </>
+                                        )}
+                                        <input type="file" id="diem-icon-upload" className="hidden" accept="image/*" onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            const reader = new FileReader();
+                                            reader.onload = (ev) => setEditedCreator({ ...editedCreator, diemIcon: ev.target?.result as string });
+                                            reader.readAsDataURL(file);
+                                        }} />
+                                    </div>
+                                    <p className="text-xs text-stone-400">Click to choose an emoji or upload an image</p>
+                                </div>
+                            </div>
+
                             {/* DIEM Request Highlight Toggle */}
                             <div className="flex items-center justify-between p-4 bg-stone-50 rounded-2xl border border-stone-200">
                                 <div className="flex items-center gap-3">
@@ -3786,6 +3855,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     )}
                                 </div>
                             </div>
+                            </>)}
                             </>)}
 
                             {/* LINKS TAB */}
@@ -3896,23 +3966,30 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 
                                                 {/* Thumbnail / Icon Picker for Existing Link */}
                                                 <div className="flex-shrink-0 relative">
-                                                    <div className="relative group/thumb">
+                                                    {(() => {
+                                                        const iconShapeClass = link.iconShape === 'circle' ? 'rounded-full' : link.iconShape === 'rounded' ? 'rounded-xl' : 'rounded-none';
+                                                        return (
+                                                        <div className="relative group/thumb">
                                                         {link.thumbnailUrl?.startsWith('data:emoji,') ? (
-                                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center bg-stone-100 border border-stone-200 text-xl cursor-pointer`} onClick={() => setOpenIconPickerId(openIconPickerId === link.id ? null : link.id)}>
+                                                            <div className={`w-10 h-10 ${iconShapeClass} flex items-center justify-center bg-stone-100 border border-stone-200 text-xl cursor-pointer`} onClick={() => setOpenIconPickerId(openIconPickerId === link.id ? null : link.id)}>
                                                                 {link.thumbnailUrl.replace('data:emoji,', '')}
                                                             </div>
                                                         ) : link.thumbnailUrl ? (
-                                                            <img src={link.thumbnailUrl} className="w-10 h-10 rounded-lg object-cover border border-stone-200 bg-white cursor-pointer" onClick={() => setOpenIconPickerId(openIconPickerId === link.id ? null : link.id)} />
+                                                            <img src={link.thumbnailUrl} className={`w-10 h-10 ${iconShapeClass} object-cover border border-stone-200 bg-white cursor-pointer`} onClick={() => setOpenIconPickerId(openIconPickerId === link.id ? null : link.id)} />
                                                         ) : (
-                                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center border cursor-pointer ${isProduct ? 'bg-purple-100 text-purple-600 border-purple-200' : isSupport ? 'bg-pink-100 text-pink-600 border-pink-200' : 'bg-stone-100 text-stone-500 border-stone-200'}`} onClick={() => setOpenIconPickerId(openIconPickerId === link.id ? null : link.id)}>
+                                                            <div className={`w-10 h-10 ${iconShapeClass} flex items-center justify-center border cursor-pointer ${isProduct ? 'bg-purple-100 text-purple-600 border-purple-200' : isSupport ? 'bg-pink-100 text-pink-600 border-pink-200' : 'bg-stone-100 text-stone-500 border-stone-200'}`} onClick={() => setOpenIconPickerId(openIconPickerId === link.id ? null : link.id)}>
                                                                 {isProduct ? <FileText size={20}/> : isSupport ? <Heart size={20}/> : <LinkIcon size={20}/>}
                                                             </div>
                                                         )}
-                                                        <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 cursor-pointer transition-opacity" onClick={() => setOpenIconPickerId(openIconPickerId === link.id ? null : link.id)}>
+                                                        <div className={`absolute inset-0 bg-black/50 ${iconShapeClass} flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 cursor-pointer transition-opacity`} onClick={() => setOpenIconPickerId(openIconPickerId === link.id ? null : link.id)}>
                                                             <Camera size={14} className="text-white"/>
                                                         </div>
-                                                    </div>
+                                                        </div>
+                                                        );
+                                                    })()}
                                                     {openIconPickerId === link.id && (
+                                                        <>
+                                                        <div className="fixed inset-0 z-10" onClick={() => setOpenIconPickerId(null)} />
                                                         <div className="absolute z-20 mt-1 p-2 bg-white border border-stone-200 rounded-xl shadow-lg w-56">
                                                             <div className="flex flex-wrap gap-1 mb-2">
                                                                 {['🔗','📺','📸','🎵','🎮','📝','💼','🛒','📧','💬','🌐','🎨','📱','🎬','🏆','🎯','🚀','✨','💡','🎁'].map(em => (
@@ -3921,15 +3998,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             </div>
                                                             <div className="flex gap-1 pt-1 border-t border-stone-100">
                                                                 <button onClick={() => { document.getElementById(`thumb-${link.id}`)?.click(); setOpenIconPickerId(null); }} className="flex-1 px-2 py-1 text-[10px] bg-stone-100 hover:bg-stone-200 rounded-lg font-medium text-stone-600 flex items-center justify-center gap-1 transition-colors"><Camera size={10}/> Upload</button>
-                                                                {link.thumbnailUrl && <button onClick={() => { handleUpdateLink(link.id, 'thumbnailUrl', ''); setOpenIconPickerId(null); }} className="px-2 py-1 text-[10px] bg-red-50 hover:bg-red-100 rounded-lg font-medium text-red-500 transition-colors">Remove</button>}
+                                                                <button onClick={() => { handleUpdateLink(link.id, 'thumbnailUrl', ''); setOpenIconPickerId(null); }} className="px-2 py-1 text-[10px] bg-red-50 hover:bg-red-100 rounded-lg font-medium text-red-500 transition-colors">Remove</button>
                                                             </div>
                                                             {/* Shape Selector */}
                                                             <div className="flex gap-1 pt-1 mt-1 border-t border-stone-100">
                                                                 {([['circle','●'],['rounded','▢'],['square','■']] as const).map(([shape, icon]) => (
-                                                                    <button key={shape} onClick={() => handleUpdateLink(link.id, 'iconShape', link.iconShape === shape ? undefined : shape)} className={`flex-1 py-1 text-[10px] rounded-lg font-medium transition-colors ${link.iconShape === shape || (!link.iconShape && shape === 'circle') ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>{icon}</button>
+                                                                    <button key={shape} onClick={() => handleUpdateLink(link.id, 'iconShape', link.iconShape === shape ? undefined : shape)} className={`flex-1 py-1 text-[10px] rounded-lg font-medium transition-colors ${link.iconShape === shape || (!link.iconShape && shape === 'square') ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>{icon}</button>
                                                                 ))}
                                                             </div>
                                                         </div>
+                                                        </>
                                                     )}
                                                     <input type="file" id={`thumb-${link.id}`} className="hidden" accept="image/*" onChange={(e) => handleLinkThumbnailUpload(e, link.id)} />
                                                 </div>

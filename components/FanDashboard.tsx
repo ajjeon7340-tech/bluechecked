@@ -2332,7 +2332,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     </div>
                                 );
                             })}
-                            <div className="h-4"></div>
+                            <div className="h-16"></div>
                           </div>
                         </div>
 
