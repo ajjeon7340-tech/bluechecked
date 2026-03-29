@@ -193,7 +193,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
       </section>
 
       {/* Featured Conversations - Weverse Magazine Style */}
-      <section className="bg-white py-24 border-t border-stone-100">
+      <section className="bg-white py-16 sm:py-24 border-t border-stone-100">
         <div className="max-w-6xl mx-auto px-6">
           {/* Section Header */}
           <div className="text-center mb-16">
@@ -341,7 +341,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
       </section>
 
       {/* How It Works */}
-      <section ref={howItWorksRef} className="py-28 bg-gradient-to-b from-stone-50 to-[#FAFAF9] relative">
+      <section ref={howItWorksRef} className="py-16 sm:py-28 bg-gradient-to-b from-stone-50 to-[#FAFAF9] relative">
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true" style={{
           backgroundImage: 'linear-gradient(to right, rgba(168,162,158,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,162,158,0.08) 1px, transparent 1px)',
           backgroundSize: '64px 64px',
@@ -349,9 +349,9 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
           WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 100%)',
         }} />
         <div className="max-w-6xl mx-auto px-6 relative">
-          <div className="text-center mb-20">
+          <div className="text-center mb-10 sm:mb-20">
             <p className="text-xs font-bold text-stone-400 uppercase tracking-[0.18em] mb-4">{t('landing.simpleTransparent')}</p>
-            <h2 className="text-3xl sm:text-5xl font-semibold text-stone-900 tracking-tight mb-4">
+            <h2 className="text-2xl sm:text-5xl font-semibold text-stone-900 tracking-tight mb-4">
               {t('landing.howItWorks')}
             </h2>
             <svg viewBox="0 0 200 12" width="200" height="12" className="mx-auto" fill="none">
@@ -508,12 +508,12 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
 
 
       {/* Trust & Safety - Premium Feel */}
-      <section className="bg-white py-24 border-t border-stone-100">
+      <section className="bg-white py-16 sm:py-24 border-t border-stone-100">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
             {/* Left: Visual */}
             <div className="relative">
-              <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-[2.5rem] p-8 lg:p-12">
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-[2.5rem] p-6 lg:p-12">
                 {/* Escrow Visualization */}
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100 mb-6">
                   <div className="flex items-center justify-between mb-4">
@@ -587,9 +587,9 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
       </section>
 
       {/* Digital Products - Soft Promotion */}
-      <section className="py-24 bg-white border-t border-stone-100">
+      <section className="py-16 sm:py-24 bg-white border-t border-stone-100">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
             {/* Left: Text */}
             <div className="space-y-8">
               <div>
@@ -624,7 +624,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
 
             {/* Right: Visual — exact public profile card layout */}
             <div className="relative">
-              <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-[2.5rem] p-8">
+              <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-[2.5rem] p-6">
                 <div className="grid gap-3">
                   {/* Digital Product card */}
                   <div className="w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden bg-gradient-to-r from-purple-50/40 to-violet-50/20 border-purple-100 shadow-sm">
@@ -678,12 +678,12 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
       </section>
 
       {/* Link Management - Business Hub */}
-      <section className="py-24 bg-[#FAFAF9] border-t border-stone-100">
+      <section className="py-16 sm:py-24 bg-[#FAFAF9] border-t border-stone-100">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
             {/* Left: Visual — grouped link sections */}
             <div className="relative order-2 lg:order-1">
-              <div className="bg-gradient-to-br from-stone-100 to-stone-50 rounded-[2.5rem] p-8">
+              <div className="bg-gradient-to-br from-stone-100 to-stone-50 rounded-[2.5rem] p-6">
                 {/* Section Header */}
                 <div className="mb-4">
                   <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3">My Links</div>
@@ -793,7 +793,7 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
       </section>
 
       {/* Final CTA - Warm & Inviting */}
-      <section className="py-24 bg-gradient-to-b from-amber-50 to-orange-50">
+      <section className="py-16 sm:py-24 bg-gradient-to-b from-amber-50 to-orange-50">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-3xl sm:text-4xl font-semibold text-stone-900 tracking-tight mb-6">
             {t('landing.readyToCreate')}
@@ -819,14 +819,14 @@ export const LandingPage: React.FC<Props> = ({ onLoginClick, onDemoClick }) => {
       </section>
 
       {/* Footer - Minimal & Clean */}
-      <footer className="bg-white border-t border-stone-100 py-12">
+      <footer className="bg-white border-t border-stone-100 py-8 sm:py-12">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
               <DiemLogo size={16} className="text-stone-800" />
             </div>
 
-            <div className="flex items-center gap-8 text-sm text-stone-500">
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-stone-500">
               <a href="#" className="hover:text-stone-900 transition-colors">{t('landing.privacy')}</a>
               <a href="/terms" className="hover:text-stone-900 transition-colors">{t('landing.terms')}</a>
               <a href="#" className="hover:text-stone-900 transition-colors">{t('landing.twitter')}</a>
