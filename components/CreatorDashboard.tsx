@@ -2078,53 +2078,40 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                      {/* CONTENT FOR FINANCE */}
                      {currentView === 'FINANCE' && (
                          <>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in zoom-in-95 duration-300">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 animate-in fade-in zoom-in-95 duration-300">
 
-                                {/* 1. Total Revenue Card */}
-                                <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><TrendingUp size={14}/></div>
-                                        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{t('creator.lifetimeRevenue')}</span>
-                                    </div>
-                                    <div className="text-2xl font-bold text-stone-900 tracking-tight flex items-baseline gap-1">
-                                        {stats.totalEarnings.toLocaleString()}
-                                        <span className="text-sm font-medium text-stone-400">{t('common.credits').toLowerCase()}</span>
-                                    </div>
-                                    <p className="text-[11px] text-emerald-600 mt-1.5 font-medium">{t('creator.approxUsd', { amount: (stats.totalEarnings / 100).toFixed(2) })}</p>
-                                </div>
-
-                                {/* 2. Current Credits Card */}
-                                <div className="bg-white p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Wallet size={14}/></div>
-                                        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{t('creator.availableBalanceLabel')}</span>
+                                {/* 1. Available Balance Card (primary) */}
+                                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 hover:shadow-sm transition-all">
+                                    <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                                        <div className="p-1.5 bg-emerald-50 text-emerald-500 rounded-lg"><Wallet size={14}/></div>
+                                        <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider leading-tight">{t('creator.availableBalanceLabel')}</span>
                                     </div>
                                     {isLoading ? (
                                         <div className="flex items-center gap-2 text-stone-400">
-                                            <RefreshCw size={16} className="animate-spin" />
-                                            <span className="text-sm font-medium">{t('creator.calculatingBalance') || 'Calculating...'}</span>
+                                            <RefreshCw size={14} className="animate-spin" />
+                                            <span className="text-xs font-medium">{t('creator.calculatingBalance') || 'Calculating...'}</span>
                                         </div>
                                     ) : (
                                         <>
-                                            <div className="text-2xl font-bold text-stone-900 tracking-tight flex items-baseline gap-1">
+                                            <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight flex items-baseline gap-1">
                                                 {/* @ts-ignore */}
                                                 {stats.availableBalance.toLocaleString()}
-                                                <span className="text-sm font-medium text-stone-400">{t('common.credits').toLowerCase()}</span>
+                                                <span className="text-xs sm:text-sm font-medium text-stone-400">{t('common.credits').toLowerCase()}</span>
                                             </div>
-                                            <p className="text-[11px] text-emerald-600 mt-1.5 font-medium">{t('creator.readyToPayout')}</p>
+                                            <p className="text-[10px] sm:text-[11px] text-emerald-600 mt-1 sm:mt-1.5 font-medium">{t('creator.readyToPayout')}</p>
                                             {/* @ts-ignore */}
                                             {stats.holdEarnings > 0 && (
                                                 <div className="mt-2 pt-2 border-t border-stone-100">
-                                                    <p className="text-[11px] text-amber-600 font-medium flex items-center gap-1">
+                                                    <p className="text-[10px] text-amber-600 font-medium flex items-center gap-1">
                                                         <span>⏳</span>
                                                         {/* @ts-ignore */}
-                                                        {stats.holdEarnings.toLocaleString()} credits in 2-day hold
+                                                        {stats.holdEarnings.toLocaleString()} on hold
                                                     </p>
                                                     {/* @ts-ignore */}
                                                     {stats.nextReleaseAt && (
-                                                        <p className="text-[10px] text-stone-400 mt-0.5">
+                                                        <p className="text-[9px] text-stone-400 mt-0.5">
                                                             {/* @ts-ignore */}
-                                                            Next release: {new Date(stats.nextReleaseAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                            Releases: {new Date(stats.nextReleaseAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                                         </p>
                                                     )}
                                                 </div>
@@ -2133,17 +2120,30 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     )}
                                 </div>
 
+                                {/* 2. Lifetime Revenue Card */}
+                                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 hover:shadow-sm transition-all">
+                                    <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                                        <div className="p-1.5 bg-stone-100 text-stone-400 rounded-lg"><TrendingUp size={14}/></div>
+                                        <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider leading-tight">{t('creator.lifetimeRevenue')}</span>
+                                    </div>
+                                    <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight flex items-baseline gap-1">
+                                        {stats.totalEarnings.toLocaleString()}
+                                        <span className="text-xs sm:text-sm font-medium text-stone-400">{t('common.credits').toLowerCase()}</span>
+                                    </div>
+                                    <p className="text-[10px] sm:text-[11px] text-emerald-600 mt-1 sm:mt-1.5 font-medium">{t('creator.approxUsd', { amount: (stats.totalEarnings / 100).toFixed(2) })}</p>
+                                </div>
+
                                 {/* 3. Withdraw Action Card */}
-                                <div className="bg-white p-5 rounded-2xl border border-stone-200/60 flex flex-col justify-center hover:shadow-sm transition-all">
+                                <div className="col-span-2 md:col-span-1 bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 flex flex-col justify-center hover:shadow-sm transition-all">
                                     <div className="text-center">
-                                        <p className="text-sm font-semibold text-stone-600 mb-4">{t('creator.convertWithdraw')}</p>
+                                        <p className="text-xs sm:text-sm font-semibold text-stone-600 mb-3 sm:mb-4">{t('creator.convertWithdraw')}</p>
                                         <Button
                                             onClick={handleWithdraw}
                                             isLoading={isWithdrawing}
                                             // @ts-ignore
                                             disabled={isLoading || stats.availableBalance === 0}
                                             fullWidth
-                                            className="bg-stone-900 text-white hover:bg-stone-800 h-12 shadow-md flex items-center justify-center gap-2"
+                                            className="bg-stone-900 text-white hover:bg-stone-800 h-11 sm:h-12 shadow-md flex items-center justify-center gap-2"
                                         >
                                             <CreditCard size={16} />
                                             {isLoading
@@ -2152,7 +2152,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 : t('creator.withdrawAmount', { amount: (stats.availableBalance / 100).toFixed(2) })
                                             }
                                         </Button>
-                                        <p className="text-[10px] text-stone-400 mt-3 text-center">
+                                        <p className="text-[10px] text-stone-400 mt-2 sm:mt-3 text-center">
                                             {t('creator.transferDays')}
                                         </p>
                                     </div>
@@ -2160,7 +2160,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             </div>
 
                             {/* Payout Method (Stripe) */}
-                            <div className="bg-white p-6 rounded-2xl border border-stone-200/60 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-bottom-2">
+                            <div className="bg-white p-4 sm:p-6 rounded-2xl border border-stone-200/60 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-bottom-2">
                                 <div className="flex items-center gap-4">
                                     <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${isStripeConnected ? 'bg-green-100 text-green-600' : 'bg-stone-100 text-stone-500'}`}>
                                         {isStripeConnected ? <Check size={24} /> : <CreditCard size={24} />}
@@ -2234,9 +2234,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 const displayedFinance = txns.slice((financePage - 1) * ITEMS_PER_PAGE, financePage * ITEMS_PER_PAGE);
                                 return (
                             <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-3">
-                                <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
+                                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-stone-100 flex items-center justify-between">
                                      <h3 className="text-sm font-bold text-stone-900">{t('creator.creditHistory')}</h3>
-                                     <Button variant="ghost" size="sm" className="text-xs"><ExternalLink size={14} className="mr-1"/> {t('creator.exportCsv')}</Button>
+                                     <Button variant="ghost" size="sm" className="text-xs hidden sm:flex"><ExternalLink size={14} className="mr-1"/> {t('creator.exportCsv')}</Button>
                                 </div>
                                 <div className="hidden md:block overflow-x-auto">
                                    <table className="w-full text-left text-sm whitespace-nowrap">
