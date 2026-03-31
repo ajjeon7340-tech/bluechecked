@@ -2020,7 +2020,10 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                                 // Sort conversation by timestamp
                                 const sortedConversation = [...msg.conversation].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-                                const [firstChat, ...restChats] = sortedConversation;
+                                // If first message is from CREATOR (e.g. Diem welcome), don't treat it as fan's message
+                                const firstIsCreator = sortedConversation[0]?.role === 'CREATOR';
+                                const firstChat = firstIsCreator ? undefined : sortedConversation[0];
+                                const restChats = firstIsCreator ? sortedConversation : sortedConversation.slice(1);
 
                                 return (
                                     <div key={msg.id} className="px-3 sm:px-4 py-2 relative">
