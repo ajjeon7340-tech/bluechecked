@@ -191,11 +191,12 @@ const ProfilePreviewCard: React.FC<{ creator: CreatorProfile; compact?: boolean 
                     </div>
                 </div>
                 {/* Avatar + bio + name */}
-                <div className="px-3 pb-4 flex flex-col items-center text-center gap-1.5">
-                    <div className="relative flex flex-col items-center">
-                        {/* Bio thought bubble */}
+                <div className="px-3 pb-4 flex flex-col items-center text-center gap-2">
+                    {/* Bio bubble is absolutely positioned above avatar — add top padding to make room */}
+                    <div className={`relative flex flex-col items-center ${(creator.showBio ?? true) && creator.bio ? (compact ? 'mt-10' : 'mt-14') : ''}`}>
+                        {/* Bio thought bubble — absolute, floats above avatar */}
                         {(creator.showBio ?? true) && creator.bio && (
-                            <div className="mb-1" style={{ maxWidth: compact ? '160px' : '200px' }}>
+                            <div className="absolute bottom-[80%] left-1/2 -translate-x-1/2 z-30" style={{ width: 'max-content', maxWidth: compact ? '160px' : '200px' }}>
                                 <div className="bg-white rounded-[16px] px-3 py-2 shadow-sm border border-stone-200/60">
                                     <p className={`${compact ? 'text-[10px]' : 'text-xs'} text-stone-800 leading-snug font-medium text-center`}>
                                         {creator.bio.length > (compact ? 60 : 100) ? creator.bio.slice(0, compact ? 60 : 100) + '…' : creator.bio}
@@ -214,7 +215,7 @@ const ProfilePreviewCard: React.FC<{ creator: CreatorProfile; compact?: boolean 
                                 : <div className="w-full h-full rounded-full bg-stone-100 flex items-center justify-center"><User size={compact ? 18 : 28} className="text-stone-300" /></div>
                             }
                         </div>
-                        {/* Like / rating badges */}
+                        {/* Like / rating badges — overlap bottom of avatar */}
                         <div className="flex items-center gap-1.5 -mt-3 relative z-10">
                             {(creator.showLikes ?? true) && (
                                 <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-full border border-stone-100 text-[10px] font-bold text-stone-500 shadow-sm">
@@ -228,16 +229,16 @@ const ProfilePreviewCard: React.FC<{ creator: CreatorProfile; compact?: boolean 
                             )}
                         </div>
                     </div>
-                    {/* Name + handle */}
-                    <div>
+                    {/* Name + handle — shown clearly below badges */}
+                    <div className="mt-1">
                         <p className={`${compact ? 'text-sm' : 'text-base'} font-bold text-stone-900 leading-tight`}>{creator.displayName || 'Your Name'}</p>
                         {creator.handle && creator.handle !== '@user' && (
-                            <p className={`${compact ? 'text-[10px]' : 'text-xs'} text-stone-500`}>{creator.handle}</p>
+                            <p className={`${compact ? 'text-[10px]' : 'text-xs'} text-stone-500 mt-0.5`}>{creator.handle}</p>
                         )}
                     </div>
                     {/* Social platforms */}
                     {platforms.length > 0 && (
-                        <div className="flex items-center justify-center gap-2 flex-wrap mt-0.5">
+                        <div className="flex items-center justify-center gap-2 flex-wrap">
                             {platforms.slice(0, compact ? 5 : 8).map(p => {
                                 const pid = typeof p === 'string' ? p : p.id;
                                 return (
