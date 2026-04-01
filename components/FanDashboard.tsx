@@ -2149,6 +2149,9 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                             const isLast = idx === restChats.length - 1;
                                             const showLine = !isLast || isPending;
 
+                                            // For Diem→fan threads, CREATOR = sender (Diem), FAN = current user
+                                            const creatorName = firstIsCreator ? (msg.senderName || 'DIEM') : (msg.creatorName || 'Creator');
+                                            const creatorAvatar = firstIsCreator ? msg.senderAvatarUrl : msg.creatorAvatarUrl;
                                             return (
                                             <div key={chat.id} className="flex mt-4 relative z-10">
                                                 {/* Left: Avatar + Thread Line */}
@@ -2156,10 +2159,10 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     {showLine && (
                                                         <div className="absolute left-[17px] top-11 -bottom-1 w-0.5 bg-stone-200"></div>
                                                     )}
-                                                    <div className={`w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ${(isCreator ? msg.creatorAvatarUrl : currentUser?.avatarUrl) ? 'cursor-pointer' : ''}`} onClick={() => { const url = isCreator ? msg.creatorAvatarUrl : currentUser?.avatarUrl; if (url) setEnlargedImage(url); }}>
+                                                    <div className={`w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ${(isCreator ? creatorAvatar : currentUser?.avatarUrl) ? 'cursor-pointer' : ''}`} onClick={() => { const url = isCreator ? creatorAvatar : currentUser?.avatarUrl; if (url) setEnlargedImage(url); }}>
                                                         {isCreator ? (
-                                                            msg.creatorAvatarUrl ? (
-                                                                <img src={msg.creatorAvatarUrl} alt={msg.creatorName} className="w-full h-full object-cover" />
+                                                            creatorAvatar ? (
+                                                                <img src={creatorAvatar} alt={creatorName} className="w-full h-full object-cover" />
                                                             ) : (
                                                                 <div className="w-full h-full bg-stone-100 flex items-center justify-center"><Verified size={22} /></div>
                                                             )
@@ -2179,7 +2182,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                                     <div className="flex items-center justify-between mb-2 ml-1">
                                                         <div className="flex items-center gap-2">
                                                                 <span className="font-semibold text-sm text-stone-900">
-                                                                    {isCreator ? <ResponsiveName name={msg.creatorName || 'Creator'} /> : <ResponsiveName name={currentUser?.name || 'You'} />}
+                                                                    {isCreator ? <ResponsiveName name={creatorName} /> : <ResponsiveName name={currentUser?.name || 'You'} />}
                                                                 </span>
                                                                 {isCreator ? (
                                                                     <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-1 rounded-full overflow-visible">
