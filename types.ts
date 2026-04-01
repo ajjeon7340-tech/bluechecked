@@ -95,6 +95,7 @@ export interface ChatMessage {
 
 export interface Message {
   id: string;
+  senderId?: string;
   senderName: string;
   senderEmail: string;
   senderAvatarUrl?: string;

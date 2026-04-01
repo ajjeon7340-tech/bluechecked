@@ -662,8 +662,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                   name: url.split('/').pop()?.split('?')[0] || 'file'
               }))
               : undefined;
-          const followUpPrice = currentCreator?.pricePerMessage ?? latestMessage.amount;
-          await sendMessage(latestMessage.creatorId || '', latestMessage.senderName, latestMessage.senderEmail, followUpText, followUpPrice, attachments);
+          // For Diem→fan threads, creatorId = fan's own ID; the real target is the sender (Diem admin)
+          const isDiemThread = latestMessage.creatorId === currentUser?.id;
+          const targetCreatorId = isDiemThread ? (latestMessage.senderId || latestMessage.creatorId || '') : (latestMessage.creatorId || '');
+          const followUpPrice = isDiemThread ? 0 : (currentCreator?.pricePerMessage ?? latestMessage.amount);
+          await sendMessage(targetCreatorId, latestMessage.senderName, latestMessage.senderEmail, followUpText, followUpPrice, attachments);
           // Subscription will refresh message list via debounced loadMessages(true)
           setShowFollowUpInput(false);
           setFollowUpText('');
@@ -1977,42 +1980,43 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                             })()
                         )}
 
+                        {/* Session Pagination - outside scroll area so content doesn't go above it */}
+                        {threadMessages.length > 0 && (
+                            <div className="flex items-center justify-between px-4 py-2 bg-stone-50 border-b border-stone-100 flex-shrink-0 z-10">
+                                <button
+                                    onClick={() => setChatSessionIndex(effectiveSessionIndex - 1)}
+                                    disabled={effectiveSessionIndex <= 0}
+                                    className="p-1.5 rounded-full hover:bg-stone-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                    <ChevronLeft size={16} className="text-stone-600" />
+                                </button>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">
+                                        {t('fan.sessionOf', { current: effectiveSessionIndex + 1, total: threadMessages.length }) || `Session ${effectiveSessionIndex + 1} of ${threadMessages.length}`}
+                                    </span>
+                                    {(() => {
+                                        const ts = threadMessages[effectiveSessionIndex]?.createdAt || threadMessages[effectiveSessionIndex]?.conversation?.[0]?.timestamp;
+                                        if (!ts) return null;
+                                        const diff = Date.now() - new Date(ts).getTime();
+                                        const mins = Math.floor(diff / 60000);
+                                        const hrs = Math.floor(mins / 60);
+                                        const days = Math.floor(hrs / 24);
+                                        const elapsed = days > 0 ? `${days}d ${hrs % 24}h ago` : hrs > 0 ? `${hrs}h ${mins % 60}m ago` : `${mins}m ago`;
+                                        return <span className="text-[9px] text-stone-400">{new Date(ts).toLocaleDateString([], { month: 'short', day: 'numeric' })} · {elapsed}</span>;
+                                    })()}
+                                </div>
+                                <button
+                                    onClick={() => setChatSessionIndex(effectiveSessionIndex + 1)}
+                                    disabled={effectiveSessionIndex >= threadMessages.length - 1}
+                                    className="p-1.5 rounded-full hover:bg-stone-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                    <ChevronRight size={16} className="text-stone-600" />
+                                </button>
+                            </div>
+                        )}
+
                         {/* Messages - Threads Style */}
                         <div className="flex-1 overflow-y-auto bg-white" ref={scrollRef}>
-                             {/* Session Pagination - full width */}
-                             {threadMessages.length > 0 && (
-                                 <div className="flex items-center justify-between px-4 py-2 bg-stone-50 border-b border-stone-100 sticky top-0 z-10">
-                                     <button
-                                         onClick={() => setChatSessionIndex(effectiveSessionIndex - 1)}
-                                         disabled={effectiveSessionIndex <= 0}
-                                         className="p-1.5 rounded-full hover:bg-stone-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                     >
-                                         <ChevronLeft size={16} className="text-stone-600" />
-                                     </button>
-                                     <div className="flex flex-col items-center">
-                                         <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">
-                                             {t('fan.sessionOf', { current: effectiveSessionIndex + 1, total: threadMessages.length }) || `Session ${effectiveSessionIndex + 1} of ${threadMessages.length}`}
-                                         </span>
-                                         {(() => {
-                                             const ts = threadMessages[effectiveSessionIndex]?.createdAt || threadMessages[effectiveSessionIndex]?.conversation?.[0]?.timestamp;
-                                             if (!ts) return null;
-                                             const diff = Date.now() - new Date(ts).getTime();
-                                             const mins = Math.floor(diff / 60000);
-                                             const hrs = Math.floor(mins / 60);
-                                             const days = Math.floor(hrs / 24);
-                                             const elapsed = days > 0 ? `${days}d ${hrs % 24}h ago` : hrs > 0 ? `${hrs}h ${mins % 60}m ago` : `${mins}m ago`;
-                                             return <span className="text-[9px] text-stone-400">{new Date(ts).toLocaleDateString([], { month: 'short', day: 'numeric' })} · {elapsed}</span>;
-                                         })()}
-                                     </div>
-                                     <button
-                                         onClick={() => setChatSessionIndex(effectiveSessionIndex + 1)}
-                                         disabled={effectiveSessionIndex >= threadMessages.length - 1}
-                                         className="p-1.5 rounded-full hover:bg-stone-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                     >
-                                         <ChevronRight size={16} className="text-stone-600" />
-                                     </button>
-                                 </div>
-                             )}
                           <div className="pt-3 max-w-md mx-auto px-1">
                              {threadMessages.slice(effectiveSessionIndex, effectiveSessionIndex + 1).map((msg) => {
                                 const isPending = msg.status === 'PENDING';

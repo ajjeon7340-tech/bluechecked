@@ -162,6 +162,7 @@ const mapDbMessageToAppMessage = (m: any, currentUserId: string): Message => {
 
     return {
         id: m.id,
+        senderId: m.sender_id,
         senderName: m.sender?.display_name || 'Fan',
         senderEmail: m.sender?.email || '',
         senderAvatarUrl: m.sender?.avatar_url,
