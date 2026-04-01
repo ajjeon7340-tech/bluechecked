@@ -197,6 +197,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Mobile Sidebar Toggle
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
 
   // Premium State
   const [showPremiumModal, setShowPremiumModal] = useState(false);
@@ -3443,14 +3444,26 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
             {/* --- VIEW: SETTINGS (Profile) --- */}
             {currentView === 'SETTINGS' && (
-                <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2">
-                    <div className="flex items-center justify-between">
+                <div className="animate-in fade-in slide-in-from-bottom-2 xl:max-w-[1200px] mx-auto">
+                    <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-2">
                             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0"><Menu size={24} /></button>
                             <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.profileSettings')}</h2>
                         </div>
-                        <TopNav hideBurger />
+                        <div className="flex items-center gap-3">
+                            {/* Mobile preview button */}
+                            <button
+                                onClick={() => setShowMobilePreview(true)}
+                                className="xl:hidden flex items-center gap-1.5 px-3 py-1.5 bg-stone-900 text-white rounded-lg text-xs font-semibold hover:bg-stone-700 transition-colors"
+                            >
+                                <Eye size={14} /> Preview
+                            </button>
+                            <TopNav hideBurger />
+                        </div>
                     </div>
+                    {/* Two-column layout: settings left, live preview right (desktop only) */}
+                    <div className="xl:grid xl:grid-cols-[minmax(0,640px)_340px] xl:gap-8 xl:items-start">
+                    <div className="space-y-6">
                     {/* ... (Existing Settings Code) ... */}
                     {/* Magical Success Message */}
                     {showSaveSuccess && (
@@ -4320,6 +4333,135 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             <Button onClick={handleSaveProfile} isLoading={isSavingProfile} className="px-8">Save Changes</Button>
                         </div>
                     </div>
+                </div>
+
+                    {/* Desktop Live Preview Panel */}
+                    <div className="hidden xl:block xl:sticky xl:top-6">
+                        <div className="bg-stone-100 rounded-2xl p-4">
+                            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-3 text-center">Live Preview</p>
+                            {/* Browser chrome */}
+                            <div className="bg-stone-200 rounded-t-xl px-3 py-2 flex items-center gap-1.5">
+                                <div className="w-2 h-2 rounded-full bg-red-400/70" />
+                                <div className="w-2 h-2 rounded-full bg-yellow-400/70" />
+                                <div className="w-2 h-2 rounded-full bg-green-400/70" />
+                                <div className="flex-1 bg-white rounded text-[9px] text-stone-400 text-center py-0.5 truncate px-2">
+                                    diem.ee/{(editedCreator.handle || '').replace('@', '')}
+                                </div>
+                            </div>
+                            {/* Profile preview */}
+                            <div className="overflow-y-auto max-h-[calc(100vh-200px)] rounded-b-xl" style={{ backgroundColor: editedCreator.bannerGradient || '#ffffff' }}>
+                                <div className="p-4 space-y-3">
+                                    {/* Header row */}
+                                    <div className="flex items-center justify-between">
+                                        <DiemLogo size={16} className="text-stone-700" />
+                                    </div>
+                                    {/* Avatar + name */}
+                                    <div className="flex flex-col items-center text-center gap-2 pt-1">
+                                        {editedCreator.bio && (editedCreator.showBio ?? true) && (
+                                            <div className="bg-white rounded-2xl px-3 py-2 shadow-sm border border-stone-200/60 text-[11px] text-stone-700 max-w-[200px]">
+                                                {editedCreator.bio.slice(0, 100)}{editedCreator.bio.length > 100 ? '…' : ''}
+                                            </div>
+                                        )}
+                                        <div className="w-16 h-16 rounded-full overflow-hidden border border-stone-100 shadow-sm bg-white flex-shrink-0">
+                                            {editedCreator.avatarUrl
+                                                ? <img src={editedCreator.avatarUrl} className="w-full h-full object-cover" alt="" />
+                                                : <div className="w-full h-full bg-stone-100 flex items-center justify-center"><User size={24} className="text-stone-300" /></div>
+                                            }
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-stone-900 text-sm">{editedCreator.displayName || 'Your Name'}</p>
+                                            <p className="text-xs text-stone-500">{editedCreator.handle || '@handle'}</p>
+                                        </div>
+                                        {/* Social platforms */}
+                                        {(editedCreator.platforms || []).length > 0 && (
+                                            <div className="flex gap-1.5 flex-wrap justify-center">
+                                                {(editedCreator.platforms || []).slice(0, 6).map(p => (
+                                                    <div key={p.platform} className="w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm border border-stone-100 text-[10px]">
+                                                        {p.platform === 'youtube' ? '▶' : p.platform === 'instagram' ? '📷' : p.platform === 'x' ? '✕' : p.platform === 'tiktok' ? '♪' : '🔗'}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {/* DIEM button */}
+                                    {editedCreator.diemEnabled !== false && (
+                                        <div className="rounded-xl py-2 px-4 text-center text-xs font-semibold flex items-center justify-center gap-1.5" style={{ backgroundColor: editedCreator.diemButtonColor || '#1c1917', color: '#ffffff' }}>
+                                            {editedCreator.diemIcon && <span className="text-sm">{editedCreator.diemIcon}</span>}
+                                            <span>Ask me · {editedCreator.pricePerMessage} credits</span>
+                                        </div>
+                                    )}
+                                    {/* Links */}
+                                    {(editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden).slice(0, 6).map(link => (
+                                        <div key={link.id} className="bg-white rounded-xl px-3 py-2.5 flex items-center gap-2 shadow-sm border border-stone-100/80">
+                                            {link.iconUrl
+                                                ? <img src={link.iconUrl} className={`w-6 h-6 object-cover flex-shrink-0 ${link.iconShape === 'circle' ? 'rounded-full' : link.iconShape === 'rounded' ? 'rounded-md' : 'rounded-none'}`} alt="" />
+                                                : <div className="w-6 h-6 bg-stone-100 rounded-full flex items-center justify-center flex-shrink-0"><LinkIcon size={10} className="text-stone-400" /></div>
+                                            }
+                                            <span className="text-xs font-medium text-stone-800 truncate">{link.title}</span>
+                                            {link.price ? <span className="ml-auto text-[10px] font-bold text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded-full flex-shrink-0">{link.price}cr</span> : null}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </div>{/* end two-col grid */}
+
+                    {/* Mobile Preview Sheet */}
+                    {showMobilePreview && (
+                        <div className="fixed inset-0 z-[100] bg-black/60 flex items-end xl:hidden animate-in fade-in" onClick={() => setShowMobilePreview(false)}>
+                            <div className="bg-white w-full max-h-[90vh] overflow-y-auto rounded-t-3xl animate-in slide-in-from-bottom-4" onClick={e => e.stopPropagation()}>
+                                <div className="sticky top-0 bg-white border-b border-stone-100 px-4 py-3 flex items-center justify-between rounded-t-3xl">
+                                    <p className="font-bold text-stone-900 text-sm">Profile Preview</p>
+                                    <button onClick={() => setShowMobilePreview(false)} className="p-1 rounded-full hover:bg-stone-100"><X size={18} /></button>
+                                </div>
+                                <div style={{ backgroundColor: editedCreator.bannerGradient || '#ffffff' }} className="min-h-[60vh]">
+                                    <div className="p-4 space-y-3 max-w-md mx-auto">
+                                        {/* Header row */}
+                                        <div className="flex items-center justify-between">
+                                            <DiemLogo size={18} className="text-stone-700" />
+                                        </div>
+                                        {/* Avatar + name */}
+                                        <div className="flex flex-col items-center text-center gap-2 pt-1">
+                                            {editedCreator.bio && (editedCreator.showBio ?? true) && (
+                                                <div className="bg-white rounded-2xl px-4 py-2.5 shadow-sm border border-stone-200/60 text-xs text-stone-700 max-w-[260px]">
+                                                    {editedCreator.bio}
+                                                </div>
+                                            )}
+                                            <div className="w-20 h-20 rounded-full overflow-hidden border border-stone-100 shadow-sm bg-white">
+                                                {editedCreator.avatarUrl
+                                                    ? <img src={editedCreator.avatarUrl} className="w-full h-full object-cover" alt="" />
+                                                    : <div className="w-full h-full bg-stone-100 flex items-center justify-center"><User size={28} className="text-stone-300" /></div>
+                                                }
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-stone-900">{editedCreator.displayName || 'Your Name'}</p>
+                                                <p className="text-sm text-stone-500">{editedCreator.handle || '@handle'}</p>
+                                            </div>
+                                        </div>
+                                        {/* DIEM button */}
+                                        {editedCreator.diemEnabled !== false && (
+                                            <div className="rounded-xl py-2.5 px-4 text-center text-sm font-semibold flex items-center justify-center gap-2" style={{ backgroundColor: editedCreator.diemButtonColor || '#1c1917', color: '#ffffff' }}>
+                                                {editedCreator.diemIcon && <span>{editedCreator.diemIcon}</span>}
+                                                <span>Ask me · {editedCreator.pricePerMessage} credits</span>
+                                            </div>
+                                        )}
+                                        {/* Links */}
+                                        {(editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden).map(link => (
+                                            <div key={link.id} className="bg-white rounded-xl px-4 py-3 flex items-center gap-3 shadow-sm border border-stone-100/80">
+                                                {link.iconUrl
+                                                    ? <img src={link.iconUrl} className={`w-7 h-7 object-cover flex-shrink-0 ${link.iconShape === 'circle' ? 'rounded-full' : link.iconShape === 'rounded' ? 'rounded-md' : 'rounded-none'}`} alt="" />
+                                                    : <div className="w-7 h-7 bg-stone-100 rounded-full flex items-center justify-center flex-shrink-0"><LinkIcon size={12} className="text-stone-400" /></div>
+                                                }
+                                                <span className="text-sm font-medium text-stone-800 flex-1 truncate">{link.title}</span>
+                                                {link.price ? <span className="text-xs font-bold text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">{link.price} cr</span> : null}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 

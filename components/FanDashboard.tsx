@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { CurrentUser, Message, CreatorProfile } from '../types';
 import { Button } from './Button';
 import { DiemLogo, CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download, Smile, Verified } from './Icons';
-import { getMessages, getChatLines, invalidateChatLinesCache, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createCheckoutSession, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl, uploadProductFile, sendFanWelcomeMessage, getDiemCreatorId } from '../services/realBackend';
+import { getMessages, getChatLines, invalidateChatLinesCache, invalidateMsgCache, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createCheckoutSession, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl, uploadProductFile, sendFanWelcomeMessage, getDiemCreatorId } from '../services/realBackend';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import i18n from '../i18n/config';
 
@@ -258,7 +258,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
     if (currentUser) {
         const { unsubscribe } = subscribeToMessages(currentUser.id, () => {
             if (subscriptionDebounceRef.current) clearTimeout(subscriptionDebounceRef.current);
-            subscriptionDebounceRef.current = setTimeout(() => loadMessages(true), 300);
+            subscriptionDebounceRef.current = setTimeout(() => { invalidateMsgCache(); loadMessages(true); }, 300);
         });
         return () => { unsubscribe(); if (subscriptionDebounceRef.current) clearTimeout(subscriptionDebounceRef.current); };
     }

@@ -970,8 +970,9 @@ export const sendMessage = async (creatorId: string, senderName: string, senderE
     const isTip = content.startsWith('Fan Tip:');
 
     // Check if sending to the Diem admin — special handling (no credits, reuse thread)
+    // Only applies to support messages, NOT product purchases or tips
     const adminId = await getDiemAdminId();
-    const isToAdmin = creatorId === adminId;
+    const isToAdmin = creatorId === adminId && !isProductPurchase && !isTip;
 
     if (isToAdmin) {
         // Find the most recent PENDING thread with admin (either direction)
