@@ -77,6 +77,59 @@ const getRelativeTime = (dateString: string, t?: (key: string, opts?: any) => st
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 };
 
+const getContrastColor = (hex: string): string => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? '#1c1917' : '#ffffff';
+};
+
+const getPreviewPlatformIcon = (platform: string) => {
+    const cls = "w-4 h-4";
+    switch (platform.toLowerCase()) {
+        case 'youtube':    return <YouTubeLogo className={`${cls} text-[#FF0000]`} />;
+        case 'instagram':  return <InstagramLogo className={`${cls} text-[#E4405F]`} />;
+        case 'x':          return <XLogo className="w-3.5 h-3.5 text-black" />;
+        case 'tiktok':     return <TikTokLogo className="w-3.5 h-3.5 text-black" />;
+        case 'twitch':     return <Twitch size={16} className="text-[#9146FF]" />;
+        case 'threads':    return <ThreadsLogo className={`${cls} text-black`} />;
+        case 'facebook':   return <FacebookLogo className={`${cls} text-[#1877F2]`} />;
+        case 'discord':    return <DiscordLogo className={`${cls} text-[#5865F2]`} />;
+        case 'linkedin':   return <LinkedInLogo className="w-3.5 h-3.5 text-[#0A66C2]" />;
+        case 'snapchat':   return <SnapchatLogo className="w-3.5 h-3.5 text-[#FFFC00]" />;
+        case 'pinterest':  return <PinterestLogo className={`${cls} text-[#E60023]`} />;
+        case 'reddit':     return <RedditLogo className={`${cls} text-[#FF4500]`} />;
+        case 'telegram':   return <TelegramLogo className={`${cls} text-[#26A5E4]`} />;
+        case 'whatsapp':   return <WhatsAppLogo className={`${cls} text-[#25D366]`} />;
+        case 'spotify':    return <SpotifyLogo className={`${cls} text-[#1DB954]`} />;
+        case 'soundcloud': return <SoundCloudLogo className={`${cls} text-[#FF5500]`} />;
+        case 'patreon':    return <PatreonLogo className="w-3.5 h-3.5 text-[#FF424D]" />;
+        case 'onlyfans':   return <OnlyFansLogo className={`${cls} text-[#00AFF0]`} />;
+        case 'substack':   return <SubstackLogo className="w-3.5 h-3.5 text-[#FF6719]" />;
+        case 'beehiiv':    return <BeehiivLogo className="w-3.5 h-3.5 text-[#F5C518]" />;
+        case 'github':     return <GitHubLogo className="w-3.5 h-3.5 text-black" />;
+        default:           return <Sparkles size={14} className="text-stone-400" />;
+    }
+};
+
+const PLATFORM_DOMAINS_PREVIEW: { pattern: RegExp; id: string }[] = [
+    { pattern: /youtube\.com|youtu\.be/, id: 'youtube' },
+    { pattern: /instagram\.com/, id: 'instagram' },
+    { pattern: /tiktok\.com/, id: 'tiktok' },
+    { pattern: /x\.com|twitter\.com/, id: 'x' },
+    { pattern: /threads\.net/, id: 'threads' },
+    { pattern: /facebook\.com|fb\.com/, id: 'facebook' },
+    { pattern: /twitch\.tv/, id: 'twitch' },
+    { pattern: /discord\.com|discord\.gg/, id: 'discord' },
+    { pattern: /linkedin\.com/, id: 'linkedin' },
+    { pattern: /t\.me|telegram\.me/, id: 'telegram' },
+    { pattern: /wa\.me|whatsapp\.com/, id: 'whatsapp' },
+    { pattern: /open\.spotify\.com|spotify\.com/, id: 'spotify' },
+    { pattern: /soundcloud\.com/, id: 'soundcloud' },
+    { pattern: /patreon\.com/, id: 'patreon' },
+    { pattern: /github\.com/, id: 'github' },
+];
+
 const isImage = (url: string) => {
     if (!url) return false;
     if (url.startsWith('data:image')) return true;
@@ -111,6 +164,188 @@ const firstName = (name: string) => name?.split(' ')[0] || name;
 const ResponsiveName = ({ name }: { name: string }) => (
   <><span className="hidden sm:inline">{name}</span><span className="sm:hidden">{firstName(name)}</span></>
 );
+
+const ProfilePreviewCard: React.FC<{ creator: CreatorProfile; compact?: boolean }> = ({ creator, compact = false }) => {
+    const cornerRadius = { soft: '8px', rounded: '16px', pill: '999px' }[creator.cornerRadius || 'rounded'] || '16px';
+    const cardRadius = { soft: '8px', rounded: '16px', pill: '24px' }[creator.cornerRadius || 'rounded'] || '16px';
+    const linkBg = creator.bannerGradient
+        ? { backgroundColor: creator.bannerGradient, borderColor: creator.bannerGradient === '#1c1917' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' }
+        : { backgroundColor: '#ffffff', borderColor: 'rgb(231 229 228 / 0.6)' };
+    const linkBlockStyle = { ...linkBg, borderRadius: cornerRadius };
+
+    const platforms = creator.platforms || [];
+    const visibleLinks = (creator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden);
+    const ds = creator.diemIconShape;
+    const dsc = ds === 'square' ? 'rounded-none' : ds === 'rounded' ? 'rounded-xl' : 'rounded-full';
+    const sz = compact ? 'text-xs' : 'text-sm';
+
+    return (
+        <div className="bg-[#FAF9F6] rounded-xl overflow-hidden">
+            {/* Main profile card */}
+            <div className="border border-stone-200/60 relative" style={{ backgroundColor: creator.bannerGradient || '#ffffff', borderRadius: cardRadius }}>
+                {/* Top bar */}
+                <div className="px-3 py-2 flex justify-between items-center">
+                    <DiemLogo size={compact ? 16 : 18} className="text-stone-800" />
+                    <div className="w-6 h-6 bg-stone-100 rounded-full flex items-center justify-center">
+                        <ExternalLink size={10} className="text-stone-400" />
+                    </div>
+                </div>
+                {/* Avatar + bio + name */}
+                <div className="px-3 pb-4 flex flex-col items-center text-center gap-1.5">
+                    <div className="relative flex flex-col items-center">
+                        {/* Bio thought bubble */}
+                        {(creator.showBio ?? true) && creator.bio && (
+                            <div className="mb-1" style={{ maxWidth: compact ? '160px' : '200px' }}>
+                                <div className="bg-white rounded-[16px] px-3 py-2 shadow-sm border border-stone-200/60">
+                                    <p className={`${compact ? 'text-[10px]' : 'text-xs'} text-stone-800 leading-snug font-medium text-center`}>
+                                        {creator.bio.length > (compact ? 60 : 100) ? creator.bio.slice(0, compact ? 60 : 100) + '…' : creator.bio}
+                                    </p>
+                                </div>
+                                <div className="relative h-3 mt-0.5">
+                                    <div className="absolute left-3 top-0 w-2 h-2 bg-white rounded-full shadow-sm border border-stone-200/60"></div>
+                                    <div className="absolute left-5 top-1.5 w-1.5 h-1.5 bg-white rounded-full shadow-sm border border-stone-200/60"></div>
+                                </div>
+                            </div>
+                        )}
+                        {/* Avatar */}
+                        <div className={`${compact ? 'w-14 h-14' : 'w-20 h-20'} rounded-full p-0.5 border border-stone-100 shadow-sm bg-white overflow-hidden`}>
+                            {creator.avatarUrl
+                                ? <img src={creator.avatarUrl} className="w-full h-full rounded-full object-cover" alt="" />
+                                : <div className="w-full h-full rounded-full bg-stone-100 flex items-center justify-center"><User size={compact ? 18 : 28} className="text-stone-300" /></div>
+                            }
+                        </div>
+                        {/* Like / rating badges */}
+                        <div className="flex items-center gap-1.5 -mt-3 relative z-10">
+                            {(creator.showLikes ?? true) && (
+                                <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-full border border-stone-100 text-[10px] font-bold text-stone-500 shadow-sm">
+                                    <Heart size={10} /> <span>{creator.stats?.totalMessages || 0}</span>
+                                </div>
+                            )}
+                            {(creator.showRating ?? true) && (
+                                <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-full border border-stone-100 text-[10px] font-bold text-stone-500 shadow-sm">
+                                    <Star size={10} className="text-yellow-400 fill-yellow-400" /> <span>{(creator.stats?.averageRating || 0).toFixed(1)}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    {/* Name + handle */}
+                    <div>
+                        <p className={`${compact ? 'text-sm' : 'text-base'} font-bold text-stone-900 leading-tight`}>{creator.displayName || 'Your Name'}</p>
+                        {creator.handle && creator.handle !== '@user' && (
+                            <p className={`${compact ? 'text-[10px]' : 'text-xs'} text-stone-500`}>{creator.handle}</p>
+                        )}
+                    </div>
+                    {/* Social platforms */}
+                    {platforms.length > 0 && (
+                        <div className="flex items-center justify-center gap-2 flex-wrap mt-0.5">
+                            {platforms.slice(0, compact ? 5 : 8).map(p => {
+                                const pid = typeof p === 'string' ? p : p.id;
+                                return (
+                                    <div key={pid} className={`${compact ? 'w-6 h-6' : 'w-7 h-7'} flex items-center justify-center rounded-full bg-stone-50 border border-stone-100`}>
+                                        {getPreviewPlatformIcon(pid)}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* DIEM block */}
+            {creator.diemEnabled !== false && (
+                <div className="mt-2 mx-0">
+                    <div className="p-2.5 rounded-2xl border flex items-center gap-2.5" style={linkBlockStyle}>
+                        {/* Icon */}
+                        <div className={`${compact ? 'w-8 h-8' : 'w-9 h-9'} ${dsc} flex items-center justify-center flex-shrink-0 overflow-hidden bg-white border border-stone-100`}>
+                            {creator.diemIcon?.startsWith('data:emoji,') ? (
+                                <span className={compact ? 'text-lg' : 'text-xl'}>{creator.diemIcon.replace('data:emoji,', '')}</span>
+                            ) : creator.diemIcon ? (
+                                <img src={creator.diemIcon} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                                <img src="/favicon.svg" alt="" className="w-full h-full object-cover" />
+                            )}
+                        </div>
+                        <div className="flex-1 min-w-0 text-left">
+                            <p className={`font-bold text-stone-900 ${sz} leading-tight`}>DIEM</p>
+                            <p className={`${compact ? 'text-[9px]' : 'text-[10px]'} text-stone-500 flex items-center gap-1 mt-0.5`}>
+                                <MessageSquare size={9} className="text-emerald-500" />
+                                Guaranteed reply · {creator.pricePerMessage} credits
+                            </p>
+                        </div>
+                        <div className={`${compact ? 'px-2 py-1 text-[10px]' : 'px-3 py-1.5 text-xs'} rounded-xl font-semibold flex-shrink-0 whitespace-nowrap`}
+                            style={creator.diemButtonColor
+                                ? { backgroundColor: creator.diemButtonColor, color: getContrastColor(creator.diemButtonColor) }
+                                : { backgroundColor: '#1c1917', color: '#ffffff' }}>
+                            Diem
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Links */}
+            {visibleLinks.length > 0 && (
+                <div className="mt-2 space-y-1.5">
+                    <p className={`${compact ? 'text-[8px]' : 'text-[9px]'} font-bold text-stone-400 uppercase tracking-widest text-center flex items-center justify-center gap-1`}>
+                        <span>⌗</span> {creator.linksSectionTitle || 'Featured Links & Products'}
+                    </p>
+                    {visibleLinks.slice(0, compact ? 4 : 6).map(link => {
+                        const isProduct = link.type === 'DIGITAL_PRODUCT';
+                        const isSupport = link.type === 'SUPPORT';
+                        const isEmoji = link.thumbnailUrl?.startsWith('data:emoji,');
+                        const hasThumbnail = !!link.thumbnailUrl && !isEmoji;
+                        const shapeClass = link.iconShape === 'circle' ? 'rounded-full' : link.iconShape === 'rounded' ? 'rounded-xl' : 'rounded-none';
+                        const accentColor = link.buttonColor;
+                        const iconStyle = accentColor && !hasThumbnail ? { backgroundColor: `${accentColor}22`, color: accentColor } : undefined;
+                        const btnStyle = accentColor ? { backgroundColor: accentColor, color: getContrastColor(accentColor) } : undefined;
+                        let detectedPlatform: string | null = null;
+                        let faviconUrl: string | null = null;
+                        if (!link.thumbnailUrl && !isProduct && !isSupport && link.url) {
+                            try {
+                                const hostname = new URL(link.url.startsWith('http') ? link.url : `https://${link.url}`).hostname;
+                                detectedPlatform = PLATFORM_DOMAINS_PREVIEW.find(p => p.pattern.test(hostname))?.id || null;
+                                if (!detectedPlatform) faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
+                            } catch { /* invalid url */ }
+                        }
+                        return (
+                            <div key={link.id} className={`p-2.5 rounded-2xl border flex items-center gap-2 ${isProduct ? 'bg-gradient-to-r from-purple-50/40 to-violet-50/20 border-purple-100' : isSupport ? 'bg-gradient-to-r from-pink-50/40 to-rose-50/20 border-pink-100' : ''}`}
+                                style={!isProduct && !isSupport ? linkBlockStyle : undefined}>
+                                {/* Icon */}
+                                <div className={`${compact ? 'w-7 h-7' : 'w-8 h-8'} flex items-center justify-center flex-shrink-0 ${shapeClass} ${hasThumbnail ? 'overflow-hidden border border-stone-100' : isEmoji ? 'bg-stone-100' : isProduct ? 'bg-purple-50 text-purple-400' : isSupport ? 'bg-pink-50 text-pink-400' : detectedPlatform ? 'bg-stone-100' : faviconUrl ? 'overflow-hidden bg-white border border-stone-100' : 'bg-stone-900 text-white'}`} style={iconStyle}>
+                                    {hasThumbnail ? (
+                                        <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt="" />
+                                    ) : isEmoji ? (
+                                        <span className={compact ? 'text-sm' : 'text-base'}>{link.thumbnailUrl!.replace('data:emoji,', '')}</span>
+                                    ) : isProduct ? (
+                                        <FileText size={compact ? 14 : 16} />
+                                    ) : isSupport ? (
+                                        <Heart size={compact ? 14 : 16} />
+                                    ) : detectedPlatform ? (
+                                        getPreviewPlatformIcon(detectedPlatform)
+                                    ) : faviconUrl ? (
+                                        <img src={faviconUrl} className="w-full h-full object-cover" alt="" />
+                                    ) : (
+                                        <Sparkles size={compact ? 12 : 14} />
+                                    )}
+                                </div>
+                                {/* Text */}
+                                <div className="flex-1 min-w-0 text-left">
+                                    <p className={`font-semibold text-stone-900 truncate ${compact ? 'text-[10px]' : sz}`}>{link.title}</p>
+                                    <p className={`${compact ? 'text-[8px]' : 'text-[9px]'} text-stone-400 mt-0.5`}>
+                                        {isProduct ? 'Digital download' : isSupport ? 'Send tip' : 'External link'}
+                                    </p>
+                                </div>
+                                {/* Button */}
+                                <div className={`${compact ? 'px-2 py-1 text-[9px]' : 'px-2.5 py-1 text-[10px]'} rounded-xl font-semibold flex-shrink-0 whitespace-nowrap ${!btnStyle ? (isProduct ? 'bg-stone-100 text-stone-600' : isSupport ? 'bg-stone-100 text-stone-600' : 'bg-stone-100 text-stone-600') : ''}`} style={btnStyle}>
+                                    {isProduct ? 'Buy' : isSupport ? 'Tip' : 'Open'}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+};
 
 export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogout, onViewProfile, onRefreshData }) => {
   const { t } = useTranslation();
@@ -4337,10 +4572,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                     {/* Desktop Live Preview Panel */}
                     <div className="hidden xl:block xl:sticky xl:top-6">
-                        <div className="bg-stone-100 rounded-2xl p-4">
-                            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-3 text-center">Live Preview</p>
+                        <div className="bg-stone-100 rounded-2xl p-3">
+                            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-2 text-center">Live Preview</p>
                             {/* Browser chrome */}
-                            <div className="bg-stone-200 rounded-t-xl px-3 py-2 flex items-center gap-1.5">
+                            <div className="bg-stone-200 rounded-t-xl px-3 py-1.5 flex items-center gap-1.5">
                                 <div className="w-2 h-2 rounded-full bg-red-400/70" />
                                 <div className="w-2 h-2 rounded-full bg-yellow-400/70" />
                                 <div className="w-2 h-2 rounded-full bg-green-400/70" />
@@ -4348,59 +4583,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     diem.ee/{(editedCreator.handle || '').replace('@', '')}
                                 </div>
                             </div>
-                            {/* Profile preview */}
-                            <div className="overflow-y-auto max-h-[calc(100vh-200px)] rounded-b-xl" style={{ backgroundColor: editedCreator.bannerGradient || '#ffffff' }}>
-                                <div className="p-4 space-y-3">
-                                    {/* Header row */}
-                                    <div className="flex items-center justify-between">
-                                        <DiemLogo size={16} className="text-stone-700" />
-                                    </div>
-                                    {/* Avatar + name */}
-                                    <div className="flex flex-col items-center text-center gap-2 pt-1">
-                                        {editedCreator.bio && (editedCreator.showBio ?? true) && (
-                                            <div className="bg-white rounded-2xl px-3 py-2 shadow-sm border border-stone-200/60 text-[11px] text-stone-700 max-w-[200px]">
-                                                {editedCreator.bio.slice(0, 100)}{editedCreator.bio.length > 100 ? '…' : ''}
-                                            </div>
-                                        )}
-                                        <div className="w-16 h-16 rounded-full overflow-hidden border border-stone-100 shadow-sm bg-white flex-shrink-0">
-                                            {editedCreator.avatarUrl
-                                                ? <img src={editedCreator.avatarUrl} className="w-full h-full object-cover" alt="" />
-                                                : <div className="w-full h-full bg-stone-100 flex items-center justify-center"><User size={24} className="text-stone-300" /></div>
-                                            }
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-stone-900 text-sm">{editedCreator.displayName || 'Your Name'}</p>
-                                            <p className="text-xs text-stone-500">{editedCreator.handle || '@handle'}</p>
-                                        </div>
-                                        {/* Social platforms */}
-                                        {(editedCreator.platforms || []).length > 0 && (
-                                            <div className="flex gap-1.5 flex-wrap justify-center">
-                                                {(editedCreator.platforms || []).slice(0, 6).map(p => (
-                                                    <div key={p.platform} className="w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm border border-stone-100 text-[10px]">
-                                                        {p.platform === 'youtube' ? '▶' : p.platform === 'instagram' ? '📷' : p.platform === 'x' ? '✕' : p.platform === 'tiktok' ? '♪' : '🔗'}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                    {/* DIEM button */}
-                                    {editedCreator.diemEnabled !== false && (
-                                        <div className="rounded-xl py-2 px-4 text-center text-xs font-semibold flex items-center justify-center gap-1.5" style={{ backgroundColor: editedCreator.diemButtonColor || '#1c1917', color: '#ffffff' }}>
-                                            {editedCreator.diemIcon && <span className="text-sm">{editedCreator.diemIcon}</span>}
-                                            <span>Ask me · {editedCreator.pricePerMessage} credits</span>
-                                        </div>
-                                    )}
-                                    {/* Links */}
-                                    {(editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden).slice(0, 6).map(link => (
-                                        <div key={link.id} className="bg-white rounded-xl px-3 py-2.5 flex items-center gap-2 shadow-sm border border-stone-100/80">
-                                            {link.iconUrl
-                                                ? <img src={link.iconUrl} className={`w-6 h-6 object-cover flex-shrink-0 ${link.iconShape === 'circle' ? 'rounded-full' : link.iconShape === 'rounded' ? 'rounded-md' : 'rounded-none'}`} alt="" />
-                                                : <div className="w-6 h-6 bg-stone-100 rounded-full flex items-center justify-center flex-shrink-0"><LinkIcon size={10} className="text-stone-400" /></div>
-                                            }
-                                            <span className="text-xs font-medium text-stone-800 truncate">{link.title}</span>
-                                            {link.price ? <span className="ml-auto text-[10px] font-bold text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded-full flex-shrink-0">{link.price}cr</span> : null}
-                                        </div>
-                                    ))}
+                            <div className="overflow-y-auto rounded-b-xl bg-[#FAF9F6]" style={{ maxHeight: 'calc(100vh - 180px)' }}>
+                                <div className="p-3">
+                                    <ProfilePreviewCard creator={editedCreator} compact />
                                 </div>
                             </div>
                         </div>
@@ -4410,54 +4595,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     {/* Mobile Preview Sheet */}
                     {showMobilePreview && (
                         <div className="fixed inset-0 z-[100] bg-black/60 flex items-end xl:hidden animate-in fade-in" onClick={() => setShowMobilePreview(false)}>
-                            <div className="bg-white w-full max-h-[90vh] overflow-y-auto rounded-t-3xl animate-in slide-in-from-bottom-4" onClick={e => e.stopPropagation()}>
-                                <div className="sticky top-0 bg-white border-b border-stone-100 px-4 py-3 flex items-center justify-between rounded-t-3xl">
+                            <div className="bg-[#FAF9F6] w-full max-h-[90vh] overflow-y-auto rounded-t-3xl animate-in slide-in-from-bottom-4" onClick={e => e.stopPropagation()}>
+                                <div className="sticky top-0 bg-white/90 backdrop-blur-sm border-b border-stone-100 px-4 py-3 flex items-center justify-between rounded-t-3xl">
                                     <p className="font-bold text-stone-900 text-sm">Profile Preview</p>
                                     <button onClick={() => setShowMobilePreview(false)} className="p-1 rounded-full hover:bg-stone-100"><X size={18} /></button>
                                 </div>
-                                <div style={{ backgroundColor: editedCreator.bannerGradient || '#ffffff' }} className="min-h-[60vh]">
-                                    <div className="p-4 space-y-3 max-w-md mx-auto">
-                                        {/* Header row */}
-                                        <div className="flex items-center justify-between">
-                                            <DiemLogo size={18} className="text-stone-700" />
-                                        </div>
-                                        {/* Avatar + name */}
-                                        <div className="flex flex-col items-center text-center gap-2 pt-1">
-                                            {editedCreator.bio && (editedCreator.showBio ?? true) && (
-                                                <div className="bg-white rounded-2xl px-4 py-2.5 shadow-sm border border-stone-200/60 text-xs text-stone-700 max-w-[260px]">
-                                                    {editedCreator.bio}
-                                                </div>
-                                            )}
-                                            <div className="w-20 h-20 rounded-full overflow-hidden border border-stone-100 shadow-sm bg-white">
-                                                {editedCreator.avatarUrl
-                                                    ? <img src={editedCreator.avatarUrl} className="w-full h-full object-cover" alt="" />
-                                                    : <div className="w-full h-full bg-stone-100 flex items-center justify-center"><User size={28} className="text-stone-300" /></div>
-                                                }
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-stone-900">{editedCreator.displayName || 'Your Name'}</p>
-                                                <p className="text-sm text-stone-500">{editedCreator.handle || '@handle'}</p>
-                                            </div>
-                                        </div>
-                                        {/* DIEM button */}
-                                        {editedCreator.diemEnabled !== false && (
-                                            <div className="rounded-xl py-2.5 px-4 text-center text-sm font-semibold flex items-center justify-center gap-2" style={{ backgroundColor: editedCreator.diemButtonColor || '#1c1917', color: '#ffffff' }}>
-                                                {editedCreator.diemIcon && <span>{editedCreator.diemIcon}</span>}
-                                                <span>Ask me · {editedCreator.pricePerMessage} credits</span>
-                                            </div>
-                                        )}
-                                        {/* Links */}
-                                        {(editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden).map(link => (
-                                            <div key={link.id} className="bg-white rounded-xl px-4 py-3 flex items-center gap-3 shadow-sm border border-stone-100/80">
-                                                {link.iconUrl
-                                                    ? <img src={link.iconUrl} className={`w-7 h-7 object-cover flex-shrink-0 ${link.iconShape === 'circle' ? 'rounded-full' : link.iconShape === 'rounded' ? 'rounded-md' : 'rounded-none'}`} alt="" />
-                                                    : <div className="w-7 h-7 bg-stone-100 rounded-full flex items-center justify-center flex-shrink-0"><LinkIcon size={12} className="text-stone-400" /></div>
-                                                }
-                                                <span className="text-sm font-medium text-stone-800 flex-1 truncate">{link.title}</span>
-                                                {link.price ? <span className="text-xs font-bold text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">{link.price} cr</span> : null}
-                                            </div>
-                                        ))}
-                                    </div>
+                                <div className="p-4 max-w-lg mx-auto pb-10">
+                                    <ProfilePreviewCard creator={editedCreator} />
                                 </div>
                             </div>
                         </div>
