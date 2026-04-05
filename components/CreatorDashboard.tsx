@@ -2943,7 +2943,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     onClick={() => setBoardFilter(f)}
                                     className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-all ${boardFilter === f ? 'bg-stone-900 text-white' : 'bg-white text-stone-500 border border-stone-200 hover:bg-stone-50'}`}
                                 >
-                                    {f === 'ALL' ? `All (${boardPosts.length})` : f === 'PENDING' ? `Pending (${boardPosts.filter(p => !p.reply).length})` : f === 'ANSWERED' ? `Answered (${boardPosts.filter(p => !!p.reply).length})` : `Links (${(editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden).length})`}
+                                    {f === 'ALL' ? `All (${boardPosts.length})` : f === 'PENDING' ? `Pending (${boardPosts.filter(p => !p.reply && !p.isPinned).length})` : f === 'ANSWERED' ? `Answered (${boardPosts.filter(p => !!p.reply || p.isPinned).length})` : `Links (${(editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden).length})`}
                                 </button>
                             ))}
                         </div>
@@ -2968,7 +2968,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         ) : (() => {
                             const visibleBoardLinks = (editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden);
                             const filtered = boardFilter === 'LINKS' ? [] : boardPosts.filter(p =>
-                                boardFilter === 'ALL' ? true : boardFilter === 'PENDING' ? !p.reply : !!p.reply
+                                boardFilter === 'ALL' ? true : boardFilter === 'PENDING' ? (!p.reply && !p.isPinned) : (!!p.reply || p.isPinned)
                             );
                             const showLinks = boardFilter === 'ALL' || boardFilter === 'LINKS';
                             if (filtered.length === 0 && (boardFilter !== 'LINKS' ? visibleBoardLinks.length === 0 : visibleBoardLinks.length === 0)) return (
@@ -4095,11 +4095,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             {/* Modal header */}
                             <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200/60">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-lg leading-none">{['⭐','❤️','✨','🌟','💙','🎯','🔥','💬','🌙','🌸'][nc]}</span>
-                                    <span className="text-xs font-bold text-stone-400 uppercase tracking-widest">Board Post</span>
+                                    <span className="text-xs font-bold text-stone-400 uppercase tracking-widest">Community Q&amp;A</span>
                                     {livePost.isPinned
                                         ? <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100"><Pin size={8} className="fill-current" /> Pinned</span>
-                                        : popExpiry && <span className={`text-[10px] font-semibold ${popExpiry.cls}`}>{popExpiry.text}</span>}
+                                        : livePost.reply 
+                                            ? <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100"><CheckCircle2 size={8} className="fill-current" /> Answered</span>
+                                            : popExpiry && <span className={`text-[10px] font-semibold ${popExpiry.cls}`}>{popExpiry.text}</span>}
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button

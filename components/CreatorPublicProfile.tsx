@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Globe } from 'lucide-react';
+import { Globe, Pin } from 'lucide-react';
 import { CreatorProfile, CurrentUser, AffiliateLink, Product } from '../types';
 import { DiemLogo, CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronLeft, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share, Image as ImageIcon, TrendingUp, LinkedInLogo, FacebookLogo, SnapchatLogo, PinterestLogo, DiscordLogo, TelegramLogo, WhatsAppLogo, RedditLogo, ThreadsLogo, PatreonLogo, SpotifyLogo, SoundCloudLogo, GitHubLogo, SubstackLogo, BeehiivLogo, OnlyFansLogo } from './Icons';
 import { Button } from './Button';
@@ -781,13 +781,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                                   // All posts sorted: answered + pinned first (by displayOrder/time), unanswered at end
                                   const answeredPosts = [...boardPosts]
-                                      .filter(p => p.reply !== null)
+                                      .filter(p => !!p.reply || p.isPinned)
                                       .sort((a, b) => {
                                           if (a.displayOrder !== null && b.displayOrder !== null) return (a.displayOrder ?? 0) - (b.displayOrder ?? 0);
                                           return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
                                       });
                                   const unansweredPosts = [...boardPosts]
-                                      .filter(p => p.reply === null)
+                                      .filter(p => !p.reply && !p.isPinned)
                                       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
                                   const _getLinkSize = (l: typeof allPublicLinks[0]) => {
@@ -1268,14 +1268,16 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                               }}
                                           >
                                                   {/* Back button + label */}
-                                              <div className="flex items-center gap-2 px-4 pt-4 pb-2">
+                                              <div className="flex items-center gap-2 px-4 pt-4 pb-2 border-b border-stone-100/60 mb-2">
                                                   <button
                                                       onClick={() => setSelectedBoardPost(null)}
                                                       className="p-1 rounded-full hover:bg-black/5 transition-colors text-stone-400 hover:text-stone-600"
                                                   >
                                                       <ChevronLeft size={15} />
                                                   </button>
-                                                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Note</span>
+                                                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Community Q&amp;A</span>
+                                                  {post.isPinned && <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100"><Pin size={8} className="fill-current" /> Pinned</span>}
+                                                  {post.reply && !post.isPinned && <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100"><CheckCircle2 size={8} className="fill-current" /> Answered</span>}
                                               </div>
 
                                               {/* Conversation — inbox style */}
