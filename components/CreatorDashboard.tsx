@@ -3489,7 +3489,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         const _msLeft = _expMs - Date.now();
                                         const _daysLeft = Math.floor(_msLeft / (24 * 60 * 60 * 1000));
                                         const _hoursLeft = Math.floor(_msLeft / (60 * 60 * 1000));
-                                        const expiry = post.isPinned
+                                        const expiry = post.isPinned || post.reply
                                             ? null
                                             : _msLeft <= 0
                                                 ? { text: 'Expired', cls: 'text-red-500 bg-red-50 border border-red-100' }
@@ -4001,7 +4001,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 const _popMsLeft = _popExpMs - Date.now();
                 const _popDaysLeft = Math.floor(_popMsLeft / (24 * 60 * 60 * 1000));
                 const _popHoursLeft = Math.floor(_popMsLeft / (60 * 60 * 1000));
-                const popExpiry = livePost.isPinned
+                const popExpiry = livePost.isPinned || livePost.reply
                     ? null
                     : _popMsLeft <= 0
                         ? { text: 'Expired', cls: 'text-red-500 bg-red-50' }
@@ -4048,7 +4048,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${livePost.isPinned ? 'translate-x-4' : 'translate-x-0.5'}`} />
                                         </span>
                                         <Pin size={10} className={livePost.isPinned ? 'text-amber-600 fill-current' : 'text-stone-400'} />
-                                        <span className={livePost.isPinned ? 'text-amber-700 font-semibold' : 'text-stone-500'}>Pin (never expires)</span>
+                                        <span className={livePost.isPinned ? 'text-amber-700 font-semibold' : 'text-stone-500'}>Pin post</span>
                                     </button>
                                     <button
                                         onClick={async () => {
@@ -4407,7 +4407,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${post.isPinned ? 'translate-x-4' : 'translate-x-0.5'}`} />
                                                     </span>
                                                     <Pin size={10} className={post.isPinned ? 'text-amber-600 fill-current' : 'text-stone-400'} />
-                                                    <span className={post.isPinned ? 'text-amber-700 font-semibold' : 'text-stone-500'}>Pin (never expires)</span>
+                                                    <span className={post.isPinned ? 'text-amber-700 font-semibold' : 'text-stone-500'}>Pin post</span>
                                                 </button>
                                                 <button
                                                     onClick={async () => {

@@ -781,12 +781,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                                   // All posts sorted: answered + pinned first (by displayOrder/time), unanswered at end
                                   const answeredPosts = [...boardPosts]
-                                      .filter(p => {
-                                          if (p.reply === null) return false;
-                                          if (p.isPinned) return true;
-                                          // Non-pinned answered posts visible until 7-day TTL
-                                          return new Date(p.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000 > Date.now();
-                                      })
+                                      .filter(p => p.reply !== null)
                                       .sort((a, b) => {
                                           if (a.displayOrder !== null && b.displayOrder !== null) return (a.displayOrder ?? 0) - (b.displayOrder ?? 0);
                                           return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
