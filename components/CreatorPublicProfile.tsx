@@ -4,7 +4,7 @@ import { Globe } from 'lucide-react';
 import { CreatorProfile, CurrentUser, AffiliateLink, Product } from '../types';
 import { DiemLogo, CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronLeft, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share, Image as ImageIcon, TrendingUp, LinkedInLogo, FacebookLogo, SnapchatLogo, PinterestLogo, DiscordLogo, TelegramLogo, WhatsAppLogo, RedditLogo, ThreadsLogo, PatreonLogo, SpotifyLogo, SoundCloudLogo, GitHubLogo, SubstackLogo, BeehiivLogo, OnlyFansLogo } from './Icons';
 import { Button } from './Button';
-import { sendMessage, updateCreatorProfile, addCredits, createCheckoutSession, isBackendConfigured, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus, getSecureDownloadUrl, logAnalyticsEvent, getCreatorTrendingStatus, getSupporters, Supporter, createBoardPost, getBoardPosts, uploadBoardAttachment, BoardPost } from '../services/realBackend';
+import { sendMessage, updateCreatorProfile, addCredits, createCheckoutSession, isBackendConfigured, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus, getSecureDownloadUrl, logAnalyticsEvent, getSupporters, Supporter, createBoardPost, getBoardPosts, uploadBoardAttachment, BoardPost } from '../services/realBackend';
 
 interface Props {
   creator: CreatorProfile;
@@ -91,15 +91,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
       onTutorialDone?.();
     }
   };
-
-  // Trending Status
-  const [isTrending, setIsTrending] = useState(false);
-
-  useEffect(() => {
-      getCreatorTrendingStatus(creator.id).then(result => {
-          setIsTrending(result.isTrending);
-      });
-  }, [creator.id]);
 
   // Product Purchase State
   const [selectedProductLink, setSelectedProductLink] = useState<AffiliateLink | null>(null);
@@ -682,56 +673,67 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           {/* 1. MINIMAL PROFILE HEADER */}
           <div className="w-full">
              <div className="border border-stone-200/60 relative transition-all" style={{ backgroundColor: creator.bannerGradient || '#ffffff', borderRadius: cardCornerRadiusValue }}>
-                <div className="px-4 py-3 flex justify-between items-center">
+                <div className="absolute top-4 left-4 z-30">
                     <div onClick={onCreateOwn} className="flex items-center cursor-pointer hover:opacity-70 transition-opacity">
                       <DiemLogo size={20} className="text-stone-800" />
                     </div>
-                    <div className="flex items-center gap-2">
-                        <button onClick={handleShare} className="w-9 h-9 bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-700 rounded-full transition-colors flex items-center justify-center flex-shrink-0" title={t('common.share')}>
-                            <Share size={16} />
-                        </button>
-                    </div>
                 </div>
-                <div className="px-4 pb-4 sm:px-6 sm:pb-5 relative z-10">
-                    <div className="flex items-center gap-4">
+                <div className="absolute top-4 right-4 z-30">
+                    <button onClick={handleShare} className="w-9 h-9 bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-700 rounded-full transition-colors flex items-center justify-center flex-shrink-0" title={t('common.share')}>
+                        <Share size={16} />
+                    </button>
+                </div>
+                <div className="px-4 pt-8 pb-4 sm:px-6 sm:pt-8 sm:pb-6 relative z-10">
+                    <div className="flex flex-col items-center text-center gap-2">
                         {/* Avatar */}
-                        <div className="relative w-14 h-14 rounded-full overflow-hidden border border-stone-100 shadow-sm bg-white flex-shrink-0">
+                        <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border border-stone-100 shadow-sm bg-white flex-shrink-0 mx-auto">
                            {!imgError && (editedCreator.avatarUrl || DEFAULT_AVATAR) ? (
                                <img src={editedCreator.avatarUrl || DEFAULT_AVATAR} alt={editedCreator.displayName} className="w-full h-full rounded-full object-cover bg-stone-100" onError={() => setImgError(true)} />
                            ) : (
-                               <div className="w-full h-full rounded-full bg-stone-100 flex items-center justify-center text-stone-300"><User size={28} /></div>
+                               <div className="w-full h-full rounded-full bg-stone-100 flex items-center justify-center text-stone-300"><User size={36} /></div>
                            )}
                         </div>
-                        {/* Name + handle + stats */}
-                        <div className="flex-1 min-w-0">
-                            <h1 className="text-lg font-bold text-stone-900 leading-tight truncate">{creator.displayName}</h1>
-                            {creator.handle && creator.handle !== '@user' && (
-                                <p className="text-xs font-medium text-stone-400">{creator.handle}</p>
-                            )}
-                            <div className="flex items-center gap-2 mt-1">
+                        
+                        {/* Likes & Rating (Moved below avatar) */}
+                        {!isCustomizeMode && ((creator.showLikes ?? true) || (creator.showRating ?? true)) && (
+                            <div className="flex items-center justify-center gap-2 -mt-3 relative z-20">
                                 {(creator.showLikes ?? true) && (
-                                    <button onClick={handleLike} className={`flex items-center gap-1 text-xs font-semibold transition-colors ${hasLiked ? 'text-pink-500' : 'text-stone-400 hover:text-pink-500'}`}>
-                                        <Heart size={12} className={hasLiked ? "fill-current" : ""} />{likes}
-                                    </button>
+                                <button
+                                    onClick={handleLike}
+                                    className={`flex items-center justify-center gap-1 bg-white px-3 py-1 rounded-full border border-stone-100 text-xs font-bold shadow-sm transition-colors ${hasLiked ? 'text-pink-600 border-pink-100' : 'text-stone-500 hover:text-pink-600 hover:bg-pink-50'}`}
+                                >
+                                    <Heart size={12} className={hasLiked ? "fill-current" : ""} />
+                                    <span>{likes}</span>
+                                </button>
                                 )}
+
                                 {(creator.showRating ?? true) && (
-                                    <span className="flex items-center gap-1 text-xs font-semibold text-stone-400">
-                                        <Star size={12} className="text-yellow-400 fill-yellow-400" />{creator.stats.averageRating.toFixed(1)}
-                                    </span>
+                                <div className="relative group/tooltip flex items-center justify-center gap-1 bg-white px-3 py-1 rounded-full border border-stone-100 text-xs font-bold text-stone-500 shadow-sm cursor-help">
+                                    <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                                    <span className="text-stone-700">{creator.stats.averageRating.toFixed(1)}</span>
+                                    
+                                    {/* Response Time Tooltip */}
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[160px] bg-stone-900 text-white text-[10px] font-medium py-2 px-3 rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-all duration-200 pointer-events-none z-50 text-center shadow-xl normal-case tracking-normal whitespace-normal transform translate-y-2 group-hover/tooltip:translate-y-0">
+                                        <div className="font-bold text-emerald-400 mb-0.5 flex items-center justify-center gap-1">
+                                            <Clock size={10} /> {creator.stats.responseTimeAvg} {t('profile.response')}
+                                        </div>
+                                        <div className="text-stone-300 leading-snug">
+                                            {getResponseTimeTooltip(creator.stats.responseTimeAvg, t)}
+                                        </div>
+                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-stone-900"></div>
+                                    </div>
+                                </div>
                                 )}
-                                <span className="flex items-center gap-1 text-xs text-stone-400">
-                                    <Clock size={11} />{creator.stats.responseTimeAvg}
-                                </span>
                             </div>
+                        )}
+
+                        {/* Name + handle + stats */}
+                        <div className="flex-1 min-w-0 mt-1 w-full text-center">
+                            <h1 className="text-xl sm:text-2xl font-bold text-stone-900 leading-tight truncate">{creator.displayName}</h1>
+                            {creator.handle && creator.handle !== '@user' && (
+                                <p className="text-xs font-medium text-stone-400 mt-0.5">{creator.handle}</p>
+                            )}
                         </div>
-                        {/* Send Diem CTA */}
-                        <button
-                            onClick={handleOpenModal}
-                            className="flex-shrink-0 inline-flex items-center gap-1.5 bg-stone-900 text-white px-4 py-2 rounded-full font-semibold text-sm hover:bg-stone-700 transition-all shadow-sm"
-                            style={creator.diemButtonColor ? { backgroundColor: creator.diemButtonColor, color: getContrastColor(creator.diemButtonColor) } : undefined}
-                        >
-                            <MessageSquare size={13} /> Diem
-                        </button>
                     </div>
                 </div>
              </div>
@@ -748,9 +750,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       <div className="px-6 pt-5 pb-3 flex items-center justify-between">
                           <div>
                               <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-0.5">
-                                  {isTrending
-                                      ? <span className="inline-flex items-center gap-1.5"><TrendingUp size={11} className="text-blue-400" /><span className="text-blue-400">Trending</span><span className="text-stone-300 mx-1">·</span>Community</span>
-                                      : 'Community'}
+                                  Community
                               </p>
                               <h2 className="text-base font-bold text-stone-900">Board</h2>
                           </div>
@@ -773,17 +773,15 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                   const PAD_Y = 20;
 
                                   // Profile stickers: bio + platform links + featured links/products/support
-                                  const profileTapeColor = 'rgba(200,193,185,0.6)';
-                                  const bioExists = !!(creator.showBio ?? true) && !!creator.bio;
-                                  const platformItems = platforms.filter(p => typeof p !== 'string' ? !!(p as any).url : false);
                                   // Flatten all public links across all groups
                                   const allPublicLinks = groupedLinks.flatMap(g => g.links);
-                                  const hasProfileContent = bioExists || platformItems.length > 0 || allPublicLinks.length > 0;
-                                  const PROFILE_ZONE_W = hasProfileContent ? PROFILE_W + CARD_GAP : 0;
                                   const LINK_STICKER_H = 84; // external/support sticker height
                                   const YT_STICKER_H = 162; // YouTube thumbnail sticker (16:9 on 220px wide + title row)
                                   const PRODUCT_STICKER_H = 104; // product sticker height
-                                  const PLATFORM_STICKER_H = 72;
+
+                                  const COLS = 3;
+                                  const NOTE_GAP_X = 28;
+                                  const LINK_START_X = PAD_X + COLS * (NOTE_W + NOTE_GAP_X) + 32;
 
                                   // All posts sorted: answered + pinned first (by displayOrder/time), unanswered at end
                                   const answeredPosts = [...boardPosts]
@@ -801,20 +799,21 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       .filter(p => p.reply === null)
                                       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
-                                  // Fan post default X starts after profile stickers zone
-                                  const fanStartX = PAD_X + PROFILE_ZONE_W;
-
-                                  // Profile sticker positions — compute before container dims so link Y/X are available
-                                  let profileY = PAD_Y;
-                                  const bioStickerY = profileY;
-                                  if (bioExists) profileY += 200 + CARD_GAP;
-                                  profileY += platformItems.length * (PLATFORM_STICKER_H + 8);
-                                  const linkStickerStartY = profileY;
+                                  // Fan post default X starts at the left padding
+                                  const fanStartX = PAD_X;
 
                                   // Compute container dimensions — include fan posts AND link sticker saved positions
                                   const LINK_W_PUBLIC = 220;
-                                  let seqLinkY = linkStickerStartY;
+                                  let seqLinkY = PAD_Y;
+                                  const _getLinkSize = (l: typeof allPublicLinks[0]) => {
+                                      if (l.iconShape === 'square-l') return 220;
+                                      if (l.iconShape === 'square-m') return 160;
+                                      if (l.iconShape === 'square-s' || l.iconShape === 'square') return 110;
+                                      return null;
+                                  };
                                   const _getLinkH = (l: typeof allPublicLinks[0]) => {
+                                      const sqSize = _getLinkSize(l);
+                                      if (sqSize) return sqSize;
                                       if (l.type === 'DIGITAL_PRODUCT') return PRODUCT_STICKER_H;
                                       try {
                                           const h = new URL(l.url.startsWith('http') ? l.url : `https://${l.url}`).hostname;
@@ -828,12 +827,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       if (l.positionY == null) seqLinkY += stickerH + 10;
                                       return Math.max(max, y + stickerH);
                                   }, 0);
-                                  let seqLinkY2 = linkStickerStartY;
+                                  let seqLinkY2 = PAD_Y;
                                   const linkMaxX = allPublicLinks.reduce((max, l) => {
-                                      const x = (l.positionX != null) ? l.positionX : PAD_X;
+                                      const sqSize = _getLinkSize(l);
+                                      const x = (l.positionX != null) ? l.positionX : LINK_START_X;
                                       if (l.positionX == null) seqLinkY2 += _getLinkH(l) + 10;
-                                      return Math.max(max, x + LINK_W_PUBLIC);
-                                  }, PAD_X + LINK_W_PUBLIC);
+                                      return Math.max(max, x + (sqSize || LINK_W_PUBLIC));
+                                  }, LINK_START_X + LINK_W_PUBLIC);
 
                                   const maxY = answeredPosts.reduce((max, p) => {
                                       const y = (p.positionY !== null && p.positionY !== undefined) ? p.positionY : PAD_Y;
@@ -858,18 +858,16 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       occupiedRects.push({ x, y, w: NOTE_W, h: NOTE_H });
                                   });
                                   // Link/product/support stickers
-                                  let _occLY = linkStickerStartY;
+                                  let _occLY = PAD_Y;
                                   allPublicLinks.forEach(link => {
-                                      const sH = link.type === 'DIGITAL_PRODUCT' ? PRODUCT_STICKER_H : LINK_STICKER_H;
-                                      const x = link.positionX != null ? link.positionX : PAD_X;
+                                      const sqSize = _getLinkSize(link);
+                                      const sH = sqSize || _getLinkH(link);
+                                      const sW = sqSize || PROFILE_W;
+                                      const x = link.positionX != null ? link.positionX : LINK_START_X;
                                       const y = link.positionY != null ? link.positionY : _occLY;
                                       if (link.positionY == null) _occLY += sH + 10;
-                                      occupiedRects.push({ x, y, w: PROFILE_W, h: sH });
+                                      occupiedRects.push({ x, y, w: sW, h: sH });
                                   });
-                                  // Profile zone (bio + platform stickers column)
-                                  if (PROFILE_ZONE_W > 0) {
-                                      occupiedRects.push({ x: PAD_X, y: PAD_Y, w: PROFILE_W, h: Math.max(linkStickerStartY + 200, 300) });
-                                  }
                                   // Slot finder: candidates are positions directly adjacent to existing sticker edges
                                   // This guarantees "right next to" placement, not grid-jump placement
                                   const _findSlot = (used: _Rect[]): { x: number; y: number } => {
@@ -911,9 +909,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                   const unansweredMaxY = pendingPositions.reduce((m, p) => Math.max(m, p.y), PAD_Y);
                                   const containerH = Math.max(300, maxY + NOTE_H + PAD_Y * 2, unansweredMaxY + NOTE_H + PAD_Y, linkMaxY + PAD_Y);
                                   const containerW = Math.max(900, maxX + NOTE_W + PAD_X, unansweredMaxX + NOTE_W + PAD_X, linkMaxX + PAD_X);
-
-                                  // Rendering positions (re-derive from bioStickerY/platformStickerStartY for the render pass)
-                                  const platformStickerStartY = bioStickerY + (bioExists ? 200 + CARD_GAP : 0);
 
                                   const isCreatorOwner = !!(currentUser && currentUser.id === creator.id);
                                   return (
@@ -964,50 +959,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                   </>
                                               );
                                           })()}
-                                              {/* --- Profile stickers --- */}
-
-                                              {/* Bio sticker */}
-                                              {bioExists && (
-                                                  <div className="absolute" style={{ left: PAD_X, top: bioStickerY, width: PROFILE_W, zIndex: 2 }}>
-                                                      <div className="h-4 w-12 mx-auto rounded-b-sm" style={{ background: profileTapeColor }} />
-                                                      <div className="rounded-lg p-3 overflow-hidden" style={{ backgroundColor: '#FFFDF0', border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}>
-                                                          <div className="flex items-center gap-2 mb-2">
-                                                              <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 border border-stone-200 bg-stone-100">
-                                                                  {creator.avatarUrl
-                                                                      ? <img src={creator.avatarUrl} className="w-full h-full object-cover" alt={creator.displayName} />
-                                                                      : <User size={14} className="text-stone-400 m-auto" />}
-                                                              </div>
-                                                              <span className="text-xs font-bold text-stone-800 truncate">{creator.displayName}</span>
-                                                          </div>
-                                                          <p className="text-[12px] text-stone-700 leading-relaxed">{creator.bio}</p>
-                                                      </div>
-                                                  </div>
-                                              )}
-
-                                              {/* Platform link stickers */}
-                                              {platformItems.map((platform, pi) => {
-                                                  const platformId = typeof platform === 'string' ? platform : (platform as any).id;
-                                                  const platformUrl = typeof platform === 'string' ? '' : (platform as any).url;
-                                                  const sY = platformStickerStartY + pi * (PLATFORM_STICKER_H + 8);
-                                                  return (
-                                                      <div key={platformId} className="absolute" style={{ left: PAD_X, top: sY, width: PROFILE_W, zIndex: 2 }}>
-                                                          <div className="h-3 w-10 mx-auto rounded-b-sm" style={{ background: tapeColors[pi % tapeColors.length] }} />
-                                                          <a
-                                                              href={platformUrl ? ensureProtocol(platformUrl) : '#'}
-                                                              target={platformUrl ? '_blank' : undefined}
-                                                              rel="noopener noreferrer"
-                                                              className="flex items-center gap-2.5 rounded-lg p-2.5 hover:opacity-80 transition-opacity"
-                                                              style={{ backgroundColor: noteColors[pi % noteColors.length], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}
-                                                              onClick={e => e.stopPropagation()}
-                                                          >
-                                                              <span className="w-6 h-6 flex-shrink-0 text-stone-600">{getPlatformIcon(platformId)}</span>
-                                                              <span className="text-xs font-semibold text-stone-700 capitalize truncate">{platformId}</span>
-                                                              <ExternalLink size={10} className="ml-auto text-stone-300 flex-shrink-0" />
-                                                          </a>
-                                                      </div>
-                                                  );
-                                              })}
-
                                               {/* Featured links / products / support stickers */}
                                               {(() => {
                                                   const LINK_DOMAINS: { pattern: RegExp; id: string }[] = [
@@ -1024,7 +975,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                       { pattern: /substack\.com/, id: 'substack' },
                                                       { pattern: /github\.com/, id: 'github' },
                                                   ];
-                                                  let lY = linkStickerStartY;
+                                                  let lY = PAD_Y;
                                                   return allPublicLinks.map((link, li) => {
                                                       const isProduct = link.type === 'DIGITAL_PRODUCT';
                                                       const isSupport = link.type === 'SUPPORT';
@@ -1039,10 +990,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           } catch { /* invalid url */ }
                                                       }
                                                       const isYoutube = detectedPlatform === 'youtube' && !isProduct && !isSupport;
-                                                      const stickerH = isProduct ? PRODUCT_STICKER_H : isYoutube ? YT_STICKER_H : LINK_STICKER_H;
+                                                      const sqSize = _getLinkSize(link);
+                                                      const stickerH = sqSize || _getLinkH(link);
                                                       // Use saved position if available, else fall back to sequential column
                                                       const hasSavedPos = link.positionX != null && link.positionY != null;
-                                                      const sX = hasSavedPos ? link.positionX! : PAD_X;
+                                                      const sX = hasSavedPos ? link.positionX! : LINK_START_X;
                                                       const sY = hasSavedPos ? link.positionY! : lY;
                                                       if (!hasSavedPos) lY += stickerH + 10;
 
@@ -1051,11 +1003,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           <div
                                                               key={link.id}
                                                               className="absolute"
-                                                              style={{ left: sX, top: sY, width: PROFILE_W, zIndex: 2, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
+                                                          style={{ left: sX, top: sY, width: sqSize || PROFILE_W, zIndex: 2, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
                                                               onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '10'; }}
                                                               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = '2'; }}
                                                           >
-                                                              <div className="h-3 w-10 mx-auto rounded-b-sm" style={{ background: tapeColors[nc] }} />
+                                                          <div className={`h-3 mx-auto rounded-b-sm ${sqSize ? (sqSize === 220 ? 'w-10' : sqSize === 160 ? 'w-8' : 'w-6') : 'w-10'}`} style={{ background: tapeColors[nc] }} />
                                                               {isProduct ? (
                                                                   <button
                                                                       onClick={() => handleProductClick(link)}
@@ -1087,7 +1039,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                           </div>
                                                                           <div className="flex-1 min-w-0">
                                                                               <p className="text-xs font-bold text-stone-800 truncate">{link.title}</p>
-                                                                              <p className="text-[10px] text-stone-400 font-medium">Support</p>
                                                                           </div>
                                                                           <span className="text-[10px] font-bold text-pink-500 bg-pink-50 px-2 py-1 rounded-full flex-shrink-0">Tip ♥</span>
                                                                       </div>
@@ -1128,6 +1079,24 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                           </a>
                                                                       );
                                                                   }
+                                                                  if (sqSize) {
+                                                                      return (
+                                                                          <a
+                                                                              href={ensureProtocol(link.url)}
+                                                                              target="_blank"
+                                                                              rel="noopener noreferrer"
+                                                                              onClick={e => e.stopPropagation()}
+                                                                          className="flex flex-col items-center justify-center text-center rounded-lg overflow-hidden hover:opacity-90 transition-opacity aspect-square p-2"
+                                                                              style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                          >
+                                                                          <div className={`${sqSize === 220 ? 'w-16 h-16 rounded-2xl mb-3' : sqSize === 160 ? 'w-14 h-14 rounded-2xl mb-2' : 'w-12 h-12 rounded-xl mb-1.5'} bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto`}>
+                                                                              {hasThumbnail ? <img src={link.thumbnailUrl} className={`w-full h-full object-cover ${sqSize >= 160 ? 'rounded-2xl' : 'rounded-xl'}`} alt={link.title} /> : isEmoji ? <span className={`${sqSize === 220 ? 'text-4xl' : sqSize === 160 ? 'text-3xl' : 'text-2xl'} leading-none`}>{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className={sqSize === 220 ? "scale-[2]" : sqSize === 160 ? "scale-[1.75]" : "scale-[1.5]"}>{getPlatformIcon(detectedPlatform)}</div> : <ExternalLink size={sqSize === 220 ? 24 : 20} className="text-stone-500" />}
+                                                                              </div>
+                                                                          <p className={`${sqSize === 220 ? 'text-lg mb-1 px-4' : sqSize === 160 ? 'text-base mb-1 px-2' : 'text-xs mb-0.5 px-1'} font-bold text-stone-800 leading-tight w-full truncate`}>{link.title}</p>
+                                                                          <p className="text-[8px] text-stone-500 uppercase tracking-wider font-semibold">Visit</p>
+                                                                          </a>
+                                                                      );
+                                                                  }
                                                                   return (
                                                                       <a
                                                                           href={ensureProtocol(link.url)}
@@ -1151,7 +1120,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                               })()}
 
                                               {/* --- Fan Q&A stickers --- */}
-                                              {answeredPosts.length === 0 && unansweredPosts.length === 0 && PROFILE_ZONE_W === 0 && (
+                                              {answeredPosts.length === 0 && unansweredPosts.length === 0 && allPublicLinks.length === 0 && (
                                                   <div className="absolute inset-0 flex items-center justify-center opacity-40">
                                                       <div className="text-center">
                                                           <div className="text-4xl mb-3">📋</div>

@@ -184,15 +184,16 @@ const ProfilePreviewCard: React.FC<{ creator: CreatorProfile; compact?: boolean 
         <div className="bg-[#FAF9F6] rounded-xl overflow-hidden">
             {/* Main profile card */}
             <div className="border border-stone-200/60 relative" style={{ backgroundColor: creator.bannerGradient || '#ffffff', borderRadius: cardRadius }}>
-                {/* Top bar */}
-                <div className="px-3 py-2 flex justify-between items-center">
-                    <DiemLogo size={compact ? 16 : 18} className="text-stone-800" />
-                    <div className="w-6 h-6 bg-stone-100 rounded-full flex items-center justify-center">
-                        <ExternalLink size={10} className="text-stone-400" />
+                    <div className="absolute top-3 left-3 z-30">
+                        <DiemLogo size={compact ? 16 : 18} className="text-stone-800" />
                     </div>
-                </div>
-                {/* Avatar + bio + name */}
-                <div className="px-3 pb-4 flex flex-col items-center text-center gap-2">
+                    <div className="absolute top-3 right-3 z-30">
+                        <div className="w-6 h-6 bg-stone-100 rounded-full flex items-center justify-center">
+                            <ExternalLink size={10} className="text-stone-400" />
+                        </div>
+                    </div>
+                    {/* Avatar + bio + name */}
+                    <div className="px-3 pt-6 pb-4 flex flex-col items-center text-center gap-2">
                     {/* Bio bubble is absolutely positioned above avatar — add top padding to make room */}
                     <div className={`relative flex flex-col items-center ${(creator.showBio ?? true) && creator.bio ? (compact ? 'mt-10' : 'mt-14') : ''}`}>
                         {/* Bio thought bubble — absolute, floats above avatar */}
@@ -402,6 +403,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [boardAddingProduct, setBoardAddingProduct] = useState(false);
   const [boardAddingSupport, setBoardAddingSupport] = useState(false);
   const [boardAddingYoutube, setBoardAddingYoutube] = useState(false);
+  const [boardAddingPlatform, setBoardAddingPlatform] = useState(false);
+  const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null>(null);
+  const [boardPlatformUrlDraft, setBoardPlatformUrlDraft] = useState('');
   const [boardYoutubeDraft, setBoardYoutubeDraft] = useState('');
 
   const _closeAllBoardAdding = () => {
@@ -409,6 +413,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setBoardAddingProduct(false);
     setBoardAddingSupport(false);
     setBoardAddingYoutube(false);
+    setBoardAddingPlatform(false);
+    setBoardSelectedPlatform(null);
+    setBoardPlatformUrlDraft('');
     setBoardChatPickerOpen(false);
     setBoardLinkDraft({ title: '', url: '', price: '', type: 'EXTERNAL', color: undefined });
     setBoardYoutubeDraft('');
@@ -3089,14 +3096,36 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                             // Link sticker layout constants
                             const LINK_W = 220;
-                            const LINK_H = 90;
                             const LINK_START_X = BOARD_PAD + COLS * (NOTE_W + NOTE_GAP_X) + 32;
+                            const _getLinkSize = (l: AffiliateLink) => {
+                                if (l.iconShape === 'square-l') return 220;
+                                if (l.iconShape === 'square-m') return 160;
+                                if (l.iconShape === 'square-s' || l.iconShape === 'square') return 110;
+                                return null;
+                            };
+                            const _getLinkH = (l: AffiliateLink) => {
+                                const sqSize = _getLinkSize(l);
+                                if (sqSize) return sqSize;
+                                if (l.type === 'DIGITAL_PRODUCT') return 104;
+                                try {
+                                    const h = new URL(l.url.startsWith('http') ? l.url : `https://${l.url}`).hostname;
+                                    if (h.includes('youtube.com') || h === 'youtu.be') return 162;
+                                } catch {}
+                                return 84;
+                            };
                             const getLinkPos = (link: AffiliateLink, idx: number): {x: number, y: number} => {
                                 if (boardLinkPositions[link.id]) return boardLinkPositions[link.id];
                                 if (link.positionX !== null && link.positionX !== undefined && link.positionY !== null && link.positionY !== undefined) {
                                     return { x: link.positionX, y: link.positionY };
                                 }
-                                return { x: LINK_START_X, y: BOARD_PAD + idx * (LINK_H + 14) };
+                                let y = BOARD_PAD;
+                                for (let i = 0; i < idx; i++) {
+                                    const l = visibleBoardLinks[i];
+                                    if (!l.positionY && !boardLinkPositions[l.id]) {
+                                        y += _getLinkH(l) + 14;
+                                    }
+                                }
+                                return { x: LINK_START_X, y };
                             };
 
                             const handleLinkTapeMouseDown = (e: React.MouseEvent, linkId: string, currentPos: {x: number, y: number}) => {
@@ -3171,7 +3200,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                             const linkMaxY = visibleBoardLinks.reduce((max, link, idx) => {
                                 const pos = getLinkPos(link, idx);
-                                return Math.max(max, pos.y + LINK_H + (boardLinkDragging ? 500 : 160));
+                                return Math.max(max, pos.y + _getLinkH(link) + (boardLinkDragging ? 500 : 160));
                             }, 0);
                             const canvasH = Math.max(maxY, linkMaxY);
 
@@ -3234,6 +3263,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         const isDraggingLink = boardLinkDragging?.id === link.id;
                                         const isEditingLink = boardLinkEditId === link.id;
                                         const typeIcon = link.type === 'DIGITAL_PRODUCT' ? '📦' : link.type === 'SUPPORT' ? '💝' : '🔗';
+                                        const sqSize = _getLinkSize(link);
+                                        let detectedPlatform: string | null = null;
+                                        if (link.type === 'EXTERNAL' && link.url) {
+                                            try {
+                                                const hostname = new URL(link.url.startsWith('http') ? link.url : `https://${link.url}`).hostname;
+                                                detectedPlatform = PLATFORM_DOMAINS_PREVIEW.find(p => p.pattern.test(hostname))?.id || null;
+                                            } catch {}
+                                        }
                                         const _ytIdLink = (() => {
                                             if (link.type !== 'EXTERNAL') return null;
                                             try {
@@ -3250,7 +3287,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 style={{
                                                     left: currentPos.x,
                                                     top: currentPos.y,
-                                                    width: LINK_W,
+                                                    width: sqSize || LINK_W,
                                                     transform: isDraggingLink ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
                                                     transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
                                                     zIndex: isDraggingLink ? 1000 : isEditingLink ? 50 : 2,
@@ -3258,7 +3295,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             >
                                                 {/* Tape — drag handle */}
                                                 <div
-                                                    className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0"
+                                                    className={`h-4 mx-auto rounded-b-sm flex-shrink-0 ${sqSize ? (sqSize === 220 ? 'w-12' : sqSize === 160 ? 'w-10' : 'w-8') : 'w-12'}`}
                                                     style={{ background: linkTapes[lc], cursor: 'grab' }}
                                                     onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
                                                     title="Drag to reposition"
@@ -3295,6 +3332,25 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 />
                                                             ))}
                                                         </div>
+                                                        {/* Size Swatches */}
+                                                        {sqSize && (
+                                                            <div className="flex items-center gap-1 mb-2.5" onClick={e => e.stopPropagation()}>
+                                                                <span className="text-[10px] font-bold text-stone-400 uppercase mr-1">Size</span>
+                                                                {([['square-s', 'S'], ['square-m', 'M'], ['square-l', 'L']] as const).map(([sVal, sLabel]) => (
+                                                                    <button
+                                                                        key={sVal}
+                                                                        onClick={async e => {
+                                                                            e.stopPropagation();
+                                                                            const updatedLinks = (editedCreator.links || []).map(l => l.id === link.id ? { ...l, iconShape: sVal } : l);
+                                                                            await saveBoardLinkChange(updatedLinks);
+                                                                        }}
+                                                                        className={`flex-1 py-0.5 text-[10px] font-bold rounded border transition-colors ${(link.iconShape === sVal || (link.iconShape === 'square' && sVal === 'square-s')) ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-500 border-stone-200 hover:bg-stone-50'}`}
+                                                                    >
+                                                                        {sLabel}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                         <div className="flex gap-1.5">
                                                             <button
                                                                 className="flex-1 py-1 text-[10px] font-bold rounded bg-stone-800 text-white hover:bg-stone-700 transition-colors"
@@ -3320,7 +3376,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     </div>
                                                 ) : (
                                                     <div
-                                                        className="relative rounded-lg p-3"
+                                                        className={`relative rounded-lg p-3 ${sqSize ? 'aspect-square flex flex-col items-center justify-center text-center' : ''}`}
                                                         style={{
                                                             backgroundColor: link.buttonColor || linkColors[lc],
                                                             border: isDraggingLink ? '2px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.08)',
@@ -3368,24 +3424,53 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     <p className="text-[10px] font-bold text-stone-700 truncate">{link.title}</p>
                                                                 </div>
                                                             </>
-                                                        ) : (
+                                                        ) : sqSize ? (
                                                             <>
-                                                                <div className="flex items-start gap-2">
-                                                                    <span className="text-base leading-none mt-0.5 flex-shrink-0">{typeIcon}</span>
-                                                                    <div className="min-w-0 flex-1">
-                                                                        <p className="text-xs font-bold text-stone-800 truncate leading-tight">{link.title}</p>
-                                                                        {link.type !== 'EXTERNAL' && link.price != null && (
-                                                                            <p className="text-[10px] text-stone-500 mt-0.5">{link.price} credits</p>
-                                                                        )}
-                                                                        <p className="text-[9px] text-stone-400 truncate mt-0.5">{link.url}</p>
+                                                                <div className={`${sqSize === 220 ? 'w-16 h-16 rounded-2xl mb-3' : sqSize === 160 ? 'w-14 h-14 rounded-2xl mb-2' : 'w-12 h-12 rounded-xl mb-1.5'} bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto`}>
+                                                                    {detectedPlatform ? (
+                                                                        <div className={sqSize === 220 ? "scale-[2]" : sqSize === 160 ? "scale-[1.75]" : "scale-[1.5]"}>{getPreviewPlatformIcon(detectedPlatform)}</div>
+                                                                    ) : link.thumbnailUrl?.startsWith('data:emoji,') ? (
+                                                                        <span className={sqSize === 220 ? "text-4xl" : sqSize === 160 ? "text-3xl" : "text-2xl"}>{link.thumbnailUrl.replace('data:emoji,', '')}</span>
+                                                                    ) : link.thumbnailUrl ? (
+                                                                        <img src={link.thumbnailUrl} className={`w-full h-full object-cover ${sqSize >= 160 ? 'rounded-2xl' : 'rounded-xl'}`} alt={link.title} />
+                                                                    ) : <LinkIcon size={sqSize === 220 ? 24 : 20} className="text-stone-500" />}
+                                                                </div>
+                                                                <p className={`${sqSize === 220 ? 'text-lg mb-1 px-4' : sqSize === 160 ? 'text-base mb-1 px-2' : 'text-xs mb-0.5 px-1'} font-bold text-stone-800 leading-tight w-full truncate`}>{link.title}</p>
+                                                                <p className="text-[8px] text-stone-500 uppercase tracking-wider font-semibold">Visit</p>
+                                                            </>
+                                                        ) : link.type === 'DIGITAL_PRODUCT' ? (
+                                                            <div className="flex flex-col h-full w-full">
+                                                                <div className="flex items-center gap-2.5 pb-2.5">
+                                                                    <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5">
+                                                                        {link.thumbnailUrl?.startsWith('data:emoji,') ? <span className="text-xl leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span> : link.thumbnailUrl ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : <ShoppingBag size={16} className="text-violet-400" />}
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0 text-left">
+                                                                        <p className="text-xs font-bold text-stone-800 truncate">{link.title}</p>
+                                                                        {link.price != null && <p className="text-[10px] text-stone-400 font-medium">{link.price} credits</p>}
                                                                     </div>
                                                                 </div>
-                                                                <div className="mt-2 pt-2 border-t border-black/5">
-                                                                    <span className="text-[9px] font-semibold uppercase tracking-wider text-stone-400">
-                                                                        {link.type === 'DIGITAL_PRODUCT' ? 'Digital Product' : link.type === 'SUPPORT' ? 'Support' : 'External Link'}
-                                                                    </span>
+                                                                <div className="mt-auto py-1.5 rounded-md text-[10px] font-bold text-center text-violet-600 bg-violet-50">
+                                                                    <ShoppingBag size={9} className="inline mr-1" />Buy
                                                                 </div>
-                                                            </>
+                                                            </div>
+                                                        ) : link.type === 'SUPPORT' ? (
+                                                            <div className="flex items-center gap-2.5 h-full w-full">
+                                                                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5">
+                                                                    {link.thumbnailUrl?.startsWith('data:emoji,') ? <span className="text-xl leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span> : link.thumbnailUrl ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : <Heart size={16} className="text-pink-400" />}
+                                                                </div>
+                                                                <div className="flex-1 min-w-0 text-left">
+                                                                    <p className="text-xs font-bold text-stone-800 truncate">{link.title}</p>
+                                                                </div>
+                                                                <span className="text-[10px] font-bold text-pink-500 bg-pink-50 px-2 py-1 rounded-full flex-shrink-0">Tip ♥</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center gap-2.5 h-full w-full">
+                                                                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5 text-stone-600">
+                                                                    {link.thumbnailUrl?.startsWith('data:emoji,') ? <span className="text-base leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span> : link.thumbnailUrl ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : detectedPlatform ? getPreviewPlatformIcon(detectedPlatform) : <LinkIcon size={13} />}
+                                                                </div>
+                                                                <span className="text-xs font-semibold text-stone-700 truncate flex-1 text-left">{link.title}</span>
+                                                                <ExternalLink size={9} className="text-stone-300 flex-shrink-0" />
+                                                            </div>
                                                         )}
                                                     </div>
                                                 )}
@@ -3731,6 +3816,91 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     >
                                         <svg viewBox="0 0 24 24" className="w-3 h-3" fill="#FF0000"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.55A3.02 3.02 0 0 0 .5 6.19C0 8.03 0 12 0 12s0 3.97.5 5.81a3.02 3.02 0 0 0 2.12 2.14C4.46 20.5 12 20.5 12 20.5s7.54 0 9.38-.55a3.02 3.02 0 0 0 2.12-2.14C24 15.97 24 12 24 12s0-3.97-.5-5.81zM9.75 15.52V8.48L15.5 12l-5.75 3.52z"/></svg>
                                         YouTube
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* ── 📱 Platform ── */}
+                            {boardAddingPlatform ? (
+                                <div className="flex flex-col" style={{ width: 240 }}>
+                                    <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(59,130,246,0.35)' }} />
+                                    <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#EFF6FF', border: '2px solid rgba(59,130,246,0.25)' }}>
+                                        {boardSelectedPlatform ? (() => {
+                                            const platformDef = SUPPORTED_PLATFORMS.find(p => p.id === boardSelectedPlatform);
+                                            return (
+                                                <>
+                                                    <div className="flex items-center gap-1.5 mb-2">
+                                                        {getPreviewPlatformIcon(boardSelectedPlatform)}
+                                                        <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">{platformDef?.label}</p>
+                                                    </div>
+                                                    <input
+                                                        className="w-full text-xs bg-white/70 border border-blue-200 rounded px-2 py-1.5 mb-2 outline-none focus:ring-1 focus:ring-blue-400"
+                                                        placeholder="Paste URL..."
+                                                        value={boardPlatformUrlDraft}
+                                                        autoFocus
+                                                        onChange={e => setBoardPlatformUrlDraft(e.target.value)}
+                                                        onKeyDown={async e => {
+                                                            if (e.key === 'Enter') {
+                                                                const url = boardPlatformUrlDraft.trim();
+                                                                if (url) {
+                                                                    _closeAllBoardAdding();
+                                                                    await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-s' }]);
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                    <div className="flex gap-1.5">
+                                                        <button
+                                                            className="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors disabled:opacity-40"
+                                                            disabled={!boardPlatformUrlDraft.trim()}
+                                                            onClick={async () => {
+                                                                const url = boardPlatformUrlDraft.trim();
+                                                                if (!url) return;
+                                                                _closeAllBoardAdding();
+                                                                await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-s' }]);
+                                                            }}
+                                                        >Add Link</button>
+                                                        <button
+                                                            className="flex-1 py-1.5 text-[10px] font-bold rounded-lg border border-blue-200 text-blue-500 hover:bg-blue-50 transition-colors"
+                                                            onClick={() => { setBoardSelectedPlatform(null); setBoardPlatformUrlDraft(''); }}
+                                                        >Back</button>
+                                                    </div>
+                                                </>
+                                            );
+                                        })() : (
+                                            <>
+                                                <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-2">📱 Platform</p>
+                                                <div className="grid grid-cols-5 gap-1.5 mb-2">
+                                                    {SUPPORTED_PLATFORMS.map(p => (
+                                                        <button
+                                                            key={p.id}
+                                                            onClick={() => {
+                                                                const existing = (editedCreator.platforms || []).find(ep => (typeof ep === 'string' ? ep : ep.id) === p.id);
+                                                                let url = typeof existing === 'object' ? existing.url : '';
+                                                                setBoardPlatformUrlDraft(url);
+                                                                setBoardSelectedPlatform(p.id);
+                                                            }}
+                                                            className="w-full aspect-square flex items-center justify-center rounded-lg bg-white border border-blue-100 hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                                                            title={p.label}
+                                                        >
+                                                            {getPreviewPlatformIcon(p.id)}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <button className="w-full py-1.5 text-[10px] font-bold rounded-lg border border-blue-200 text-blue-500 hover:bg-blue-50 transition-colors" onClick={_closeAllBoardAdding}>Cancel</button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col" style={{ width: 110 }}>
+                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(59,130,246,0.35)' }} />
+                                    <button
+                                        className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold"
+                                        style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }}
+                                        onClick={() => { _closeAllBoardAdding(); setBoardAddingPlatform(true); }}
+                                    >
+                                        📱 Platform
                                     </button>
                                 </div>
                             )}
