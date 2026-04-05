@@ -764,24 +764,20 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                   const tapeColors = ['rgba(200,193,185,0.55)', 'rgba(110,200,140,0.45)', 'rgba(240,160,80,0.4)', 'rgba(180,150,240,0.4)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)'];
                                   const stickers = ['⭐','❤️','✨','🌟','💙','🎯','🔥','💬','🌙','🌸'];
                                   const rotations = [-2.1, 1.2, -0.8, 1.6, -1.4, 0.7, -1.9, 1.0, -0.6, 1.3];
-                                  const NOTE_W = 270;
-                                  const PROFILE_W = 220;
-                                  const NOTE_H = 190;
-                                  const CARD_GAP = 28;
                                   const stableIdx = (id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xFFFFFF; return Math.abs(h); };
-                                  const PAD_X = 32;
-                                  const PAD_Y = 20;
 
                                   // Profile stickers: bio + platform links + featured links/products/support
                                   // Flatten all public links across all groups
                                   const allPublicLinks = groupedLinks.flatMap(g => g.links);
-                                  const LINK_STICKER_H = 84; // external/support sticker height
-                                  const YT_STICKER_H = 162; // YouTube thumbnail sticker (16:9 on 220px wide + title row)
-                                  const PRODUCT_STICKER_H = 104; // product sticker height
 
+                                  const NOTE_W = 252;
+                                  const NOTE_H_EST = 272;
                                   const COLS = 3;
                                   const NOTE_GAP_X = 28;
-                                  const LINK_START_X = PAD_X + COLS * (NOTE_W + NOTE_GAP_X) + 32;
+                                  const NOTE_GAP_Y = 36;
+                                  const BOARD_PAD = 32;
+                                  const PROFILE_W = 220;
+                                  const LINK_START_X = BOARD_PAD + COLS * (NOTE_W + NOTE_GAP_X) + 32;
 
                                   // All posts sorted: answered + pinned first (by displayOrder/time), unanswered at end
                                   const answeredPosts = [...boardPosts]
@@ -799,12 +795,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       .filter(p => p.reply === null)
                                       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
-                                  // Fan post default X starts at the left padding
-                                  const fanStartX = PAD_X;
-
-                                  // Compute container dimensions — include fan posts AND link sticker saved positions
-                                  const LINK_W_PUBLIC = 220;
-                                  let seqLinkY = PAD_Y;
                                   const _getLinkSize = (l: typeof allPublicLinks[0]) => {
                                       if (l.iconShape === 'square-l') return 220;
                                       if (l.iconShape === 'square-m') return 160;
@@ -814,101 +804,93 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                   const _getLinkH = (l: typeof allPublicLinks[0]) => {
                                       const sqSize = _getLinkSize(l);
                                       if (sqSize) return sqSize;
-                                      if (l.type === 'DIGITAL_PRODUCT') return PRODUCT_STICKER_H;
+                                      if (l.type === 'DIGITAL_PRODUCT') return 104;
                                       try {
                                           const h = new URL(l.url.startsWith('http') ? l.url : `https://${l.url}`).hostname;
-                                          if (h.includes('youtube.com') || h === 'youtu.be') return YT_STICKER_H;
+                                          if (h.includes('youtube.com') || h === 'youtu.be') return 162;
                                       } catch {}
-                                      return LINK_STICKER_H;
+                                      return 84;
                                   };
-                                  const linkMaxY = allPublicLinks.reduce((max, l) => {
-                                      const stickerH = _getLinkH(l);
-                                      const y = (l.positionY != null) ? l.positionY : seqLinkY;
-                                      if (l.positionY == null) seqLinkY += stickerH + 10;
-                                      return Math.max(max, y + stickerH);
-                                  }, 0);
-                                  let seqLinkY2 = PAD_Y;
-                                  const linkMaxX = allPublicLinks.reduce((max, l) => {
-                                      const sqSize = _getLinkSize(l);
-                                      const x = (l.positionX != null) ? l.positionX : LINK_START_X;
-                                      if (l.positionX == null) seqLinkY2 += _getLinkH(l) + 10;
-                                      return Math.max(max, x + (sqSize || LINK_W_PUBLIC));
-                                  }, LINK_START_X + LINK_W_PUBLIC);
 
-                                  const maxY = answeredPosts.reduce((max, p) => {
-                                      const y = (p.positionY !== null && p.positionY !== undefined) ? p.positionY : PAD_Y;
-                                      return Math.max(max, y);
-                                  }, PAD_Y);
-                                  const maxX = answeredPosts.reduce((max, p, i) => {
-                                      const x = (p.positionX !== null && p.positionX !== undefined) ? p.positionX : fanStartX + i * (NOTE_W + CARD_GAP);
-                                      return Math.max(max, x);
-                                  }, fanStartX);
-                                  // --- Collision-aware pending post placement ---
-                                  // Build occupied rect list from all existing stickers
-                                  const COL_MARGIN = 6; // minimum gap — place right next to, not far away
-                                  type _Rect = { x: number; y: number; w: number; h: number };
-                                  const _overlaps = (a: _Rect, b: _Rect) =>
-                                      a.x < b.x + b.w + COL_MARGIN && a.x + a.w + COL_MARGIN > b.x &&
-                                      a.y < b.y + b.h + COL_MARGIN && a.y + a.h + COL_MARGIN > b.y;
-                                  const occupiedRects: _Rect[] = [];
-                                  // Answered fan posts
-                                  answeredPosts.forEach((p, i) => {
-                                      const x = p.positionX != null ? p.positionX : fanStartX + i * (NOTE_W + CARD_GAP);
-                                      const y = p.positionY != null ? p.positionY : PAD_Y + (i % 2) * 24;
-                                      occupiedRects.push({ x, y, w: NOTE_W, h: NOTE_H });
-                                  });
-                                  // Link/product/support stickers
-                                  let _occLY = PAD_Y;
-                                  allPublicLinks.forEach(link => {
-                                      const sqSize = _getLinkSize(link);
-                                      const sH = sqSize || _getLinkH(link);
-                                      const sW = sqSize || PROFILE_W;
-                                      const x = link.positionX != null ? link.positionX : LINK_START_X;
-                                      const y = link.positionY != null ? link.positionY : _occLY;
-                                      if (link.positionY == null) _occLY += sH + 10;
-                                      occupiedRects.push({ x, y, w: sW, h: sH });
-                                  });
-                                  // Slot finder: candidates are positions directly adjacent to existing sticker edges
-                                  // This guarantees "right next to" placement, not grid-jump placement
-                                  const _findSlot = (used: _Rect[]): { x: number; y: number } => {
-                                      // Seed candidates: origin + all 4 edges of every occupied rect
-                                      const cands: { x: number; y: number }[] = [{ x: fanStartX, y: PAD_Y }];
-                                      for (const r of used) {
-                                          cands.push({ x: r.x + r.w + COL_MARGIN, y: r.y });           // right
-                                          cands.push({ x: r.x, y: r.y + r.h + COL_MARGIN });           // below
-                                          cands.push({ x: r.x - NOTE_W - COL_MARGIN, y: r.y });        // left
-                                          cands.push({ x: r.x, y: r.y - NOTE_H - COL_MARGIN });        // above
-                                          cands.push({ x: r.x + r.w + COL_MARGIN, y: r.y + r.h - NOTE_H }); // right, bottom-aligned
-                                          cands.push({ x: r.x + r.w - NOTE_W, y: r.y + r.h + COL_MARGIN }); // below, right-aligned
+                                  const getLinkPos = (link: typeof allPublicLinks[0], idx: number): {x: number, y: number} => {
+                                      if (link.positionX != null && link.positionY != null) {
+                                          return { x: link.positionX, y: link.positionY };
                                       }
-                                      // Sort by distance from (fanStartX, PAD_Y) — closest first
-                                      cands.sort((a, b) => {
-                                          const da = (a.x - fanStartX) ** 2 + (a.y - PAD_Y) ** 2;
-                                          const db = (b.x - fanStartX) ** 2 + (b.y - PAD_Y) ** 2;
-                                          return da - db;
-                                      });
-                                      const seen = new Set<string>();
-                                      for (const c of cands) {
-                                          if (c.x < PAD_X || c.y < 0) continue;
-                                          const k = `${Math.round(c.x)},${Math.round(c.y)}`;
-                                          if (seen.has(k)) continue;
-                                          seen.add(k);
-                                          const cand: _Rect = { x: c.x, y: c.y, w: NOTE_W, h: NOTE_H };
-                                          if (!used.some(r => _overlaps(cand, r))) return c;
+                                      let y = BOARD_PAD;
+                                      for (let i = 0; i < idx; i++) {
+                                          const l = allPublicLinks[i];
+                                          if (l.positionY == null) {
+                                              y += _getLinkH(l) + 14;
+                                          }
                                       }
-                                      return { x: fanStartX + used.length * (NOTE_W + COL_MARGIN), y: PAD_Y };
+                                      return { x: LINK_START_X, y };
                                   };
-                                  const pendingPositions: { x: number; y: number }[] = [];
-                                  const allOccupied = [...occupiedRects];
-                                  unansweredPosts.forEach(() => {
-                                      const pos = _findSlot(allOccupied);
-                                      pendingPositions.push(pos);
-                                      allOccupied.push({ x: pos.x, y: pos.y, w: NOTE_W, h: NOTE_H });
+
+                                  const DB_MARGIN = 8;
+                                  type _BP = { x: number; y: number };
+                                  const _bpOverlaps = (a: _BP, b: _BP) =>
+                                      Math.abs(a.x - b.x) < NOTE_W + DB_MARGIN &&
+                                      Math.abs(a.y - b.y) < NOTE_H_EST + DB_MARGIN;
+
+                                  const savedPositions = new Map<string, _BP>();
+                                  boardPosts.forEach(p => {
+                                      if (p.positionX != null && p.positionY != null) savedPositions.set(p.id, { x: p.positionX, y: p.positionY });
                                   });
-                                  const unansweredMaxX = pendingPositions.reduce((m, p) => Math.max(m, p.x), fanStartX);
-                                  const unansweredMaxY = pendingPositions.reduce((m, p) => Math.max(m, p.y), PAD_Y);
-                                  const containerH = Math.max(300, maxY + NOTE_H + PAD_Y * 2, unansweredMaxY + NOTE_H + PAD_Y, linkMaxY + PAD_Y);
-                                  const containerW = Math.max(900, maxX + NOTE_W + PAD_X, unansweredMaxX + NOTE_W + PAD_X, linkMaxX + PAD_X);
+
+                                  const computedPositions = new Map<string, _BP>(savedPositions);
+                                  boardPosts.forEach((p, idx) => {
+                                      if (computedPositions.has(p.id)) return;
+                                      const col = idx % COLS;
+                                      const row = Math.floor(idx / COLS);
+                                      const gridPos: _BP = {
+                                          x: BOARD_PAD + col * (NOTE_W + NOTE_GAP_X) + (row % 2) * 12,
+                                          y: BOARD_PAD + row * (NOTE_H_EST + NOTE_GAP_Y),
+                                      };
+                                      const placed = Array.from(computedPositions.values());
+                                      if (!placed.some(op => _bpOverlaps(gridPos, op))) {
+                                          computedPositions.set(p.id, gridPos);
+                                          return;
+                                      }
+                                      const cands: _BP[] = [{ x: BOARD_PAD, y: BOARD_PAD }];
+                                      for (const op of placed) {
+                                          cands.push({ x: op.x + NOTE_W + DB_MARGIN, y: op.y });
+                                          cands.push({ x: op.x, y: op.y + NOTE_H_EST + DB_MARGIN });
+                                          cands.push({ x: op.x - NOTE_W - DB_MARGIN, y: op.y });
+                                          cands.push({ x: op.x, y: op.y - NOTE_H_EST - DB_MARGIN });
+                                      }
+                                      cands.sort((a, b) => (a.x**2 + a.y**2) - (b.x**2 + b.y**2));
+                                      for (const c of cands) {
+                                          if (c.x < 0 || c.y < 0) continue;
+                                          if (!placed.some(op => _bpOverlaps(c, op))) {
+                                              computedPositions.set(p.id, c);
+                                              return;
+                                          }
+                                      }
+                                      computedPositions.set(p.id, gridPos);
+                                  });
+
+                                  const getPos = (post: BoardPost): _BP => computedPositions.get(post.id) ?? { x: BOARD_PAD, y: BOARD_PAD };
+
+                                  const linkMaxY = allPublicLinks.reduce((max, link, idx) => {
+                                      const pos = getLinkPos(link, idx);
+                                      return Math.max(max, pos.y + _getLinkH(link) + 160);
+                                  }, 0);
+                                  const linkMaxX = allPublicLinks.reduce((max, link, idx) => {
+                                      const pos = getLinkPos(link, idx);
+                                      const sqSize = _getLinkSize(link);
+                                      return Math.max(max, pos.x + (sqSize || PROFILE_W));
+                                  }, LINK_START_X + PROFILE_W);
+                                  const maxY = boardPosts.reduce((max, p) => {
+                                      const pos = getPos(p);
+                                      return Math.max(max, pos.y + NOTE_H_EST + 160);
+                                  }, BOARD_PAD);
+                                  const maxX = boardPosts.reduce((max, p) => {
+                                      const pos = getPos(p);
+                                      return Math.max(max, pos.x + NOTE_W);
+                                  }, BOARD_PAD + NOTE_W);
+
+                                  const containerH = Math.max(300, maxY, linkMaxY);
+                                  const containerW = Math.max(900, maxX + BOARD_PAD, linkMaxX + BOARD_PAD);
 
                                   const isCreatorOwner = !!(currentUser && currentUser.id === creator.id);
                                   return (
@@ -991,19 +973,14 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                       }
                                                       const isYoutube = detectedPlatform === 'youtube' && !isProduct && !isSupport;
                                                       const sqSize = _getLinkSize(link);
-                                                      const stickerH = sqSize || _getLinkH(link);
-                                                      // Use saved position if available, else fall back to sequential column
-                                                      const hasSavedPos = link.positionX != null && link.positionY != null;
-                                                      const sX = hasSavedPos ? link.positionX! : LINK_START_X;
-                                                      const sY = hasSavedPos ? link.positionY! : lY;
-                                                      if (!hasSavedPos) lY += stickerH + 10;
+                                                      const pos = getLinkPos(link, li);
 
                                                       const linkRot = rotations[(stableIdx(link.id) + li) % rotations.length];
                                                       return (
                                                           <div
                                                               key={link.id}
                                                               className="absolute"
-                                                          style={{ left: sX, top: sY, width: sqSize || PROFILE_W, zIndex: 2, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
+                                                          style={{ left: pos.x, top: pos.y, width: sqSize || PROFILE_W, zIndex: 2, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
                                                               onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '10'; }}
                                                               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = '2'; }}
                                                           >
@@ -1131,14 +1108,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                               {answeredPosts.map((post, i) => {
                                                   const nc = stableIdx(post.id) % noteColors.length;
                                                   const rot = rotations[stableIdx(post.id) % rotations.length];
-                                                  const topOffset = (post.positionY !== null && post.positionY !== undefined) ? post.positionY : PAD_Y + (i % 2) * 24;
-                                                  const leftOffset = (post.positionX !== null && post.positionX !== undefined) ? post.positionX : fanStartX + i * (NOTE_W + CARD_GAP);
+                                                  const pos = getPos(post);
                                                   return (
                                                       <div
                                                           key={post.id}
                                                           data-post-id={post.id}
                                                           className="absolute cursor-pointer"
-                                                          style={{ left: leftOffset, top: topOffset, width: NOTE_W, transform: `rotate(${rot}deg)`, transition: 'transform 0.2s ease', zIndex: 1 }}
+                                                          style={{ left: pos.x, top: pos.y, width: NOTE_W, transform: `rotate(${rot}deg)`, transition: 'transform 0.2s ease', zIndex: 1 }}
                                                           onClick={() => { setSelectedBoardPost(post); setIsComposing(false); }}
                                                           onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '10'; }}
                                                           onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${rot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = '1'; }}
@@ -1184,8 +1160,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                                               {/* --- Unanswered (pending) stickers — grid-wrapped within viewport --- */}
                                               {unansweredPosts.map((post, i) => {
-                                                  const leftOffset = pendingPositions[i]?.x ?? fanStartX;
-                                                  const topOffset = pendingPositions[i]?.y ?? PAD_Y;
+                                                  const pos = getPos(post);
+                                                  const leftOffset = pos.x;
+                                                  const topOffset = pos.y;
                                                   const isNew = post.id === newlyPostedId;
                                                   // Expiry: 7 days from createdAt
                                                   const _expMs = new Date(post.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000;
