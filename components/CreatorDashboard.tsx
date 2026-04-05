@@ -451,6 +451,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const boardScrollContainerRef = useRef<HTMLDivElement>(null);
   const [boardViewportW, setBoardViewportW] = useState(0);
 
+  // Long Press Drag State (Mobile)
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStartPosRef = useRef<{x: number, y: number} | null>(null);
+
   // Withdrawal State
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [isStripeConnected, setIsStripeConnected] = useState(false);
@@ -3140,6 +3144,62 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 });
                             };
 
+                            // --- Mobile Touch Handlers (Long Press to Drag) ---
+                            const cancelLongPress = () => {
+                                if (longPressTimerRef.current) {
+                                    clearTimeout(longPressTimerRef.current);
+                                    longPressTimerRef.current = null;
+                                }
+                            };
+
+                            const handleNoteTouchStart = (e: React.TouchEvent, id: string, currentPos: {x: number, y: number}, type: 'POST' | 'LINK') => {
+                                if (e.touches.length > 1) return;
+                                const touch = e.touches[0];
+                                touchStartPosRef.current = { x: touch.clientX, y: touch.clientY };
+
+                                longPressTimerRef.current = setTimeout(() => {
+                                    if (navigator.vibrate) navigator.vibrate(50); // Haptic feedback
+                                    if (type === 'POST') {
+                                        setBoardDragging({ id, startMouseX: touch.clientX, startMouseY: touch.clientY, startNoteX: currentPos.x, startNoteY: currentPos.y });
+                                        setSelectedBoardId(id);
+                                    } else {
+                                        setBoardLinkDragging({ id, startMouseX: touch.clientX, startMouseY: touch.clientY, startNoteX: currentPos.x, startNoteY: currentPos.y });
+                                    }
+                                }, 400); // 400ms to trigger pick-up
+                            };
+
+                            const handleNoteTouchMove = (e: React.TouchEvent) => {
+                                if (!touchStartPosRef.current || !longPressTimerRef.current) return;
+                                const touch = e.touches[0];
+                                const dx = touch.clientX - touchStartPosRef.current.x;
+                                const dy = touch.clientY - touchStartPosRef.current.y;
+                                if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+                                    cancelLongPress(); // Cancel drag if user is just scrolling
+                                }
+                            };
+
+                            const handleCanvasTouchMove = (e: React.TouchEvent) => {
+                                if (!boardDragging && !boardLinkDragging) return;
+                                const touch = e.touches[0];
+                                if (boardDragging) {
+                                    const dx = touch.clientX - boardDragging.startMouseX;
+                                    const dy = touch.clientY - boardDragging.startMouseY;
+                                    setBoardPositions(prev => ({ ...prev, [boardDragging.id]: { x: Math.max(0, boardDragging.startNoteX + dx), y: Math.max(0, boardDragging.startNoteY + dy) } }));
+                                }
+                                if (boardLinkDragging) {
+                                    const dx = touch.clientX - boardLinkDragging.startMouseX;
+                                    const dy = touch.clientY - boardLinkDragging.startMouseY;
+                                    setBoardLinkPositions(prev => ({ ...prev, [boardLinkDragging.id]: { x: Math.max(0, boardLinkDragging.startNoteX + dx), y: Math.max(0, boardLinkDragging.startNoteY + dy) } }));
+                                }
+                            };
+
+                            useEffect(() => {
+                                const preventDefault = (e: TouchEvent) => { if (boardDragging || boardLinkDragging) e.preventDefault(); };
+                                // Block native mobile scrolling actively while dragging a sticker
+                                document.addEventListener('touchmove', preventDefault, { passive: false, capture: true });
+                                return () => document.removeEventListener('touchmove', preventDefault, { capture: true });
+                            }, [boardDragging, boardLinkDragging]);
+
                             const handleCanvasMouseMove = (e: React.MouseEvent) => {
                                 if (boardDragging) {
                                     const dx = e.clientX - boardDragging.startMouseX;
@@ -3221,6 +3281,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     onMouseMove={handleCanvasMouseMove}
                                     onMouseUp={handleCanvasMouseUp}
                                     onMouseLeave={handleCanvasMouseUp}
+                                    onTouchMove={handleCanvasTouchMove}
+                                    onTouchEnd={handleCanvasMouseUp}
+                                    onTouchCancel={handleCanvasMouseUp}
                                 >
                                     {/* Viewport guidelines — two rectangles showing exact visible area per device */}
                                     {boardViewportW > 0 && (() => {
@@ -3520,6 +3583,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 onMouseEnter={() => !boardDragging && setSelectedBoardId(post.id)}
                                                 onMouseLeave={() => !boardDragging && setSelectedBoardId(null)}
                                                 onClick={() => !isDragging && setBoardPopupPost(post)}
+                                                onTouchStart={e => handleNoteTouchStart(e, post.id, currentPos, 'POST')}
+                                                onTouchMove={handleNoteTouchMove}
+                                                onTouchEnd={cancelLongPress}
+                                                onTouchCancel={cancelLongPress}
                                             >
                                                 {/* Tape strip — drag handle */}
                                                 <div
