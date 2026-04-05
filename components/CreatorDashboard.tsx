@@ -455,6 +455,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartPosRef = useRef<{x: number, y: number} | null>(null);
 
+  useEffect(() => {
+      const preventDefault = (e: TouchEvent) => { if (boardDragging || boardLinkDragging) e.preventDefault(); };
+      // Block native mobile scrolling actively while dragging a sticker
+      document.addEventListener('touchmove', preventDefault, { passive: false, capture: true });
+      return () => document.removeEventListener('touchmove', preventDefault, { capture: true });
+  }, [boardDragging, boardLinkDragging]);
+
   // Withdrawal State
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [isStripeConnected, setIsStripeConnected] = useState(false);
@@ -3192,13 +3199,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     setBoardLinkPositions(prev => ({ ...prev, [boardLinkDragging.id]: { x: Math.max(0, boardLinkDragging.startNoteX + dx), y: Math.max(0, boardLinkDragging.startNoteY + dy) } }));
                                 }
                             };
-
-                            useEffect(() => {
-                                const preventDefault = (e: TouchEvent) => { if (boardDragging || boardLinkDragging) e.preventDefault(); };
-                                // Block native mobile scrolling actively while dragging a sticker
-                                document.addEventListener('touchmove', preventDefault, { passive: false, capture: true });
-                                return () => document.removeEventListener('touchmove', preventDefault, { capture: true });
-                            }, [boardDragging, boardLinkDragging]);
 
                             const handleCanvasMouseMove = (e: React.MouseEvent) => {
                                 if (boardDragging) {
