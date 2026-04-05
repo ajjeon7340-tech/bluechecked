@@ -957,7 +957,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                       { pattern: /substack\.com/, id: 'substack' },
                                                       { pattern: /github\.com/, id: 'github' },
                                                   ];
-                                                  let lY = PAD_Y;
                                                   return allPublicLinks.map((link, li) => {
                                                       const isProduct = link.type === 'DIGITAL_PRODUCT';
                                                       const isSupport = link.type === 'SUPPORT';
