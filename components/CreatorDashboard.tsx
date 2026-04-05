@@ -3332,25 +3332,27 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 />
                                                             ))}
                                                         </div>
-                                                        {/* Size Swatches */}
-                                                        {sqSize && (
-                                                            <div className="flex items-center gap-1 mb-2.5" onClick={e => e.stopPropagation()}>
-                                                                <span className="text-[10px] font-bold text-stone-400 uppercase mr-1">Size</span>
-                                                                {([['square-s', 'S'], ['square-m', 'M'], ['square-l', 'L']] as const).map(([sVal, sLabel]) => (
+                                                        {/* Size Swatches (Always visible for all links) */}
+                                                        <div className="flex items-center gap-1 mb-2.5" onClick={e => e.stopPropagation()}>
+                                                            <span className="text-[10px] font-bold text-stone-400 uppercase mr-1">Size</span>
+                                                            {([['wide', 'Wide'], ['square-s', 'S'], ['square-m', 'M'], ['square-l', 'L']] as const).map(([sVal, sLabel]) => {
+                                                                const isSelected = link.iconShape === sVal || (link.iconShape === 'square' && sVal === 'square-s') || (sVal === 'wide' && !['square-s', 'square-m', 'square-l', 'square'].includes(link.iconShape || ''));
+                                                                return (
                                                                     <button
                                                                         key={sVal}
                                                                         onClick={async e => {
                                                                             e.stopPropagation();
-                                                                            const updatedLinks = (editedCreator.links || []).map(l => l.id === link.id ? { ...l, iconShape: sVal } : l);
+                                                                            const shapeToSet = sVal === 'wide' ? undefined : sVal;
+                                                                            const updatedLinks = (editedCreator.links || []).map(l => l.id === link.id ? { ...l, iconShape: shapeToSet } : l);
                                                                             await saveBoardLinkChange(updatedLinks);
                                                                         }}
-                                                                        className={`flex-1 py-0.5 text-[10px] font-bold rounded border transition-colors ${(link.iconShape === sVal || (link.iconShape === 'square' && sVal === 'square-s')) ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-500 border-stone-200 hover:bg-stone-50'}`}
+                                                                        className={`flex-1 py-0.5 text-[10px] font-bold rounded border transition-colors ${isSelected ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-500 border-stone-200 hover:bg-stone-50'}`}
                                                                     >
                                                                         {sLabel}
                                                                     </button>
-                                                                ))}
-                                                            </div>
-                                                        )}
+                                                                );
+                                                            })}
+                                                        </div>
                                                         <div className="flex gap-1.5">
                                                             <button
                                                                 className="flex-1 py-1 text-[10px] font-bold rounded bg-stone-800 text-white hover:bg-stone-700 transition-colors"
@@ -3433,10 +3435,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                         <span className={sqSize === 220 ? "text-4xl" : sqSize === 160 ? "text-3xl" : "text-2xl"}>{link.thumbnailUrl.replace('data:emoji,', '')}</span>
                                                                     ) : link.thumbnailUrl ? (
                                                                         <img src={link.thumbnailUrl} className={`w-full h-full object-cover ${sqSize >= 160 ? 'rounded-2xl' : 'rounded-xl'}`} alt={link.title} />
-                                                                    ) : <LinkIcon size={sqSize === 220 ? 24 : 20} className="text-stone-500" />}
+                                                                        ) : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={sqSize === 220 ? 24 : 20} className="text-violet-500" /> : link.type === 'SUPPORT' ? <Heart size={sqSize === 220 ? 24 : 20} className="text-pink-500" /> : <LinkIcon size={sqSize === 220 ? 24 : 20} className="text-stone-500" />}
                                                                 </div>
                                                                 <p className={`${sqSize === 220 ? 'text-lg mb-1 px-4' : sqSize === 160 ? 'text-base mb-1 px-2' : 'text-xs mb-0.5 px-1'} font-bold text-stone-800 leading-tight w-full truncate`}>{link.title}</p>
-                                                                <p className="text-[8px] text-stone-500 uppercase tracking-wider font-semibold">Visit</p>
+                                                                    <p className="text-[8px] text-stone-500 uppercase tracking-wider font-semibold">{link.type === 'DIGITAL_PRODUCT' ? 'Buy' : link.type === 'SUPPORT' ? 'Tip' : 'Visit'}</p>
                                                             </>
                                                         ) : link.type === 'DIGITAL_PRODUCT' ? (
                                                             <div className="flex flex-col h-full w-full">

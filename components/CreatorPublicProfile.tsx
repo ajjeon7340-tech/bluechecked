@@ -1056,21 +1056,27 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                       );
                                                                   }
                                                                   if (sqSize) {
+                                                                      const isExternal = link.type === 'EXTERNAL';
+                                                                      const Tag = isExternal ? 'a' : 'button';
                                                                       return (
-                                                                          <a
-                                                                              href={ensureProtocol(link.url)}
-                                                                              target="_blank"
-                                                                              rel="noopener noreferrer"
-                                                                              onClick={e => e.stopPropagation()}
-                                                                          className="flex flex-col items-center justify-center text-center rounded-lg overflow-hidden hover:opacity-90 transition-opacity aspect-square p-2"
+                                                                          <Tag
+                                                                              href={isExternal ? ensureProtocol(link.url) : undefined}
+                                                                              target={isExternal ? "_blank" : undefined}
+                                                                              rel={isExternal ? "noopener noreferrer" : undefined}
+                                                                              onClick={e => {
+                                                                                  e.stopPropagation();
+                                                                                  if (isProduct) handleProductClick(link);
+                                                                                  if (isSupport) handleSupportClick(link.price);
+                                                                              }}
+                                                                              className="flex flex-col items-center justify-center text-center rounded-lg overflow-hidden hover:opacity-90 transition-opacity aspect-square p-2 w-full h-full block"
                                                                               style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
                                                                           >
-                                                                          <div className={`${sqSize === 220 ? 'w-16 h-16 rounded-2xl mb-3' : sqSize === 160 ? 'w-14 h-14 rounded-2xl mb-2' : 'w-12 h-12 rounded-xl mb-1.5'} bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto`}>
-                                                                              {hasThumbnail ? <img src={link.thumbnailUrl} className={`w-full h-full object-cover ${sqSize >= 160 ? 'rounded-2xl' : 'rounded-xl'}`} alt={link.title} /> : isEmoji ? <span className={`${sqSize === 220 ? 'text-4xl' : sqSize === 160 ? 'text-3xl' : 'text-2xl'} leading-none`}>{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className={sqSize === 220 ? "scale-[2]" : sqSize === 160 ? "scale-[1.75]" : "scale-[1.5]"}>{getPlatformIcon(detectedPlatform)}</div> : <ExternalLink size={sqSize === 220 ? 24 : 20} className="text-stone-500" />}
+                                                                              <div className={`${sqSize === 220 ? 'w-16 h-16 rounded-2xl mb-3' : sqSize === 160 ? 'w-14 h-14 rounded-2xl mb-2' : 'w-12 h-12 rounded-xl mb-1.5'} bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto`}>
+                                                                                  {hasThumbnail ? <img src={link.thumbnailUrl} className={`w-full h-full object-cover ${sqSize >= 160 ? 'rounded-2xl' : 'rounded-xl'}`} alt={link.title} /> : isEmoji ? <span className={`${sqSize === 220 ? 'text-4xl' : sqSize === 160 ? 'text-3xl' : 'text-2xl'} leading-none`}>{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className={sqSize === 220 ? "scale-[2]" : sqSize === 160 ? "scale-[1.75]" : "scale-[1.5]"}>{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={sqSize === 220 ? 24 : 20} className="text-violet-500" /> : isSupport ? <Heart size={sqSize === 220 ? 24 : 20} className="text-pink-500" /> : <ExternalLink size={sqSize === 220 ? 24 : 20} className="text-stone-500" />}
                                                                               </div>
-                                                                          <p className={`${sqSize === 220 ? 'text-lg mb-1 px-4' : sqSize === 160 ? 'text-base mb-1 px-2' : 'text-xs mb-0.5 px-1'} font-bold text-stone-800 leading-tight w-full truncate`}>{link.title}</p>
-                                                                          <p className="text-[8px] text-stone-500 uppercase tracking-wider font-semibold">Visit</p>
-                                                                          </a>
+                                                                              <p className={`${sqSize === 220 ? 'text-lg mb-1 px-4' : sqSize === 160 ? 'text-base mb-1 px-2' : 'text-xs mb-0.5 px-1'} font-bold text-stone-800 leading-tight w-full truncate`}>{link.title}</p>
+                                                                              <p className={`text-[8px] text-stone-500 uppercase tracking-wider font-semibold`}>{isProduct ? 'Buy' : isSupport ? 'Tip' : 'Visit'}</p>
+                                                                          </Tag>
                                                                       );
                                                                   }
                                                                   return (
