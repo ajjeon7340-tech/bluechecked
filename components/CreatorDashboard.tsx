@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n/config';
 import { CreatorProfile, Message, DashboardStats, MonthlyStat, AffiliateLink, LinkSection, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
-import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, sendWelcomeMessage, sendSupportMessage, Withdrawal, isBackendConfigured } from '../services/realBackend';
+import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, uploadPremiumContent, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, sendWelcomeMessage, sendSupportMessage, Withdrawal, isBackendConfigured, getBoardPosts, getPendingBoardPosts, replyToBoardPost, deleteBoardPost, updateBoardPostVisibility, pinBoardPost, updateBoardNoteColor, updateBoardPostPosition, promoteMessageToBoardPost, uploadBoardAttachment, BoardPost} from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import {
@@ -18,6 +18,7 @@ import {
   GitHubLogo, SubstackLogo, BeehiivLogo, OnlyFansLogo,
 } from './Icons';
 import { Button } from './Button';
+import { Globe, Trash2, Loader2, Pin } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid, PieChart, Pie, Cell, Legend, ComposedChart, Line } from 'recharts';
 
 interface Props {
@@ -28,7 +29,7 @@ interface Props {
   onRefreshData: () => Promise<void>;
 }
 
-type DashboardView = 'OVERVIEW' | 'INBOX' | 'FINANCE' | 'ANALYTICS' | 'STATISTICS' | 'SETTINGS' | 'NOTIFICATIONS' | 'REVIEWS' | 'SUPPORT';
+type DashboardView = 'OVERVIEW' | 'INBOX' | 'BOARD' | 'FINANCE' | 'ANALYTICS' | 'STATISTICS' | 'SETTINGS' | 'NOTIFICATIONS' | 'REVIEWS' | 'SUPPORT';
 type InboxFilter = 'ALL' | 'PENDING' | 'REPLIED' | 'REJECTED';
 
 const SUPPORTED_PLATFORMS = [
@@ -252,45 +253,60 @@ const ProfilePreviewCard: React.FC<{ creator: CreatorProfile; compact?: boolean 
                 </div>
             </div>
 
-            {/* DIEM block */}
+            {/* Post a Diem CTA */}
             {creator.diemEnabled !== false && (
                 <div className="mt-2 mx-0">
-                    <div className="p-2.5 rounded-2xl border flex items-center gap-2.5" style={linkBlockStyle}>
-                        {/* Icon */}
-                        <div className={`${compact ? 'w-8 h-8' : 'w-9 h-9'} ${dsc} flex items-center justify-center flex-shrink-0 overflow-hidden bg-white border border-stone-100`}>
-                            {creator.diemIcon?.startsWith('data:emoji,') ? (
-                                <span className={compact ? 'text-lg' : 'text-xl'}>{creator.diemIcon.replace('data:emoji,', '')}</span>
-                            ) : creator.diemIcon ? (
-                                <img src={creator.diemIcon} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                                <img src="/favicon.svg" alt="" className="w-full h-full object-cover" />
-                            )}
-                        </div>
-                        <div className="flex-1 min-w-0 text-left">
-                            <p className={`font-bold text-stone-900 ${sz} leading-tight`}>DIEM</p>
-                            <p className={`${compact ? 'text-[9px]' : 'text-[10px]'} text-stone-500 flex items-center gap-1 mt-0.5`}>
-                                <MessageSquare size={9} className="text-emerald-500" />
-                                Guaranteed reply · {creator.pricePerMessage} credits
-                            </p>
-                        </div>
-                        <div className={`${compact ? 'px-2 py-1 text-[10px]' : 'px-3 py-1.5 text-xs'} rounded-xl font-semibold flex-shrink-0 whitespace-nowrap`}
-                            style={creator.diemButtonColor
-                                ? { backgroundColor: creator.diemButtonColor, color: getContrastColor(creator.diemButtonColor) }
-                                : { backgroundColor: '#1c1917', color: '#ffffff' }}>
-                            Diem
+                    <div className="relative overflow-hidden rounded-2xl border border-stone-200/60 py-3 px-3"
+                        style={{
+                            background: 'linear-gradient(135deg, #FAFAF9 0%, #F5F3F0 100%)',
+                            backgroundImage: 'linear-gradient(rgba(168,162,158,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(168,162,158,0.08) 1px, transparent 1px)',
+                            backgroundSize: '24px 24px',
+                        }}>
+                        <p className={`${compact ? 'text-[8px]' : 'text-[9px]'} font-bold text-stone-400 uppercase tracking-widest mb-1`}>Ask me anything</p>
+                        <p className={`font-semibold text-stone-900 ${compact ? 'text-[10px]' : sz} mb-2`}>Post a Diem</p>
+                        <div className={`inline-flex items-center gap-1 bg-stone-900 text-white rounded-full font-semibold ${compact ? 'px-3 py-1 text-[9px]' : 'px-4 py-1.5 text-[10px]'}`}
+                            style={creator.diemButtonColor ? { backgroundColor: creator.diemButtonColor, color: getContrastColor(creator.diemButtonColor) } : undefined}>
+                            <MessageSquare size={compact ? 9 : 10} /> Post
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Links */}
+            {/* Links: Products as cards, support + external as rows */}
             {visibleLinks.length > 0 && (
                 <div className="mt-2 space-y-1.5">
                     <p className={`${compact ? 'text-[8px]' : 'text-[9px]'} font-bold text-stone-400 uppercase tracking-widest text-center flex items-center justify-center gap-1`}>
                         <span>⌗</span> {creator.linksSectionTitle || 'Featured Links & Products'}
                     </p>
-                    {visibleLinks.slice(0, compact ? 4 : 6).map(link => {
-                        const isProduct = link.type === 'DIGITAL_PRODUCT';
+                    {/* Products: mini card grid */}
+                    {visibleLinks.filter(l => l.type === 'DIGITAL_PRODUCT').slice(0, compact ? 2 : 4).length > 0 && (
+                        <div className={`grid gap-1.5 ${visibleLinks.filter(l => l.type === 'DIGITAL_PRODUCT').length >= 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                            {visibleLinks.filter(l => l.type === 'DIGITAL_PRODUCT').slice(0, compact ? 2 : 4).map(link => {
+                                const isEmoji = link.thumbnailUrl?.startsWith('data:emoji,');
+                                const hasThumbnail = !!link.thumbnailUrl && !isEmoji;
+                                const accentColor = link.buttonColor;
+                                const btnStyle = accentColor ? { backgroundColor: accentColor, color: getContrastColor(accentColor) } : undefined;
+                                return (
+                                    <div key={link.id} className="rounded-xl border border-stone-200/60 bg-white overflow-hidden">
+                                        <div className={`${compact ? 'h-10' : 'h-12'} bg-stone-50 flex items-center justify-center overflow-hidden`}>
+                                            {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt="" />
+                                            : isEmoji ? <span className={compact ? 'text-xl' : 'text-2xl'}>{link.thumbnailUrl!.replace('data:emoji,', '')}</span>
+                                            : <FileText size={compact ? 14 : 16} className="text-stone-300" />}
+                                        </div>
+                                        <div className="p-1.5">
+                                            <p className={`font-semibold text-stone-900 truncate ${compact ? 'text-[9px]' : 'text-[10px]'}`}>{link.title}</p>
+                                            <div className="flex items-center justify-between mt-1 gap-1">
+                                                {link.price ? <span className={`${compact ? 'text-[8px]' : 'text-[9px]'} font-bold text-stone-600`}>{link.price}cr</span> : <span />}
+                                                <span className={`${compact ? 'px-1.5 py-0.5 text-[8px]' : 'px-2 py-0.5 text-[9px]'} rounded font-semibold flex-shrink-0 ${!btnStyle ? 'bg-stone-900 text-white' : ''}`} style={btnStyle}>Buy</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                    {/* Support + external links as rows */}
+                    {visibleLinks.filter(l => l.type !== 'DIGITAL_PRODUCT').slice(0, compact ? 3 : 4).map(link => {
                         const isSupport = link.type === 'SUPPORT';
                         const isEmoji = link.thumbnailUrl?.startsWith('data:emoji,');
                         const hasThumbnail = !!link.thumbnailUrl && !isEmoji;
@@ -300,7 +316,7 @@ const ProfilePreviewCard: React.FC<{ creator: CreatorProfile; compact?: boolean 
                         const btnStyle = accentColor ? { backgroundColor: accentColor, color: getContrastColor(accentColor) } : undefined;
                         let detectedPlatform: string | null = null;
                         let faviconUrl: string | null = null;
-                        if (!link.thumbnailUrl && !isProduct && !isSupport && link.url) {
+                        if (!link.thumbnailUrl && !isSupport && link.url) {
                             try {
                                 const hostname = new URL(link.url.startsWith('http') ? link.url : `https://${link.url}`).hostname;
                                 detectedPlatform = PLATFORM_DOMAINS_PREVIEW.find(p => p.pattern.test(hostname))?.id || null;
@@ -308,36 +324,22 @@ const ProfilePreviewCard: React.FC<{ creator: CreatorProfile; compact?: boolean 
                             } catch { /* invalid url */ }
                         }
                         return (
-                            <div key={link.id} className={`p-2.5 rounded-2xl border flex items-center gap-2 ${isProduct ? 'bg-gradient-to-r from-purple-50/40 to-violet-50/20 border-purple-100' : isSupport ? 'bg-gradient-to-r from-pink-50/40 to-rose-50/20 border-pink-100' : ''}`}
-                                style={!isProduct && !isSupport ? linkBlockStyle : undefined}>
-                                {/* Icon */}
-                                <div className={`${compact ? 'w-7 h-7' : 'w-8 h-8'} flex items-center justify-center flex-shrink-0 ${shapeClass} ${hasThumbnail ? 'overflow-hidden border border-stone-100' : isEmoji ? 'bg-stone-100' : isProduct ? 'bg-purple-50 text-purple-400' : isSupport ? 'bg-pink-50 text-pink-400' : detectedPlatform ? 'bg-stone-100' : faviconUrl ? 'overflow-hidden bg-white border border-stone-100' : 'bg-stone-900 text-white'}`} style={iconStyle}>
-                                    {hasThumbnail ? (
-                                        <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt="" />
-                                    ) : isEmoji ? (
-                                        <span className={compact ? 'text-sm' : 'text-base'}>{link.thumbnailUrl!.replace('data:emoji,', '')}</span>
-                                    ) : isProduct ? (
-                                        <FileText size={compact ? 14 : 16} />
-                                    ) : isSupport ? (
-                                        <Heart size={compact ? 14 : 16} />
-                                    ) : detectedPlatform ? (
-                                        getPreviewPlatformIcon(detectedPlatform)
-                                    ) : faviconUrl ? (
-                                        <img src={faviconUrl} className="w-full h-full object-cover" alt="" />
-                                    ) : (
-                                        <Sparkles size={compact ? 12 : 14} />
-                                    )}
+                            <div key={link.id} className={`p-2.5 rounded-2xl border flex items-center gap-2 ${isSupport ? 'bg-gradient-to-r from-pink-50/40 to-rose-50/20 border-pink-100' : ''}`}
+                                style={!isSupport ? linkBlockStyle : undefined}>
+                                <div className={`${compact ? 'w-7 h-7' : 'w-8 h-8'} flex items-center justify-center flex-shrink-0 ${shapeClass} ${hasThumbnail ? 'overflow-hidden border border-stone-100' : isEmoji ? 'bg-stone-100' : isSupport ? 'bg-pink-50 text-pink-400' : detectedPlatform ? 'bg-stone-100' : faviconUrl ? 'overflow-hidden bg-white border border-stone-100' : 'bg-stone-900 text-white'}`} style={iconStyle}>
+                                    {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt="" />
+                                    : isEmoji ? <span className={compact ? 'text-sm' : 'text-base'}>{link.thumbnailUrl!.replace('data:emoji,', '')}</span>
+                                    : isSupport ? <Heart size={compact ? 14 : 16} />
+                                    : detectedPlatform ? getPreviewPlatformIcon(detectedPlatform)
+                                    : faviconUrl ? <img src={faviconUrl} className="w-full h-full object-cover" alt="" />
+                                    : <Sparkles size={compact ? 12 : 14} />}
                                 </div>
-                                {/* Text */}
                                 <div className="flex-1 min-w-0 text-left">
                                     <p className={`font-semibold text-stone-900 truncate ${compact ? 'text-[10px]' : sz}`}>{link.title}</p>
-                                    <p className={`${compact ? 'text-[8px]' : 'text-[9px]'} text-stone-400 mt-0.5`}>
-                                        {isProduct ? 'Digital download' : isSupport ? 'Send tip' : 'External link'}
-                                    </p>
+                                    <p className={`${compact ? 'text-[8px]' : 'text-[9px]'} text-stone-400 mt-0.5`}>{isSupport ? 'Send tip' : 'External link'}</p>
                                 </div>
-                                {/* Button */}
-                                <div className={`${compact ? 'px-2 py-1 text-[9px]' : 'px-2.5 py-1 text-[10px]'} rounded-xl font-semibold flex-shrink-0 whitespace-nowrap ${!btnStyle ? (isProduct ? 'bg-stone-100 text-stone-600' : isSupport ? 'bg-stone-100 text-stone-600' : 'bg-stone-100 text-stone-600') : ''}`} style={btnStyle}>
-                                    {isProduct ? 'Buy' : isSupport ? 'Tip' : 'Open'}
+                                <div className={`${compact ? 'px-2 py-1 text-[9px]' : 'px-2.5 py-1 text-[10px]'} rounded-xl font-semibold flex-shrink-0 whitespace-nowrap ${!btnStyle ? 'bg-stone-100 text-stone-600' : ''}`} style={btnStyle}>
+                                    {isSupport ? 'Tip' : 'Open'}
                                 </div>
                             </div>
                         );
@@ -354,7 +356,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       const path = window.location.pathname;
       if (path.startsWith('/dashboard/')) {
           const view = path.split('/')[2].toUpperCase();
-          if (['INBOX', 'FINANCE', 'ANALYTICS', 'STATISTICS', 'SETTINGS', 'NOTIFICATIONS', 'REVIEWS', 'SUPPORT'].includes(view)) {
+          if (['INBOX', 'BOARD', 'FINANCE', 'ANALYTICS', 'STATISTICS', 'SETTINGS', 'NOTIFICATIONS', 'REVIEWS', 'SUPPORT'].includes(view)) {
               return view as DashboardView;
           }
       }
@@ -390,6 +392,57 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Inbox Filter
   const [inboxFilter, setInboxFilter] = useState<InboxFilter>('ALL');
   const [inboxSortOrder, setInboxSortOrder] = useState<'LATEST' | 'COUNT'>('LATEST');
+
+  // Board State
+  const [boardPosts, setBoardPosts] = useState<BoardPost[]>([]);
+  const [boardLoading, setBoardLoading] = useState(false);
+  const [boardFilter, setBoardFilter] = useState<'ALL' | 'PENDING' | 'ANSWERED' | 'LINKS'>('ALL');
+  const [boardLinkEditId, setBoardLinkEditId] = useState<string | null>(null);
+  const [boardAddingLink, setBoardAddingLink] = useState(false);
+  const [boardAddingProduct, setBoardAddingProduct] = useState(false);
+  const [boardAddingSupport, setBoardAddingSupport] = useState(false);
+  const [boardAddingYoutube, setBoardAddingYoutube] = useState(false);
+  const [boardYoutubeDraft, setBoardYoutubeDraft] = useState('');
+
+  const _closeAllBoardAdding = () => {
+    setBoardAddingLink(false);
+    setBoardAddingProduct(false);
+    setBoardAddingSupport(false);
+    setBoardAddingYoutube(false);
+    setBoardChatPickerOpen(false);
+    setBoardLinkDraft({ title: '', url: '', price: '', type: 'EXTERNAL', color: undefined });
+    setBoardYoutubeDraft('');
+  };
+  const [boardLinkDraft, setBoardLinkDraft] = useState<{ title: string; url: string; price: string; type: 'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT'; color?: string }>({ title: '', url: '', price: '', type: 'EXTERNAL' });
+  const [boardReplyDraft, setBoardReplyDraft] = useState<Record<string, string>>({});
+  const [boardReplyingId, setBoardReplyingId] = useState<string | null>(null);
+  const [boardReplyAttachmentFile, setBoardReplyAttachmentFile] = useState<File | null>(null);
+  const [boardReplyAttachmentPreview, setBoardReplyAttachmentPreview] = useState<string | null>(null);
+  const boardReplyAttachmentInputRef = useRef<HTMLInputElement>(null);
+  const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
+  const [boardPopupPost, setBoardPopupPost] = useState<BoardPost | null>(null);
+  const [inboxSelectedPostId, setInboxSelectedPostId] = useState<string | null>(null);
+  const [inboxBoardFilter, setInboxBoardFilter] = useState<'ALL' | 'PINNED' | 'UNPINNED'>('ALL');
+  const [boardPositions, setBoardPositions] = useState<Record<string, {x: number, y: number}>>({});
+  const [boardDragging, setBoardDragging] = useState<{
+      id: string;
+      startMouseX: number;
+      startMouseY: number;
+      startNoteX: number;
+      startNoteY: number;
+  } | null>(null);
+  const [boardChatPickerOpen, setBoardChatPickerOpen] = useState(false);
+  const [boardLinkPositions, setBoardLinkPositions] = useState<Record<string, {x: number, y: number}>>({});
+  const [boardLinkDragging, setBoardLinkDragging] = useState<{
+      id: string;
+      startMouseX: number;
+      startMouseY: number;
+      startNoteX: number;
+      startNoteY: number;
+  } | null>(null);
+  const boardCanvasRef = useRef<HTMLDivElement>(null);
+  const boardScrollContainerRef = useRef<HTMLDivElement>(null);
+  const [boardViewportW, setBoardViewportW] = useState(0);
 
   // Withdrawal State
   const [isWithdrawing, setIsWithdrawing] = useState(false);
@@ -677,7 +730,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
               setCurrentView('OVERVIEW');
           } else if (path.startsWith('/dashboard/')) {
               const view = path.split('/')[2].toUpperCase();
-              if (['INBOX', 'FINANCE', 'ANALYTICS', 'STATISTICS', 'SETTINGS', 'NOTIFICATIONS', 'REVIEWS', 'SUPPORT'].includes(view)) {
+              if (['INBOX', 'BOARD', 'FINANCE', 'ANALYTICS', 'STATISTICS', 'SETTINGS', 'NOTIFICATIONS', 'REVIEWS', 'SUPPORT'].includes(view)) {
                   setCurrentView(view as DashboardView);
               }
           }
@@ -955,6 +1008,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
         loadDetailedStats();
     } else if (currentView === 'FINANCE') {
         loadFinancialStats();
+    } else if (currentView === 'BOARD') {
+        setBoardLoading(true);
+        getBoardPosts(creator.id).then(posts => {
+            setBoardPosts(posts);
+            setBoardLoading(false);
+        });
     }
   }, [currentView, statsTimeFrame, statsDate]);
 
@@ -1627,13 +1686,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
      setEditedCreator(prev => ({ ...prev, links: (prev.links || []).filter(l => l.id !== id) }));
   };
 
+  // Save link changes immediately from the board (auto-save without full profile form)
+  const saveBoardLinkChange = async (updatedLinks: AffiliateLink[]) => {
+      setEditedCreator(prev => ({ ...prev, links: updatedLinks }));
+      try { await updateCreatorProfile({ ...editedCreator, links: updatedLinks }); } catch {}
+  };
+
   const handleProductFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
 
       setIsUploadingProduct(true);
       try {
-          const url = await uploadProductFile(file, creator.id);
+          const url = await uploadPremiumContent(file, creator.id);
           setNewLinkUrl(url);
           setNewFileName(file.name);
       } catch (error) {
@@ -1647,7 +1712,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const handleProductDrop = async (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      
+
       if (isUploadingProduct) return;
 
       const file = e.dataTransfer.files?.[0];
@@ -1655,7 +1720,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
       setIsUploadingProduct(true);
       try {
-          const url = await uploadProductFile(file, creator.id);
+          const url = await uploadPremiumContent(file, creator.id);
           setNewLinkUrl(url);
           setNewFileName(file.name);
       } catch (error) {
@@ -1671,9 +1736,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       if (!file) return;
 
       try {
-          // Note: In a real app, we'd want a per-item loading state. 
-          // For MVP, we rely on the async update.
-          const url = await uploadProductFile(file, creator.id);
+          const url = await uploadPremiumContent(file, creator.id);
           handleUpdateLink(linkId, 'url', url);
           handleUpdateLink(linkId, 'fileName', file.name);
       } catch (error) {
@@ -1685,12 +1748,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const handleExistingProductDrop = async (e: React.DragEvent<HTMLDivElement>, linkId: string) => {
       e.preventDefault();
       e.stopPropagation();
-      
+
       const file = e.dataTransfer.files?.[0];
       if (!file) return;
 
       try {
-          const url = await uploadProductFile(file, creator.id);
+          const url = await uploadPremiumContent(file, creator.id);
           handleUpdateLink(linkId, 'url', url);
           handleUpdateLink(linkId, 'fileName', file.name);
       } catch (error) {
@@ -1877,6 +1940,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <div className="px-3 mb-2 text-xs font-bold text-stone-400 uppercase tracking-wider">{t('creator.main')}</div>
                 <SidebarItem icon={Home} label={t('creator.overview')} view="OVERVIEW" />
                 <SidebarItem icon={Users} label={t('creator.inbox')} view="INBOX" badge={stats.pendingCount > 0 ? stats.pendingCount : undefined} />
+                <SidebarItem icon={LayoutGrid} label="Board" view="BOARD" badge={boardPosts.filter(p => !p.reply).length || undefined} />
                 <SidebarItem icon={Wallet} label={t('creator.finance')} view="FINANCE" />
                 <SidebarItem icon={Bell} label={t('creator.notifications')} view="NOTIFICATIONS" badge={notifications.filter(n => n.time.getTime() > lastReadTime).length || undefined} />
                 <SidebarItem icon={Star} label={t('creator.reviews')} view="REVIEWS" />
@@ -1934,7 +1998,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       <main className="flex-1 md:ml-64 flex flex-col h-screen relative">
         
         {/* Scrollable Content */}
-        <div className={`flex-1 ${currentView === 'INBOX' ? 'overflow-hidden p-0' : 'overflow-auto p-6'} relative`}>
+        <div className={`flex-1 ${currentView === 'INBOX' ? 'overflow-hidden p-0' : currentView === 'BOARD' ? 'overflow-hidden p-0' : 'overflow-auto p-6'} relative`}>
             
             {/* ... (Overview View) ... */}
             {currentView === 'OVERVIEW' && (
@@ -2846,837 +2910,1472 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 </div>
             )}
 
-            {currentView === 'INBOX' && (
-                <div className="h-full flex flex-col bg-[#FAF9F6] animate-in fade-in">
-                    {/* Header Row */}
-                    <div className="flex items-center justify-between px-4 sm:px-6 py-4 shrink-0">
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0">
-                                <Menu size={24} />
-                            </button>
-                            <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.inbox')}</h2>
-                        </div>
-                        <TopNav hideBurger />
-                    </div>
-                    <div className="flex flex-1 min-h-0 overflow-x-hidden">
-                    {/* List Column */}
-                    <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col bg-white ${selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
-                        <div className="p-3 border-b border-stone-100 space-y-2">
-                            <div className="flex flex-wrap gap-1 bg-stone-100/60 p-1 rounded-lg">
-                                {(['ALL', 'PENDING', 'REPLIED', 'REJECTED'] as const).map(f => (
-                                    <button
-                                        key={f}
-                                        onClick={() => setInboxFilter(f)}
-                                        className={`flex-1 px-2 py-1.5 text-[10px] font-semibold rounded transition-all whitespace-nowrap ${inboxFilter === f ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
-                                    >
-                                        {f === 'ALL' ? t('creator.all') : f === 'PENDING' ? t('creator.pending') : f === 'REPLIED' ? t('creator.replied') : t('creator.rejected')}
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] text-stone-400 font-medium">{t('creator.sort')}:</span>
-                                <div className="flex gap-1 bg-stone-100/60 p-0.5 rounded-md">
-                                    <button
-                                        onClick={() => setInboxSortOrder('LATEST')}
-                                        className={`px-2 py-1 text-[10px] font-semibold rounded transition-all ${inboxSortOrder === 'LATEST' ? 'bg-stone-300 text-stone-800' : 'text-stone-400 hover:text-stone-600'}`}
-                                    >
-                                        {t('creator.sortLatest')}
-                                    </button>
-                                    <button
-                                        onClick={() => setInboxSortOrder('COUNT')}
-                                        className={`px-2 py-1 text-[10px] font-semibold rounded transition-all flex items-center gap-0.5 ${inboxSortOrder === 'COUNT' ? 'bg-stone-300 text-stone-800' : 'text-stone-400 hover:text-stone-600'}`}
-                                    >
-                                        <Coins size={9} /> {t('creator.sortSessions')}
-                                    </button>
+            {currentView === 'BOARD' && (
+                <div className="h-full overflow-auto">
+                    {/* Header */}
+                    <div className="sticky top-0 z-10 bg-[#F5F3EE]/95 backdrop-blur-sm border-b border-stone-200/60 px-4 sm:px-6 py-4">
+                        <div className="flex items-center justify-between max-w-4xl mx-auto">
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0"><Menu size={24} /></button>
+                                <div>
+                                    <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-0.5">Ask Me Anything</p>
+                                    <h1 className="text-xl font-bold text-stone-900">Community Board</h1>
                                 </div>
                             </div>
+                            <TopNav hideBurger />
                         </div>
-                        <div className="flex-1 overflow-y-auto">
-                            {isLoading ? (
-                                <div className="p-8 text-center text-sm text-stone-400">{t('common.loading')}</div>
-                            ) : filteredGroups.length === 0 ? (
-                                <div className="p-8 text-center text-sm text-stone-400">{t('creator.noMessagesFound')}</div>
-                            ) : (
-                                filteredGroups.map(group => {
-                                    const isActive = selectedSenderEmail === group.senderEmail;
-                                    const latestMsg = group.latestMessage;
-                                    const timeLeft = getTimeLeft(latestMsg.expiresAt);
-                                    // Check unread based on role
-                                    const isUnread = incomingMessages.some(m => {
-                                        if (m.senderEmail !== group.senderEmail) return false;
-                                        if (m.isRead) return false;
-                                        const lastMsg = m.conversation[m.conversation.length - 1];
-                                        return !lastMsg || lastMsg.role === 'FAN';
+                        {/* Filter tabs */}
+                        <div className="flex gap-2 mt-4 max-w-4xl mx-auto overflow-x-auto">
+                            {(['ALL', 'PENDING', 'ANSWERED', 'LINKS'] as const).map(f => (
+                                <button
+                                    key={f}
+                                    onClick={() => setBoardFilter(f)}
+                                    className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-all ${boardFilter === f ? 'bg-stone-900 text-white' : 'bg-white text-stone-500 border border-stone-200 hover:bg-stone-50'}`}
+                                >
+                                    {f === 'ALL' ? `All (${boardPosts.length})` : f === 'PENDING' ? `Pending (${boardPosts.filter(p => !p.reply).length})` : f === 'ANSWERED' ? `Answered (${boardPosts.filter(p => !!p.reply).length})` : `Links (${(editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden).length})`}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Freeform corkboard canvas */}
+                    <div
+                        ref={el => {
+                            (boardScrollContainerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+                            if (el && boardViewportW === 0) {
+                                setBoardViewportW(el.offsetWidth);
+                                const ro = new ResizeObserver(() => setBoardViewportW(el.offsetWidth));
+                                ro.observe(el);
+                            }
+                        }}
+                        className="relative flex-1 overflow-auto"
+                    >
+                        {boardLoading ? (
+                            <div className="flex items-center justify-center py-20 text-stone-400">
+                                <Loader2 size={24} className="animate-spin" />
+                            </div>
+                        ) : (() => {
+                            const visibleBoardLinks = (editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden);
+                            const filtered = boardFilter === 'LINKS' ? [] : boardPosts.filter(p =>
+                                boardFilter === 'ALL' ? true : boardFilter === 'PENDING' ? !p.reply : !!p.reply
+                            );
+                            const showLinks = boardFilter === 'ALL' || boardFilter === 'LINKS';
+                            if (filtered.length === 0 && (boardFilter !== 'LINKS' ? visibleBoardLinks.length === 0 : visibleBoardLinks.length === 0)) return (
+                                <div className="text-center py-20 text-stone-400">
+                                    <div className="text-4xl mb-3">📋</div>
+                                    <p className="text-sm font-medium">{boardFilter === 'PENDING' ? 'No pending questions' : boardFilter === 'ANSWERED' ? 'No answered questions yet' : boardFilter === 'LINKS' ? 'No links added yet' : 'No posts on the board yet'}</p>
+                                </div>
+                            );
+
+                            const NOTE_W = 252;
+                            const NOTE_H_EST = 272;
+                            const NOTE_GAP_X = 28;
+                            const NOTE_GAP_Y = 36;
+                            const COLS = 3;
+                            const stableIdx = (id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xFFFFFF; return Math.abs(h); };
+                            const BOARD_PAD = 32;
+
+                            // Compute positions: saved positions are fixed; unsaved use adjacent-slot finder
+                            const DB_MARGIN = 8;
+                            type _BP = { x: number; y: number };
+                            const _bpOverlaps = (a: _BP, b: _BP) =>
+                                Math.abs(a.x - b.x) < NOTE_W + DB_MARGIN &&
+                                Math.abs(a.y - b.y) < NOTE_H_EST + DB_MARGIN;
+
+                            // First pass: collect all saved positions
+                            const savedPositions = new Map<string, _BP>();
+                            filtered.forEach(p => {
+                                if (boardPositions[p.id]) savedPositions.set(p.id, boardPositions[p.id]);
+                                else if (p.positionX != null && p.positionY != null) savedPositions.set(p.id, { x: p.positionX, y: p.positionY });
+                            });
+
+                            // Second pass: assign positions for unsaved posts via adjacent-slot finder
+                            const computedPositions = new Map<string, _BP>(savedPositions);
+                            filtered.forEach((p, idx) => {
+                                if (computedPositions.has(p.id)) return;
+                                // Default grid slot
+                                const col = idx % COLS;
+                                const row = Math.floor(idx / COLS);
+                                const gridPos: _BP = {
+                                    x: BOARD_PAD + col * (NOTE_W + NOTE_GAP_X) + (row % 2) * 12,
+                                    y: BOARD_PAD + row * (NOTE_H_EST + NOTE_GAP_Y),
+                                };
+                                const placed = Array.from(computedPositions.values());
+                                if (!placed.some(op => _bpOverlaps(gridPos, op))) {
+                                    computedPositions.set(p.id, gridPos);
+                                    return;
+                                }
+                                // Find adjacent non-colliding slot
+                                const cands: _BP[] = [{ x: BOARD_PAD, y: BOARD_PAD }];
+                                for (const op of placed) {
+                                    cands.push({ x: op.x + NOTE_W + DB_MARGIN, y: op.y });
+                                    cands.push({ x: op.x, y: op.y + NOTE_H_EST + DB_MARGIN });
+                                    cands.push({ x: op.x - NOTE_W - DB_MARGIN, y: op.y });
+                                    cands.push({ x: op.x, y: op.y - NOTE_H_EST - DB_MARGIN });
+                                }
+                                cands.sort((a, b) => (a.x**2 + a.y**2) - (b.x**2 + b.y**2));
+                                for (const c of cands) {
+                                    if (c.x < 0 || c.y < 0) continue;
+                                    if (!placed.some(op => _bpOverlaps(c, op))) {
+                                        computedPositions.set(p.id, c);
+                                        return;
+                                    }
+                                }
+                                computedPositions.set(p.id, gridPos); // fallback
+                            });
+
+                            const getPos = (post: BoardPost, _idx: number): _BP =>
+                                computedPositions.get(post.id) ?? { x: BOARD_PAD, y: BOARD_PAD };
+
+                            // Collision uses sticker body only (excludes tape strip at top)
+                            const TAPE_H = 16;
+                            // Actual rendered card body is ~140px — much shorter than NOTE_H_EST grid spacing
+                            const COLLISION_BODY_H = 140;
+                            const bodiesOverlap = (pos: {x: number, y: number}, op: {x: number, y: number}) =>
+                                Math.abs(pos.x - op.x) < NOTE_W &&
+                                Math.abs((pos.y + TAPE_H) - (op.y + TAPE_H)) < COLLISION_BODY_H;
+
+                            // Find nearest non-colliding position via binary search along 8 directions
+                            const resolveCollision = (droppedId: string, rawPos: {x: number, y: number}): {x: number, y: number} => {
+                                const others = filtered.filter(p => p.id !== droppedId);
+                                const isOverlapping = (pos: {x: number, y: number}) =>
+                                    others.some((p) => {
+                                        const op = boardPositions[p.id] || getPos(p, filtered.findIndex(f => f.id === p.id));
+                                        return bodiesOverlap(pos, op);
                                     });
-                                    
-                                    return (
-                                        <div 
-                                            key={group.senderEmail}
-                                            onClick={() => handleOpenChat(group.senderEmail)}
-                                            className={`p-4 border-b border-stone-100/80 cursor-pointer hover:bg-stone-50/50 transition-colors ${isActive ? 'bg-stone-50/70 border-l-2 border-l-stone-900' : 'border-l-2 border-l-transparent'}`}
-                                        >
-                                            <div className="flex justify-between items-start mb-1">
-                                                <span className={`text-sm font-semibold ${isUnread ? 'text-stone-900' : 'text-stone-600'}`}>
-                                                    <ResponsiveName name={group.senderName} />
-                                                    {isUnread && <span className="inline-block w-2 h-2 bg-stone-900 rounded-full ml-2"></span>}
-                                                </span>
-                                                <span className="text-xs text-stone-400">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
-                                            </div>
-                                            <p className="text-xs text-stone-500 line-clamp-2 mb-2">{latestMsg.content}</p>
-                                            <div className="flex items-center justify-between">
-                                                {latestMsg.status === 'PENDING' ? (
-                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${timeLeft.bg} ${timeLeft.color}`}>{timeLeft.text}</span>
-                                                ) : latestMsg.status === 'REPLIED' ? (
-                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">{t('creator.replied')}</span>
-                                                ) : (
-                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">{latestMsg.status === 'EXPIRED' ? t('creator.expired') : t('creator.cancelled')}</span>
-                                                )}
-                                                {group.messageCount > 0 && <span className="text-xs font-mono font-medium text-stone-700 flex items-center gap-1"><MessageSquare size={10}/> {group.messageCount}</span>}
-                                            </div>
-                                        </div>
-                                    )
-                                })
-                            )}
-                        </div>
-                    </div>
-                    
-                    {/* Detail Column */}
-                    <div className={`flex-1 flex flex-col bg-[#FAF9F6] ${!selectedSenderEmail ? 'hidden md:flex' : 'flex'}`}>
-                        {!activeMessage ? (
-                            <div className="flex-1 flex flex-col items-center justify-center text-stone-400 relative">
-                                <div className="absolute inset-0 pointer-events-none" aria-hidden="true" style={{
-                                    backgroundImage: 'linear-gradient(to right, rgba(168,162,158,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,162,158,0.08) 1px, transparent 1px)',
-                                    backgroundSize: '64px 64px',
-                                    maskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 100%)',
-                                    WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 100%)',
-                                }} />
-                                {/* Celebration Overlay (Reused from FanDashboard logic but triggered on Collect) */}
-                                {showReadCelebration && (
-                                    <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
-                                        {sprinkles.map((s: any) => (
-                                            <div 
-                                                key={s.id}
-                                                className="absolute animate-sprinkle"
-                                                style={{
-                                                    left: `${s.left}%`,
-                                                    top: '-20px',
-                                                    width: `${s.size}px`,
-                                                    height: `${s.size}px`,
-                                                    backgroundColor: s.color,
-                                                    borderRadius: s.type === 'circle' ? '50%' : s.type === 'square' ? '2px' : '0',
-                                                    clipPath: s.type === 'triangle' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : 'none',
-                                                    animationDelay: `${s.animationDelay}s`,
-                                                    animationDuration: `${s.animationDuration}s`
-                                                }}
-                                            />
-                                        ))}
-                                    </div>
-                                )}
-                                <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mb-4">
-                                    <Users size={32} className="text-stone-300" />
-                                </div>
-                                <p className="text-sm font-medium">{t('creator.selectMessage')}</p>
-                            </div>
-                        ) : (
-                             <div className="h-full flex flex-col bg-[#FAF9F6] relative overflow-hidden">
-                                <div className="absolute inset-0 pointer-events-none z-0" aria-hidden="true" style={{
-                                    backgroundImage: 'linear-gradient(to right, rgba(168,162,158,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,162,158,0.08) 1px, transparent 1px)',
-                                    backgroundSize: '64px 64px',
-                                    maskImage: 'radial-gradient(ellipse 80% 70% at 50% 50%, black 10%, transparent 100%)',
-                                    WebkitMaskImage: 'radial-gradient(ellipse 80% 70% at 50% 50%, black 10%, transparent 100%)',
-                                }} />
-                                {/* Celebration Overlay (Inside Chat View) */}
-                                {showReadCelebration && (
-                                    <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
-                                        {sprinkles.map((s: any) => (
-                                            <div 
-                                                key={s.id}
-                                                className="absolute animate-sprinkle"
-                                                style={{
-                                                    left: `${s.left}%`,
-                                                    top: '-20px',
-                                                    width: `${s.size}px`,
-                                                    height: `${s.size}px`,
-                                                    backgroundColor: s.color,
-                                                    borderRadius: s.type === 'circle' ? '50%' : s.type === 'square' ? '2px' : '0',
-                                                    clipPath: s.type === 'triangle' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : 'none',
-                                                    animationDelay: `${s.animationDelay}s`,
-                                                    animationDuration: `${s.animationDuration}s`
-                                                }}
-                                            />
-                                        ))}
-                                    </div>
-                                )}
-                                {/* Collection Animation Overlay */}
-                                {showCollectAnimation && (
-                                    <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
-                                        <style>{`
-                                            @keyframes cd-sketch { to { stroke-dashoffset: 0; } }
-                                            @keyframes cd-pop { from { opacity: 0; transform: translateY(12px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-                                        `}</style>
-                                        <div className="bg-white rounded-3xl shadow-2xl ring-1 ring-stone-100 px-8 py-6 flex flex-col items-center gap-3 animate-in zoom-in-95 fade-in duration-300">
-                                            {/* Sketch coin/checkmark illustration */}
-                                            <svg viewBox="0 0 120 100" width="120" height="100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                {/* Coin stack */}
-                                                <ellipse cx="60" cy="72" rx="26" ry="8" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.1s' }} />
-                                                <rect x="34" y="52" width="52" height="20" rx="2" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.2s' }} />
-                                                <ellipse cx="60" cy="52" rx="26" ry="8" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.3s' }} />
-                                                <rect x="34" y="34" width="52" height="20" rx="2" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.4s' }} />
-                                                <ellipse cx="60" cy="34" rx="26" ry="8" stroke="#1c1917" strokeWidth="2" fill="#f5f0eb" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.5s' }} />
-                                                {/* Sparkle lines */}
-                                                <line x1="96" y1="18" x2="103" y2="11" stroke="#10b981" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.7s' }} />
-                                                <line x1="100" y1="30" x2="108" y2="28" stroke="#10b981" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.8s' }} />
-                                                <line x1="90" y1="10" x2="90" y2="4" stroke="#10b981" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.9s' }} />
-                                                {/* Check */}
-                                                <path d="M50 34 L57 41 L72 26" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.6s' }} />
-                                            </svg>
-                                            <div style={{ animation: 'cd-pop 0.4s ease forwards 0.9s', opacity: 0 }}>
-                                                <p className="text-base font-bold text-stone-900">{t('creator.creditsCollected')}</p>
-                                                <p className="text-2xl font-black text-emerald-600 text-center">+{collectedAmount}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
+                                if (!isOverlapping(rawPos)) return rawPos;
+                                const MAX_R = Math.max(NOTE_W, NOTE_H_EST) * 4;
+                                const dirs = [[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]]
+                                    .map(([dx, dy]) => { const l = Math.sqrt(dx*dx+dy*dy); return [dx/l, dy/l]; });
+                                let best: {x: number, y: number} | null = null;
+                                let bestDist = Infinity;
+                                for (const [dx, dy] of dirs) {
+                                    let lo = 0, hi = MAX_R;
+                                    while (hi - lo > 1) {
+                                        const mid = (lo + hi) / 2;
+                                        const c = { x: Math.max(0, rawPos.x + dx * mid), y: Math.max(0, rawPos.y + dy * mid) };
+                                        if (isOverlapping(c)) lo = mid; else hi = mid;
+                                    }
+                                    const c = { x: Math.max(0, rawPos.x + dx * hi), y: Math.max(0, rawPos.y + dy * hi) };
+                                    if (hi < bestDist && !isOverlapping(c)) { bestDist = hi; best = c; }
+                                }
+                                return best ?? rawPos;
+                            };
 
-                                {/* Withdraw Success Animation */}
-                                {showWithdrawAnimation && (
-                                    <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
-                                        <div className="bg-white rounded-3xl shadow-2xl ring-1 ring-stone-100 px-8 py-6 flex flex-col items-center gap-3 animate-in zoom-in-95 fade-in duration-300">
-                                            <svg viewBox="0 0 120 100" width="120" height="100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                {/* Wallet outline */}
-                                                <rect x="20" y="30" width="80" height="50" rx="6" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.5s ease forwards 0.1s' }} />
-                                                <rect x="72" y="47" width="28" height="18" rx="4" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.3s' }} />
-                                                <circle cx="82" cy="56" r="4" stroke="#1c1917" strokeWidth="1.5" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.5s' }} />
-                                                <line x1="20" y1="43" x2="100" y2="43" stroke="#1c1917" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.2s' }} />
-                                                {/* Arrow up (withdraw) */}
-                                                <line x1="44" y1="22" x2="44" y2="8" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.6s' }} />
-                                                <polyline points="38,15 44,8 50,15" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.7s' }} />
-                                                {/* Sparkles */}
-                                                <line x1="90" y1="18" x2="97" y2="11" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.8s' }} />
-                                                <line x1="95" y1="25" x2="103" y2="23" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.9s' }} />
-                                            </svg>
-                                            <div style={{ animation: 'cd-pop 0.4s ease forwards 1s', opacity: 0 }}>
-                                                <p className="text-base font-bold text-stone-900">Withdrawal Requested!</p>
-                                                <p className="text-2xl font-black text-indigo-600 text-center">${withdrawnAmount.toFixed(2)}</p>
-                                                <p className="text-xs text-stone-400 text-center mt-0.5">will be sent to your Stripe account</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
+                            // Extra buffer during drag so canvas always extends below the dragged card
+                            const dragBuffer = boardDragging ? 500 : 160;
+                            const maxY = filtered.reduce((max, post, idx) => {
+                                const pos = getPos(post, idx);
+                                return Math.max(max, pos.y + NOTE_H_EST + dragBuffer);
+                            }, 400 + dragBuffer);
 
-                                {/* Stripe Connect Success Animation */}
-                                {showStripeAnimation && (
-                                    <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
-                                        <div className="bg-white rounded-3xl shadow-2xl ring-1 ring-stone-100 px-8 py-6 flex flex-col items-center gap-3 animate-in zoom-in-95 fade-in duration-300">
-                                            <svg viewBox="0 0 120 100" width="120" height="100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                {/* Credit card */}
-                                                <rect x="18" y="25" width="84" height="55" rx="8" stroke="#635BFF" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.5s ease forwards 0.1s' }} />
-                                                <line x1="18" y1="42" x2="102" y2="42" stroke="#635BFF" strokeWidth="3" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.2s' }} />
-                                                <rect x="28" y="52" width="20" height="8" rx="3" stroke="#635BFF" strokeWidth="1.5" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 0.4s' }} />
-                                                {/* Big checkmark */}
-                                                <circle cx="84" cy="35" r="14" stroke="#10b981" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.5s ease forwards 0.5s' }} />
-                                                <path d="M77 35 L82 40 L92 28" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.4s ease forwards 0.8s' }} />
-                                                {/* Sparkles */}
-                                                <line x1="20" y1="14" x2="26" y2="8" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 1s' }} />
-                                                <line x1="14" y1="20" x2="8" y2="20" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset="1" style={{ animation: 'cd-sketch 0.3s ease forwards 1.1s' }} />
-                                            </svg>
-                                            <div style={{ animation: 'cd-pop 0.4s ease forwards 1.2s', opacity: 0 }}>
-                                                <p className="text-base font-bold text-stone-900">Stripe Connected!</p>
-                                                <p className="text-sm text-stone-400 text-center">You're ready to receive payouts</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
+                            const noteColors = ['#FFFEF0', '#F0FDF4', '#FFF7ED', '#F5F3FF', '#EFF6FF', '#FDF2F8'];
+                            const tapeColors = ['rgba(200,193,185,0.55)', 'rgba(110,200,140,0.45)', 'rgba(240,160,80,0.4)', 'rgba(180,150,240,0.4)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)'];
+                            const stickers = ['⭐','❤️','✨','🌟','💙','🎯','🔥','💬','🌙','🌸'];
+                            const rotations = [-2.1, 1.3, -0.8, 1.7, -1.4, 0.6, -1.9, 1.1, -0.5, 1.4];
 
-                                {/* Header & Chat Content */}
-                                <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-stone-200/60 flex items-center justify-between bg-white sticky top-0 z-10 gap-2">
-                                    <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-                                        <button onClick={() => setSelectedSenderEmail(null)} className="md:hidden p-2 -ml-2 hover:bg-stone-50 rounded-full text-stone-400 hover:text-stone-700 flex-shrink-0">
-                                            <ChevronLeft size={20} />
-                                        </button>
-                                        <div className="min-w-0">
-                                            <div className="flex items-center gap-2 min-w-0">
-                                                <h3 className="font-bold text-stone-900 truncate"><ResponsiveName name={activeMessage.creatorId !== creator.id ? (activeMessage.creatorName || 'User') : activeMessage.senderName} /></h3>
-                                                {activeMessage.status === 'PENDING' && (
-                                                    <button 
-                                                        onClick={(e) => handleReject(e)}
-                                                        disabled={isRejecting}
-                                                        className="p-1 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                                                        title={t('creator.rejectRefund')}
-                                                    >
-                                                        <Ban size={14} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                            <div className="text-xs text-stone-500 flex items-center gap-2">
-                                                <span className="font-mono font-medium flex items-center gap-1"><Coins size={10}/> {activeMessage.amount}</span>
-                                                <span className="w-1 h-1 bg-stone-300 rounded-full"></span>
-                                                <span>{new Date(activeMessage.createdAt).toLocaleDateString()}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-2 flex-shrink-0">
-                                        {activeMessage.status === 'PENDING' && (() => {
-                                            const tl = getTimeLeft(activeMessage.expiresAt);
-                                            return (
-                                                <>
-                                                    <div ref={(el) => { inboxTutorialRefs.current[0] = el; }} className={showInboxTutorial && inboxTutorialStep === 0 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-full' : ''}>
-                                                        <div className={`text-[10px] sm:text-xs font-semibold ${tl.color} ${tl.bg} px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1 border ${tl.border} whitespace-nowrap`}>
-                                                            <Clock size={12} className={tl.iconColor} /> {tl.text}
-                                                        </div>
-                                                    </div>
-                                                    <div ref={(el) => { inboxTutorialRefs.current[3] = el; }} className={showInboxTutorial && inboxTutorialStep === 3 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-full' : ''}>
-                                                        <button
-                                                            onClick={() => handleSendReply(true)}
-                                                            disabled={((!replyText.trim() && replyAttachments.length === 0) && !hasManualCreatorReply) || isSendingReply || isRejecting}
-                                                            className="h-7 px-3 rounded-full bg-stone-900 text-white hover:bg-stone-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 font-semibold text-[10px] sm:text-xs group whitespace-nowrap"
-                                                            title="Complete & Collect"
-                                                        >
-                                                            <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
-                                                            <span>Collect {activeMessage.amount}</span>
-                                                        </button>
-                                                    </div>
-                                                </>
-                                            );
-                                        })()}
-                                        {activeMessage.status === 'REPLIED' && (
-                                            <div className="text-[10px] sm:text-xs font-bold text-emerald-600 bg-emerald-50 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1 border border-emerald-100 whitespace-nowrap">
-                                                <CheckCircle2 size={12} /> {t('creator.completed')}
-                                            </div>
-                                        )}
-                                        {(activeMessage.status === 'EXPIRED' || activeMessage.status === 'CANCELLED') && (
-                                            <div className="text-[10px] sm:text-xs font-bold text-stone-500 bg-stone-100 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-stone-200 whitespace-nowrap">
-                                                {t('creator.refunded')}
-                                            </div>
-                                        )}
-                                        <div ref={(el) => { inboxTutorialRefs.current[4] = el; }} className={showInboxTutorial && inboxTutorialStep === 4 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-lg' : ''}>
-                                            <button
-                                                onClick={() => leaveChatroom(activeMessage.senderEmail)}
-                                                className="p-1.5 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                title={t('creator.leaveConversationTitle')}
-                                            >
-                                                <LogOut size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                            const handleTapeMouseDown = (e: React.MouseEvent, postId: string, currentPos: {x: number, y: number}) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setBoardDragging({
+                                    id: postId,
+                                    startMouseX: e.clientX,
+                                    startMouseY: e.clientY,
+                                    startNoteX: currentPos.x,
+                                    startNoteY: currentPos.y,
+                                });
+                                setSelectedBoardId(postId);
+                            };
 
-                                <div className="flex-1 overflow-y-auto bg-white" ref={scrollRef}>
-                                    {/* Session Pagination - full width */}
-                                    {threadMessages.length > 0 && (
-                                        <div className="flex items-center justify-between px-4 py-2 bg-stone-50 border-b border-stone-100 sticky top-0 z-20">
-                                            <button
-                                                onClick={() => setChatSessionIndex(effectiveSessionIndex - 1)}
-                                                disabled={effectiveSessionIndex <= 0}
-                                                className="p-1.5 rounded-full hover:bg-stone-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                            >
-                                                <ChevronLeft size={16} className="text-stone-600" />
-                                            </button>
-                                            <div className="flex flex-col items-center">
-                                                <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">
-                                                    {t('creator.sessionOf', { current: effectiveSessionIndex + 1, total: threadMessages.length }) || `Session ${effectiveSessionIndex + 1} of ${threadMessages.length}`}
-                                                </span>
-                                                {(() => {
-                                                    const ts = threadMessages[effectiveSessionIndex]?.createdAt || threadMessages[effectiveSessionIndex]?.conversation?.[0]?.timestamp;
-                                                    if (!ts) return null;
-                                                    const diff = Date.now() - new Date(ts).getTime();
-                                                    const mins = Math.floor(diff / 60000);
-                                                    const hrs = Math.floor(mins / 60);
-                                                    const days = Math.floor(hrs / 24);
-                                                    const elapsed = days > 0 ? `${days}d ${hrs % 24}h ago` : hrs > 0 ? `${hrs}h ${mins % 60}m ago` : `${mins}m ago`;
-                                                    return <span className="text-[9px] text-stone-400">{new Date(ts).toLocaleDateString([], { month: 'short', day: 'numeric' })} · {elapsed}</span>;
-                                                })()}
+                            // Link sticker layout constants
+                            const LINK_W = 220;
+                            const LINK_H = 90;
+                            const LINK_START_X = BOARD_PAD + COLS * (NOTE_W + NOTE_GAP_X) + 32;
+                            const getLinkPos = (link: AffiliateLink, idx: number): {x: number, y: number} => {
+                                if (boardLinkPositions[link.id]) return boardLinkPositions[link.id];
+                                if (link.positionX !== null && link.positionX !== undefined && link.positionY !== null && link.positionY !== undefined) {
+                                    return { x: link.positionX, y: link.positionY };
+                                }
+                                return { x: LINK_START_X, y: BOARD_PAD + idx * (LINK_H + 14) };
+                            };
+
+                            const handleLinkTapeMouseDown = (e: React.MouseEvent, linkId: string, currentPos: {x: number, y: number}) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setBoardLinkDragging({
+                                    id: linkId,
+                                    startMouseX: e.clientX,
+                                    startMouseY: e.clientY,
+                                    startNoteX: currentPos.x,
+                                    startNoteY: currentPos.y,
+                                });
+                            };
+
+                            const handleCanvasMouseMove = (e: React.MouseEvent) => {
+                                if (boardDragging) {
+                                    const dx = e.clientX - boardDragging.startMouseX;
+                                    const dy = e.clientY - boardDragging.startMouseY;
+                                    setBoardPositions(prev => ({
+                                        ...prev,
+                                        [boardDragging.id]: {
+                                            x: Math.max(0, boardDragging.startNoteX + dx),
+                                            y: Math.max(0, boardDragging.startNoteY + dy),
+                                        },
+                                    }));
+                                }
+                                if (boardLinkDragging) {
+                                    const dx = e.clientX - boardLinkDragging.startMouseX;
+                                    const dy = e.clientY - boardLinkDragging.startMouseY;
+                                    setBoardLinkPositions(prev => ({
+                                        ...prev,
+                                        [boardLinkDragging.id]: {
+                                            x: Math.max(0, boardLinkDragging.startNoteX + dx),
+                                            y: Math.max(0, boardLinkDragging.startNoteY + dy),
+                                        },
+                                    }));
+                                }
+                            };
+
+                            const handleCanvasMouseUp = async () => {
+                                if (boardDragging) {
+                                    const rawPos = boardPositions[boardDragging.id];
+                                    if (rawPos) {
+                                        const finalPos = resolveCollision(boardDragging.id, rawPos);
+                                        const moved = finalPos.x !== rawPos.x || finalPos.y !== rawPos.y;
+                                        if (moved) {
+                                            setBoardPositions(prev => ({ ...prev, [boardDragging.id]: finalPos }));
+                                        }
+                                        const allPositioned = filtered.map((p, idx) => ({
+                                            id: p.id,
+                                            pos: boardPositions[p.id] || getPos(p, idx),
+                                        })).sort((a, b) => a.pos.y !== b.pos.y ? a.pos.y - b.pos.y : a.pos.x - b.pos.x);
+                                        const order = allPositioned.findIndex(item => item.id === boardDragging.id);
+                                        try {
+                                            await updateBoardPostPosition(boardDragging.id, finalPos.x, finalPos.y, order);
+                                            setBoardPosts(prev => prev.map(p => p.id === boardDragging.id ? { ...p, positionX: finalPos.x, positionY: finalPos.y, displayOrder: order } : p));
+                                        } catch {}
+                                    }
+                                    setBoardDragging(null);
+                                }
+                                if (boardLinkDragging) {
+                                    const pos = boardLinkPositions[boardLinkDragging.id];
+                                    if (pos) {
+                                        const updatedLinks = (editedCreator.links || []).map(l =>
+                                            l.id === boardLinkDragging.id ? { ...l, positionX: pos.x, positionY: pos.y } : l
+                                        );
+                                        await saveBoardLinkChange(updatedLinks);
+                                    }
+                                    setBoardLinkDragging(null);
+                                }
+                            };
+
+                            const linkMaxY = visibleBoardLinks.reduce((max, link, idx) => {
+                                const pos = getLinkPos(link, idx);
+                                return Math.max(max, pos.y + LINK_H + (boardLinkDragging ? 500 : 160));
+                            }, 0);
+                            const canvasH = Math.max(maxY, linkMaxY);
+
+                            const linkColors = ['#FFF7ED', '#F0FDF4', '#EFF6FF', '#FDF2F8', '#FFFEF0', '#F5F3FF'];
+                            const linkTapes = ['rgba(240,160,80,0.45)', 'rgba(110,200,140,0.45)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)', 'rgba(200,193,185,0.55)', 'rgba(180,150,240,0.4)'];
+
+                            return (
+                                <div
+                                    ref={boardCanvasRef}
+                                    className="relative w-full select-none"
+                                    style={{
+                                        minHeight: `${canvasH}px`,
+                                        background: 'linear-gradient(135deg, #FAFAF8 0%, #F5F3EF 100%)',
+                                        backgroundImage: 'radial-gradient(circle, rgba(168,162,158,0.15) 1px, transparent 1px)',
+                                        backgroundSize: '24px 24px',
+                                        cursor: boardDragging || boardLinkDragging ? 'grabbing' : 'default',
+                                    }}
+                                    onMouseMove={handleCanvasMouseMove}
+                                    onMouseUp={handleCanvasMouseUp}
+                                    onMouseLeave={handleCanvasMouseUp}
+                                >
+                                    {/* Viewport guidelines — two rectangles showing exact visible area per device */}
+                                    {boardViewportW > 0 && (() => {
+                                        const BOARD_MAX_H = 440; // matches public profile max-height
+                                        // Desktop: actual public board container = max-w-2xl(672) - px-4*2(32) = 640px
+                                        const desktopVW = Math.min(640, boardViewportW);
+                                        // Mobile: 390px screen - 32px padding = 358px
+                                        const mobileVW = Math.min(358, desktopVW);
+                                        const GuideRect = ({ w, h, color, dash, label }: { w: number; h: number; color: string; dash?: boolean; label: string }) => (
+                                            <div className="absolute pointer-events-none" style={{ left: 0, top: 0, width: w, height: h, zIndex: 0 }}>
+                                                <div className="absolute inset-0" style={{ border: `2px ${dash ? 'dashed' : 'solid'} ${color}`, borderRadius: 2 }} />
+                                                {/* Top-right label */}
+                                                <div className="absolute top-0 right-0 flex items-center gap-1 px-1.5 py-0.5 rounded-bl" style={{ background: `${color}22`, borderLeft: `1px solid ${color}55`, borderBottom: `1px solid ${color}55` }}>
+                                                    <span className="text-[8px] font-bold uppercase tracking-wider select-none" style={{ color }}>{label}</span>
+                                                </div>
+                                                {/* Bottom-center scroll hint */}
+                                                <div className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: `${color}22`, border: `1px solid ${color}55` }}>
+                                                    <span className="text-[8px] font-bold select-none" style={{ color }}>↓ scroll to view more</span>
+                                                </div>
+                                                {/* Right-center scroll hint */}
+                                                <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 flex items-center gap-1 px-1.5 py-0.5 rounded-full" style={{ background: `${color}22`, border: `1px solid ${color}55` }}>
+                                                    <span className="text-[8px] font-bold select-none" style={{ color, writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>→ scroll to view more</span>
+                                                </div>
                                             </div>
-                                            <button
-                                                onClick={() => setChatSessionIndex(effectiveSessionIndex + 1)}
-                                                disabled={effectiveSessionIndex >= threadMessages.length - 1}
-                                                className="p-1.5 rounded-full hover:bg-stone-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                            >
-                                                <ChevronRight size={16} className="text-stone-600" />
-                                            </button>
-                                        </div>
-                                    )}
-                                    <div className="pt-3 max-w-lg mx-auto px-1">
-                                    {threadMessages.slice(effectiveSessionIndex, effectiveSessionIndex + 1).map((msg) => {
-                                        const isPending = msg.status === 'PENDING';
-                                        const isRefunded = msg.status === 'EXPIRED' || msg.status === 'CANCELLED';
-                                        // For outgoing messages (admin sent welcome), roles are inverted
-                                        const isOutgoing = msg.creatorId !== creator.id;
-                                        // True when either party in this thread is the admin account
-                                        const isAdminThread = msg.senderEmail === 'abe7340@gmail.com' || msg.creatorEmail === 'abe7340@gmail.com';
-
-                                        // Sort conversation by timestamp
-                                        const sortedConversation = [...msg.conversation].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-                                        const [firstChat, ...restChats] = sortedConversation;
-
+                                        );
                                         return (
-                                            <div key={msg.id} className="px-3 sm:px-4 py-2 relative">
-                                                {/* 1. First Message (The Request) */}
-                                                {firstChat && (
-                                                <div className="flex relative z-10">
-                                                    {/* Left: Avatar + Thread Line */}
-                                                    <div className="flex flex-col items-center mr-3 relative">
-                                                        {/* Thread Line to Next */}
-                                                        {(restChats.length > 0 || isPending) && (
-                                                            <div className="absolute left-[17px] top-11 -bottom-1 w-0.5 bg-stone-200"></div>
-                                                        )}
-                                                        <div className={`w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ${msg.senderAvatarUrl ? 'cursor-pointer' : ''}`} onClick={() => msg.senderAvatarUrl && setEnlargedImage(msg.senderAvatarUrl)}>
-                                                            {msg.senderAvatarUrl ? (
-                                                                <img src={msg.senderAvatarUrl} alt={msg.senderName} className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <div className="w-full h-full bg-stone-200 flex items-center justify-center">
-                                                                    <User size={16} className="text-stone-500" />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Right: Content */}
-                                                    <div className="flex-1 min-w-0 pb-2">
-                                                        <div className="flex items-center gap-2 mb-2 ml-1">
-                                                            <span className="font-semibold text-sm text-stone-900">
-                                                                <ResponsiveName name={isOutgoing ? (creator.displayName || 'You') : msg.senderName} />
-                                                            </span>
-                                                            {msg.senderEmail === 'abe7340@gmail.com' ? (
-                                                                <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
-                                                                    <Verified size={10} />
-                                                                    <span className="text-[9px] font-semibold uppercase tracking-wide">ADMIN</span>
-                                                                </div>
-                                                            ) : (isOutgoing || isAdminThread) ? (
-                                                                <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full overflow-visible">
-                                                                    <Verified size={12} />
-                                                                    <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.creator')}</span>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
-                                                                    <User size={10} className="fill-current" />
-                                                                    <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.fan')}</span>
-                                                                </div>
-                                                            )}
-                                                            <span className="text-xs font-medium text-stone-400">• {new Date(firstChat.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
-                                                        </div>
-
-                                                        <div className="bg-white p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
-
-                                            {/* Content */}
-                                            <div>
-                                                <p className="text-xs sm:text-sm text-stone-700 leading-relaxed break-words">{firstChat.content}</p>
-
-                                                {/* Attachments */}
-                                                {msg.attachmentUrl && (() => {
-                                                    const allUrls = msg.attachmentUrl.split('|||');
-                                                    const imgUrls = allUrls.filter((u: string) => isImage(u));
-                                                    const fileUrls = allUrls.filter((u: string) => !isImage(u));
-                                                    return (
-                                                        <div className="mt-3 space-y-2">
-                                                            {fileUrls.map((url: string, ai: number) => (
-                                                                <div key={`f${ai}`} className="rounded-lg overflow-hidden border border-stone-200">
-                                                                    <a href={url} target="_blank" rel="noopener noreferrer" download="attachment" className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
-                                                                        <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
-                                                                        <div className="flex-1 min-w-0">
-                                                                            <p className="text-sm font-medium text-stone-700 truncate">{url.startsWith('data:') ? 'Attached File' : (url.split('/').pop() || 'Document')}</p>
-                                                                            <p className="text-xs text-stone-400">Document</p>
-                                                                        </div>
-                                                                        <Download size={16} className="text-stone-400 flex-shrink-0" />
-                                                                    </a>
-                                                                </div>
+                                            <>
+                                                {/* Desktop frame */}
+                                                <GuideRect w={desktopVW} h={BOARD_MAX_H} color="rgba(99,102,241,0.5)" label="Computer" />
+                                                {/* Mobile frame */}
+                                                <GuideRect w={mobileVW} h={BOARD_MAX_H} color="rgba(251,146,60,0.6)" dash label="Mobile" />
+                                            </>
+                                        );
+                                    })()}
+                                    {/* Link stickers */}
+                                    {showLinks && visibleBoardLinks.map((link, i) => {
+                                        const lc = i % linkColors.length;
+                                        const rot = rotations[(stableIdx(link.id) + 3) % rotations.length];
+                                        const currentPos = boardLinkPositions[link.id] || getLinkPos(link, i);
+                                        const isDraggingLink = boardLinkDragging?.id === link.id;
+                                        const isEditingLink = boardLinkEditId === link.id;
+                                        const typeIcon = link.type === 'DIGITAL_PRODUCT' ? '📦' : link.type === 'SUPPORT' ? '💝' : '🔗';
+                                        const _ytIdLink = (() => {
+                                            if (link.type !== 'EXTERNAL') return null;
+                                            try {
+                                                const u = new URL(link.url.startsWith('http') ? link.url : `https://${link.url}`);
+                                                if (u.hostname.includes('youtube.com')) return u.searchParams.get('v');
+                                                if (u.hostname === 'youtu.be') return u.pathname.slice(1).split('?')[0];
+                                            } catch {}
+                                            return null;
+                                        })();
+                                        return (
+                                            <div
+                                                key={link.id}
+                                                className="absolute flex flex-col group"
+                                                style={{
+                                                    left: currentPos.x,
+                                                    top: currentPos.y,
+                                                    width: LINK_W,
+                                                    transform: isDraggingLink ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
+                                                    transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
+                                                    zIndex: isDraggingLink ? 1000 : isEditingLink ? 50 : 2,
+                                                }}
+                                            >
+                                                {/* Tape — drag handle */}
+                                                <div
+                                                    className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0"
+                                                    style={{ background: linkTapes[lc], cursor: 'grab' }}
+                                                    onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
+                                                    title="Drag to reposition"
+                                                />
+                                                {isEditingLink ? (
+                                                    <div className="rounded-lg p-3 shadow-lg" style={{ backgroundColor: boardLinkDraft.color || linkColors[lc], border: '2px solid rgba(0,0,0,0.15)' }}>
+                                                        <input
+                                                            className="w-full text-xs font-semibold bg-white/70 border border-stone-200 rounded px-2 py-1 mb-1.5 outline-none"
+                                                            placeholder="Title"
+                                                            value={boardLinkDraft.title}
+                                                            onChange={e => setBoardLinkDraft(p => ({ ...p, title: e.target.value }))}
+                                                            onClick={e => e.stopPropagation()}
+                                                            autoFocus
+                                                        />
+                                                        <input
+                                                            className="w-full text-xs bg-white/70 border border-stone-200 rounded px-2 py-1 mb-2 outline-none"
+                                                            placeholder="URL"
+                                                            value={boardLinkDraft.url}
+                                                            onChange={e => setBoardLinkDraft(p => ({ ...p, url: e.target.value }))}
+                                                            onClick={e => e.stopPropagation()}
+                                                        />
+                                                        {/* Color swatches */}
+                                                        <div className="flex items-center gap-1 mb-2.5" onClick={e => e.stopPropagation()}>
+                                                            {['#FFFEF0','#F0FDF4','#FFF7ED','#F5F3FF','#EFF6FF','#FDF2F8','#FFF1F2','#ECFDF5','#FFFBEB','#F0F9FF'].map(c => (
+                                                                <button
+                                                                    key={c}
+                                                                    onClick={e => { e.stopPropagation(); setBoardLinkDraft(p => ({ ...p, color: c })); }}
+                                                                    className="w-4 h-4 rounded-full flex-shrink-0 transition-transform hover:scale-110"
+                                                                    style={{
+                                                                        backgroundColor: c,
+                                                                        border: (boardLinkDraft.color || linkColors[lc]) === c ? '2px solid rgba(0,0,0,0.4)' : '1.5px solid rgba(0,0,0,0.12)',
+                                                                        transform: (boardLinkDraft.color || linkColors[lc]) === c ? 'scale(1.25)' : undefined,
+                                                                    }}
+                                                                />
                                                             ))}
-                                                            {imgUrls.length > 0 && (
-                                                                <div className={imgUrls.length === 1 ? '' : 'grid grid-cols-2 gap-1.5'}>
-                                                                    {imgUrls.map((url: string, ai: number) => (
-                                                                        <div key={`i${ai}`} className="rounded-lg overflow-hidden border border-stone-200">
-                                                                            <img src={url} onClick={() => setEnlargedImage(url)} className={`block object-cover cursor-pointer hover:opacity-90 transition-opacity ${imgUrls.length === 1 ? 'max-h-[240px] w-auto max-w-[260px]' : 'w-full h-[140px]'}`} alt={`attachment ${ai + 1}`} />
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            )}
                                                         </div>
-                                                    );
-                                                })()}
-                                                            </div>
-
-                                            {/* Action Row */}
-                                            <div className="flex items-center gap-1 mt-1 -ml-1 -mb-1.5">
-                                                <div className="relative">
-                                                    <button
-                                                        onClick={() => setActiveReactionPicker(activeReactionPicker === firstChat.id ? null : firstChat.id)}
-                                                        className="p-1 text-stone-400 hover:text-stone-600 transition-colors relative group"
-                                                    >
-                                                        {messageReactions[firstChat.id] ? (
-                                                            <span className="text-lg animate-in zoom-in">{messageReactions[firstChat.id]}</span>
-                                                        ) : (
-                                                            <div className="w-6 h-6 rounded-full bg-stone-50 border border-stone-200 flex items-center justify-center hover:bg-stone-100 transition-colors relative">
-                                                                <Smile size={14} className="text-stone-400" />
-                                                                <div className="absolute -top-0.5 -right-0.5 bg-white rounded-full border border-stone-100 p-[1px]">
-                                                                    <Plus size={6} className="text-stone-400" />
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </button>
-                                                    {activeReactionPicker === firstChat.id && (
-                                                        <div className="absolute bottom-full left-0 mb-1 bg-white border border-stone-200 shadow-lg rounded-full p-1 flex gap-1 z-10 animate-in zoom-in duration-200">
-                                                            <button onClick={() => handleReactionClick(firstChat.id, '👍')} className="p-1.5 hover:bg-stone-100 rounded-full transition-colors text-lg leading-none">👍</button>
-                                                            <button onClick={() => handleReactionClick(firstChat.id, '❤️')} className="p-1.5 hover:bg-stone-100 rounded-full transition-colors text-lg leading-none">❤️</button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                {messageReactions[firstChat.id] && (
-                                                    <span className="text-[10px] text-stone-400"><ResponsiveName name={creator.displayName || 'You'} /></span>
-                                                )}
-                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                )}
-
-                                                {/* 2. Subsequent Messages (Replies & Appreciation) */}
-                                                {restChats.map((chat, idx) => {
-                                                    // For outgoing messages, invert: CREATOR role = the other person, FAN role = me
-                                                    const isCreator = isOutgoing ? chat.role === 'FAN' : chat.role === 'CREATOR';
-                                                    const isLast = idx === restChats.length - 1;
-                                                    const showLine = !isLast;
-
-                                                    return (
-                                                    <div key={chat.id} className="flex mt-4 relative z-10">
-                                                        {/* Left: Avatar + Thread Line */}
-                                                        <div className="flex flex-col items-center mr-3 relative">
-                                                            {showLine && (
-                                                                <div className="absolute left-[17px] top-11 -bottom-1 w-0.5 bg-stone-200"></div>
-                                                            )}
-                                                            {(() => {
-                                                                const otherAvatar = isOutgoing ? msg.creatorAvatarUrl : msg.senderAvatarUrl;
-                                                                const otherName = isOutgoing ? msg.creatorName : msg.senderName;
-                                                                const avatarUrl = isCreator ? creator.avatarUrl : otherAvatar;
-                                                                const avatarName = isCreator ? creator.displayName : otherName;
-                                                                return (
-                                                            <div className={`w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ${avatarUrl ? 'cursor-pointer' : ''}`} onClick={() => { if (avatarUrl) setEnlargedImage(avatarUrl); }}>
-                                                                {isCreator ? (
-                                                                    creator.avatarUrl ? (
-                                                                        <img src={creator.avatarUrl} alt={creator.displayName} className="w-full h-full object-cover" />
-                                                                    ) : (
-                                                                        <div className="w-full h-full bg-stone-100 flex items-center justify-center"><Verified size={22} /></div>
-                                                                    )
-                                                                ) : (
-                                                                    avatarUrl ? (
-                                                                        <img src={avatarUrl} alt={avatarName} className="w-full h-full object-cover" />
-                                                                    ) : (
-                                                                        <div className="w-full h-full bg-stone-200 flex items-center justify-center"><User size={16} className="text-stone-500" /></div>
-                                                                    )
-                                                                )}
-                                                            </div>
-                                                                );
-                                                            })()}
-                                                        </div>
-
-                                                        {/* Right: Content */}
-                                                        <div className="flex-1 min-w-0 pb-2">
-                                                            <div className="flex items-center justify-between mb-2 ml-1">
-                                                                <div className="flex items-center gap-2">
-                                                                        <span className="font-semibold text-sm text-stone-900">
-                                                                            {isCreator ? (creator.displayName || 'You') : (isOutgoing ? (msg.creatorName || 'User') : msg.senderName)}
-                                                                        </span>
-                                                                        {(() => {
-                                                                            // Determine if THIS chat line was sent by the admin account
-                                                                            const isAdminChatLine =
-                                                                                (chat.role === 'FAN' && msg.senderEmail === 'abe7340@gmail.com') ||
-                                                                                (chat.role === 'CREATOR' && msg.creatorEmail === 'abe7340@gmail.com');
-                                                                            if (isAdminChatLine) return (
-                                                                                <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
-                                                                                    <Verified size={10} />
-                                                                                    <span className="text-[9px] font-semibold uppercase tracking-wide">ADMIN</span>
-                                                                                </div>
-                                                                            );
-                                                                            // In admin threads the non-admin party is always a creator
-                                                                            if (isCreator || isAdminThread) return (
-                                                                                <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full overflow-visible">
-                                                                                    <Verified size={12} />
-                                                                                    <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.creator')}</span>
-                                                                                </div>
-                                                                            );
-                                                                            return (
-                                                                                <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
-                                                                                    <User size={10} className="fill-current" />
-                                                                                    <span className="text-[9px] font-semibold uppercase tracking-wide">{t('common.fan')}</span>
-                                                                                </div>
-                                                                            );
-                                                                        })()}
-                                                                        <span className="text-xs font-medium text-stone-400">• {new Date(chat.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
-                                                                    </div>
-                                                                </div>
-
-                                                            <div className={`${isCreator ? 'bg-stone-50' : 'bg-white'} p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60`}>
-                                                                {/* Content */}
-                                                                {editingChatId === chat.id ? (
-                                                                    <div className="space-y-3">
-                                                                        <textarea
-                                                                            value={editContent}
-                                                                            onChange={(e) => setEditContent(e.target.value)}
-                                                                            className="w-full text-sm text-stone-700 leading-relaxed bg-white border border-stone-200 rounded-lg p-3 resize-none focus:outline-none focus:ring-1 focus:ring-stone-400"
-                                                                            rows={3}
-                                                                            autoFocus
-                                                                        />
-                                                                        {/* Edit attachment preview */}
-                                                                        {editAttachment && (
-                                                                            <div className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg border border-stone-200">
-                                                                                {editAttachment.toLowerCase().endsWith('.pdf') ? (
-                                                                                    <FileText size={16} className="text-stone-400 flex-shrink-0" />
-                                                                                ) : (
-                                                                                    <img src={editAttachment} className="w-10 h-10 rounded object-cover flex-shrink-0" alt="" />
-                                                                                )}
-                                                                                <span className="text-xs text-stone-500 truncate flex-1">{editAttachment.split('/').pop()}</span>
-                                                                                <button onClick={() => setEditAttachment(null)} className="p-1 text-stone-400 hover:text-stone-600 transition-colors"><X size={14} /></button>
-                                                                            </div>
-                                                                        )}
-                                                                        <div className="flex items-center gap-2 justify-between">
-                                                                            <div className="flex items-center gap-1">
-                                                                                <button
-                                                                                    onClick={() => editFileInputRef.current?.click()}
-                                                                                    disabled={isUploadingEditAttachment}
-                                                                                    className="p-2 text-stone-400 hover:text-stone-600 transition-colors rounded-lg hover:bg-stone-100"
-                                                                                    title={editAttachment ? 'Replace file' : 'Attach file'}
-                                                                                >
-                                                                                    {isUploadingEditAttachment ? <div className="w-4 h-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" /> : <Paperclip size={14} />}
-                                                                                </button>
-                                                                                <input type="file" ref={editFileInputRef} className="hidden" onChange={handleEditFileChange} />
-                                                                            </div>
-                                                                            <div className="flex items-center gap-2">
-                                                                                <button onClick={() => { setEditingChatId(null); setEditContent(''); setEditAttachment(undefined); }} className="text-xs text-stone-400 hover:text-stone-600 px-3 py-1.5 rounded-lg transition-colors">{t('common.cancel')}</button>
-                                                                                <button onClick={() => handleDeleteChat(chat.id, msg.id)} className="text-xs text-red-400 hover:text-red-600 px-3 py-1.5 rounded-lg transition-colors">Delete</button>
-                                                                                <button onClick={() => handleEditChat(chat.id, msg.id)} disabled={isUploadingEditAttachment} className="text-xs text-white bg-stone-900 hover:bg-stone-800 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50">{t('common.save')}</button>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                ) : (
-                                                                    <>
-                                                                        <p className="text-xs sm:text-sm text-stone-700 leading-relaxed break-words">{chat.content}</p>
-                                                                        {chat.isEdited && <span className="text-[10px] text-stone-400 mt-1 block">edited</span>}
-                                                                    </>
-                                                                )}
-
-                                                                {/* Attachments (shown when NOT editing) */}
-                                                                {editingChatId !== chat.id && chat.attachmentUrl && (() => {
-                                                                    const allUrls = chat.attachmentUrl.split('|||');
-                                                                    const imgUrls = allUrls.filter((u: string) => isImage(u));
-                                                                    const fileUrls = allUrls.filter((u: string) => !isImage(u));
-                                                                    return (
-                                                                        <div className="mt-3 space-y-2">
-                                                                            {fileUrls.map((url: string, ai: number) => (
-                                                                                <div key={`f${ai}`} className="rounded-lg overflow-hidden border border-stone-200">
-                                                                                    <a href={url} target="_blank" rel="noopener noreferrer" download="attachment" className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors">
-                                                                                        <div className="p-2 bg-stone-100 rounded-lg"><FileText size={18} className="text-stone-500" /></div>
-                                                                                        <div className="flex-1 min-w-0">
-                                                                                            <p className="text-sm font-medium text-stone-700 truncate">{url.startsWith('data:') ? 'Attached File' : (url.split('/').pop() || 'Document')}</p>
-                                                                                            <p className="text-xs text-stone-400">Document</p>
-                                                                                        </div>
-                                                                                        <Download size={16} className="text-stone-400 flex-shrink-0" />
-                                                                                    </a>
-                                                                                </div>
-                                                                            ))}
-                                                                            {imgUrls.length > 0 && (
-                                                                                <div className={imgUrls.length === 1 ? '' : 'grid grid-cols-2 gap-1.5'}>
-                                                                                    {imgUrls.map((url: string, ai: number) => (
-                                                                                        <div key={`i${ai}`} className="rounded-lg overflow-hidden border border-stone-200">
-                                                                                            <img src={url} onClick={() => setEnlargedImage(url)} className={`block object-cover cursor-pointer hover:opacity-90 transition-opacity ${imgUrls.length === 1 ? 'max-h-[240px] w-auto max-w-[260px]' : 'w-full h-[140px]'}`} alt={`attachment ${ai + 1}`} />
-                                                                                        </div>
-                                                                                    ))}
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
+                                                        <div className="flex gap-1.5">
+                                                            <button
+                                                                className="flex-1 py-1 text-[10px] font-bold rounded bg-stone-800 text-white hover:bg-stone-700 transition-colors"
+                                                                onClick={async e => {
+                                                                    e.stopPropagation();
+                                                                    const updatedLinks = (editedCreator.links || []).map(l =>
+                                                                        l.id === link.id ? {
+                                                                            ...l,
+                                                                            title: boardLinkDraft.title || l.title,
+                                                                            url: boardLinkDraft.url || l.url,
+                                                                            ...(boardLinkDraft.color ? { buttonColor: boardLinkDraft.color } : {}),
+                                                                        } : l
                                                                     );
-                                                                })()}
-
-                                                                {/* Action Row */}
-                                                                <div className="flex items-center gap-1 mt-1 -ml-1 -mb-1.5">
-                                                                <div className="relative">
-                                                                    <button
-                                                                        onClick={() => setActiveReactionPicker(activeReactionPicker === chat.id ? null : chat.id)}
-                                                                        className="p-1 text-stone-400 hover:text-stone-600 transition-colors relative group"
-                                                                    >
-                                                                        {messageReactions[chat.id] ? (
-                                                                            <span className="text-lg animate-in zoom-in">{messageReactions[chat.id]}</span>
-                                                                        ) : (
-                                                                            <div className="w-6 h-6 rounded-full bg-stone-50 border border-stone-200 flex items-center justify-center hover:bg-stone-100 transition-colors relative">
-                                                                                <Smile size={14} className="text-stone-400" />
-                                                                                <div className="absolute -top-0.5 -right-0.5 bg-white rounded-full border border-stone-100 p-[1px]">
-                                                                                    <Plus size={6} className="text-stone-400" />
-                                                                                </div>
-                                                                            </div>
-                                                                        )}
-                                                                    </button>
-                                                                    {activeReactionPicker === chat.id && (
-                                                                        <div className="absolute bottom-full left-0 mb-1 bg-white border border-stone-200 shadow-lg rounded-full p-1 flex gap-1 z-10 animate-in zoom-in duration-200">
-                                                                            <button onClick={() => handleReactionClick(chat.id, '👍')} className="p-1.5 hover:bg-stone-100 rounded-full transition-colors text-lg leading-none">👍</button>
-                                                                            <button onClick={() => handleReactionClick(chat.id, '❤️')} className="p-1.5 hover:bg-stone-100 rounded-full transition-colors text-lg leading-none">❤️</button>
+                                                                    await saveBoardLinkChange(updatedLinks);
+                                                                    setBoardLinkEditId(null);
+                                                                }}
+                                                            >Save</button>
+                                                            <button
+                                                                className="flex-1 py-1 text-[10px] font-bold rounded border border-stone-200 text-stone-500 hover:bg-stone-100 transition-colors"
+                                                                onClick={e => { e.stopPropagation(); setBoardLinkEditId(null); }}
+                                                            >Cancel</button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div
+                                                        className="relative rounded-lg p-3"
+                                                        style={{
+                                                            backgroundColor: link.buttonColor || linkColors[lc],
+                                                            border: isDraggingLink ? '2px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.08)',
+                                                            boxShadow: isDraggingLink ? '0 16px 40px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.07)',
+                                                        }}
+                                                    >
+                                                        {/* Action buttons — show on hover */}
+                                                        <div className="absolute top-1.5 right-1.5 hidden group-hover:flex items-center gap-1">
+                                                            <button
+                                                                className="p-1 rounded-full bg-white/80 text-stone-500 hover:text-stone-800 hover:bg-white transition-all shadow-sm"
+                                                                onClick={e => {
+                                                                    e.stopPropagation();
+                                                                    setBoardLinkEditId(link.id);
+                                                                    setBoardLinkDraft({ title: link.title, url: link.url, price: link.price?.toString() || '', type: (link.type as any) || 'EXTERNAL', color: link.buttonColor });
+                                                                }}
+                                                                title="Edit"
+                                                            ><Pencil size={10} /></button>
+                                                            <button
+                                                                className="p-1 rounded-full bg-white/80 text-red-400 hover:text-red-600 hover:bg-white transition-all shadow-sm"
+                                                                onClick={async e => {
+                                                                    e.stopPropagation();
+                                                                    const updatedLinks = (editedCreator.links || []).filter(l => l.id !== link.id);
+                                                                    await saveBoardLinkChange(updatedLinks);
+                                                                }}
+                                                                title="Delete"
+                                                            ><Trash2 size={10} /></button>
+                                                        </div>
+                                                        {_ytIdLink ? (
+                                                            <>
+                                                                {/* YouTube thumbnail */}
+                                                                <div className="relative w-full rounded-md overflow-hidden -mx-0 mb-2" style={{ paddingBottom: '56.25%' }}>
+                                                                    <img
+                                                                        src={`https://img.youtube.com/vi/${_ytIdLink}/hqdefault.jpg`}
+                                                                        className="absolute inset-0 w-full h-full object-cover"
+                                                                        alt={link.title}
+                                                                    />
+                                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                                        <div className="w-8 h-6 bg-[#FF0000] rounded-md flex items-center justify-center shadow opacity-90">
+                                                                            <svg viewBox="0 0 24 24" className="w-3 h-3 fill-white ml-0.5"><path d="M8 5v14l11-7z"/></svg>
                                                                         </div>
-                                                                    )}
-                                                                </div>
-                                                                {messageReactions[chat.id] && (
-                                                                    <span className="text-[10px] text-stone-400"><ResponsiveName name={creator.displayName || 'You'} /></span>
-                                                                )}
-                                                                {isCreator && editingChatId !== chat.id && msg.status !== 'REPLIED' && (
-                                                                    <button
-                                                                        onClick={() => { setEditingChatId(chat.id); setEditContent(chat.content); setEditAttachment(chat.attachmentUrl || null); }}
-                                                                        className="ml-auto p-2 text-stone-300 hover:text-stone-500 transition-colors"
-                                                                        title="Edit message"
-                                                                    >
-                                                                        <Pencil size={13} />
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    );
-                                                })}
-
-                                                {/* Waiting indicator */}
-                                                {isPending && sortedConversation[sortedConversation.length - 1]?.role === 'FAN' && (
-                                                    <div className="flex mt-4 relative z-10">
-                                                        <div className="flex flex-col items-center mr-3">
-                                                            <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-dashed border-stone-300">
-                                                                {creator.avatarUrl ? (
-                                                                    <img src={creator.avatarUrl} alt={creator.displayName} className="w-full h-full object-cover opacity-30" />
-                                                                ) : (
-                                                                    <div className="w-full h-full bg-stone-50 flex items-center justify-center">
-                                                                        <User size={16} className="text-stone-300" />
                                                                     </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex-1 flex items-center">
-                                                            <span className="text-[15px] text-stone-400">Reply to thread...</span>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Status indicator */}
-                                                {msg.status === 'REPLIED' && (
-                                                    <div className="mt-5 mx-auto max-w-[260px]">
-                                                        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/60 rounded-xl p-3 shadow-sm">
-                                                            <div className="flex items-center justify-between">
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="bg-emerald-500 p-1 rounded-full">
-                                                                        <Check size={10} className="text-white stroke-[3px]" />
-                                                                    </div>
-                                                                    <span className="text-xs font-semibold text-emerald-700">{t('creator.creditsCollected')}</span>
                                                                 </div>
-                                                                <span className="text-sm font-bold text-emerald-600 font-mono">+{msg.amount}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                {msg.status === 'EXPIRED' && (
-                                                    <div className="mt-5 mx-auto max-w-[260px]">
-                                                        <div className="bg-gradient-to-br from-red-50 to-orange-50 border border-red-200/60 rounded-xl p-3 shadow-sm">
-                                                            <div className="flex items-center justify-between">
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="bg-red-500 p-1 rounded-full">
-                                                                        <AlertCircle size={10} className="text-white stroke-[3px]" />
-                                                                    </div>
-                                                                    <span className="text-xs font-semibold text-red-700">Deadline Missed</span>
+                                                                <div className="flex items-center gap-1">
+                                                                    <svg viewBox="0 0 24 24" className="w-3 h-3 flex-shrink-0" fill="#FF0000"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.55A3.02 3.02 0 0 0 .5 6.19C0 8.03 0 12 0 12s0 3.97.5 5.81a3.02 3.02 0 0 0 2.12 2.14C4.46 20.5 12 20.5 12 20.5s7.54 0 9.38-.55a3.02 3.02 0 0 0 2.12-2.14C24 15.97 24 12 24 12s0-3.97-.5-5.81zM9.75 15.52V8.48L15.5 12l-5.75 3.52z"/></svg>
+                                                                    <p className="text-[10px] font-bold text-stone-700 truncate">{link.title}</p>
                                                                 </div>
-                                                                <span className="text-xs font-semibold text-red-500">{t('creator.refunded')}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                {msg.status === 'CANCELLED' && (
-                                                    <div className="mt-5 mx-auto max-w-[260px]">
-                                                        <div className="bg-gradient-to-br from-stone-50 to-stone-100 border border-stone-200/60 rounded-xl p-3 shadow-sm">
-                                                            <div className="flex items-center justify-between">
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="bg-stone-500 p-1 rounded-full">
-                                                                        <Ban size={10} className="text-white stroke-[3px]" />
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <div className="flex items-start gap-2">
+                                                                    <span className="text-base leading-none mt-0.5 flex-shrink-0">{typeIcon}</span>
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <p className="text-xs font-bold text-stone-800 truncate leading-tight">{link.title}</p>
+                                                                        {link.type !== 'EXTERNAL' && link.price != null && (
+                                                                            <p className="text-[10px] text-stone-500 mt-0.5">{link.price} credits</p>
+                                                                        )}
+                                                                        <p className="text-[9px] text-stone-400 truncate mt-0.5">{link.url}</p>
                                                                     </div>
-                                                                    <span className="text-xs font-semibold text-stone-700">Cancelled</span>
                                                                 </div>
-                                                                <span className="text-xs font-semibold text-stone-500">{t('creator.refunded')}</span>
-                                                            </div>
-                                                        </div>
+                                                                <div className="mt-2 pt-2 border-t border-black/5">
+                                                                    <span className="text-[9px] font-semibold uppercase tracking-wider text-stone-400">
+                                                                        {link.type === 'DIGITAL_PRODUCT' ? 'Digital Product' : link.type === 'SUPPORT' ? 'Support' : 'External Link'}
+                                                                    </span>
+                                                                </div>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
                                         );
                                     })}
-                                    <div className="h-4"></div>
+                                    {/* Fan post stickers */}
+                                    {filtered.map((post, i) => {
+                                        const nc = stableIdx(post.id) % noteColors.length;
+                                        const rot = rotations[stableIdx(post.id) % rotations.length];
+                                        const pos = getPos(post, i);
+                                        // Expiry: 7 days from createdAt, unless pinned
+                                        const _expMs = new Date(post.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000;
+                                        const _msLeft = _expMs - Date.now();
+                                        const _daysLeft = Math.floor(_msLeft / (24 * 60 * 60 * 1000));
+                                        const _hoursLeft = Math.floor(_msLeft / (60 * 60 * 1000));
+                                        const expiry = post.isPinned
+                                            ? null
+                                            : _msLeft <= 0
+                                                ? { text: 'Expired', cls: 'text-red-500 bg-red-50 border border-red-100' }
+                                                : _daysLeft >= 2
+                                                    ? { text: `${_daysLeft}d left`, cls: 'text-stone-400 bg-stone-50' }
+                                                    : _daysLeft === 1
+                                                        ? { text: '1d left', cls: 'text-amber-600 bg-amber-50 border border-amber-100' }
+                                                        : { text: `${_hoursLeft}h left`, cls: 'text-red-500 bg-red-50 border border-red-100' };
+                                        const isDragging = boardDragging?.id === post.id;
+                                        const isHovered = !isDragging && !boardDragging && selectedBoardId === post.id;
+                                        const isActive = isDragging || isHovered;
+                                        const isReplying = boardReplyingId === post.id;
+                                        const currentPos = boardPositions[post.id] || pos;
+
+                                        return (
+                                            <div
+                                                key={post.id}
+                                                className="absolute flex flex-col"
+                                                style={{
+                                                    left: currentPos.x,
+                                                    top: currentPos.y,
+                                                    width: NOTE_W,
+                                                    transform: isActive ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
+                                                    transition: isDragging ? 'none' : 'transform 0.2s ease',
+                                                    zIndex: isDragging ? 1000 : isActive ? 10 : 1,
+                                                    cursor: isDragging ? 'grabbing' : 'pointer',
+                                                }}
+                                                onMouseEnter={() => !boardDragging && setSelectedBoardId(post.id)}
+                                                onMouseLeave={() => !boardDragging && setSelectedBoardId(null)}
+                                                onClick={() => !isDragging && setBoardPopupPost(post)}
+                                            >
+                                                {/* Tape strip — drag handle */}
+                                                <div
+                                                    className="h-4 w-14 mx-auto rounded-b-sm flex-shrink-0"
+                                                    style={{ background: tapeColors[nc], cursor: 'grab' }}
+                                                    onMouseDown={e => handleTapeMouseDown(e, post.id, currentPos)}
+                                                    title="Drag to reposition"
+                                                />
+                                                {/* Note card — use fan-chosen color if available */}
+                                                <div
+                                                    className="relative rounded-lg p-3 overflow-hidden"
+                                                    style={{
+                                                        backgroundColor: post.noteColor ?? noteColors[nc],
+                                                        backgroundImage: 'repeating-linear-gradient(to bottom, transparent, transparent 23px, rgba(0,0,0,0.04) 23px, rgba(0,0,0,0.04) 24px)',
+                                                        backgroundPositionY: '36px',
+                                                        border: isActive ? '2px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.08)',
+                                                        boxShadow: isDragging ? '0 16px 40px rgba(0,0,0,0.2)' : isActive ? '0 6px 20px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.07)',
+                                                    }}
+                                                >
+                                                    {/* Avatar + Name row */}
+                                                    <div className="flex items-center gap-2.5 mb-2">
+                                                        <div className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center flex-shrink-0 overflow-hidden border border-stone-200/60">
+                                                            {post.fanAvatarUrl
+                                                                ? <img src={post.fanAvatarUrl} className="w-full h-full object-cover" alt={post.fanName} />
+                                                                : <span className="text-white text-xs font-bold">{post.fanName.charAt(0).toUpperCase()}</span>}
+                                                        </div>
+                                                        <p className="text-sm font-bold text-stone-800 truncate">{post.fanName}</p>
+                                                    </div>
+                                                    {/* Message preview */}
+                                                    <p className="text-xs text-stone-500 line-clamp-2 mb-2.5 leading-relaxed">{post.content}</p>
+                                                    {/* Footer */}
+                                                    <div className="flex items-center justify-between gap-1 flex-wrap">
+                                                        {post.reply
+                                                            ? <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Answered</span>
+                                                            : <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100">Awaiting reply</span>}
+                                                        {post.isPinned
+                                                            ? <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 flex items-center gap-0.5"><Pin size={8} className="fill-current" /> Pinned</span>
+                                                            : expiry && <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${expiry.cls}`}>{expiry.text}</span>}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })()}
+                    </div>
+
+                    {/* Sticky bottom toolbar */}
+                    <div className="sticky bottom-0 z-20 pb-4 pt-2 pointer-events-none">
+                        <div className="pointer-events-auto flex items-end justify-center gap-3 flex-wrap px-4" style={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.12))' }}>
+
+                            {/* ── 🔗 External Link ── */}
+                            {boardAddingLink ? (
+                                <div className="flex flex-col" style={{ width: 240 }}>
+                                    <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(200,193,185,0.55)' }} />
+                                    <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#FFFEF0', border: '2px solid rgba(0,0,0,0.12)' }}>
+                                        <p className="text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-2">🔗 External Link</p>
+                                        <input
+                                            className="w-full text-xs bg-white/70 border border-stone-200 rounded px-2 py-1.5 mb-1.5 outline-none focus:ring-1 focus:ring-stone-400"
+                                            placeholder="Paste URL (https://...)"
+                                            value={boardLinkDraft.url}
+                                            autoFocus
+                                            onChange={e => {
+                                                const url = e.target.value;
+                                                setBoardLinkDraft(p => {
+                                                    let autoTitle = p.title;
+                                                    if (!p.title) {
+                                                        try {
+                                                            const hostname = new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace('www.', '');
+                                                            autoTitle = hostname.charAt(0).toUpperCase() + hostname.slice(1).split('.')[0];
+                                                        } catch {}
+                                                    }
+                                                    return { ...p, url, title: autoTitle };
+                                                });
+                                            }}
+                                        />
+                                        <input
+                                            className="w-full text-xs font-semibold bg-white/70 border border-stone-200 rounded px-2 py-1.5 mb-2 outline-none focus:ring-1 focus:ring-stone-400"
+                                            placeholder="Title (auto-filled from URL)"
+                                            value={boardLinkDraft.title}
+                                            onChange={e => setBoardLinkDraft(p => ({ ...p, title: e.target.value }))}
+                                        />
+                                        <div className="flex gap-1.5">
+                                            <button
+                                                className="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-stone-800 text-white hover:bg-stone-700 transition-colors disabled:opacity-40"
+                                                disabled={!boardLinkDraft.url.trim()}
+                                                onClick={async () => {
+                                                    const url = boardLinkDraft.url.trim();
+                                                    if (!url) return;
+                                                    let title = boardLinkDraft.title.trim();
+                                                    if (!title) {
+                                                        try {
+                                                            const hostname = new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace('www.', '');
+                                                            title = hostname.charAt(0).toUpperCase() + hostname.slice(1).split('.')[0];
+                                                        } catch { title = url; }
+                                                    }
+                                                    await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title, url, type: 'EXTERNAL' }]);
+                                                    _closeAllBoardAdding();
+                                                }}
+                                            >Add Link</button>
+                                            <button className="flex-1 py-1.5 text-[10px] font-bold rounded-lg border border-stone-200 text-stone-500 hover:bg-stone-100 transition-colors" onClick={_closeAllBoardAdding}>Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col" style={{ width: 130 }}>
+                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(200,193,185,0.45)' }} />
+                                    <button
+                                        className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700 hover:bg-white/80 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold"
+                                        style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }}
+                                        onClick={() => { _closeAllBoardAdding(); setBoardAddingLink(true); }}
+                                    >
+                                        🔗 Link
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* ── 📦 Digital Product ── */}
+                            {boardAddingProduct ? (
+                                <div className="flex flex-col" style={{ width: 240 }}>
+                                    <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(139,92,246,0.35)' }} />
+                                    <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#F5F3FF', border: '2px solid rgba(139,92,246,0.25)' }}>
+                                        <p className="text-[10px] font-bold text-violet-500 uppercase tracking-wider mb-2">📦 Digital Product</p>
+                                        <input
+                                            className="w-full text-xs font-semibold bg-white/70 border border-violet-200 rounded px-2 py-1.5 mb-1.5 outline-none focus:ring-1 focus:ring-violet-400"
+                                            placeholder="Product name"
+                                            value={boardLinkDraft.title}
+                                            autoFocus
+                                            onChange={e => setBoardLinkDraft(p => ({ ...p, title: e.target.value }))}
+                                        />
+                                        <input
+                                            className="w-full text-xs bg-white/70 border border-violet-200 rounded px-2 py-1.5 mb-1.5 outline-none focus:ring-1 focus:ring-violet-400"
+                                            placeholder="URL or file link"
+                                            value={boardLinkDraft.url}
+                                            onChange={e => setBoardLinkDraft(p => ({ ...p, url: e.target.value }))}
+                                        />
+                                        <input
+                                            className="w-full text-xs bg-white/70 border border-violet-200 rounded px-2 py-1.5 mb-2 outline-none focus:ring-1 focus:ring-violet-400"
+                                            placeholder="Price (credits)"
+                                            value={boardLinkDraft.price}
+                                            onChange={e => setBoardLinkDraft(p => ({ ...p, price: e.target.value }))}
+                                        />
+                                        <div className="flex gap-1.5">
+                                            <button
+                                                className="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-40"
+                                                disabled={!boardLinkDraft.title.trim() || !boardLinkDraft.url.trim()}
+                                                onClick={async () => {
+                                                    const title = boardLinkDraft.title.trim();
+                                                    const url = boardLinkDraft.url.trim();
+                                                    if (!title || !url) return;
+                                                    await saveBoardLinkChange([...(editedCreator.links || []), {
+                                                        id: `link_${Date.now()}`, title, url, type: 'DIGITAL_PRODUCT',
+                                                        price: boardLinkDraft.price ? parseInt(boardLinkDraft.price) : undefined,
+                                                    }]);
+                                                    _closeAllBoardAdding();
+                                                }}
+                                            >Add Product</button>
+                                            <button className="flex-1 py-1.5 text-[10px] font-bold rounded-lg border border-violet-200 text-violet-500 hover:bg-violet-50 transition-colors" onClick={_closeAllBoardAdding}>Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col" style={{ width: 130 }}>
+                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(139,92,246,0.35)' }} />
+                                    <button
+                                        className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold"
+                                        style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }}
+                                        onClick={() => { _closeAllBoardAdding(); setBoardAddingProduct(true); setBoardLinkDraft({ title: '', url: '', price: '', type: 'DIGITAL_PRODUCT' }); }}
+                                    >
+                                        📦 Product
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* ── 💝 Support / Tip ── */}
+                            {boardAddingSupport ? (
+                                <div className="flex flex-col" style={{ width: 220 }}>
+                                    <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(236,72,153,0.3)' }} />
+                                    <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#FDF2F8', border: '2px solid rgba(236,72,153,0.2)' }}>
+                                        <p className="text-[10px] font-bold text-pink-500 uppercase tracking-wider mb-2">💝 Support / Tip</p>
+                                        <input
+                                            className="w-full text-xs font-semibold bg-white/70 border border-pink-200 rounded px-2 py-1.5 mb-1.5 outline-none focus:ring-1 focus:ring-pink-400"
+                                            placeholder="Label (e.g. Buy me a coffee)"
+                                            value={boardLinkDraft.title}
+                                            autoFocus
+                                            onChange={e => setBoardLinkDraft(p => ({ ...p, title: e.target.value }))}
+                                        />
+                                        <input
+                                            className="w-full text-xs bg-white/70 border border-pink-200 rounded px-2 py-1.5 mb-2 outline-none focus:ring-1 focus:ring-pink-400"
+                                            placeholder="Amount (credits)"
+                                            value={boardLinkDraft.price}
+                                            onChange={e => setBoardLinkDraft(p => ({ ...p, price: e.target.value }))}
+                                        />
+                                        <div className="flex gap-1.5">
+                                            <button
+                                                className="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-pink-500 text-white hover:bg-pink-600 transition-colors disabled:opacity-40"
+                                                disabled={!boardLinkDraft.title.trim()}
+                                                onClick={async () => {
+                                                    const title = boardLinkDraft.title.trim();
+                                                    if (!title) return;
+                                                    await saveBoardLinkChange([...(editedCreator.links || []), {
+                                                        id: `link_${Date.now()}`, title, url: '#', type: 'SUPPORT',
+                                                        price: boardLinkDraft.price ? parseInt(boardLinkDraft.price) : undefined,
+                                                    }]);
+                                                    _closeAllBoardAdding();
+                                                }}
+                                            >Add Support</button>
+                                            <button className="flex-1 py-1.5 text-[10px] font-bold rounded-lg border border-pink-200 text-pink-400 hover:bg-pink-50 transition-colors" onClick={_closeAllBoardAdding}>Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col" style={{ width: 130 }}>
+                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(236,72,153,0.3)' }} />
+                                    <button
+                                        className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-pink-400 hover:text-pink-600 hover:bg-pink-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold"
+                                        style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }}
+                                        onClick={() => { _closeAllBoardAdding(); setBoardAddingSupport(true); setBoardLinkDraft({ title: '', url: '', price: '', type: 'SUPPORT' }); }}
+                                    >
+                                        💝 Support
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* ── ▶ YouTube ── */}
+                            {boardAddingYoutube ? (
+                                <div className="flex flex-col" style={{ width: 240 }}>
+                                    <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(220,50,50,0.35)' }} />
+                                    <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#0f0f0f', border: '2px solid rgba(255,0,0,0.3)' }}>
+                                        <div className="flex items-center gap-1.5 mb-2">
+                                            <svg viewBox="0 0 24 24" className="w-4 h-4 flex-shrink-0" fill="#FF0000"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.55A3.02 3.02 0 0 0 .5 6.19C0 8.03 0 12 0 12s0 3.97.5 5.81a3.02 3.02 0 0 0 2.12 2.14C4.46 20.5 12 20.5 12 20.5s7.54 0 9.38-.55a3.02 3.02 0 0 0 2.12-2.14C24 15.97 24 12 24 12s0-3.97-.5-5.81zM9.75 15.52V8.48L15.5 12l-5.75 3.52z"/></svg>
+                                            <p className="text-[10px] font-bold text-white/70 uppercase tracking-wider">YouTube Video</p>
+                                        </div>
+                                        <input
+                                            className="w-full text-xs bg-white/10 border border-white/20 rounded px-2 py-1.5 mb-2 outline-none text-white placeholder-white/40 focus:border-red-500/60"
+                                            placeholder="Paste YouTube URL…"
+                                            value={boardYoutubeDraft}
+                                            autoFocus
+                                            onChange={e => setBoardYoutubeDraft(e.target.value)}
+                                            onKeyDown={async e => {
+                                                if (e.key !== 'Enter') return;
+                                                const url = boardYoutubeDraft.trim();
+                                                if (!url) return;
+                                                const newLink: AffiliateLink = { id: `link_${Date.now()}`, title: 'YouTube Video', url, type: 'EXTERNAL' };
+                                                await saveBoardLinkChange([...(editedCreator.links || []), newLink]);
+                                                setBoardAddingYoutube(false);
+                                                setBoardYoutubeDraft('');
+                                            }}
+                                        />
+                                        {/* Thumbnail preview */}
+                                        {(() => {
+                                            try {
+                                                const u = new URL(boardYoutubeDraft.startsWith('http') ? boardYoutubeDraft : `https://${boardYoutubeDraft}`);
+                                                const vid = u.hostname.includes('youtube.com') ? u.searchParams.get('v') : u.hostname === 'youtu.be' ? u.pathname.slice(1).split('?')[0] : null;
+                                                if (vid) return (
+                                                    <div className="relative rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%' }}>
+                                                        <img src={`https://img.youtube.com/vi/${vid}/hqdefault.jpg`} className="absolute inset-0 w-full h-full object-cover" alt="thumbnail" />
+                                                        <div className="absolute inset-0 flex items-center justify-center">
+                                                            <div className="w-8 h-6 bg-[#FF0000] rounded-md flex items-center justify-center shadow opacity-90">
+                                                                <svg viewBox="0 0 24 24" className="w-3 h-3 fill-white ml-0.5"><path d="M8 5v14l11-7z"/></svg>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            } catch {}
+                                            return null;
+                                        })()}
+                                        <div className="flex gap-1.5">
+                                            <button
+                                                className="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-[#FF0000] text-white hover:bg-red-700 transition-colors disabled:opacity-40"
+                                                disabled={!boardYoutubeDraft.trim()}
+                                                onClick={async () => {
+                                                    const url = boardYoutubeDraft.trim();
+                                                    if (!url) return;
+                                                    const newLink: AffiliateLink = { id: `link_${Date.now()}`, title: 'YouTube Video', url, type: 'EXTERNAL' };
+                                                    await saveBoardLinkChange([...(editedCreator.links || []), newLink]);
+                                                    setBoardAddingYoutube(false);
+                                                    setBoardYoutubeDraft('');
+                                                }}
+                                            >Add Video</button>
+                                            <button
+                                                className="flex-1 py-1.5 text-[10px] font-bold rounded-lg border border-white/20 text-white/60 hover:bg-white/10 transition-colors"
+                                                onClick={() => { setBoardAddingYoutube(false); setBoardYoutubeDraft(''); }}
+                                            >Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col" style={{ width: 160 }}>
+                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(220,50,50,0.35)' }} />
+                                    <button
+                                        className="rounded-xl py-2.5 px-4 border-2 border-dashed border-stone-300 text-stone-500 hover:border-red-400 hover:text-red-600 hover:bg-red-50/60 transition-all flex items-center justify-center gap-2 text-xs font-semibold"
+                                        style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }}
+                                        onClick={() => { setBoardAddingYoutube(true); setBoardAddingLink(false); setBoardChatPickerOpen(false); setBoardYoutubeDraft(''); }}
+                                    >
+                                        <svg viewBox="0 0 24 24" className="w-3 h-3" fill="#FF0000"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.55A3.02 3.02 0 0 0 .5 6.19C0 8.03 0 12 0 12s0 3.97.5 5.81a3.02 3.02 0 0 0 2.12 2.14C4.46 20.5 12 20.5 12 20.5s7.54 0 9.38-.55a3.02 3.02 0 0 0 2.12-2.14C24 15.97 24 12 24 12s0-3.97-.5-5.81zM9.75 15.52V8.48L15.5 12l-5.75 3.52z"/></svg>
+                                        YouTube
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Pull from Chat button */}
+                            <div className="flex flex-col" style={{ width: 160 }}>
+                                <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(110,170,240,0.45)' }} />
+                                <button
+                                    className={`rounded-xl py-2.5 px-4 border-2 border-dashed text-xs font-semibold transition-all flex items-center justify-center gap-2 ${boardChatPickerOpen ? 'border-blue-400 text-blue-700 bg-blue-50' : 'border-stone-300 text-stone-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/60'}`}
+                                    style={{ backgroundColor: boardChatPickerOpen ? undefined : 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }}
+                                    onClick={() => { setBoardChatPickerOpen(p => !p); setBoardAddingLink(false); setBoardAddingYoutube(false); }}
+                                >
+                                    <MessageSquare size={13} /> From Chat
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Chat history picker panel */}
+                    {boardChatPickerOpen && (() => {
+                        const repliedMessages = messages.filter(m => m.status === 'REPLIED' && m.replyContent);
+                        const alreadyPinned = new Set(boardPosts.map(p => p.fanId).filter(Boolean));
+                        return (
+                            <div
+                                className="sticky bottom-0 z-10 mx-4 mb-4 rounded-2xl border border-stone-200 overflow-hidden"
+                                style={{ background: 'rgba(250,249,246,0.97)', backdropFilter: 'blur(12px)', boxShadow: '0 -4px 32px rgba(0,0,0,0.1)' }}
+                            >
+                                <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200/60">
+                                    <div>
+                                        <p className="text-xs font-bold text-stone-800">Pull from Chat History</p>
+                                        <p className="text-[10px] text-stone-400 mt-0.5">Pick a replied DM to pin as a public Q&A sticker</p>
+                                    </div>
+                                    <button onClick={() => setBoardChatPickerOpen(false)} className="p-1.5 rounded-full text-stone-400 hover:bg-stone-200/60 transition-colors"><X size={14} /></button>
+                                </div>
+                                {repliedMessages.length === 0 ? (
+                                    <div className="py-8 text-center text-stone-400 text-xs">No replied messages yet</div>
+                                ) : (
+                                    <div className="flex gap-3 overflow-x-auto p-4" style={{ scrollbarWidth: 'none' }}>
+                                        {repliedMessages.map(msg => {
+                                            const alreadyOnBoard = boardPosts.some(p => p.content === msg.content && p.reply === msg.replyContent);
+                                            return (
+                                                <div
+                                                    key={msg.id}
+                                                    className={`flex-shrink-0 w-52 rounded-xl border p-3 transition-all ${alreadyOnBoard ? 'opacity-40 cursor-default' : 'cursor-pointer hover:border-stone-400 hover:shadow-md'}`}
+                                                    style={{ backgroundColor: '#FFFEF0', border: alreadyOnBoard ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(0,0,0,0.09)' }}
+                                                    onClick={async () => {
+                                                        if (alreadyOnBoard) return;
+                                                        try {
+                                                            const newPost = await promoteMessageToBoardPost(
+                                                                creator.id,
+                                                                msg.senderName,
+                                                                msg.senderAvatarUrl || null,
+                                                                msg.content,
+                                                                msg.replyContent!,
+                                                            );
+                                                            setBoardPosts(prev => [newPost, ...prev]);
+                                                        } catch {}
+                                                    }}
+                                                >
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <div className="w-6 h-6 rounded-full bg-stone-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                                            {msg.senderAvatarUrl
+                                                                ? <img src={msg.senderAvatarUrl} className="w-full h-full object-cover" alt={msg.senderName} />
+                                                                : <span className="text-white text-[9px] font-bold">{msg.senderName.charAt(0).toUpperCase()}</span>}
+                                                        </div>
+                                                        <span className="text-[10px] font-bold text-stone-700 truncate">{msg.senderName}</span>
+                                                        {alreadyOnBoard && <span className="ml-auto text-[9px] text-emerald-600 font-semibold flex-shrink-0">Pinned</span>}
+                                                    </div>
+                                                    <p className="text-[10px] text-stone-600 line-clamp-2 mb-1.5 leading-relaxed">{msg.content}</p>
+                                                    <div className="pt-1.5 border-t border-black/5">
+                                                        <p className="text-[9px] text-stone-400 font-semibold uppercase tracking-wide mb-0.5">Reply</p>
+                                                        <p className="text-[10px] text-stone-500 line-clamp-2 leading-relaxed">{msg.replyContent}</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })()}
+                </div>
+            )}
+
+            {/* Board post popup modal */}
+            {boardPopupPost && (() => {
+                const post = boardPopupPost;
+                const noteColors = ['#FFFEF0', '#F0FDF4', '#FFF7ED', '#F5F3FF', '#EFF6FF', '#FDF2F8'];
+                const tapeColors = ['rgba(200,193,185,0.55)', 'rgba(110,200,140,0.45)', 'rgba(240,160,80,0.4)', 'rgba(180,150,240,0.4)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)'];
+                const _stableIdx = (id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xFFFFFF; return Math.abs(h); };
+                const nc = _stableIdx(post.id) % noteColors.length;
+                const isReplying = boardReplyingId === post.id;
+                const livePost = boardPosts.find(p => p.id === post.id) || post;
+                // Expiry for popup
+                const _popExpMs = new Date(livePost.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000;
+                const _popMsLeft = _popExpMs - Date.now();
+                const _popDaysLeft = Math.floor(_popMsLeft / (24 * 60 * 60 * 1000));
+                const _popHoursLeft = Math.floor(_popMsLeft / (60 * 60 * 1000));
+                const popExpiry = livePost.isPinned
+                    ? null
+                    : _popMsLeft <= 0
+                        ? { text: 'Expired', cls: 'text-red-500 bg-red-50' }
+                        : _popDaysLeft >= 2
+                            ? { text: `Expires in ${_popDaysLeft}d`, cls: 'text-stone-400' }
+                            : _popDaysLeft === 1
+                                ? { text: 'Expires in 1d', cls: 'text-amber-600' }
+                                : { text: `Expires in ${_popHoursLeft}h`, cls: 'text-red-500' };
+                return (
+                    <div
+                        className="fixed inset-0 z-[300] flex items-center justify-center p-4"
+                        style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)' }}
+                        onClick={() => { setBoardPopupPost(null); setBoardReplyingId(null); }}
+                    >
+                        <div
+                            className="animate-in fade-in zoom-in-95 duration-200 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl"
+                            style={{
+                                background: '#FAF9F6',
+                                backgroundImage: 'linear-gradient(to right, rgba(168,162,158,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,162,158,0.08) 1px, transparent 1px)',
+                                backgroundSize: '64px 64px',
+                            }}
+                            onClick={e => e.stopPropagation()}
+                        >
+                            {/* Modal header */}
+                            <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200/60">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-lg leading-none">{['⭐','❤️','✨','🌟','💙','🎯','🔥','💬','🌙','🌸'][nc]}</span>
+                                    <span className="text-xs font-bold text-stone-400 uppercase tracking-widest">Board Post</span>
+                                    {livePost.isPinned
+                                        ? <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100"><Pin size={8} className="fill-current" /> Pinned</span>
+                                        : popExpiry && <span className={`text-[10px] font-semibold ${popExpiry.cls}`}>{popExpiry.text}</span>}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => {
+                                            const next = !livePost.isPinned;
+                                            setBoardPosts(prev => prev.map(p => p.id === livePost.id ? { ...p, isPinned: next } : p));
+                                            setBoardPopupPost(prev => prev ? { ...prev, isPinned: next } : null);
+                                            pinBoardPost(livePost.id, next);
+                                        }}
+                                        className="flex items-center gap-2 text-xs font-medium hover:opacity-80 transition-opacity"
+                                    >
+                                        <span className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors duration-200 ${livePost.isPinned ? 'bg-amber-400' : 'bg-stone-200'}`}>
+                                            <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${livePost.isPinned ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                                        </span>
+                                        <Pin size={10} className={livePost.isPinned ? 'text-amber-600 fill-current' : 'text-stone-400'} />
+                                        <span className={livePost.isPinned ? 'text-amber-700 font-semibold' : 'text-stone-500'}>Pin (never expires)</span>
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (!window.confirm('Delete this post?')) return;
+                                            try {
+                                                await deleteBoardPost(livePost.id);
+                                                setBoardPosts(prev => prev.filter(p => p.id !== livePost.id));
+                                                setBoardPopupPost(null);
+                                            } catch {}
+                                        }}
+                                        className="p-1.5 rounded-full text-red-400 hover:bg-red-50 transition-colors"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                    <button onClick={() => { setBoardPopupPost(null); setBoardReplyingId(null); }} className="p-1.5 rounded-full text-stone-400 hover:bg-stone-200/60 transition-colors">
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Sticker color picker */}
+                            <div className="flex items-center gap-2 px-5 py-2.5 border-b border-stone-100">
+                                <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mr-1">Color</span>
+                                {['#FFFEF0','#F0FDF4','#FFF7ED','#F5F3FF','#EFF6FF','#FDF2F8','#FFF1F2','#ECFDF5','#FFFBEB','#F0F9FF'].map(color => (
+                                    <button
+                                        key={color}
+                                        onClick={() => {
+                                            setBoardPosts(prev => prev.map(p => p.id === livePost.id ? { ...p, noteColor: color } : p));
+                                            setBoardPopupPost(prev => prev ? { ...prev, noteColor: color } : null);
+                                            updateBoardNoteColor(livePost.id, color);
+                                        }}
+                                        className="w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 flex-shrink-0"
+                                        style={{
+                                            backgroundColor: color,
+                                            borderColor: (livePost.noteColor ?? noteColors[nc]) === color ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.1)',
+                                            transform: (livePost.noteColor ?? noteColors[nc]) === color ? 'scale(1.2)' : undefined,
+                                        }}
+                                        title={color}
+                                    />
+                                ))}
+                            </div>
+
+                            {/* Thread content */}
+                            <div className="px-5 py-5 space-y-1">
+                                {/* Fan message */}
+                                <div className="flex relative z-10">
+                                    <div className="flex flex-col items-center mr-3 relative flex-shrink-0">
+                                        {(livePost.reply || isReplying) && <div className="absolute left-[17px] top-11 -bottom-1 w-0.5 bg-stone-200" />}
+                                        <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-800 flex items-center justify-center flex-shrink-0">
+                                            {livePost.fanAvatarUrl
+                                                ? <img src={livePost.fanAvatarUrl} className="w-full h-full object-cover" alt={livePost.fanName} />
+                                                : <div className="w-full h-full bg-stone-200 flex items-center justify-center"><User size={16} className="text-stone-500" /></div>}
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 min-w-0 pb-4">
+                                        <div className="flex items-center gap-2 mb-2 ml-1 flex-wrap">
+                                            <span className="font-semibold text-sm text-stone-900">{livePost.fanName}</span>
+                                            <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                                                <User size={9} className="fill-current" />
+                                                <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
+                                            </div>
+                                            <span className="text-xs font-medium text-stone-400">• {new Date(livePost.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+                                        </div>
+                                        <div className="bg-white p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
+                                            <p className="text-sm text-stone-700 leading-relaxed">{livePost.content}</p>
+                                            {livePost.attachmentUrl && (
+                                                /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(livePost.attachmentUrl)
+                                                    ? <img src={livePost.attachmentUrl} className="mt-2 w-full max-h-48 object-cover rounded-xl" alt="attachment" />
+                                                    : <a href={livePost.attachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 text-xs text-stone-500 hover:text-stone-800 font-medium transition-colors"><Paperclip size={12} /> {livePost.attachmentUrl.split('/').pop()}</a>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Reply Input Area — always show for admin threads (either side) */}
-                                {(activeMessage.status === 'PENDING' || selectedSenderEmail === 'abe7340@gmail.com' || currentUser?.email === 'abe7340@gmail.com') && (
-                                    <div className="p-3 sm:p-4 bg-white border-t border-stone-200/60 z-20">
-                                        <input type="file" ref={replyFileInputRef} className="hidden" accept="image/*" multiple onChange={handleReplyFileChange} />
-
-                                        {replyAttachments.length > 0 && (
-                                            <div className="mb-2 flex flex-wrap gap-2">
-                                                {replyAttachments.map((att, i) => (
-                                                    <div key={i} className="flex items-center gap-2 bg-stone-50 p-1.5 rounded-lg border border-stone-200 animate-in zoom-in duration-200">
-                                                        {isImage(att) ? (
-                                                            <img src={att} className="w-10 h-10 rounded object-cover" alt={`attachment ${i + 1}`} />
-                                                        ) : (
-                                                            <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-stone-500 border border-stone-100">
-                                                                <Paperclip size={14} />
-                                                            </div>
-                                                        )}
-                                                        <button onClick={() => setReplyAttachments(prev => prev.filter((_, idx) => idx !== i))} className="text-stone-400 hover:text-red-500 p-1 hover:bg-stone-100 rounded transition-colors">
-                                                            <X size={12} />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                                {replyAttachments.length < 3 && (
-                                                    <span className="text-[10px] text-stone-400 self-center">{replyAttachments.length}/3</span>
+                                {/* Creator reply */}
+                                {livePost.reply ? (
+                                    <div className="flex mt-1 relative z-10">
+                                        <div className="flex flex-col items-center mr-3 flex-shrink-0">
+                                            <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-200 flex items-center justify-center">
+                                                {creator.avatarUrl
+                                                    ? <img src={creator.avatarUrl} className="w-full h-full object-cover" alt={creator.displayName} />
+                                                    : <div className="w-full h-full bg-stone-200 flex items-center justify-center"><User size={16} className="text-stone-500" /></div>}
+                                            </div>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-2 ml-1 flex-wrap">
+                                                <span className="font-semibold text-sm text-stone-900">{creator.displayName}</span>
+                                                <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                                                    <CheckCircle2 size={10} className="text-blue-500" />
+                                                    <span className="text-[9px] font-semibold uppercase tracking-wide">Creator</span>
+                                                </div>
+                                                {livePost.replyAt && <span className="text-xs font-medium text-stone-400">• {new Date(livePost.replyAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>}
+                                            </div>
+                                            <div className="bg-white p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
+                                                <p className="text-sm text-stone-700 leading-relaxed">{livePost.reply}</p>
+                                                {livePost.replyAttachmentUrl && (
+                                                    /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(livePost.replyAttachmentUrl)
+                                                        ? <img src={livePost.replyAttachmentUrl} className="mt-2 w-full max-h-48 object-cover rounded-xl" alt="attachment" />
+                                                        : <a href={livePost.replyAttachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 text-xs text-stone-500 hover:text-stone-800 font-medium transition-colors"><Paperclip size={12} /> {livePost.replyAttachmentUrl.split('/').pop()}</a>
                                                 )}
-                                            </div>
-                                        )}
-
-                                        <textarea
-                                            value={replyText}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' && !e.shiftKey) {
-                                                    e.preventDefault();
-                                                    handleSendReply(false);
-                                                }
-                                            }}
-                                            onChange={(e) => setReplyText(e.target.value)}
-                                            placeholder="Write your reply..."
-                                            className="w-full bg-stone-50/50 border border-stone-200/60 rounded-xl p-3 text-sm focus:ring-1 focus:ring-stone-400 focus:border-stone-300 outline-none resize-none min-h-[100px] text-stone-900 placeholder:text-stone-400"
-                                        />
-
-                                        <div className="flex items-center mt-2 gap-2">
-                                            <span className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded border border-green-100 font-medium whitespace-nowrap text-[10px] sm:text-xs">
-                                                <Coins size={12} className="flex-shrink-0" /> <span className="hidden sm:inline">Payment held in </span>escrow
-                                            </span>
-                                            <div className="flex-1" />
-                                            <div ref={(el) => { inboxTutorialRefs.current[2] = el; }} className={showInboxTutorial && inboxTutorialStep === 2 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-full' : ''}>
-                                                <button
-                                                    onClick={() => replyFileInputRef.current?.click()}
-                                                    disabled={isUploadingReplyAttachment || replyAttachments.length >= 3}
-                                                    className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-colors disabled:opacity-30"
-                                                    title={replyAttachments.length >= 3 ? 'Max 3 photos' : 'Attach photos (max 3)'}
-                                                >
-                                                    {isUploadingReplyAttachment ? <div className="w-4 h-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" /> : <Paperclip size={16} />}
-                                                </button>
-                                            </div>
-                                            <div ref={(el) => { inboxTutorialRefs.current[1] = el; }} className={showInboxTutorial && inboxTutorialStep === 1 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-full' : ''}>
-                                                <button
-                                                    onClick={() => handleSendReply(false)}
-                                                    disabled={(!replyText.trim() && replyAttachments.length === 0) || isSendingReply || isRejecting}
-                                                    className="h-9 px-4 rounded-full bg-stone-600 text-white hover:bg-stone-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold text-xs"
-                                                    title="Send reply (Keep Pending)"
-                                                >
-                                                    Send <Send size={14} />
-                                                </button>
                                             </div>
                                         </div>
                                     </div>
+                                ) : isReplying ? (
+                                    <div className="flex mt-4 relative z-10">
+                                        <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-200 flex items-center justify-center flex-shrink-0 mr-3">
+                                            {creator.avatarUrl
+                                                ? <img src={creator.avatarUrl} className="w-full h-full object-cover" alt="" />
+                                                : <User size={16} className="text-stone-500" />}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <textarea
+                                                autoFocus
+                                                className="w-full text-sm bg-white border border-stone-200 rounded-2xl rounded-tl-lg p-3 outline-none resize-none focus:ring-1 focus:ring-stone-400 placeholder-stone-300"
+                                                placeholder="Write your reply…"
+                                                rows={3}
+                                                value={boardReplyDraft[livePost.id] || ''}
+                                                onChange={e => setBoardReplyDraft(prev => ({ ...prev, [livePost.id]: e.target.value }))}
+                                            />
+                                            {/* Attachment picker */}
+                                            <input
+                                                ref={boardReplyAttachmentInputRef}
+                                                type="file"
+                                                accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+                                                className="hidden"
+                                                onChange={e => {
+                                                    const file = e.target.files?.[0] ?? null;
+                                                    setBoardReplyAttachmentFile(file);
+                                                    if (file && file.type.startsWith('image/')) {
+                                                        const reader = new FileReader();
+                                                        reader.onload = ev => setBoardReplyAttachmentPreview(ev.target?.result as string);
+                                                        reader.readAsDataURL(file);
+                                                    } else {
+                                                        setBoardReplyAttachmentPreview(null);
+                                                    }
+                                                    e.target.value = '';
+                                                }}
+                                            />
+                                            {boardReplyAttachmentFile ? (
+                                                <div className="flex items-center gap-2 bg-stone-100 rounded-xl px-3 py-2 mt-2">
+                                                    {boardReplyAttachmentPreview
+                                                        ? <img src={boardReplyAttachmentPreview} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" alt="preview" />
+                                                        : <div className="w-10 h-10 rounded-lg bg-stone-200 flex items-center justify-center flex-shrink-0"><Paperclip size={16} className="text-stone-500" /></div>}
+                                                    <span className="text-xs text-stone-600 font-medium truncate flex-1">{boardReplyAttachmentFile.name}</span>
+                                                    <button
+                                                        onClick={() => { setBoardReplyAttachmentFile(null); setBoardReplyAttachmentPreview(null); }}
+                                                        className="p-1 rounded-full hover:bg-stone-200 transition-colors text-stone-400"
+                                                    ><X size={12} /></button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() => boardReplyAttachmentInputRef.current?.click()}
+                                                    className="mt-2 flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-600 font-medium transition-colors px-1"
+                                                >
+                                                    <Paperclip size={13} /> Add attachment
+                                                </button>
+                                            )}
+                                            <div className="flex gap-2 mt-2">
+                                                <button onClick={() => { setBoardReplyingId(null); setBoardReplyAttachmentFile(null); setBoardReplyAttachmentPreview(null); }} className="flex-1 py-2 text-xs font-semibold rounded-xl border border-stone-200 text-stone-500 hover:bg-stone-100 transition-colors">Cancel</button>
+                                                <button
+                                                    onClick={async () => {
+                                                        const reply = boardReplyDraft[livePost.id]?.trim();
+                                                        if (!reply) return;
+                                                        try {
+                                                            let replyAttachmentUrl: string | null = null;
+                                                            if (boardReplyAttachmentFile && currentUser) {
+                                                                replyAttachmentUrl = await uploadBoardAttachment(boardReplyAttachmentFile, currentUser.id);
+                                                            }
+                                                            await replyToBoardPost(livePost.id, reply, replyAttachmentUrl);
+                                                            const updated = { ...livePost, reply, replyAt: new Date().toISOString(), replyAttachmentUrl };
+                                                            setBoardPosts(prev => prev.map(p => p.id === livePost.id ? updated : p));
+                                                            setBoardPopupPost(updated);
+                                                            setBoardReplyingId(null);
+                                                            setBoardReplyDraft(prev => { const n = { ...prev }; delete n[livePost.id]; return n; });
+                                                            setBoardReplyAttachmentFile(null);
+                                                            setBoardReplyAttachmentPreview(null);
+                                                        } catch {}
+                                                    }}
+                                                    className="flex-1 py-2 text-xs font-semibold rounded-xl bg-stone-900 text-white hover:bg-stone-700 transition-colors"
+                                                >Post Reply</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="mt-4">
+                                        <button
+                                            onClick={() => setBoardReplyingId(livePost.id)}
+                                            className="w-full py-2.5 text-sm font-semibold rounded-xl bg-stone-900 text-white hover:bg-stone-700 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <MessageSquare size={14} /> Answer this question
+                                        </button>
+                                    </div>
                                 )}
-                             </div>
-                        )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
+
+            {currentView === 'INBOX' && (() => {
+                const answeredBoardPosts = boardPosts
+                    .filter(p => p.reply !== null)
+                    .sort((a, b) => new Date(b.replyAt ?? b.createdAt).getTime() - new Date(a.replyAt ?? a.createdAt).getTime());
+                const inboxFiltered = answeredBoardPosts.filter(p =>
+                    inboxBoardFilter === 'ALL' ? true :
+                    inboxBoardFilter === 'PINNED' ? p.isPinned :
+                    !p.isPinned
+                );
+                const inboxPost = inboxSelectedPostId ? boardPosts.find(p => p.id === inboxSelectedPostId) ?? null : null;
+                const noteColors = ['#FFFEF0', '#F0FDF4', '#FFF7ED', '#F5F3FF', '#EFF6FF', '#FDF2F8'];
+                const tapeColors = ['rgba(200,193,185,0.55)', 'rgba(110,200,140,0.45)', 'rgba(240,160,80,0.4)', 'rgba(180,150,240,0.4)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)'];
+                const rotations = [-1.8, 0.9, -0.7, 1.4, -1.1, 0.6];
+                const stableIdx = (id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xFFFFFF; return Math.abs(h); };
+                const isReplying = inboxPost ? boardReplyingId === inboxPost.id : false;
+                return (
+                <div className="h-full flex flex-col bg-[#FAF9F6] animate-in fade-in">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 sm:px-6 py-4 shrink-0">
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0">
+                                <Menu size={24} />
+                            </button>
+                            <div>
+                                <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-0.5">Q&amp;A History</p>
+                                <h2 className="text-xl sm:text-2xl font-bold text-stone-900">Inbox</h2>
+                            </div>
+                        </div>
+                        <TopNav hideBurger />
+                    </div>
+                    <div className="flex flex-1 min-h-0 overflow-x-hidden">
+                        {/* List Column */}
+                        <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col ${inboxPost ? 'hidden md:flex' : 'flex'}`}
+                            style={{ background: 'linear-gradient(135deg, #FAFAF8 0%, #F5F3EF 100%)', backgroundImage: 'linear-gradient(to right, rgba(168,162,158,0.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,162,158,0.07) 1px, transparent 1px)', backgroundSize: '28px 28px' }}>
+                            <div className="p-3 border-b border-stone-200/40 bg-white/60 backdrop-blur-sm">
+                                <div className="flex gap-1 bg-stone-100/60 p-1 rounded-lg">
+                                    {(['ALL', 'PINNED', 'UNPINNED'] as const).map(f => (
+                                        <button
+                                            key={f}
+                                            onClick={() => setInboxBoardFilter(f)}
+                                            className={`flex-1 px-2 py-1.5 text-[10px] font-semibold rounded transition-all whitespace-nowrap ${inboxBoardFilter === f ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+                                        >
+                                            {f === 'ALL' ? `All (${answeredBoardPosts.length})` : f === 'PINNED' ? `Pinned (${answeredBoardPosts.filter(p => p.isPinned).length})` : `Unpinned (${answeredBoardPosts.filter(p => !p.isPinned).length})`}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
+                                {boardLoading ? (
+                                    <div className="p-8 text-center text-sm text-stone-400 flex items-center justify-center gap-2"><Loader2 size={16} className="animate-spin" /> Loading…</div>
+                                ) : inboxFiltered.length === 0 ? (
+                                    <div className="p-8 text-center space-y-2">
+                                        <div className="text-3xl">📭</div>
+                                        <p className="text-sm text-stone-400 font-medium">{inboxBoardFilter === 'PINNED' ? 'No pinned posts yet' : inboxBoardFilter === 'UNPINNED' ? 'All answered posts are pinned' : 'No answered posts yet'}</p>
+                                        <p className="text-xs text-stone-300">Answer questions on the Board to see them here</p>
+                                    </div>
+                                ) : (
+                                    inboxFiltered.map((post, noteIdx) => {
+                                        const nc = stableIdx(post.id) % noteColors.length;
+                                        const rot = rotations[nc];
+                                        const isActive = inboxSelectedPostId === post.id;
+                                        return (
+                                            <div
+                                                key={post.id}
+                                                onClick={() => setInboxSelectedPostId(post.id)}
+                                                className="relative cursor-pointer"
+                                                style={{ transform: isActive ? 'rotate(0deg) scale(1.02)' : `rotate(${rot}deg)`, transition: 'transform 0.2s ease', zIndex: isActive ? 10 : 1 }}
+                                            >
+                                                <div className="h-4 w-14 mx-auto rounded-b-sm" style={{ background: tapeColors[nc] }} />
+                                                <div
+                                                    className="relative rounded-lg p-3 overflow-hidden"
+                                                    style={{
+                                                        backgroundColor: post.noteColor ?? noteColors[nc],
+                                                        backgroundImage: 'repeating-linear-gradient(to bottom, transparent, transparent 23px, rgba(0,0,0,0.04) 23px, rgba(0,0,0,0.04) 24px)',
+                                                        backgroundPositionY: '36px',
+                                                        border: isActive ? '2px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.08)',
+                                                        boxShadow: isActive ? '0 6px 20px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.07)',
+                                                    }}
+                                                >
+                                                    {post.isPinned && (
+                                                        <span className="absolute top-2 right-2"><Pin size={10} className="text-amber-500 fill-amber-400" /></span>
+                                                    )}
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <div className="w-7 h-7 rounded-full bg-stone-800 flex items-center justify-center flex-shrink-0 overflow-hidden border border-stone-200/60">
+                                                            {post.fanAvatarUrl
+                                                                ? <img src={post.fanAvatarUrl} className="w-full h-full object-cover" alt={post.fanName} />
+                                                                : <span className="text-white text-[10px] font-bold">{post.fanName.charAt(0).toUpperCase()}</span>}
+                                                        </div>
+                                                        <p className="text-sm font-bold truncate text-stone-700">{post.fanName}</p>
+                                                    </div>
+                                                    <p className="text-xs text-stone-600 line-clamp-2 mb-1.5 leading-relaxed">{post.content}</p>
+                                                    {post.reply && (
+                                                        <div className="flex items-start gap-1.5 bg-black/5 rounded-lg px-2 py-1.5">
+                                                            <CheckCircle2 size={9} className="text-blue-500 mt-0.5 flex-shrink-0" />
+                                                            <p className="text-[10px] text-stone-500 line-clamp-2 leading-relaxed">{post.reply}</p>
+                                                        </div>
+                                                    )}
+                                                    <p className="text-[9px] text-stone-400 mt-1.5">{getRelativeTime(post.replyAt ?? post.createdAt)}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Detail Column */}
+                        <div className={`flex-1 flex flex-col bg-[#FAF9F6] ${!inboxPost ? 'hidden md:flex' : 'flex'}`}>
+                            {!inboxPost ? (
+                                <div className="flex-1 flex flex-col items-center justify-center text-stone-400 relative">
+                                    <div className="absolute inset-0 pointer-events-none" style={{
+                                        backgroundImage: 'linear-gradient(to right, rgba(168,162,158,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,162,158,0.08) 1px, transparent 1px)',
+                                        backgroundSize: '64px 64px',
+                                        maskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 100%)',
+                                        WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 100%)',
+                                    }} />
+                                    <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mb-4 relative z-10">
+                                        <MessageSquare size={32} className="text-stone-300" />
+                                    </div>
+                                    <p className="text-sm font-medium relative z-10">Select a conversation</p>
+                                    <p className="text-xs text-stone-300 mt-1 relative z-10">Answered board posts appear here</p>
+                                </div>
+                            ) : (() => {
+                                const post = inboxPost;
+                                const nc = stableIdx(post.id) % noteColors.length;
+                                return (
+                                    <div className="flex-1 flex flex-col overflow-hidden">
+                                        {/* Thread header */}
+                                        <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200/60 bg-white/60 backdrop-blur-sm shrink-0">
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    onClick={() => setInboxSelectedPostId(null)}
+                                                    className="md:hidden p-1.5 rounded-full hover:bg-stone-100 text-stone-400 transition-colors"
+                                                >
+                                                    <ChevronLeft size={16} />
+                                                </button>
+                                                <div className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                    {post.fanAvatarUrl
+                                                        ? <img src={post.fanAvatarUrl} className="w-full h-full object-cover" alt={post.fanName} />
+                                                        : <span className="text-white text-xs font-bold">{post.fanName.charAt(0).toUpperCase()}</span>}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-stone-900">{post.fanName}</p>
+                                                    <p className="text-[10px] text-stone-400">{new Date(post.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        const next = !post.isPinned;
+                                                        setBoardPosts(prev => prev.map(p => p.id === post.id ? { ...p, isPinned: next } : p));
+                                                        pinBoardPost(post.id, next);
+                                                    }}
+                                                    className="flex items-center gap-2 text-xs font-medium hover:opacity-80 transition-opacity"
+                                                >
+                                                    <span className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors duration-200 ${post.isPinned ? 'bg-amber-400' : 'bg-stone-200'}`}>
+                                                        <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${post.isPinned ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                                                    </span>
+                                                    <Pin size={10} className={post.isPinned ? 'text-amber-600 fill-current' : 'text-stone-400'} />
+                                                    <span className={post.isPinned ? 'text-amber-700 font-semibold' : 'text-stone-500'}>Pin (never expires)</span>
+                                                </button>
+                                                <button
+                                                    onClick={async () => {
+                                                        if (!window.confirm('Delete this post?')) return;
+                                                        try {
+                                                            await deleteBoardPost(post.id);
+                                                            setBoardPosts(prev => prev.filter(p => p.id !== post.id));
+                                                            setInboxSelectedPostId(null);
+                                                        } catch {}
+                                                    }}
+                                                    className="p-1.5 rounded-full text-red-400 hover:bg-red-50 transition-colors"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Thread content */}
+                                        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-1">
+                                            {/* Fan message */}
+                                            <div className="flex relative z-10">
+                                                <div className="flex flex-col items-center mr-3 relative flex-shrink-0">
+                                                    {post.reply && <div className="absolute left-[17px] top-11 -bottom-1 w-0.5 bg-stone-200" />}
+                                                    <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-800 flex items-center justify-center flex-shrink-0">
+                                                        {post.fanAvatarUrl
+                                                            ? <img src={post.fanAvatarUrl} className="w-full h-full object-cover" alt={post.fanName} />
+                                                            : <div className="w-full h-full bg-stone-200 flex items-center justify-center"><User size={16} className="text-stone-500" /></div>}
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1 min-w-0 pb-4">
+                                                    <div className="flex items-center gap-2 mb-2 ml-1 flex-wrap">
+                                                        <span className="font-semibold text-sm text-stone-900">{post.fanName}</span>
+                                                        <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                                                            <User size={9} className="fill-current" />
+                                                            <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
+                                                        </div>
+                                                        <span className="text-xs font-medium text-stone-400">• {new Date(post.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+                                                    </div>
+                                                    <div className="bg-white p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
+                                                        <p className="text-sm text-stone-700 leading-relaxed">{post.content}</p>
+                                                        {post.attachmentUrl && (
+                                                            /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(post.attachmentUrl)
+                                                                ? <img src={post.attachmentUrl} className="mt-2 w-full max-h-48 object-cover rounded-xl" alt="attachment" />
+                                                                : <a href={post.attachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 text-xs text-stone-500 hover:text-stone-800 font-medium transition-colors"><Paperclip size={12} /> {post.attachmentUrl.split('/').pop()}</a>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Creator reply */}
+                                            {post.reply ? (
+                                                <div className="flex mt-1 relative z-10">
+                                                    <div className="flex flex-col items-center mr-3 flex-shrink-0">
+                                                        <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-200 flex items-center justify-center">
+                                                            {creator.avatarUrl
+                                                                ? <img src={creator.avatarUrl} className="w-full h-full object-cover" alt={creator.displayName} />
+                                                                : <div className="w-full h-full bg-stone-200 flex items-center justify-center"><User size={16} className="text-stone-500" /></div>}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-2 ml-1 flex-wrap">
+                                                            <span className="font-semibold text-sm text-stone-900">{creator.displayName}</span>
+                                                            <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                                                                <CheckCircle2 size={10} className="text-blue-500" />
+                                                                <span className="text-[9px] font-semibold uppercase tracking-wide">Creator</span>
+                                                            </div>
+                                                            {post.replyAt && <span className="text-xs font-medium text-stone-400">• {new Date(post.replyAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>}
+                                                        </div>
+                                                        <div className="bg-white p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
+                                                            <p className="text-sm text-stone-700 leading-relaxed">{post.reply}</p>
+                                                            {post.replyAttachmentUrl && (
+                                                                /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(post.replyAttachmentUrl)
+                                                                    ? <img src={post.replyAttachmentUrl} className="mt-2 w-full max-h-48 object-cover rounded-xl" alt="attachment" />
+                                                                    : <a href={post.replyAttachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 text-xs text-stone-500 hover:text-stone-800 font-medium transition-colors"><Paperclip size={12} /> {post.replyAttachmentUrl.split('/').pop()}</a>
+                                                            )}
+                                                        </div>
+                                                        {/* Pin callout */}
+                                                        <div className="mt-2 ml-1">
+                                                            {post.isPinned ? (
+                                                                <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 font-medium"><Pin size={9} className="fill-current" /> Visible on public Community Board</span>
+                                                            ) : (
+                                                                <span className="inline-flex items-center gap-1 text-[10px] text-stone-400 font-medium"><Pin size={9} /> Not pinned — only visible here</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : isReplying ? (
+                                                <div className="flex mt-4 relative z-10">
+                                                    <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-200 flex items-center justify-center flex-shrink-0 mr-3">
+                                                        {creator.avatarUrl
+                                                            ? <img src={creator.avatarUrl} className="w-full h-full object-cover" alt="" />
+                                                            : <User size={16} className="text-stone-500" />}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <textarea
+                                                            autoFocus
+                                                            className="w-full text-sm bg-white border border-stone-200 rounded-2xl rounded-tl-lg p-3 outline-none resize-none focus:ring-1 focus:ring-stone-400 placeholder-stone-300"
+                                                            placeholder="Write your reply…"
+                                                            rows={3}
+                                                            value={boardReplyDraft[post.id] || ''}
+                                                            onChange={e => setBoardReplyDraft(prev => ({ ...prev, [post.id]: e.target.value }))}
+                                                        />
+                                                        <div className="flex gap-2 mt-2">
+                                                            <button onClick={() => setBoardReplyingId(null)} className="flex-1 py-2 text-xs font-semibold rounded-xl border border-stone-200 text-stone-500 hover:bg-stone-100 transition-colors">Cancel</button>
+                                                            <button
+                                                                onClick={async () => {
+                                                                    const reply = boardReplyDraft[post.id]?.trim();
+                                                                    if (!reply) return;
+                                                                    try {
+                                                                        await replyToBoardPost(post.id, reply, null);
+                                                                        const updated = { ...post, reply, replyAt: new Date().toISOString(), replyAttachmentUrl: null };
+                                                                        setBoardPosts(prev => prev.map(p => p.id === post.id ? updated : p));
+                                                                        setBoardReplyingId(null);
+                                                                        setBoardReplyDraft(prev => { const n = { ...prev }; delete n[post.id]; return n; });
+                                                                    } catch {}
+                                                                }}
+                                                                className="flex-1 py-2 text-xs font-semibold rounded-xl bg-stone-900 text-white hover:bg-stone-700 transition-colors"
+                                                            >Post Reply</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="mt-4">
+                                                    <button
+                                                        onClick={() => setBoardReplyingId(post.id)}
+                                                        className="w-full py-2.5 text-sm font-semibold rounded-xl bg-stone-900 text-white hover:bg-stone-700 transition-colors flex items-center justify-center gap-2"
+                                                    >
+                                                        <MessageSquare size={14} /> Answer this question
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+                        </div>
                     </div>
                 </div>
-                </div>
-            )}
+                );
+            })()}
 
             {/* --- VIEW: SETTINGS (Profile) --- */}
             {currentView === 'SETTINGS' && (

@@ -33,6 +33,9 @@ export interface AffiliateLink {
   iconShape?: 'circle' | 'rounded' | 'square';
   sectionId?: string;
   buttonColor?: string;
+  hidden?: boolean;
+  positionX?: number;
+  positionY?: number;
 }
 
 export interface Product {

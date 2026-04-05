@@ -1825,8 +1825,8 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                       </div>
                       <div className="flex flex-1 min-h-0 overflow-x-hidden">
                       {/* List Column */}
-                      <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col bg-white ${selectedCreatorId ? 'hidden md:flex' : 'flex'}`}>
-                         <div className="p-3 border-b border-stone-100">
+                      <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col ${selectedCreatorId ? 'hidden md:flex' : 'flex'}`} style={{ background: 'linear-gradient(135deg, #FAFAF8 0%, #F5F3EF 100%)', backgroundImage: 'linear-gradient(to right, rgba(168,162,158,0.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,162,158,0.07) 1px, transparent 1px)', backgroundSize: '28px 28px' }}>
+                         <div className="p-3 border-b border-stone-200/40 bg-white/60 backdrop-blur-sm">
                              {/* Search Input */}
                              <div className="relative group">
                                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-stone-600 transition-colors" size={16} />
@@ -1835,11 +1835,11 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                      placeholder={t('fan.searchMessages')}
                                      value={searchQuery}
                                      onChange={(e) => setSearchQuery(e.target.value)}
-                                     className="w-full pl-10 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:ring-1 focus:ring-stone-400 focus:bg-white outline-none transition-all"
+                                     className="w-full pl-10 pr-4 py-2 bg-white/80 border border-stone-200 rounded-xl text-sm focus:ring-1 focus:ring-stone-400 focus:bg-white outline-none transition-all"
                                  />
                              </div>
                          </div>
-                         <div className="flex-1 overflow-y-auto">
+                         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
                             {isLoading ? (
                                 <div className="p-8 text-center text-sm text-stone-400">{t('fan.loadingRequests')}</div>
                             ) : filteredGroups.length === 0 ? (
@@ -1853,46 +1853,70 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
                                     </p>
                                 </div>
                             ) : (
-                                filteredGroups.map(group => {
+                                filteredGroups.map((group, noteIdx) => {
+                                    const noteColors = ['#FFFEF0', '#F0FDF4', '#FFF7ED', '#F5F3FF', '#EFF6FF', '#FDF2F8'];
+                                    const tapeColors = ['rgba(200,193,185,0.55)', 'rgba(110,200,140,0.45)', 'rgba(240,160,80,0.4)', 'rgba(180,150,240,0.4)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)'];
+                                    const stickers = ['⭐', '❤️', '✨', '🌟', '💙', '🎯'];
+                                    const rotations = [-1.8, 0.9, -0.7, 1.4, -1.1, 0.6];
+                                    const nc = noteIdx % noteColors.length;
+                                    const rot = rotations[nc];
                                     const isActive = selectedCreatorId === group.creatorId;
                                     const latestMsg = group.latestMessage;
                                     const timeLeft = getTimeLeft(latestMsg.expiresAt);
+                                    const lastChatContent = latestMsg.conversation[latestMsg.conversation.length - 1]?.content || latestMsg.content;
+
                                     return (
                                         <div
                                             key={group.creatorId}
                                             onClick={() => handleOpenChat(group.creatorId)}
-                                            className={`p-4 border-b border-stone-100/80 cursor-pointer hover:bg-stone-50/50 transition-colors ${isActive ? 'bg-stone-50/70 border-l-2 border-l-stone-900' : 'border-l-2 border-l-transparent'}`}
+                                            className="relative cursor-pointer"
+                                            style={{ transform: isActive ? 'rotate(0deg) scale(1.02)' : `rotate(${rot}deg)`, transition: 'transform 0.2s ease', zIndex: isActive ? 10 : 1 }}
                                         >
-                                            <div className="flex items-center gap-3 mb-1">
-                                                <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200 overflow-hidden flex-shrink-0">
-                                                    {group.creatorAvatarUrl ? (
-                                                        <img src={group.creatorAvatarUrl} className="w-full h-full object-cover" alt={group.creatorName} />
-                                                    ) : (
-                                                        <User size={16} />
-                                                    )}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex justify-between items-start">
-                                                        <span className="text-sm font-semibold text-stone-900"><ResponsiveName name={group.creatorName} /></span>
-                                                        <span className="text-xs text-stone-400">{new Date(latestMsg.createdAt).toLocaleDateString()}</span>
+                                            {/* Tape strip */}
+                                            <div className="h-4 w-14 mx-auto rounded-b-sm" style={{ background: tapeColors[nc] }} />
+                                            {/* Note card */}
+                                            <div
+                                                className="relative rounded-lg p-3 overflow-hidden"
+                                                style={{
+                                                    backgroundColor: noteColors[nc],
+                                                    backgroundImage: 'repeating-linear-gradient(to bottom, transparent, transparent 23px, rgba(0,0,0,0.04) 23px, rgba(0,0,0,0.04) 24px)',
+                                                    backgroundPositionY: '36px',
+                                                    border: isActive ? '2px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.08)',
+                                                    boxShadow: isActive ? '0 6px 20px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.07)',
+                                                }}
+                                            >
+                                                {/* Sticker */}
+                                                <span className="absolute top-2.5 right-2.5 text-lg leading-none">{stickers[nc]}</span>
+
+                                                {/* Avatar + Name row */}
+                                                <div className="flex items-center gap-2.5 mb-2 pr-8">
+                                                    <div className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center flex-shrink-0 overflow-hidden border border-stone-200/60">
+                                                        {group.creatorAvatarUrl
+                                                            ? <img src={group.creatorAvatarUrl} className="w-full h-full object-cover" alt={group.creatorName} />
+                                                            : <span className="text-white text-xs font-bold">{group.creatorName.charAt(0).toUpperCase()}</span>}
                                                     </div>
+                                                    <p className="text-sm font-bold text-stone-800 truncate"><ResponsiveName name={group.creatorName} /></p>
                                                 </div>
-                                            </div>
-                                            <p className="text-xs text-stone-500 line-clamp-2 mb-2 ml-11">{latestMsg.conversation[latestMsg.conversation.length - 1]?.content || latestMsg.content}</p>
-                                            <div className="flex items-center justify-between ml-11">
-                                                {group.isDiemMessage ? (
-                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 animate-pulse">NEW</span>
-                                                ) : latestMsg.status === 'PENDING' ? (
-                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${timeLeft.bg} ${timeLeft.color}`}>{timeLeft.text}</span>
-                                                ) : latestMsg.status === 'REPLIED' ? (
-                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">{t('creator.replied')}</span>
-                                                ) : (
-                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">{latestMsg.status === 'EXPIRED' ? t('creator.expired') : t('creator.cancelled')}</span>
-                                                )}
-                                                {group.messageCount > 0 && <span className="text-xs font-mono font-medium text-stone-700 flex items-center gap-1"><Bell size={10}/> {group.messageCount}</span>}
+
+                                                {/* Message preview */}
+                                                <p className="text-xs text-stone-500 line-clamp-2 mb-2.5 leading-relaxed">{lastChatContent}</p>
+
+                                                {/* Footer */}
+                                                <div className="flex items-center justify-between">
+                                                    {group.isDiemMessage ? (
+                                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 animate-pulse">NEW</span>
+                                                    ) : latestMsg.status === 'PENDING' ? (
+                                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${timeLeft.bg} ${timeLeft.color}`}>{timeLeft.text}</span>
+                                                    ) : latestMsg.status === 'REPLIED' ? (
+                                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">{t('creator.replied')}</span>
+                                                    ) : (
+                                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-500">{latestMsg.status === 'EXPIRED' ? t('creator.expired') : t('creator.cancelled')}</span>
+                                                    )}
+                                                    {group.messageCount > 0 && <span className="text-[10px] font-mono font-medium text-stone-500 flex items-center gap-0.5"><Bell size={9}/> {group.messageCount}</span>}
+                                                </div>
                                             </div>
                                         </div>
-                                    )
+                                    );
                                 })
                             )}
                          </div>

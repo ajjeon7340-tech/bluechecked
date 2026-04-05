@@ -1584,6 +1584,26 @@ export const uploadProductFile = async (file: File, creatorId: string): Promise<
     return data.publicUrl;
 };
 
+// Upload premium digital content — stored under {creatorId}/products/ within the 'products' bucket
+export const uploadPremiumContent = async (file: File, creatorId: string): Promise<string> => {
+    if (!isConfigured) return MockBackend.uploadProductFile(file, creatorId);
+
+    console.log(`[RealBackend] Uploading premium content: ${file.name} for creator: ${creatorId}`);
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${creatorId}/products/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from('products')
+        .upload(fileName, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage.from('products').getPublicUrl(fileName);
+    console.log(`[RealBackend] Premium content uploaded: ${data.publicUrl}`);
+    return data.publicUrl;
+};
+
 export const getPurchasedProducts = async (): Promise<any[]> => {
     if (!isConfigured) return MockBackend.getPurchasedProducts();
 
@@ -2637,4 +2657,249 @@ export const getWithdrawalHistory = async (): Promise<Withdrawal[]> => {
     } catch {
         return MockBackend.getWithdrawalHistory();
     }
+};
+
+// ============================================================
+// BOARD POSTS — public corkboard Q&A feature
+// ============================================================
+
+export interface BoardPost {
+    id: string;
+    creatorId: string;
+    fanId: string | null;
+    fanName: string;
+    fanAvatarUrl: string | null;
+    content: string;
+    isPrivate: boolean;
+    reply: string | null;
+    replyAt: string | null;
+    createdAt: string;
+    positionX: number | null;
+    positionY: number | null;
+    displayOrder: number | null;
+    attachmentUrl: string | null;
+    replyAttachmentUrl: string | null;
+    noteColor: string | null;
+    isPinned: boolean;
+}
+
+const mapBoardPost = (row: any): BoardPost => ({
+    id: row.id,
+    creatorId: row.creator_id,
+    fanId: row.fan_id,
+    fanName: row.fan_name || 'Anonymous Fan',
+    fanAvatarUrl: row.fan_avatar_url,
+    content: row.content,
+    isPrivate: row.is_private,
+    reply: row.reply,
+    replyAt: row.reply_at,
+    createdAt: row.created_at,
+    positionX: row.position_x ?? null,
+    positionY: row.position_y ?? null,
+    displayOrder: row.display_order ?? null,
+    attachmentUrl: row.attachment_url ?? null,
+    replyAttachmentUrl: row.reply_attachment_url ?? null,
+    noteColor: row.note_color ?? null,
+    isPinned: row.is_pinned ?? false,
+});
+
+// Returns all board posts visible to the current caller for a given creator.
+// RLS enforces: public+replied posts visible to all; fan sees own posts; creator sees all.
+export const getBoardPosts = async (creatorId: string): Promise<BoardPost[]> => {
+    if (!isConfigured) return [];
+    try {
+        const { data, error } = await supabase
+            .from('board_posts')
+            .select('*')
+            .eq('creator_id', creatorId)
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        return (data || []).map(mapBoardPost);
+    } catch (e) {
+        console.error('[Board] getBoardPosts:', e);
+        return [];
+    }
+};
+
+// Fan creates a new board post.
+export const createBoardPost = async (
+    creatorId: string,
+    content: string,
+    isPrivate: boolean,
+    attachmentUrl?: string | null,
+    noteColor?: string | null,
+): Promise<BoardPost> => {
+    if (!isConfigured) throw new Error('Backend not configured');
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) throw new Error('Must be logged in to post');
+    const userId = sessionData.session.user.id;
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name, avatar_url')
+        .eq('id', userId)
+        .single();
+
+    const insertRow: Record<string, any> = {
+        creator_id: creatorId,
+        fan_id: userId,
+        fan_name: profile?.display_name || 'Anonymous Fan',
+        fan_avatar_url: profile?.avatar_url || null,
+        content,
+        is_private: isPrivate,
+    };
+    if (attachmentUrl) insertRow.attachment_url = attachmentUrl;
+    if (noteColor) insertRow.note_color = noteColor;
+
+    const { data, error } = await supabase
+        .from('board_posts')
+        .insert(insertRow)
+        .select()
+        .single();
+
+    // If schema cache hasn't refreshed yet, retry without new columns
+    if (error && error.message?.match(/attachment_url|note_color/)) {
+        console.warn('[Board] schema cache stale — retrying without new columns');
+        const { attachment_url: _a, note_color: _n, ...rowWithout } = insertRow;
+        const { data: data2, error: error2 } = await supabase
+            .from('board_posts')
+            .insert(rowWithout)
+            .select()
+            .single();
+        if (error2) throw error2;
+        return mapBoardPost(data2);
+    }
+
+    if (error) throw error;
+    return mapBoardPost(data);
+};
+
+// Creator replies to a board post (makes it public if is_private=false).
+export const replyToBoardPost = async (postId: string, reply: string, replyAttachmentUrl?: string | null): Promise<void> => {
+    if (!isConfigured) throw new Error('Backend not configured');
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) throw new Error('Must be logged in to reply');
+
+    const updateRow: Record<string, any> = { reply, reply_at: new Date().toISOString() };
+    if (replyAttachmentUrl) updateRow.reply_attachment_url = replyAttachmentUrl;
+
+    const { error } = await supabase
+        .from('board_posts')
+        .update(updateRow)
+        .eq('id', postId);
+
+    // If schema cache hasn't refreshed, retry without reply_attachment_url
+    if (error && replyAttachmentUrl && error.message?.includes('reply_attachment_url')) {
+        console.warn('[Board] reply_attachment_url column not in schema cache — replying without attachment');
+        const { reply_attachment_url: _dropped, ...rowWithout } = updateRow;
+        const { error: error2 } = await supabase.from('board_posts').update(rowWithout).eq('id', postId);
+        if (error2) throw error2;
+        return;
+    }
+
+    if (error) throw error;
+};
+
+// Upload a board post attachment (image or file) to Supabase storage.
+export const uploadBoardAttachment = async (file: File, userId: string): Promise<string> => {
+    if (!isConfigured) throw new Error('Backend not configured');
+    const fileExt = file.name.split('.').pop();
+    const fileName = `board/${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const { error: uploadError } = await supabase.storage.from('products').upload(fileName, file);
+    if (uploadError) throw uploadError;
+    const { data } = supabase.storage.from('products').getPublicUrl(fileName);
+    return data.publicUrl;
+};
+
+// Creator gets all unreplied posts to their board (for the response dashboard).
+export const getPendingBoardPosts = async (creatorId: string): Promise<BoardPost[]> => {
+    if (!isConfigured) return [];
+    try {
+        const { data, error } = await supabase
+            .from('board_posts')
+            .select('*')
+            .eq('creator_id', creatorId)
+            .is('reply', null)
+            .order('created_at', { ascending: true });
+        if (error) throw error;
+        return (data || []).map(mapBoardPost);
+    } catch (e) {
+        console.error('[Board] getPendingBoardPosts:', e);
+        return [];
+    }
+};
+
+// Creator deletes a board post from their board.
+export const deleteBoardPost = async (postId: string): Promise<void> => {
+    if (!isConfigured) throw new Error('Backend not configured');
+    const { error } = await supabase
+        .from('board_posts')
+        .delete()
+        .eq('id', postId);
+    if (error) throw error;
+};
+
+// Creator toggles visibility (public/private) of a board post.
+export const updateBoardPostVisibility = async (postId: string, isPrivate: boolean): Promise<void> => {
+    if (!isConfigured) throw new Error('Backend not configured');
+    const { error } = await supabase
+        .from('board_posts')
+        .update({ is_private: isPrivate })
+        .eq('id', postId);
+    if (error) throw error;
+};
+
+export const pinBoardPost = async (postId: string, isPinned: boolean): Promise<void> => {
+    if (!isConfigured) return;
+    const { error } = await supabase.from('board_posts').update({ is_pinned: isPinned }).eq('id', postId);
+    if (error) console.warn('[Board] pinBoardPost:', error);
+};
+
+export const updateBoardNoteColor = async (postId: string, noteColor: string): Promise<void> => {
+    if (!isConfigured) return;
+    const { error } = await supabase.from('board_posts').update({ note_color: noteColor }).eq('id', postId);
+    if (error) console.warn('[Board] updateBoardNoteColor:', error);
+};
+
+// Creator promotes a paid DM reply to the public board as a pinned Q&A sticker.
+export const promoteMessageToBoardPost = async (
+    creatorId: string,
+    fanName: string,
+    fanAvatarUrl: string | null,
+    question: string,
+    reply: string,
+): Promise<BoardPost> => {
+    if (!isConfigured) throw new Error('Backend not configured');
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+        .from('board_posts')
+        .insert({
+            creator_id: creatorId,
+            fan_id: null,
+            fan_name: fanName,
+            fan_avatar_url: fanAvatarUrl || null,
+            content: question,
+            is_private: false,
+            reply,
+            reply_at: now,
+        })
+        .select()
+        .single();
+    if (error) throw error;
+    return mapBoardPost(data);
+};
+
+// Creator saves the freeform position of a board post on their board.
+export const updateBoardPostPosition = async (
+    postId: string,
+    positionX: number,
+    positionY: number,
+    displayOrder: number
+): Promise<void> => {
+    if (!isConfigured) return;
+    const { error } = await supabase
+        .from('board_posts')
+        .update({ position_x: positionX, position_y: positionY, display_order: displayOrder })
+        .eq('id', postId);
+    if (error) console.warn('[Board] updateBoardPostPosition:', error);
 };

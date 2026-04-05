@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Globe } from 'lucide-react';
 import { CreatorProfile, CurrentUser, AffiliateLink, Product } from '../types';
-import { DiemLogo, CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share, Image as ImageIcon, TrendingUp, LinkedInLogo, FacebookLogo, SnapchatLogo, PinterestLogo, DiscordLogo, TelegramLogo, WhatsAppLogo, RedditLogo, ThreadsLogo, PatreonLogo, SpotifyLogo, SoundCloudLogo, GitHubLogo, SubstackLogo, BeehiivLogo, OnlyFansLogo } from './Icons';
+import { DiemLogo, CheckCircle2, Clock, ShieldCheck, MessageSquare, ExternalLink, User, DollarSign, Save, LogOut, ChevronLeft, ChevronRight, Camera, Heart, Paperclip, X, Sparkles, ArrowRight, Lock, Star, Trash, Plus, Send, Check, ShoppingBag, Tag, CreditCard, YouTubeLogo, InstagramLogo, XLogo, TikTokLogo, Twitch, FileText, Download, Play, Coins, Wallet, Share, Image as ImageIcon, TrendingUp, LinkedInLogo, FacebookLogo, SnapchatLogo, PinterestLogo, DiscordLogo, TelegramLogo, WhatsAppLogo, RedditLogo, ThreadsLogo, PatreonLogo, SpotifyLogo, SoundCloudLogo, GitHubLogo, SubstackLogo, BeehiivLogo, OnlyFansLogo } from './Icons';
 import { Button } from './Button';
-import { sendMessage, updateCreatorProfile, addCredits, createCheckoutSession, isBackendConfigured, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus, getSecureDownloadUrl, logAnalyticsEvent, getCreatorTrendingStatus, getSupporters, Supporter } from '../services/realBackend';
+import { sendMessage, updateCreatorProfile, addCredits, createCheckoutSession, isBackendConfigured, DEFAULT_AVATAR, toggleCreatorLike, getCreatorLikeStatus, getSecureDownloadUrl, logAnalyticsEvent, getCreatorTrendingStatus, getSupporters, Supporter, createBoardPost, getBoardPosts, uploadBoardAttachment, BoardPost } from '../services/realBackend';
 
 interface Props {
   creator: CreatorProfile;
@@ -60,6 +61,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const photoInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const boardScrollRef = useRef<HTMLDivElement>(null);
+  const [boardContainerW, setBoardContainerW] = useState(0);
+  // Fixed board visible height — mirrors the max-height set on the scroll container
+  const BOARD_MAX_H = 440;
 
   // Profile Tutorial
   const [tutorialStep, setTutorialStep] = useState(0);
@@ -120,6 +125,21 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const [hasLiked, setHasLiked] = useState(false);
   const [likes, setLikes] = useState(creator.likesCount || 0);
 
+  // Board Post State
+  const [isComposing, setIsComposing] = useState(false);
+  const [boardMessage, setBoardMessage] = useState('');
+  const [isPrivatePost, setIsPrivatePost] = useState(false);
+  const [isBoardSubmitting, setIsBoardSubmitting] = useState(false);
+  const [boardPosts, setBoardPosts] = useState<BoardPost[]>([]);
+  const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
+  const [selectedBoardPost, setSelectedBoardPost] = useState<BoardPost | null>(null);
+  const [boardAttachmentFile, setBoardAttachmentFile] = useState<File | null>(null);
+  const [boardAttachmentPreview, setBoardAttachmentPreview] = useState<string | null>(null);
+  const boardAttachmentInputRef = useRef<HTMLInputElement>(null);
+  const [newlyPostedId, setNewlyPostedId] = useState<string | null>(null);
+  const boardTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const [selectedNoteColor, setSelectedNoteColor] = useState<string | null>(null);
+
   // Credit/Top-up State
   const [topUpAmount, setTopUpAmount] = useState(500);
   const [imgError, setImgError] = useState(false);
@@ -167,6 +187,71 @@ export const CreatorPublicProfile: React.FC<Props> = ({
         setLoadingSupporters(false);
     });
   }, [creator.id]);
+
+  // Fetch board posts
+  useEffect(() => {
+    getBoardPosts(creator.id).then(posts => {
+        setBoardPosts(posts);
+    }).catch(() => {});
+  }, [creator.id]);
+
+  // Wheel inside the board: scroll vertically when there's room, otherwise redirect to horizontal
+  useEffect(() => {
+    const el = boardScrollRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return; // already horizontal — let it pass
+        const atTop = el.scrollTop === 0;
+        const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+        // If scrolling up and already at top, or scrolling down and already at bottom → redirect to X
+        if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) {
+            e.preventDefault();
+            el.scrollLeft += e.deltaY * 1.2;
+        }
+        // Otherwise let vertical scroll happen naturally
+    };
+    el.addEventListener('wheel', handler, { passive: false });
+    return () => el.removeEventListener('wheel', handler);
+  }, []);
+
+  const handleBoardPost = async () => {
+    if (!boardMessage.trim()) return;
+    setIsBoardSubmitting(true);
+    try {
+        let attachmentUrl: string | null = null;
+        if (boardAttachmentFile && currentUser) {
+            attachmentUrl = await uploadBoardAttachment(boardAttachmentFile, currentUser.id);
+        }
+        const newPost = await createBoardPost(creator.id, boardMessage, isPrivatePost, attachmentUrl, selectedNoteColor);
+        setIsComposing(false);
+        setBoardMessage('');
+        setIsPrivatePost(false);
+        setSelectedSticker(null);
+        setBoardAttachmentFile(null);
+        setBoardAttachmentPreview(null);
+        setSelectedNoteColor(null);
+        onMessageSent();
+        // Refresh board posts then scroll to the newly placed sticker
+        getBoardPosts(creator.id).then(posts => {
+            setBoardPosts(posts);
+            setNewlyPostedId(newPost.id);
+            // Scroll to the new sticker after render
+            setTimeout(() => {
+                const el = boardScrollRef.current;
+                const sticker = el?.querySelector(`[data-post-id="${newPost.id}"]`) as HTMLElement | null;
+                if (el && sticker) {
+                    el.scrollTo({ left: sticker.offsetLeft - 32, top: sticker.offsetTop - 32, behavior: 'smooth' });
+                }
+                // Clear highlight after 3s
+                setTimeout(() => setNewlyPostedId(null), 3000);
+            }, 80);
+        }).catch(() => {});
+    } catch (e: any) {
+        alert(e.message);
+    } finally {
+        setIsBoardSubmitting(false);
+    }
+  };
 
   const handleOpenModal = () => {
     if (!isCustomizeMode) {
@@ -276,6 +361,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
         logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'PRODUCT', id: selectedProductLink.id, title: selectedProductLink.title, price: selectedProductLink.price });
         setIsSubmitting(false);
         setStep('product_success');
+        onMessageSent();
       } catch (e: any) {
           setIsSubmitting(false);
           if (e.message.includes("Insufficient")) {
@@ -296,6 +382,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
         logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'TIP', amount: supportAmount });
         setIsSubmitting(false);
         setStep('support_success');
+        onMessageSent();
         // Refresh supporter list
         getSupporters(creator.id).then(setSupporters);
       } catch (e: any) {
@@ -518,6 +605,24 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     'dm-serif': "font-['DM_Serif_Text',serif]",
   }[creator.profileFont || 'inter'] || 'font-sans';
 
+  const getYouTubeId = (url: string): string | null => {
+    try {
+        const u = new URL(url.startsWith('http') ? url : `https://${url}`);
+        if (u.hostname.includes('youtube.com')) return u.searchParams.get('v');
+        if (u.hostname === 'youtu.be') return u.pathname.slice(1).split('?')[0];
+    } catch { }
+    return null;
+  };
+
+  const timeAgo = (d: string) => {
+    const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+  };
+
   const linkBlockStyle = creator.bannerGradient
     ? { backgroundColor: creator.bannerGradient, borderColor: creator.bannerGradient === '#1c1917' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' }
     : { backgroundColor: '#ffffff', borderColor: 'rgb(231 229 228 / 0.6)' };
@@ -574,266 +679,779 @@ export const CreatorPublicProfile: React.FC<Props> = ({
       {/* Main Layout - Single Column / Vertical Stack */}
       <div className="relative z-10 max-w-2xl mx-auto px-4 pt-2 flex flex-col gap-5 items-center">
 
-          {/* 1. PROFILE INFO & STATS */}
+          {/* 1. MINIMAL PROFILE HEADER */}
           <div className="w-full">
              <div className="border border-stone-200/60 relative transition-all" style={{ backgroundColor: creator.bannerGradient || '#ffffff', borderRadius: cardCornerRadiusValue }}>
                 <div className="px-4 py-3 flex justify-between items-center">
-                    <div
-                      onClick={onCreateOwn}
-                      className="flex items-center cursor-pointer hover:opacity-70 transition-opacity"
-                    >
+                    <div onClick={onCreateOwn} className="flex items-center cursor-pointer hover:opacity-70 transition-opacity">
                       <DiemLogo size={20} className="text-stone-800" />
                     </div>
-
                     <div className="flex items-center gap-2">
-                        <button
-                            onClick={handleShare}
-                            className="w-9 h-9 bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-700 rounded-full transition-colors flex items-center justify-center flex-shrink-0"
-                            title={t('common.share')}
-                        >
+                        <button onClick={handleShare} className="w-9 h-9 bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-700 rounded-full transition-colors flex items-center justify-center flex-shrink-0" title={t('common.share')}>
                             <Share size={16} />
                         </button>
-
-
                     </div>
                 </div>
-                <div className="px-4 pt-1 pb-4 sm:px-6 sm:pb-6 relative z-10">
-                    <div className="flex flex-col items-center text-center gap-2">
-                        {/* Instagram Notes style: Avatar with thought bubble overlaid */}
-                        <div className={`flex flex-col items-center flex-shrink-0 relative`}>
-                        {/* Avatar container - bubble overlaps onto avatar */}
-                        <div className="relative">
-                        {/* Thought bubble overlapping top of avatar */}
-                        {!isCustomizeMode && (creator.showBio ?? true) && creator.bio && (
-                            <div className="absolute bottom-[75%] sm:bottom-[70%] left-1/2 -translate-x-1/2 z-30" style={{ width: 'max-content', maxWidth: '220px' }}>
-                                <div className="bg-white rounded-[20px] px-4 py-2.5 shadow-lg border border-stone-200/60">
-                                    <p className="text-xs sm:text-sm text-stone-800 leading-snug font-medium text-center">
-                                        {creator.bio}
-                                    </p>
-                                </div>
-                                {/* Thought bubble dots trailing from left toward center */}
-                                <div className="relative h-5 mt-0.5">
-                                    <div className="absolute left-3 top-0 w-2.5 h-2.5 bg-white rounded-full shadow-md border border-stone-200/60"></div>
-                                    <div className="absolute left-6 top-2.5 w-1.5 h-1.5 bg-white rounded-full shadow-md border border-stone-200/60"></div>
-                                </div>
-                            </div>
-                        )}
-                        <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full p-1 overflow-hidden border border-stone-100 shadow-sm bg-white group">
+                <div className="px-4 pb-4 sm:px-6 sm:pb-5 relative z-10">
+                    <div className="flex items-center gap-4">
+                        {/* Avatar */}
+                        <div className="relative w-14 h-14 rounded-full overflow-hidden border border-stone-100 shadow-sm bg-white flex-shrink-0">
                            {!imgError && (editedCreator.avatarUrl || DEFAULT_AVATAR) ? (
-                               <img 
-                                    src={editedCreator.avatarUrl || DEFAULT_AVATAR} 
-                                    alt={editedCreator.displayName} 
-                                    className={`w-full h-full rounded-full object-cover bg-stone-100 ${isCustomizeMode ? 'cursor-pointer hover:opacity-80' : ''}`}
-                                    onClick={isCustomizeMode ? handleAvatarEdit : undefined}
-                                    onError={() => setImgError(true)}
-                                />
+                               <img src={editedCreator.avatarUrl || DEFAULT_AVATAR} alt={editedCreator.displayName} className="w-full h-full rounded-full object-cover bg-stone-100" onError={() => setImgError(true)} />
                            ) : (
-                               <div 
-                                    className={`w-full h-full rounded-full bg-stone-100 flex items-center justify-center text-stone-300 ${isCustomizeMode ? 'cursor-pointer hover:bg-stone-200' : ''}`}
-                                    onClick={isCustomizeMode ? handleAvatarEdit : undefined}
-                               >
-                                   <User size={48} />
-                               </div>
+                               <div className="w-full h-full rounded-full bg-stone-100 flex items-center justify-center text-stone-300"><User size={28} /></div>
                            )}
-                        
-                            {isCustomizeMode && (
-                                <div 
-                                    className="absolute inset-0 flex items-center justify-center rounded-full cursor-pointer pointer-events-none z-20"
-                                >
-                                    <div className="bg-black/50 p-2 rounded-full text-white backdrop-blur-sm"><Camera size={20} /></div>
-                                </div>
+                        </div>
+                        {/* Name + handle + stats */}
+                        <div className="flex-1 min-w-0">
+                            <h1 className="text-lg font-bold text-stone-900 leading-tight truncate">{creator.displayName}</h1>
+                            {creator.handle && creator.handle !== '@user' && (
+                                <p className="text-xs font-medium text-stone-400">{creator.handle}</p>
                             )}
-                        </div>
-                        </div>{/* close relative avatar container */}
-
-                        {/* Likes & Rating (Moved below avatar) */}
-                        {!isCustomizeMode && ((creator.showLikes ?? true) || (creator.showRating ?? true)) && (
-                            <div className="flex items-center gap-2 -mt-5 relative z-20">
+                            <div className="flex items-center gap-2 mt-1">
                                 {(creator.showLikes ?? true) && (
-                                <button
-                                    onClick={handleLike}
-                                    className={`flex items-center justify-center gap-1 bg-white px-3 py-1.5 rounded-full border border-stone-100 text-xs font-bold shadow-sm transition-colors ${hasLiked ? 'text-pink-600 border-pink-100' : 'text-stone-500 hover:text-pink-600 hover:bg-pink-50'}`}
-                                >
-                                    <Heart size={14} className={hasLiked ? "fill-current" : ""} />
-                                    <span>{likes}</span>
-                                </button>
+                                    <button onClick={handleLike} className={`flex items-center gap-1 text-xs font-semibold transition-colors ${hasLiked ? 'text-pink-500' : 'text-stone-400 hover:text-pink-500'}`}>
+                                        <Heart size={12} className={hasLiked ? "fill-current" : ""} />{likes}
+                                    </button>
                                 )}
-
                                 {(creator.showRating ?? true) && (
-                                <div className="relative group/tooltip flex items-center justify-center gap-1 bg-white px-3 py-1.5 rounded-full border border-stone-100 text-xs font-bold text-stone-500 shadow-sm cursor-help">
-                                    <Star size={14} className="text-yellow-400 fill-yellow-400" />
-                                    <span className="text-stone-700">{creator.stats.averageRating.toFixed(1)}</span>
-                                    
-                                    {/* Response Time Tooltip */}
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[160px] bg-stone-900 text-white text-[10px] font-medium py-2 px-3 rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-all duration-200 pointer-events-none z-50 text-center shadow-xl normal-case tracking-normal whitespace-normal transform translate-y-2 group-hover/tooltip:translate-y-0">
-                                        <div className="font-bold text-emerald-400 mb-0.5 flex items-center justify-center gap-1">
-                                            <Clock size={10} /> {creator.stats.responseTimeAvg} {t('profile.response')}
-                                        </div>
-                                        <div className="text-stone-300 leading-snug">
-                                            {getResponseTimeTooltip(creator.stats.responseTimeAvg, t)}
-                                        </div>
-                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-stone-900"></div>
-                                    </div>
-                                </div>
+                                    <span className="flex items-center gap-1 text-xs font-semibold text-stone-400">
+                                        <Star size={12} className="text-yellow-400 fill-yellow-400" />{creator.stats.averageRating.toFixed(1)}
+                                    </span>
                                 )}
-                            </div>
-                        )}
-                        </div>
-
-                        {/* Content Wrapper */}
-                        <div className="flex-1 min-w-0 w-full flex flex-col items-center">
-                            <div className="w-full flex flex-col items-center">
-                                {isCustomizeMode ? (
-                                    <div className="space-y-4 w-full text-center">
-                                        <input 
-                                            type="text" 
-                                            value={editedCreator.displayName} 
-                                            onChange={(e) => updateField('displayName', e.target.value)}
-                                            className="block w-full text-2xl sm:text-3xl font-bold text-stone-900 border-b border-dashed border-stone-300 focus:border-black focus:outline-none bg-transparent placeholder-stone-300 text-center"
-                                            placeholder={t('auth.displayName')}
-                                        />
-                                        <input 
-                                            type="text" 
-                                            value={editedCreator.handle} 
-                                            onChange={(e) => updateField('handle', e.target.value)}
-                                            className="block w-full text-sm text-stone-500 font-medium border-b border-dashed border-stone-300 focus:border-black focus:outline-none bg-transparent placeholder-stone-300 text-center"
-                                            placeholder={`@${t('creator.handle').toLowerCase()}`}
-                                        />
-                                        <textarea
-                                            value={editedCreator.bio}
-                                            onChange={(e) => updateField('bio', e.target.value)}
-                                            className="block w-full text-stone-600 border border-dashed border-stone-300 rounded-xl p-3 focus:ring-1 focus:ring-black min-h-[80px] bg-white text-sm mt-2 text-center"
-                                            placeholder={t('auth.bioAbout')}
-                                        />
-                                    </div>
-                                ) : (
-                                    <>
-                                        <h1 className="text-2xl sm:text-3xl font-bold sm:font-black text-stone-900 tracking-tight leading-tight mb-1">
-                                            {creator.displayName}
-                                        </h1>
-                                        {creator.handle && creator.handle !== '@user' && (
-                                            <p className="text-sm font-medium text-stone-500 mb-4">
-                                                {creator.handle}
-                                            </p>
-                                        )}
-                                        
-
-                                        {platforms.length > 0 && (
-                                            <div className="flex items-center justify-center gap-3">
-                                                {platforms.map(platform => {
-                                                const platformId = typeof platform === 'string' ? platform : platform.id;
-                                                const platformUrl = typeof platform === 'string' ? '' : platform.url;
-                                                return (
-                                                    <a
-                                                        key={platformId}
-                                                        href={platformUrl ? ensureProtocol(platformUrl) : '#'}
-                                                        target={platformUrl ? "_blank" : undefined}
-                                                        rel="noopener noreferrer"
-                                                        className={`w-8 h-8 flex items-center justify-center rounded-full bg-stone-50 border border-stone-100 transition-all ${platformUrl ? 'hover:bg-stone-100 hover:scale-110 cursor-pointer text-stone-600' : 'opacity-40 cursor-default text-stone-400'}`}
-                                                        title={platformId}
-                                                    >
-                                                        {getPlatformIcon(platformId)}
-                                                    </a>
-                                                );
-                                                })}
-                                            </div>
-                                        )}
-                                    </>
-                                )}
+                                <span className="flex items-center gap-1 text-xs text-stone-400">
+                                    <Clock size={11} />{creator.stats.responseTimeAvg}
+                                </span>
                             </div>
                         </div>
+                        {/* Send Diem CTA */}
+                        <button
+                            onClick={handleOpenModal}
+                            className="flex-shrink-0 inline-flex items-center gap-1.5 bg-stone-900 text-white px-4 py-2 rounded-full font-semibold text-sm hover:bg-stone-700 transition-all shadow-sm"
+                            style={creator.diemButtonColor ? { backgroundColor: creator.diemButtonColor, color: getContrastColor(creator.diemButtonColor) } : undefined}
+                        >
+                            <MessageSquare size={13} /> Diem
+                        </button>
                     </div>
                 </div>
              </div>
           </div>
 
-          {/* Guaranteed Reply + Ask Me Anything */}
+          {/* 2. COMMUNITY BOARD — always visible, profile info as stickers */}
           {!isCustomizeMode && creator.diemEnabled !== false && (
               <div ref={tutorialDiemBtnRef} className={`w-full${showTutorial && tutorialStep === 1 ? ' ring-2 ring-amber-400 ring-offset-2 rounded-2xl' : ''}`}>
-              <div
-                  onClick={() => { currentUser ? handleOpenModal() : onLoginRequest(); }}
-                  className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${creator.isDiemHighlighted ? 'bg-gradient-to-r from-indigo-50/40 to-blue-50/20 border-indigo-100 shadow-sm' : 'hover:border-stone-300 hover:shadow-sm'}`}
-                  style={!creator.isDiemHighlighted ? linkBlockStyleWithRadius : undefined}
-              >
-                  {(() => {
-                      const ds = creator.diemIconShape;
-                      const dsc = ds === 'square' ? 'rounded-none' : ds === 'rounded' ? 'rounded-xl' : 'rounded-full';
-                      return (
-                      <div className={`w-10 h-10 sm:w-12 sm:h-12 ${dsc} flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden bg-white border border-stone-100`}>
-                          {creator.diemIcon?.startsWith('data:emoji,') ? (
-                              <span className="text-2xl">{creator.diemIcon.replace('data:emoji,', '')}</span>
-                          ) : creator.diemIcon ? (
-                              <img src={creator.diemIcon} alt="Diem" className="w-full h-full object-cover" />
-                          ) : (
-                              <img src="/favicon.svg" alt="Diem" className="w-full h-full object-cover" />
-                          )}
+                  <div
+                      className="relative overflow-hidden rounded-2xl border border-stone-200/60"
+                      style={{ backgroundColor: '#FAFAF9', backgroundImage: 'linear-gradient(rgba(168,162,158,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(168,162,158,0.07) 1px, transparent 1px)', backgroundSize: '32px 32px' }}
+                  >
+                      {/* Header */}
+                      <div className="px-6 pt-5 pb-3 flex items-center justify-between">
+                          <div>
+                              <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-0.5">
+                                  {isTrending
+                                      ? <span className="inline-flex items-center gap-1.5"><TrendingUp size={11} className="text-blue-400" /><span className="text-blue-400">Trending</span><span className="text-stone-300 mx-1">·</span>Community</span>
+                                      : 'Community'}
+                              </p>
+                              <h2 className="text-base font-bold text-stone-900">Board</h2>
+                          </div>
                       </div>
-                      );
-                  })()}
-                  <div className="flex-1 relative z-10 min-w-0 text-left">
-                      <div className="flex items-center gap-2">
-                          <h4 className="font-semibold sm:font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors">DIEM</h4>
-                          {isTrending && (
-                              <span className="flex items-center gap-1 text-[10px] sm:text-xs text-blue-500 font-medium">
-                                  <TrendingUp size={12} className="text-blue-500" />
-                                  Trending
-                              </span>
-                          )}
-                      </div>
-                      <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-stone-500 mt-0.5 font-medium truncate">
-                          <MessageSquare size={12} className="text-emerald-500" />
-                          <span>{t('profile.guaranteed', { hours: creator.responseWindowHours })}{creator.isDiemHighlighted ? ` · ${t('common.recommended')}` : ''}</span>
+
+                      {/* Always-on board */}
+                      <div>
+                              {/* Wide horizontally-scrollable board with profile stickers */}
+                              {(() => {
+                                  const noteColors = ['#FFFEF0', '#F0FDF4', '#FFF7ED', '#F5F3FF', '#EFF6FF', '#FDF2F8'];
+                                  const tapeColors = ['rgba(200,193,185,0.55)', 'rgba(110,200,140,0.45)', 'rgba(240,160,80,0.4)', 'rgba(180,150,240,0.4)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)'];
+                                  const stickers = ['⭐','❤️','✨','🌟','💙','🎯','🔥','💬','🌙','🌸'];
+                                  const rotations = [-2.1, 1.2, -0.8, 1.6, -1.4, 0.7, -1.9, 1.0, -0.6, 1.3];
+                                  const NOTE_W = 270;
+                                  const PROFILE_W = 220;
+                                  const NOTE_H = 190;
+                                  const CARD_GAP = 28;
+                                  const stableIdx = (id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xFFFFFF; return Math.abs(h); };
+                                  const PAD_X = 32;
+                                  const PAD_Y = 20;
+
+                                  // Profile stickers: bio + platform links + featured links/products/support
+                                  const profileTapeColor = 'rgba(200,193,185,0.6)';
+                                  const bioExists = !!(creator.showBio ?? true) && !!creator.bio;
+                                  const platformItems = platforms.filter(p => typeof p !== 'string' ? !!(p as any).url : false);
+                                  // Flatten all public links across all groups
+                                  const allPublicLinks = groupedLinks.flatMap(g => g.links);
+                                  const hasProfileContent = bioExists || platformItems.length > 0 || allPublicLinks.length > 0;
+                                  const PROFILE_ZONE_W = hasProfileContent ? PROFILE_W + CARD_GAP : 0;
+                                  const LINK_STICKER_H = 84; // external/support sticker height
+                                  const YT_STICKER_H = 162; // YouTube thumbnail sticker (16:9 on 220px wide + title row)
+                                  const PRODUCT_STICKER_H = 104; // product sticker height
+                                  const PLATFORM_STICKER_H = 72;
+
+                                  // All posts sorted: answered + pinned first (by displayOrder/time), unanswered at end
+                                  const answeredPosts = [...boardPosts]
+                                      .filter(p => {
+                                          if (p.reply === null) return false;
+                                          if (p.isPinned) return true;
+                                          // Non-pinned answered posts visible until 7-day TTL
+                                          return new Date(p.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000 > Date.now();
+                                      })
+                                      .sort((a, b) => {
+                                          if (a.displayOrder !== null && b.displayOrder !== null) return (a.displayOrder ?? 0) - (b.displayOrder ?? 0);
+                                          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                                      });
+                                  const unansweredPosts = [...boardPosts]
+                                      .filter(p => p.reply === null)
+                                      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+                                  // Fan post default X starts after profile stickers zone
+                                  const fanStartX = PAD_X + PROFILE_ZONE_W;
+
+                                  // Profile sticker positions — compute before container dims so link Y/X are available
+                                  let profileY = PAD_Y;
+                                  const bioStickerY = profileY;
+                                  if (bioExists) profileY += 200 + CARD_GAP;
+                                  profileY += platformItems.length * (PLATFORM_STICKER_H + 8);
+                                  const linkStickerStartY = profileY;
+
+                                  // Compute container dimensions — include fan posts AND link sticker saved positions
+                                  const LINK_W_PUBLIC = 220;
+                                  let seqLinkY = linkStickerStartY;
+                                  const _getLinkH = (l: typeof allPublicLinks[0]) => {
+                                      if (l.type === 'DIGITAL_PRODUCT') return PRODUCT_STICKER_H;
+                                      try {
+                                          const h = new URL(l.url.startsWith('http') ? l.url : `https://${l.url}`).hostname;
+                                          if (h.includes('youtube.com') || h === 'youtu.be') return YT_STICKER_H;
+                                      } catch {}
+                                      return LINK_STICKER_H;
+                                  };
+                                  const linkMaxY = allPublicLinks.reduce((max, l) => {
+                                      const stickerH = _getLinkH(l);
+                                      const y = (l.positionY != null) ? l.positionY : seqLinkY;
+                                      if (l.positionY == null) seqLinkY += stickerH + 10;
+                                      return Math.max(max, y + stickerH);
+                                  }, 0);
+                                  let seqLinkY2 = linkStickerStartY;
+                                  const linkMaxX = allPublicLinks.reduce((max, l) => {
+                                      const x = (l.positionX != null) ? l.positionX : PAD_X;
+                                      if (l.positionX == null) seqLinkY2 += _getLinkH(l) + 10;
+                                      return Math.max(max, x + LINK_W_PUBLIC);
+                                  }, PAD_X + LINK_W_PUBLIC);
+
+                                  const maxY = answeredPosts.reduce((max, p) => {
+                                      const y = (p.positionY !== null && p.positionY !== undefined) ? p.positionY : PAD_Y;
+                                      return Math.max(max, y);
+                                  }, PAD_Y);
+                                  const maxX = answeredPosts.reduce((max, p, i) => {
+                                      const x = (p.positionX !== null && p.positionX !== undefined) ? p.positionX : fanStartX + i * (NOTE_W + CARD_GAP);
+                                      return Math.max(max, x);
+                                  }, fanStartX);
+                                  // --- Collision-aware pending post placement ---
+                                  // Build occupied rect list from all existing stickers
+                                  const COL_MARGIN = 6; // minimum gap — place right next to, not far away
+                                  type _Rect = { x: number; y: number; w: number; h: number };
+                                  const _overlaps = (a: _Rect, b: _Rect) =>
+                                      a.x < b.x + b.w + COL_MARGIN && a.x + a.w + COL_MARGIN > b.x &&
+                                      a.y < b.y + b.h + COL_MARGIN && a.y + a.h + COL_MARGIN > b.y;
+                                  const occupiedRects: _Rect[] = [];
+                                  // Answered fan posts
+                                  answeredPosts.forEach((p, i) => {
+                                      const x = p.positionX != null ? p.positionX : fanStartX + i * (NOTE_W + CARD_GAP);
+                                      const y = p.positionY != null ? p.positionY : PAD_Y + (i % 2) * 24;
+                                      occupiedRects.push({ x, y, w: NOTE_W, h: NOTE_H });
+                                  });
+                                  // Link/product/support stickers
+                                  let _occLY = linkStickerStartY;
+                                  allPublicLinks.forEach(link => {
+                                      const sH = link.type === 'DIGITAL_PRODUCT' ? PRODUCT_STICKER_H : LINK_STICKER_H;
+                                      const x = link.positionX != null ? link.positionX : PAD_X;
+                                      const y = link.positionY != null ? link.positionY : _occLY;
+                                      if (link.positionY == null) _occLY += sH + 10;
+                                      occupiedRects.push({ x, y, w: PROFILE_W, h: sH });
+                                  });
+                                  // Profile zone (bio + platform stickers column)
+                                  if (PROFILE_ZONE_W > 0) {
+                                      occupiedRects.push({ x: PAD_X, y: PAD_Y, w: PROFILE_W, h: Math.max(linkStickerStartY + 200, 300) });
+                                  }
+                                  // Slot finder: candidates are positions directly adjacent to existing sticker edges
+                                  // This guarantees "right next to" placement, not grid-jump placement
+                                  const _findSlot = (used: _Rect[]): { x: number; y: number } => {
+                                      // Seed candidates: origin + all 4 edges of every occupied rect
+                                      const cands: { x: number; y: number }[] = [{ x: fanStartX, y: PAD_Y }];
+                                      for (const r of used) {
+                                          cands.push({ x: r.x + r.w + COL_MARGIN, y: r.y });           // right
+                                          cands.push({ x: r.x, y: r.y + r.h + COL_MARGIN });           // below
+                                          cands.push({ x: r.x - NOTE_W - COL_MARGIN, y: r.y });        // left
+                                          cands.push({ x: r.x, y: r.y - NOTE_H - COL_MARGIN });        // above
+                                          cands.push({ x: r.x + r.w + COL_MARGIN, y: r.y + r.h - NOTE_H }); // right, bottom-aligned
+                                          cands.push({ x: r.x + r.w - NOTE_W, y: r.y + r.h + COL_MARGIN }); // below, right-aligned
+                                      }
+                                      // Sort by distance from (fanStartX, PAD_Y) — closest first
+                                      cands.sort((a, b) => {
+                                          const da = (a.x - fanStartX) ** 2 + (a.y - PAD_Y) ** 2;
+                                          const db = (b.x - fanStartX) ** 2 + (b.y - PAD_Y) ** 2;
+                                          return da - db;
+                                      });
+                                      const seen = new Set<string>();
+                                      for (const c of cands) {
+                                          if (c.x < PAD_X || c.y < 0) continue;
+                                          const k = `${Math.round(c.x)},${Math.round(c.y)}`;
+                                          if (seen.has(k)) continue;
+                                          seen.add(k);
+                                          const cand: _Rect = { x: c.x, y: c.y, w: NOTE_W, h: NOTE_H };
+                                          if (!used.some(r => _overlaps(cand, r))) return c;
+                                      }
+                                      return { x: fanStartX + used.length * (NOTE_W + COL_MARGIN), y: PAD_Y };
+                                  };
+                                  const pendingPositions: { x: number; y: number }[] = [];
+                                  const allOccupied = [...occupiedRects];
+                                  unansweredPosts.forEach(() => {
+                                      const pos = _findSlot(allOccupied);
+                                      pendingPositions.push(pos);
+                                      allOccupied.push({ x: pos.x, y: pos.y, w: NOTE_W, h: NOTE_H });
+                                  });
+                                  const unansweredMaxX = pendingPositions.reduce((m, p) => Math.max(m, p.x), fanStartX);
+                                  const unansweredMaxY = pendingPositions.reduce((m, p) => Math.max(m, p.y), PAD_Y);
+                                  const containerH = Math.max(300, maxY + NOTE_H + PAD_Y * 2, unansweredMaxY + NOTE_H + PAD_Y, linkMaxY + PAD_Y);
+                                  const containerW = Math.max(900, maxX + NOTE_W + PAD_X, unansweredMaxX + NOTE_W + PAD_X, linkMaxX + PAD_X);
+
+                                  // Rendering positions (re-derive from bioStickerY/platformStickerStartY for the render pass)
+                                  const platformStickerStartY = bioStickerY + (bioExists ? 200 + CARD_GAP : 0);
+
+                                  const isCreatorOwner = !!(currentUser && currentUser.id === creator.id);
+                                  return (
+                                      <div
+                                          ref={el => {
+                                              (boardScrollRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+                                              if (el) {
+                                                  setBoardContainerW(el.offsetWidth);
+                                                  const ro = new ResizeObserver(() => setBoardContainerW(el.offsetWidth));
+                                                  ro.observe(el);
+                                              }
+                                          }}
+                                          className="overflow-x-auto overflow-y-auto select-none"
+                                          style={{ cursor: 'grab', scrollbarWidth: 'none', msOverflowStyle: 'none', maxHeight: `${BOARD_MAX_H}px` }}
+                                      >
+                                          <style>{`.board-scroll::-webkit-scrollbar { display: none; }`}</style>
+                                          <div
+                                              className="relative board-scroll"
+                                              style={{ width: `${containerW}px`, minHeight: `${containerH}px` }}
+                                          >
+                                          {/* Viewport guidelines — only visible to the creator viewing their own board */}
+                                          {isCreatorOwner && boardContainerW > 0 && (() => {
+                                              // Desktop: actual container width (capped at max-w-2xl 640px)
+                                              const desktopVW = Math.min(640, boardContainerW);
+                                              // Mobile: 390px screen - 32px padding = 358px
+                                              const mobileVW = Math.min(358, desktopVW);
+                                              const GuideRect = ({ w, h, color, dash, label }: { w: number; h: number; color: string; dash?: boolean; label: string }) => (
+                                                  <div className="absolute pointer-events-none" style={{ left: 0, top: 0, width: w, height: h, zIndex: 5 }}>
+                                                      <div className="absolute inset-0" style={{ border: `2px ${dash ? 'dashed' : 'solid'} ${color}`, borderRadius: 2 }} />
+                                                      {/* Top-right label */}
+                                                      <div className="absolute top-0 right-0 flex items-center gap-1 px-1.5 py-0.5 rounded-bl" style={{ background: `${color}22`, borderLeft: `1px solid ${color}55`, borderBottom: `1px solid ${color}55` }}>
+                                                          <span className="text-[8px] font-bold uppercase tracking-wider select-none" style={{ color }}>{label}</span>
+                                                      </div>
+                                                      {/* Bottom-center scroll hint */}
+                                                      <div className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: `${color}22`, border: `1px solid ${color}55` }}>
+                                                          <span className="text-[8px] font-bold select-none" style={{ color }}>↓ scroll to view more</span>
+                                                      </div>
+                                                      {/* Right-center scroll hint */}
+                                                      <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 flex items-center gap-1 px-1.5 py-0.5 rounded-full" style={{ background: `${color}22`, border: `1px solid ${color}55` }}>
+                                                          <span className="text-[8px] font-bold select-none" style={{ color, writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>→ scroll to view more</span>
+                                                      </div>
+                                                  </div>
+                                              );
+                                              return (
+                                                  <>
+                                                      <GuideRect w={desktopVW} h={BOARD_MAX_H} color="rgba(99,102,241,0.5)" label="Computer" />
+                                                      <GuideRect w={mobileVW} h={BOARD_MAX_H} color="rgba(251,146,60,0.6)" dash label="Mobile" />
+                                                  </>
+                                              );
+                                          })()}
+                                              {/* --- Profile stickers --- */}
+
+                                              {/* Bio sticker */}
+                                              {bioExists && (
+                                                  <div className="absolute" style={{ left: PAD_X, top: bioStickerY, width: PROFILE_W, zIndex: 2 }}>
+                                                      <div className="h-4 w-12 mx-auto rounded-b-sm" style={{ background: profileTapeColor }} />
+                                                      <div className="rounded-lg p-3 overflow-hidden" style={{ backgroundColor: '#FFFDF0', border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}>
+                                                          <div className="flex items-center gap-2 mb-2">
+                                                              <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 border border-stone-200 bg-stone-100">
+                                                                  {creator.avatarUrl
+                                                                      ? <img src={creator.avatarUrl} className="w-full h-full object-cover" alt={creator.displayName} />
+                                                                      : <User size={14} className="text-stone-400 m-auto" />}
+                                                              </div>
+                                                              <span className="text-xs font-bold text-stone-800 truncate">{creator.displayName}</span>
+                                                          </div>
+                                                          <p className="text-[12px] text-stone-700 leading-relaxed">{creator.bio}</p>
+                                                      </div>
+                                                  </div>
+                                              )}
+
+                                              {/* Platform link stickers */}
+                                              {platformItems.map((platform, pi) => {
+                                                  const platformId = typeof platform === 'string' ? platform : (platform as any).id;
+                                                  const platformUrl = typeof platform === 'string' ? '' : (platform as any).url;
+                                                  const sY = platformStickerStartY + pi * (PLATFORM_STICKER_H + 8);
+                                                  return (
+                                                      <div key={platformId} className="absolute" style={{ left: PAD_X, top: sY, width: PROFILE_W, zIndex: 2 }}>
+                                                          <div className="h-3 w-10 mx-auto rounded-b-sm" style={{ background: tapeColors[pi % tapeColors.length] }} />
+                                                          <a
+                                                              href={platformUrl ? ensureProtocol(platformUrl) : '#'}
+                                                              target={platformUrl ? '_blank' : undefined}
+                                                              rel="noopener noreferrer"
+                                                              className="flex items-center gap-2.5 rounded-lg p-2.5 hover:opacity-80 transition-opacity"
+                                                              style={{ backgroundColor: noteColors[pi % noteColors.length], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}
+                                                              onClick={e => e.stopPropagation()}
+                                                          >
+                                                              <span className="w-6 h-6 flex-shrink-0 text-stone-600">{getPlatformIcon(platformId)}</span>
+                                                              <span className="text-xs font-semibold text-stone-700 capitalize truncate">{platformId}</span>
+                                                              <ExternalLink size={10} className="ml-auto text-stone-300 flex-shrink-0" />
+                                                          </a>
+                                                      </div>
+                                                  );
+                                              })}
+
+                                              {/* Featured links / products / support stickers */}
+                                              {(() => {
+                                                  const LINK_DOMAINS: { pattern: RegExp; id: string }[] = [
+                                                      { pattern: /youtube\.com|youtu\.be/, id: 'youtube' },
+                                                      { pattern: /instagram\.com/, id: 'instagram' },
+                                                      { pattern: /tiktok\.com/, id: 'tiktok' },
+                                                      { pattern: /x\.com|twitter\.com/, id: 'x' },
+                                                      { pattern: /threads\.net/, id: 'threads' },
+                                                      { pattern: /twitch\.tv/, id: 'twitch' },
+                                                      { pattern: /discord\.gg|discord\.com/, id: 'discord' },
+                                                      { pattern: /linkedin\.com/, id: 'linkedin' },
+                                                      { pattern: /spotify\.com/, id: 'spotify' },
+                                                      { pattern: /patreon\.com/, id: 'patreon' },
+                                                      { pattern: /substack\.com/, id: 'substack' },
+                                                      { pattern: /github\.com/, id: 'github' },
+                                                  ];
+                                                  let lY = linkStickerStartY;
+                                                  return allPublicLinks.map((link, li) => {
+                                                      const isProduct = link.type === 'DIGITAL_PRODUCT';
+                                                      const isSupport = link.type === 'SUPPORT';
+                                                      const isEmoji = link.thumbnailUrl?.startsWith('data:emoji,');
+                                                      const hasThumbnail = !!link.thumbnailUrl && !isEmoji;
+                                                      const nc = li % noteColors.length;
+                                                      let detectedPlatform: string | null = null;
+                                                      if (!link.thumbnailUrl && link.url) {
+                                                          try {
+                                                              const hostname = new URL(link.url.startsWith('http') ? link.url : `https://${link.url}`).hostname;
+                                                              detectedPlatform = LINK_DOMAINS.find(p => p.pattern.test(hostname))?.id || null;
+                                                          } catch { /* invalid url */ }
+                                                      }
+                                                      const isYoutube = detectedPlatform === 'youtube' && !isProduct && !isSupport;
+                                                      const stickerH = isProduct ? PRODUCT_STICKER_H : isYoutube ? YT_STICKER_H : LINK_STICKER_H;
+                                                      // Use saved position if available, else fall back to sequential column
+                                                      const hasSavedPos = link.positionX != null && link.positionY != null;
+                                                      const sX = hasSavedPos ? link.positionX! : PAD_X;
+                                                      const sY = hasSavedPos ? link.positionY! : lY;
+                                                      if (!hasSavedPos) lY += stickerH + 10;
+
+                                                      const linkRot = rotations[(stableIdx(link.id) + li) % rotations.length];
+                                                      return (
+                                                          <div
+                                                              key={link.id}
+                                                              className="absolute"
+                                                              style={{ left: sX, top: sY, width: PROFILE_W, zIndex: 2, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
+                                                              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '10'; }}
+                                                              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = '2'; }}
+                                                          >
+                                                              <div className="h-3 w-10 mx-auto rounded-b-sm" style={{ background: tapeColors[nc] }} />
+                                                              {isProduct ? (
+                                                                  <button
+                                                                      onClick={() => handleProductClick(link)}
+                                                                      className="w-full text-left rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
+                                                                      style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                  >
+                                                                      <div className="flex items-center gap-2.5 p-2.5">
+                                                                          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5">
+                                                                              {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : isEmoji ? <span className="text-xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : <ShoppingBag size={16} className="text-violet-400" />}
+                                                                          </div>
+                                                                          <div className="flex-1 min-w-0">
+                                                                              <p className="text-xs font-bold text-stone-800 truncate">{link.title}</p>
+                                                                              {link.price && <p className="text-[10px] text-stone-400 font-medium">{link.price}</p>}
+                                                                          </div>
+                                                                      </div>
+                                                                      <div className="mx-2.5 mb-2.5 py-1.5 rounded-md text-[10px] font-bold text-center text-violet-600 bg-violet-50">
+                                                                          <ShoppingBag size={9} className="inline mr-1" />Buy
+                                                                      </div>
+                                                                  </button>
+                                                              ) : isSupport ? (
+                                                                  <button
+                                                                      onClick={() => handleSupportClick(link.price)}
+                                                                      className="w-full text-left rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
+                                                                      style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                  >
+                                                                      <div className="flex items-center gap-2.5 p-2.5">
+                                                                          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5">
+                                                                              {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : isEmoji ? <span className="text-xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : <Heart size={16} className="text-pink-400" />}
+                                                                          </div>
+                                                                          <div className="flex-1 min-w-0">
+                                                                              <p className="text-xs font-bold text-stone-800 truncate">{link.title}</p>
+                                                                              <p className="text-[10px] text-stone-400 font-medium">Support</p>
+                                                                          </div>
+                                                                          <span className="text-[10px] font-bold text-pink-500 bg-pink-50 px-2 py-1 rounded-full flex-shrink-0">Tip ♥</span>
+                                                                      </div>
+                                                                  </button>
+                                                              ) : (() => {
+                                                                  const ytId = detectedPlatform === 'youtube' ? getYouTubeId(link.url) : null;
+                                                                  if (ytId) {
+                                                                      return (
+                                                                          <a
+                                                                              href={ensureProtocol(link.url)}
+                                                                              target="_blank"
+                                                                              rel="noopener noreferrer"
+                                                                              onClick={e => e.stopPropagation()}
+                                                                              className="block rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
+                                                                              style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                          >
+                                                                              <div className="p-2.5">
+                                                                                  {/* Thumbnail */}
+                                                                                  <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%' }}>
+                                                                                      <img
+                                                                                          src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`}
+                                                                                          className="absolute inset-0 w-full h-full object-cover"
+                                                                                          alt={link.title}
+                                                                                      />
+                                                                                      {/* Play button overlay */}
+                                                                                      <div className="absolute inset-0 flex items-center justify-center">
+                                                                                          <div className="w-8 h-6 bg-[#FF0000] rounded-md flex items-center justify-center shadow opacity-90">
+                                                                                              <svg viewBox="0 0 24 24" className="w-3 h-3 fill-white ml-0.5"><path d="M8 5v14l11-7z"/></svg>
+                                                                                          </div>
+                                                                                      </div>
+                                                                                  </div>
+                                                                                  {/* Title row */}
+                                                                                  <div className="flex items-center gap-1">
+                                                                                      <svg viewBox="0 0 24 24" className="w-3 h-3 flex-shrink-0" fill="#FF0000"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.55A3.02 3.02 0 0 0 .5 6.19C0 8.03 0 12 0 12s0 3.97.5 5.81a3.02 3.02 0 0 0 2.12 2.14C4.46 20.5 12 20.5 12 20.5s7.54 0 9.38-.55a3.02 3.02 0 0 0 2.12-2.14C24 15.97 24 12 24 12s0-3.97-.5-5.81zM9.75 15.52V8.48L15.5 12l-5.75 3.52z"/></svg>
+                                                                                      <span className="text-[10px] font-bold text-stone-700 truncate">{link.title}</span>
+                                                                                  </div>
+                                                                              </div>
+                                                                          </a>
+                                                                      );
+                                                                  }
+                                                                  return (
+                                                                      <a
+                                                                          href={ensureProtocol(link.url)}
+                                                                          target="_blank"
+                                                                          rel="noopener noreferrer"
+                                                                          onClick={e => e.stopPropagation()}
+                                                                          className="flex items-center gap-2.5 rounded-lg p-2.5 hover:opacity-80 transition-opacity"
+                                                                          style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}
+                                                                      >
+                                                                          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5 text-stone-600">
+                                                                              {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : isEmoji ? <span className="text-base leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? getPlatformIcon(detectedPlatform) : <ExternalLink size={13} />}
+                                                                          </div>
+                                                                          <span className="text-xs font-semibold text-stone-700 truncate flex-1">{link.title}</span>
+                                                                          <ExternalLink size={9} className="text-stone-300 flex-shrink-0" />
+                                                                      </a>
+                                                                  );
+                                                              })()}
+                                                          </div>
+                                                      );
+                                                  });
+                                              })()}
+
+                                              {/* --- Fan Q&A stickers --- */}
+                                              {answeredPosts.length === 0 && unansweredPosts.length === 0 && PROFILE_ZONE_W === 0 && (
+                                                  <div className="absolute inset-0 flex items-center justify-center opacity-40">
+                                                      <div className="text-center">
+                                                          <div className="text-4xl mb-3">📋</div>
+                                                          <p className="text-sm font-medium text-stone-500">No posts yet — be the first!</p>
+                                                      </div>
+                                                  </div>
+                                              )}
+                                              {answeredPosts.map((post, i) => {
+                                                  const nc = stableIdx(post.id) % noteColors.length;
+                                                  const rot = rotations[stableIdx(post.id) % rotations.length];
+                                                  const topOffset = (post.positionY !== null && post.positionY !== undefined) ? post.positionY : PAD_Y + (i % 2) * 24;
+                                                  const leftOffset = (post.positionX !== null && post.positionX !== undefined) ? post.positionX : fanStartX + i * (NOTE_W + CARD_GAP);
+                                                  return (
+                                                      <div
+                                                          key={post.id}
+                                                          data-post-id={post.id}
+                                                          className="absolute cursor-pointer"
+                                                          style={{ left: leftOffset, top: topOffset, width: NOTE_W, transform: `rotate(${rot}deg)`, transition: 'transform 0.2s ease', zIndex: 1 }}
+                                                          onClick={() => { setSelectedBoardPost(post); setIsComposing(false); }}
+                                                          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '10'; }}
+                                                          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${rot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = '1'; }}
+                                                      >
+                                                          {/* Tape strip */}
+                                                          <div className="h-4 w-14 mx-auto rounded-b-sm" style={{ background: tapeColors[nc] }} />
+                                                          {/* Note card — use fan-chosen color if available */}
+                                                          <div
+                                                              className="relative rounded-lg p-3 overflow-hidden"
+                                                              style={{
+                                                                  backgroundColor: post.noteColor ?? noteColors[nc],
+                                                                  backgroundImage: 'repeating-linear-gradient(to bottom, transparent, transparent 23px, rgba(0,0,0,0.04) 23px, rgba(0,0,0,0.04) 24px)',
+                                                                  backgroundPositionY: '36px',
+                                                                  border: '1px solid rgba(0,0,0,0.08)',
+                                                                  boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                                                              }}
+                                                          >
+                                                              {/* Fan: avatar + name + badge */}
+                                                              <div className="flex items-center gap-1.5 mb-1.5">
+                                                                  <div className="w-6 h-6 rounded-full bg-stone-800 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                                                                      {post.fanAvatarUrl
+                                                                          ? <img src={post.fanAvatarUrl} className="w-full h-full object-cover" alt={post.fanName} />
+                                                                          : <span className="text-white text-[9px] font-bold">{post.fanName.charAt(0).toUpperCase()}</span>}
+                                                                  </div>
+                                                                  <span className="text-[11px] font-semibold text-stone-800 truncate">{post.fanName}</span>
+                                                                  <span className="flex items-center gap-0.5 bg-stone-100 text-stone-400 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                                                                      <User size={7} className="fill-current" />
+                                                                      <span className="text-[8px] font-semibold uppercase tracking-wide">Fan</span>
+                                                                  </span>
+                                                              </div>
+
+                                                              {/* Fan message only — no reply shown in preview */}
+                                                              <div className="ml-[30px] bg-white/80 rounded-xl rounded-tl-sm border border-black/06 p-2">
+                                                                  <p className="text-[11px] text-stone-700 leading-relaxed line-clamp-4">{post.content}</p>
+                                                                  {post.attachmentUrl && /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(post.attachmentUrl) && (
+                                                                      <img src={post.attachmentUrl} className="mt-1.5 w-full max-h-16 object-cover rounded-lg" alt="attachment" />
+                                                                  )}
+                                                              </div>
+                                                          </div>
+                                                      </div>
+                                                  );
+                                              })}
+
+                                              {/* --- Unanswered (pending) stickers — grid-wrapped within viewport --- */}
+                                              {unansweredPosts.map((post, i) => {
+                                                  const leftOffset = pendingPositions[i]?.x ?? fanStartX;
+                                                  const topOffset = pendingPositions[i]?.y ?? PAD_Y;
+                                                  const isNew = post.id === newlyPostedId;
+                                                  // Expiry: 7 days from createdAt
+                                                  const _expMs = new Date(post.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000;
+                                                  const _msLeft = _expMs - Date.now();
+                                                  const _daysLeft = Math.floor(_msLeft / (24 * 60 * 60 * 1000));
+                                                  const _hoursLeft = Math.floor(_msLeft / (60 * 60 * 1000));
+                                                  const expiry = _msLeft <= 0
+                                                      ? { text: 'Expired', cls: 'text-red-500' }
+                                                      : _daysLeft >= 2
+                                                          ? { text: `${_daysLeft}d left`, cls: 'text-stone-400' }
+                                                          : _daysLeft === 1
+                                                              ? { text: '1d left', cls: 'text-amber-600' }
+                                                              : { text: `${_hoursLeft}h left`, cls: 'text-red-500' };
+                                                  return (
+                                                      <div
+                                                          key={post.id}
+                                                          data-post-id={post.id}
+                                                          className="absolute"
+                                                          style={{ left: leftOffset, top: topOffset, width: NOTE_W, zIndex: isNew ? 20 : 1 }}
+                                                      >
+                                                          {/* Tape strip */}
+                                                          <div className="h-4 w-14 mx-auto rounded-b-sm" style={{ background: 'rgba(200,193,185,0.45)' }} />
+                                                          {/* Pending note card — dotted border */}
+                                                          <div
+                                                              className="relative rounded-lg p-3 overflow-hidden"
+                                                              style={{
+                                                                  backgroundColor: '#FAFAF8',
+                                                                  backgroundImage: 'repeating-linear-gradient(to bottom, transparent, transparent 23px, rgba(0,0,0,0.03) 23px, rgba(0,0,0,0.03) 24px)',
+                                                                  backgroundPositionY: '36px',
+                                                                  border: `2px dashed ${isNew ? 'rgba(99,102,241,0.7)' : 'rgba(0,0,0,0.18)'}`,
+                                                                  boxShadow: isNew ? '0 0 0 3px rgba(99,102,241,0.15), 0 4px 16px rgba(0,0,0,0.1)' : '0 2px 8px rgba(0,0,0,0.06)',
+                                                                  transition: 'box-shadow 0.3s ease, border-color 0.3s ease',
+                                                              }}
+                                                          >
+                                                              {/* Pending badge */}
+                                                              <span className="absolute top-2 right-2 text-[9px] font-bold text-stone-400 bg-stone-100 px-1.5 py-0.5 rounded-full uppercase tracking-wide">Pending</span>
+
+                                                              {/* Fan: avatar + name */}
+                                                              <div className="flex items-center gap-1.5 mb-1.5 pr-16">
+                                                                  <div className="w-6 h-6 rounded-full bg-stone-300 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                                                                      {post.fanAvatarUrl
+                                                                          ? <img src={post.fanAvatarUrl} className="w-full h-full object-cover" alt={post.fanName} />
+                                                                          : <span className="text-white text-[9px] font-bold">{post.fanName.charAt(0).toUpperCase()}</span>}
+                                                                  </div>
+                                                                  <span className="text-[11px] font-semibold text-stone-600 truncate">{post.fanName}</span>
+                                                              </div>
+
+                                                              {/* Message */}
+                                                              <div className="ml-[30px] bg-white/60 rounded-xl rounded-tl-sm border border-dashed border-stone-200 p-2">
+                                                                  <p className="text-[11px] text-stone-500 leading-relaxed line-clamp-4 italic">{post.content}</p>
+                                                                  {post.attachmentUrl && /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(post.attachmentUrl) && (
+                                                                      <img src={post.attachmentUrl} className="mt-1.5 w-full max-h-16 object-cover rounded-lg opacity-70" alt="attachment" />
+                                                                  )}
+                                                              </div>
+
+                                                              {/* Awaiting reply + expiry */}
+                                                              <div className="flex items-center justify-between mt-2 ml-[30px]">
+                                                                  <div className="flex items-center gap-1">
+                                                                      <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                                                                      <span className="text-[9px] font-medium text-stone-400">{creator.stats?.responseTimeAvg ? `Replies in ~${creator.stats.responseTimeAvg}` : 'Awaiting reply…'}</span>
+                                                                  </div>
+                                                                  <span className={`text-[9px] font-semibold ${expiry.cls}`}>{expiry.text}</span>
+                                                              </div>
+                                                          </div>
+                                                      </div>
+                                                  );
+                                              })}
+                                          </div>
+                                      </div>
+                                  );
+                              })()}
+
+                              {/* Scroll hint */}
+                              {boardPosts.length > 2 && !selectedBoardPost && (
+                                  <p className="text-center text-[10px] text-stone-400 -mt-2 mb-2">← scroll to explore →</p>
+                              )}
+
+                              {/* Thread view — popup modal */}
+                              {selectedBoardPost && (() => {
+                                  const post = selectedBoardPost;
+                                  const noteColors = ['#FFFEF0', '#F0FDF4', '#FFF7ED', '#F5F3FF', '#EFF6FF', '#FDF2F8'];
+                                  const tapeColors = ['rgba(200,193,185,0.55)', 'rgba(110,200,140,0.45)', 'rgba(240,160,80,0.4)', 'rgba(180,150,240,0.4)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)'];
+                                  const _si = (id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xFFFFFF; return Math.abs(h); };
+                                  const nc = _si(post.id) % noteColors.length;
+                                  return (
+                                      <div
+                                          className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+                                          style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}
+                                          onClick={() => setSelectedBoardPost(null)}
+                                      >
+                                      <div className="animate-in fade-in zoom-in-95 duration-200 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+                                          {/* Tape strip */}
+                                          <div className="h-5 w-16 mx-auto rounded-b-sm" style={{ background: tapeColors[nc] }} />
+                                          {/* Expanded note card */}
+                                          <div
+                                              className="relative rounded-lg overflow-hidden"
+                                              style={{
+                                                  backgroundColor: noteColors[nc],
+                                                  backgroundImage: 'repeating-linear-gradient(to bottom, transparent, transparent 27px, rgba(0,0,0,0.05) 27px, rgba(0,0,0,0.05) 28px)',
+                                                  backgroundPositionY: '48px',
+                                                  border: '1px solid rgba(0,0,0,0.08)',
+                                                  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                                              }}
+                                          >
+                                                  {/* Back button + label */}
+                                              <div className="flex items-center gap-2 px-4 pt-4 pb-2">
+                                                  <button
+                                                      onClick={() => setSelectedBoardPost(null)}
+                                                      className="p-1 rounded-full hover:bg-black/5 transition-colors text-stone-400 hover:text-stone-600"
+                                                  >
+                                                      <ChevronLeft size={15} />
+                                                  </button>
+                                                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Note</span>
+                                              </div>
+
+                                              {/* Conversation — inbox style */}
+                                              <div className="px-3 pb-5 space-y-1">
+                                                  {/* Fan message */}
+                                                  <div className="flex relative z-10">
+                                                      <div className="flex flex-col items-center mr-3 relative">
+                                                          {post.reply && <div className="absolute left-[17px] top-11 -bottom-1 w-0.5 bg-stone-200" />}
+                                                          <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-stone-800 flex items-center justify-center">
+                                                              {post.fanAvatarUrl
+                                                                  ? <img src={post.fanAvatarUrl} className="w-full h-full object-cover" alt={post.fanName} />
+                                                                  : <div className="w-full h-full bg-stone-200 flex items-center justify-center"><User size={16} className="text-stone-500" /></div>}
+                                                          </div>
+                                                      </div>
+                                                      <div className="flex-1 min-w-0 pb-2">
+                                                          <div className="flex items-center gap-2 mb-2 ml-1">
+                                                              <span className="font-semibold text-sm text-stone-900">{post.fanName}</span>
+                                                              <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                                                                  <User size={10} className="fill-current" />
+                                                                  <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
+                                                              </div>
+                                                              <span className="text-xs font-medium text-stone-400">• {new Date(post.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+                                                          </div>
+                                                          <div className="bg-white p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
+                                                              <p className="text-sm text-stone-700 leading-relaxed">{post.content}</p>
+                                                              {post.attachmentUrl && (
+                                                                  /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(post.attachmentUrl)
+                                                                      ? <img src={post.attachmentUrl} className="mt-2 w-full max-h-48 object-cover rounded-xl" alt="attachment" />
+                                                                      : <a href={post.attachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 text-xs text-stone-500 hover:text-stone-800 font-medium transition-colors"><Paperclip size={12} /> {post.attachmentUrl.split('/').pop()}</a>
+                                                              )}
+                                                          </div>
+                                                      </div>
+                                                  </div>
+
+                                                  {/* Creator reply */}
+                                                  {post.reply ? (
+                                                      <div className="flex mt-4 relative z-10">
+                                                          <div className="flex flex-col items-center mr-3">
+                                                              <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-stone-200 flex items-center justify-center">
+                                                                  {creator.avatarUrl
+                                                                      ? <img src={creator.avatarUrl} className="w-full h-full object-cover" alt={creator.displayName} />
+                                                                      : <div className="w-full h-full bg-stone-200 flex items-center justify-center"><User size={16} className="text-stone-500" /></div>}
+                                                              </div>
+                                                          </div>
+                                                          <div className="flex-1 min-w-0">
+                                                              <div className="flex items-center gap-2 mb-2 ml-1">
+                                                                  <span className="font-semibold text-sm text-stone-900">{creator.displayName}</span>
+                                                                  <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                                                                      <CheckCircle2 size={10} className="text-blue-500" />
+                                                                      <span className="text-[9px] font-semibold uppercase tracking-wide">Creator</span>
+                                                                  </div>
+                                                                  {post.replyAt && <span className="text-xs font-medium text-stone-400">• {new Date(post.replyAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>}
+                                                              </div>
+                                                              <div className="bg-white p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
+                                                                  <p className="text-sm text-stone-700 leading-relaxed">{post.reply}</p>
+                                                                  {post.replyAttachmentUrl && (
+                                                                      /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(post.replyAttachmentUrl)
+                                                                          ? <img src={post.replyAttachmentUrl} className="mt-2 w-full max-h-48 object-cover rounded-xl" alt="attachment" />
+                                                                          : <a href={post.replyAttachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 text-xs text-stone-500 hover:text-stone-800 font-medium transition-colors"><Paperclip size={12} /> {post.replyAttachmentUrl.split('/').pop()}</a>
+                                                                  )}
+                                                              </div>
+                                                          </div>
+                                                      </div>
+                                                  ) : (
+                                                      <div className="flex mt-4 relative z-10">
+                                                          <div className="flex flex-col items-center mr-3">
+                                                              <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-dashed border-stone-300 flex items-center justify-center">
+                                                                  {creator.avatarUrl
+                                                                      ? <img src={creator.avatarUrl} className="w-full h-full object-cover opacity-30" alt="" />
+                                                                      : <User size={16} className="text-stone-300" />}
+                                                              </div>
+                                                          </div>
+                                                          <div className="flex-1 flex items-center">
+                                                              <p className="text-xs text-stone-400 italic ml-1">{creator.stats?.responseTimeAvg ? `Replies in ~${creator.stats.responseTimeAvg}` : `Awaiting reply from ${creator.displayName}…`}</p>
+                                                          </div>
+                                                      </div>
+                                                  )}
+                                              </div>
+                                          </div>
+                                      </div>
+                                      </div>
+                                  );
+                              })()}
+
+                              {/* Post Diem button — always visible */}
+                              <div className="flex justify-center py-4 pb-5">
+                                  <button
+                                      onClick={() => currentUser ? setIsComposing(true) : onLoginRequest()}
+                                      className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-2.5 rounded-full font-semibold text-sm hover:bg-stone-700 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
+                                      style={creator.diemButtonColor ? { backgroundColor: creator.diemButtonColor, color: getContrastColor(creator.diemButtonColor) } : undefined}
+                                  >
+                                      <Plus size={15} /> Post Diem
+                                  </button>
+                              </div>
                       </div>
                   </div>
-                  <button
-                      onClick={(e) => {
-                          e.stopPropagation();
-                          currentUser ? handleOpenModal() : onLoginRequest();
-                      }}
-                      className={`w-20 h-9 px-3 py-0 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 flex-shrink-0 whitespace-nowrap z-20 transition-colors ${!creator.diemButtonColor ? (creator.isDiemHighlighted ? 'bg-indigo-500 text-white group-hover:bg-indigo-600' : 'bg-stone-900 text-white hover:bg-stone-700') : ''}`}
-                      style={creator.diemButtonColor ? { backgroundColor: creator.diemButtonColor, color: getContrastColor(creator.diemButtonColor) } : undefined}
-                  >
-                      {t('common.diem')}
-                  </button>
-              </div>
               </div>
           )}
 
-          {/* 4. AFFILIATE LINKS & DIGITAL PRODUCTS */}
-          <div ref={tutorialLinksRef} className={`w-full space-y-6 ${showTutorial && tutorialStep === 3 ? 'ring-2 ring-amber-400 ring-offset-2 rounded-2xl p-1' : ''}`}>
+          {/* 4. AFFILIATE LINKS, PRODUCTS & SUPPORT — customize mode only; public view uses board stickers */}
+          {isCustomizeMode && <div ref={tutorialLinksRef} className={`w-full space-y-6 ${showTutorial && tutorialStep === 3 ? 'ring-2 ring-amber-400 ring-offset-2 rounded-2xl p-1' : ''}`}>
                 {groupedLinks.map((group, groupIdx) => {
                     const groupLinksToShow = group.links;
                     if (groupLinksToShow.length === 0 && !isCustomizeMode) return null;
-                    // For the null/default group in sectioned mode with no unsectioned links, skip
                     if (group.id === null && sortedSections.length > 0 && groupLinksToShow.length === 0 && !isCustomizeMode) return null;
-                    return (
-                    <div key={group.id ?? 'default'} className="space-y-3">
-                        <div className="flex justify-center items-end">
-                            <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
-                                <Tag size={14} /> {group.title ?? (creator.linksSectionTitle || t('profile.featuredLinks'))}
-                            </h3>
-                        </div>
-                        {groupLinksToShow.length > 0 ? (
-                    <div className="grid gap-3">
-                        {groupLinksToShow.map((link) => {
-                            const isProduct = link.type === 'DIGITAL_PRODUCT';
-                            const isSupport = link.type === 'SUPPORT';
-                            const isEmoji = link.thumbnailUrl?.startsWith('data:emoji,');
-                            const hasThumbnail = !!link.thumbnailUrl && !isEmoji;
-                            const accentColor = link.buttonColor;
-                            const shapeClass = link.iconShape === 'circle' ? 'rounded-full' : link.iconShape === 'rounded' ? 'rounded-xl' : 'rounded-none';
-                            // Detect platform from URL to use branded icon
-                            const PLATFORM_DOMAINS: { pattern: RegExp; id: string }[] = [
-                                { pattern: /youtube\.com|youtu\.be/, id: 'youtube' },
-                                { pattern: /instagram\.com/, id: 'instagram' },
-                                { pattern: /tiktok\.com/, id: 'tiktok' },
-                                { pattern: /x\.com|twitter\.com/, id: 'x' },
-                                { pattern: /threads\.net/, id: 'threads' },
-                                { pattern: /facebook\.com|fb\.com/, id: 'facebook' },
-                                { pattern: /twitch\.tv/, id: 'twitch' },
-                                { pattern: /discord\.com|discord\.gg/, id: 'discord' },
-                                { pattern: /linkedin\.com/, id: 'linkedin' },
-                                { pattern: /snapchat\.com/, id: 'snapchat' },
+
+                    const productLinks = groupLinksToShow.filter(l => l.type === 'DIGITAL_PRODUCT');
+                    const supportLinks = groupLinksToShow.filter(l => l.type === 'SUPPORT');
+                    const externalLinks = groupLinksToShow.filter(l => l.type !== 'DIGITAL_PRODUCT' && l.type !== 'SUPPORT');
+
+                    // Inline platform domain list for external links
+                    const PLATFORM_DOMAINS: { pattern: RegExp; id: string }[] = [
+                        { pattern: /youtube\.com|youtu\.be/, id: 'youtube' },
+                        { pattern: /instagram\.com/, id: 'instagram' },
+                        { pattern: /tiktok\.com/, id: 'tiktok' },
+                        { pattern: /x\.com|twitter\.com/, id: 'x' },
+                        { pattern: /threads\.net/, id: 'threads' },
+                        { pattern: /facebook\.com|fb\.com/, id: 'facebook' },
+                        { pattern: /twitch\.tv/, id: 'twitch' },
+                        { pattern: /discord\.com|discord\.gg/, id: 'discord' },
+                        { pattern: /linkedin\.com/, id: 'linkedin' },
+                        { pattern: /snapchat\.com/, id: 'snapchat' },
                                 { pattern: /pinterest\.com/, id: 'pinterest' },
                                 { pattern: /reddit\.com/, id: 'reddit' },
                                 { pattern: /t\.me|telegram\.me/, id: 'telegram' },
@@ -845,162 +1463,156 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                 { pattern: /substack\.com/, id: 'substack' },
                                 { pattern: /beehiiv\.com/, id: 'beehiiv' },
                                 { pattern: /github\.com/, id: 'github' },
-                            ];
-                            let detectedPlatform: string | null = null;
-                            if (!link.thumbnailUrl && !isProduct && !isSupport && link.url) {
-                                try {
-                                    const hostname = new URL(link.url.startsWith('http') ? link.url : `https://${link.url}`).hostname;
-                                    detectedPlatform = PLATFORM_DOMAINS.find(p => p.pattern.test(hostname))?.id || null;
-                                } catch { /* invalid url */ }
-                            }
-                            let faviconUrl: string | null = null;
-                            if (!link.thumbnailUrl && !isProduct && !isSupport && link.url && !detectedPlatform) {
-                                try { faviconUrl = `https://www.google.com/s2/favicons?domain=${new URL(link.url.startsWith('http') ? link.url : `https://${link.url}`).hostname}&sz=64`; } catch { faviconUrl = null; }
-                            }
-                            const btnStyle = accentColor ? { backgroundColor: accentColor, color: getContrastColor(accentColor) } : undefined;
-                            const iconStyle = accentColor && !hasThumbnail ? { backgroundColor: `${accentColor}22`, color: accentColor } : undefined;
-                            return (
-                                <div key={link.id} className="relative group">
-                                    {isCustomizeMode ? (
-                                         <div className={`relative rounded-2xl p-4 pr-12 border border-dashed flex items-center transition-all ${isProduct ? 'bg-stone-50 border-stone-300' : isSupport ? 'bg-stone-50 border-stone-300' : 'bg-white border-stone-300'}`}>
-                                            <button 
-                                                onClick={() => handleUpdateLink(link.id, 'isPromoted', !link.isPromoted)}
-                                                className={`w-10 h-10 rounded-xl flex items-center justify-center mr-4 transition-colors hover:bg-stone-100 ${link.isPromoted ? 'bg-stone-100 text-stone-600' : 'bg-white text-stone-400'}`}
-                                                title={t('profile.toggleHighlight')}
-                                            >
-                                                {link.isPromoted ? <Sparkles size={20} /> : <ExternalLink size={20} />}
-                                            </button>
-                                            <div className="flex-1 min-w-0">
-                                                 <div className="flex items-center gap-2 mb-1">
-                                                     {isProduct ? <span className="text-[10px] font-semibold bg-stone-200 text-stone-600 px-1.5 rounded uppercase">{t('profile.product')}</span> : isSupport ? <span className="text-[10px] font-semibold bg-stone-200 text-stone-600 px-1.5 rounded uppercase">{t('profile.support')}</span> : null}
-                                                     <input 
-                                                        className="block w-full font-bold text-stone-800 text-lg leading-tight bg-transparent outline-none border-b border-transparent focus:border-stone-300 placeholder-stone-300"
-                                                        value={link.title}
-                                                        onChange={(e) => handleUpdateLink(link.id, 'title', e.target.value)}
-                                                        placeholder={t('profile.linkTitle')}
-                                                    />
-                                                 </div>
-                                                <input 
-                                                    className="block w-full text-xs text-stone-400 mt-1 bg-transparent outline-none border-b border-transparent focus:border-stone-300 placeholder-stone-300"
-                                                    value={link.url}
-                                                    onChange={(e) => handleUpdateLink(link.id, 'url', e.target.value)}
-                                                    placeholder={t('profile.url')}
-                                                />
+                    ];
+
+                    return (
+                    <div key={group.id ?? 'default'} className="space-y-4">
+                        <div className="flex justify-center items-end">
+                            <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
+                                <Tag size={14} /> {group.title ?? (creator.linksSectionTitle || t('profile.featuredLinks'))}
+                            </h3>
+                        </div>
+                        {isCustomizeMode ? (
+                            <div className="grid gap-3">
+                                {groupLinksToShow.map((link) => {
+                                    const isProduct = link.type === 'DIGITAL_PRODUCT';
+                                    const isSupport = link.type === 'SUPPORT';
+                                    return (
+                                        <div key={link.id} className="relative group">
+                                            <div className={`relative rounded-2xl p-4 pr-12 border border-dashed flex items-center transition-all ${isProduct ? 'bg-stone-50 border-stone-300' : isSupport ? 'bg-stone-50 border-stone-300' : 'bg-white border-stone-300'}`}>
+                                                <button onClick={() => handleUpdateLink(link.id, 'isPromoted', !link.isPromoted)} className={`w-10 h-10 rounded-xl flex items-center justify-center mr-4 transition-colors hover:bg-stone-100 ${link.isPromoted ? 'bg-stone-100 text-stone-600' : 'bg-white text-stone-400'}`} title={t('profile.toggleHighlight')}>
+                                                    {link.isPromoted ? <Sparkles size={20} /> : <ExternalLink size={20} />}
+                                                </button>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        {isProduct ? <span className="text-[10px] font-semibold bg-stone-200 text-stone-600 px-1.5 rounded uppercase">{t('profile.product')}</span> : isSupport ? <span className="text-[10px] font-semibold bg-stone-200 text-stone-600 px-1.5 rounded uppercase">{t('profile.support')}</span> : null}
+                                                        <input className="block w-full font-bold text-stone-800 text-lg leading-tight bg-transparent outline-none border-b border-transparent focus:border-stone-300 placeholder-stone-300" value={link.title} onChange={(e) => handleUpdateLink(link.id, 'title', e.target.value)} placeholder={t('profile.linkTitle')} />
+                                                    </div>
+                                                    <input className="block w-full text-xs text-stone-400 mt-1 bg-transparent outline-none border-b border-transparent focus:border-stone-300 placeholder-stone-300" value={link.url} onChange={(e) => handleUpdateLink(link.id, 'url', e.target.value)} placeholder={t('profile.url')} />
+                                                </div>
                                             </div>
+                                            <button onClick={() => handleRemoveLink(link.id)} className="absolute -top-2 -right-2 bg-red-500 text-white p-2 rounded-full shadow-md hover:bg-red-600 z-20"><Trash size={14} /></button>
                                         </div>
-                                    ) : (
-                                        // RENDER PRODUCT VS LINK
-                                        isSupport ? (
-                                            <button
-                                                onClick={() => handleSupportClick(link.price)}
-                                                className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-pink-50/40 to-rose-50/20 border-pink-100 shadow-sm' : 'hover:border-stone-300 hover:shadow-sm'}`}
-                                                style={!link.isPromoted ? linkBlockStyleWithRadius : undefined}
-                                            >
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${shapeClass} ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : isEmoji ? 'bg-stone-100' : 'bg-pink-50 text-pink-400'}`} style={iconStyle}>
-                                                    {hasThumbnail ? (
-                                                        <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
-                                                    ) : isEmoji ? (
-                                                        <span className="text-xl sm:text-2xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span>
-                                                    ) : (
-                                                        <>
-                                                            <Heart size={20} className="sm:hidden" />
-                                                            <Heart size={24} className="hidden sm:block" />
-                                                        </>
-                                                    )}
-                                                </div>
-                                                <div className="flex-1 relative z-10 min-w-0 text-left">
-                                                    <h4 className="font-semibold sm:font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
-                                                    <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">{t('profile.sendTip')}{link.isPromoted ? ` · ${t('common.recommended')}` : ''}</p>
-                                                </div>
-                                                <div className={`w-20 h-9 px-3 py-0 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 flex-shrink-0 whitespace-nowrap transition-colors ${!btnStyle ? (link.isPromoted ? 'bg-pink-400 text-white group-hover:bg-pink-500' : 'bg-stone-100 text-stone-600 hover:bg-stone-200') : ''}`} style={btnStyle}>
-                                                    <Heart size={12} /> {t('profile.tip')}
-                                                </div>
-                                            </button>
-                                        ) : isProduct ? (
-                                            <button
-                                                onClick={() => handleProductClick(link)}
-                                                className={`w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-purple-50/40 to-violet-50/20 border-purple-100 shadow-sm' : 'hover:border-stone-300 hover:shadow-sm'}`}
-                                                style={!link.isPromoted ? linkBlockStyleWithRadius : undefined}
-                                            >
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${shapeClass} ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : isEmoji ? 'bg-stone-100' : 'bg-purple-50 text-purple-400'}`} style={iconStyle}>
-                                                    {hasThumbnail ? (
-                                                        <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
-                                                    ) : isEmoji ? (
-                                                        <span className="text-xl sm:text-2xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span>
-                                                    ) : (
-                                                        <>
-                                                            <FileText size={20} className="sm:hidden" />
-                                                            <FileText size={24} className="hidden sm:block" />
-                                                        </>
-                                                    )}
-                                                </div>
-                                                <div className="flex-1 relative z-10 min-w-0 text-left">
-                                                    <h4 className="font-semibold sm:font-bold text-stone-900 text-sm sm:text-base group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
-                                                    <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5 font-medium truncate">{t('profile.digitalDownload')}{link.isPromoted ? ` · ${t('common.recommended')}` : ''}</p>
-                                                </div>
-                                                <div className={`w-20 h-9 px-3 py-0 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 flex-shrink-0 whitespace-nowrap transition-colors ${!btnStyle ? (link.isPromoted ? 'bg-purple-500 text-white group-hover:bg-purple-600' : 'bg-stone-100 text-stone-600 hover:bg-stone-200') : ''}`} style={btnStyle}>
-                                                    {t('common.buy')}
-                                                </div>
-                                            </button>
-                                        ) : (
-                                            <a
-                                                href={ensureProtocol(link.url)}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                onClick={() => logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'LINK', id: link.id, title: link.title, url: link.url })}
-                                                className={`block w-full text-left p-3 sm:p-4 rounded-2xl border flex items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-stone-50 to-stone-100/40 border-stone-200 shadow-sm' : 'hover:border-stone-300'}`}
-                                                style={!link.isPromoted ? linkBlockStyleWithRadius : undefined}
-                                            >
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${shapeClass} ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : isEmoji ? 'bg-stone-100' : detectedPlatform ? 'bg-stone-100' : faviconUrl ? 'overflow-hidden bg-white border border-stone-100' : 'bg-stone-900 text-white'}`} style={iconStyle}>
-                                                    {hasThumbnail ? (
-                                                        <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
-                                                    ) : isEmoji ? (
-                                                        <span className="text-xl sm:text-2xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span>
-                                                    ) : detectedPlatform ? (
-                                                        getPlatformIcon(detectedPlatform)
-                                                    ) : faviconUrl ? (
-                                                        <img src={faviconUrl} className="w-full h-full object-cover" alt={link.title} onError={(e) => { (e.target as HTMLImageElement).style.display='none'; (e.target as HTMLImageElement).parentElement!.classList.add('bg-stone-900'); (e.target as HTMLImageElement).parentElement!.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'; }} />
-                                                    ) : (
-                                                        <>
-                                                            <Sparkles size={20} className="sm:hidden" />
-                                                            <Sparkles size={24} className="hidden sm:block" />
-                                                        </>
-                                                    )}
-                                                </div>
+                                    );
+                                })}
+                            </div>
+                        ) : groupLinksToShow.length === 0 ? (
+                            <div className="p-6 text-center border-2 border-dashed border-stone-200 rounded-2xl text-stone-400 text-xs">{t('profile.noLinksYet')}</div>
+                        ) : (
+                            <div className="space-y-3">
+                                {/* Products: horizontal boxed cards (like support) */}
+                                {productLinks.length > 0 && (
+                                    <div className="space-y-3">
+                                        {productLinks.map((link) => {
+                                            const isEmoji = link.thumbnailUrl?.startsWith('data:emoji,');
+                                            const hasThumbnail = !!link.thumbnailUrl && !isEmoji;
+                                            const accentColor = link.buttonColor;
+                                            const btnStyle = accentColor ? { backgroundColor: accentColor, color: getContrastColor(accentColor) } : undefined;
+                                            return (
+                                                <button key={link.id} onClick={() => handleProductClick(link)} className={`w-full text-left p-4 rounded-2xl border flex items-center gap-4 group cursor-pointer transition-all hover:shadow-md ${link.isPromoted ? 'bg-gradient-to-r from-violet-50/40 to-purple-50/20 border-violet-100 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300'}`}>
+                                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${hasThumbnail ? 'overflow-hidden border border-stone-100' : isEmoji ? 'bg-stone-100' : 'bg-violet-50 text-violet-400'}`}>
+                                                        {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} /> : isEmoji ? <span className="text-2xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : <FileText size={24} />}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0 text-left">
+                                                        <h4 className="font-semibold text-stone-900 text-sm">{link.title}</h4>
+                                                        <p className="text-xs text-stone-400 mt-0.5">{t('profile.product')}{link.price ? ` · ${link.price}` : ''}{link.isPromoted ? ` · ${t('common.recommended')}` : ''}</p>
+                                                    </div>
+                                                    <div className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-1.5 flex-shrink-0 transition-colors ${!btnStyle ? (link.isPromoted ? 'bg-violet-500 text-white' : 'bg-violet-50 text-violet-600 group-hover:bg-violet-100') : ''}`} style={btnStyle}>
+                                                        <ShoppingBag size={14} /> {t('common.buy')}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
 
-                                                <div className="flex-1 relative z-10 min-w-0 text-left">
-                                                    <h4 className="font-semibold sm:font-bold text-sm sm:text-base text-stone-900 group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
-                                                    <p className="text-[10px] text-stone-400 mt-0.5 font-medium truncate">{t('profile.externalLink')}{link.isPromoted ? ` · ${t('common.recommended')}` : ''}</p>
-                                                </div>
-
-                                                <div className={`w-20 h-9 px-3 py-0 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 flex-shrink-0 whitespace-nowrap transition-colors ${!btnStyle ? (link.isPromoted ? 'bg-stone-900 text-white group-hover:bg-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200') : ''}`} style={btnStyle}>
-                                                    {link.isPromoted ? t('common.visit') : t('common.open')} <ExternalLink size={12} />
-                                                </div>
-                                            </a>
-                                        )
-                                    )}
-                                    
-                                    {isCustomizeMode && (
-                                        <button 
-                                            onClick={() => handleRemoveLink(link.id)}
-                                            className="absolute -top-2 -right-2 bg-red-500 text-white p-2 rounded-full shadow-md hover:bg-red-600 z-20 scale-100 transition-transform duration-200"
-                                        >
-                                            <Trash size={14} />
+                                {/* Support: featured card */}
+                                {supportLinks.map((link) => {
+                                    const isEmoji = link.thumbnailUrl?.startsWith('data:emoji,');
+                                    const hasThumbnail = !!link.thumbnailUrl && !isEmoji;
+                                    const accentColor = link.buttonColor;
+                                    const btnStyle = accentColor ? { backgroundColor: accentColor, color: getContrastColor(accentColor) } : undefined;
+                                    return (
+                                        <button key={link.id} onClick={() => handleSupportClick(link.price)} className={`w-full text-left p-4 rounded-2xl border flex items-center gap-4 group cursor-pointer transition-all hover:shadow-md ${link.isPromoted ? 'bg-gradient-to-r from-pink-50/40 to-rose-50/20 border-pink-100 shadow-sm' : 'bg-white border-stone-200/60 hover:border-stone-300'}`}>
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${hasThumbnail ? 'overflow-hidden border border-stone-100' : isEmoji ? 'bg-stone-100' : 'bg-pink-50 text-pink-400'}`}>
+                                                {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} /> : isEmoji ? <span className="text-2xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : <Heart size={24} />}
+                                            </div>
+                                            <div className="flex-1 min-w-0 text-left">
+                                                <h4 className="font-semibold text-stone-900 text-sm">{link.title}</h4>
+                                                <p className="text-xs text-stone-400 mt-0.5">{t('profile.sendTip')}{link.isPromoted ? ` · ${t('common.recommended')}` : ''}</p>
+                                            </div>
+                                            <div className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-1.5 flex-shrink-0 transition-colors ${!btnStyle ? (link.isPromoted ? 'bg-pink-400 text-white' : 'bg-pink-50 text-pink-500 group-hover:bg-pink-100') : ''}`} style={btnStyle}>
+                                                <Heart size={14} /> {t('profile.tip')}
+                                            </div>
                                         </button>
-                                    )}
-                                </div>
-                            )
-                        })}
-                    </div>
-                ) : (
-                    <div className="p-6 text-center border-2 border-dashed border-stone-200 rounded-2xl text-stone-400 text-xs">
-                        {isCustomizeMode ? t('profile.addLinkAbove') : t('profile.noLinksYet')}
-                    </div>
-                )}
+                                    );
+                                })}
+
+                                {/* External links: YouTube embeds as notes, others as list rows */}
+                                {externalLinks.length > 0 && (
+                                    <div className="space-y-2">
+                                        {externalLinks.map((link) => {
+                                            const isEmoji = link.thumbnailUrl?.startsWith('data:emoji,');
+                                            const hasThumbnail = !!link.thumbnailUrl && !isEmoji;
+                                            const accentColor = link.buttonColor;
+                                            const shapeClass = link.iconShape === 'circle' ? 'rounded-full' : link.iconShape === 'rounded' ? 'rounded-xl' : 'rounded-none';
+                                            const btnStyle = accentColor ? { backgroundColor: accentColor, color: getContrastColor(accentColor) } : undefined;
+                                            const iconStyle = accentColor && !hasThumbnail ? { backgroundColor: `${accentColor}22`, color: accentColor } : undefined;
+
+                                            // YouTube embed note
+                                            const ytId = link.url ? getYouTubeId(link.url) : null;
+                                            if (ytId) {
+                                                return (
+                                                    <div key={link.id} className="relative overflow-hidden rounded-2xl border border-stone-200/60 bg-[#fffef5] shadow-sm" style={{ transform: 'rotate(-0.4deg)' }}>
+                                                        <div className="h-3 w-20 mx-auto bg-amber-200/70 rounded-b-sm" />
+                                                        <div className="aspect-video bg-black">
+                                                            <iframe src={`https://www.youtube.com/embed/${ytId}`} className="w-full h-full" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen title={link.title} />
+                                                        </div>
+                                                        {link.title && <div className="px-4 py-3"><p className="font-semibold text-stone-800 text-sm">{link.title}</p></div>}
+                                                    </div>
+                                                );
+                                            }
+
+                                            let detectedPlatform: string | null = null;
+                                            if (!link.thumbnailUrl && link.url) {
+                                                try {
+                                                    const hostname = new URL(link.url.startsWith('http') ? link.url : `https://${link.url}`).hostname;
+                                                    detectedPlatform = PLATFORM_DOMAINS.find(p => p.pattern.test(hostname))?.id || null;
+                                                } catch { /* invalid url */ }
+                                            }
+                                            let faviconUrl: string | null = null;
+                                            if (!link.thumbnailUrl && link.url && !detectedPlatform) {
+                                                try { faviconUrl = `https://www.google.com/s2/favicons?domain=${new URL(link.url.startsWith('http') ? link.url : `https://${link.url}`).hostname}&sz=64`; } catch { faviconUrl = null; }
+                                            }
+
+                                            return (
+                                                <a key={link.id} href={ensureProtocol(link.url)} target="_blank" rel="noopener noreferrer" onClick={() => logAnalyticsEvent(creator.id, 'CONVERSION', { type: 'LINK', id: link.id, title: link.title, url: link.url })} className={`flex w-full text-left p-3 sm:p-4 rounded-2xl border items-center gap-3 sm:gap-4 group cursor-pointer transition-all hover:shadow-md relative overflow-hidden ${link.isPromoted ? 'bg-gradient-to-r from-stone-50 to-stone-100/40 border-stone-200 shadow-sm' : 'hover:border-stone-300'}`} style={!link.isPromoted ? linkBlockStyleWithRadius : undefined}>
+                                                    <div className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${shapeClass} ${hasThumbnail ? 'p-0 overflow-hidden border border-stone-100' : isEmoji ? 'bg-stone-100' : detectedPlatform ? 'bg-stone-100' : faviconUrl ? 'overflow-hidden bg-white border border-stone-100' : 'bg-stone-900 text-white'}`} style={iconStyle}>
+                                                        {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
+                                                        : isEmoji ? <span className="text-xl sm:text-2xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span>
+                                                        : detectedPlatform ? getPlatformIcon(detectedPlatform)
+                                                        : faviconUrl ? <img src={faviconUrl} className="w-full h-full object-cover" alt={link.title} onError={(e) => { (e.target as HTMLImageElement).style.display='none'; (e.target as HTMLImageElement).parentElement!.classList.add('bg-stone-900'); (e.target as HTMLImageElement).parentElement!.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'; }} />
+                                                        : <><Sparkles size={20} className="sm:hidden" /><Sparkles size={24} className="hidden sm:block" /></>}
+                                                    </div>
+                                                    <div className="flex-1 relative z-10 min-w-0 text-left">
+                                                        <h4 className="font-semibold sm:font-bold text-sm sm:text-base text-stone-900 group-hover:text-stone-700 transition-colors truncate">{link.title}</h4>
+                                                        <p className="text-[10px] text-stone-400 mt-0.5 font-medium truncate">{t('profile.externalLink')}{link.isPromoted ? ` · ${t('common.recommended')}` : ''}</p>
+                                                    </div>
+                                                    <div className={`w-20 h-9 px-3 py-0 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 flex-shrink-0 whitespace-nowrap transition-colors ${!btnStyle ? (link.isPromoted ? 'bg-stone-900 text-white group-hover:bg-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200') : ''}`} style={btnStyle}>
+                                                        {link.isPromoted ? t('common.visit') : t('common.open')} <ExternalLink size={12} />
+                                                    </div>
+                                                </a>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                     );
                 })}
-          </div>
+          </div>}
+
 
       </div>
 
@@ -1657,6 +2269,188 @@ export const CreatorPublicProfile: React.FC<Props> = ({
         </div>
       )}
 
+      {/* Board Compose Modal */}
+      {isComposing && (
+        <div
+            className="fixed inset-0 z-[250] flex items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)' }}
+            onClick={() => { setIsComposing(false); setBoardMessage(''); setSelectedSticker(null); setIsPrivatePost(false); setBoardAttachmentFile(null); setBoardAttachmentPreview(null); }}
+        >
+            <div
+                className="w-full max-w-lg animate-in fade-in zoom-in-95 duration-200 flex gap-3 items-start"
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Left panel — emoji picker */}
+                <div
+                    className="w-32 flex-shrink-0 rounded-xl shadow-xl overflow-hidden"
+                    style={{ background: '#fffef0' }}
+                >
+                    <div className="px-2 pt-2.5 pb-1">
+                        <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest text-center">Emoji</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-0.5 p-2 max-h-64 overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
+                        {['⭐','❤️','🔥','✨','🎉','💬','🌙','🌸','💡','🎵','😊','🤍','😂','🥹','🥰','😎','🤔','👏','🙌','💪','🫶','🎶','📸','🌈','🍀','🦋','🌺','🎯','💫','🙏','👋','✌️','🤝','💎','🏆'].map(s => (
+                            <button
+                                key={s}
+                                onClick={() => {
+                                    const el = boardTextareaRef.current;
+                                    if (!el) { setBoardMessage(m => m + s); return; }
+                                    const start = el.selectionStart ?? boardMessage.length;
+                                    const end = el.selectionEnd ?? boardMessage.length;
+                                    const next = boardMessage.slice(0, start) + s + boardMessage.slice(end);
+                                    if (next.length <= 500) {
+                                        setBoardMessage(next);
+                                        requestAnimationFrame(() => {
+                                            el.focus();
+                                            el.setSelectionRange(start + s.length, start + s.length);
+                                        });
+                                    }
+                                }}
+                                className="w-full aspect-square rounded-lg text-xl flex items-center justify-center hover:bg-stone-100 active:scale-90 transition-all"
+                            >{s}</button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Right panel — note card */}
+                <div className="flex-1 min-w-0">
+                    {/* Tape strip */}
+                    <div className="flex justify-center">
+                        <div className="h-5 w-20 bg-amber-200/80 rounded-b-sm shadow-sm" style={{ transform: 'rotate(-1.5deg)' }} />
+                    </div>
+                    <div
+                        className="relative rounded-sm shadow-2xl overflow-hidden transition-colors duration-150"
+                        style={{ background: selectedNoteColor ?? '#fffef0', backgroundImage: 'repeating-linear-gradient(transparent 0px, transparent 27px, rgba(0,0,0,0.045) 27px, rgba(0,0,0,0.045) 28px)' }}
+                    >
+                        <div className="absolute left-9 top-0 bottom-0 w-px bg-red-200/50 pointer-events-none" />
+
+                        {/* Header row */}
+                        <div className="flex items-center justify-between px-3 pt-3 pb-1">
+                            <div className="flex items-center gap-1.5">
+                                {currentUser?.avatarUrl
+                                    ? <img src={currentUser.avatarUrl} className="w-6 h-6 rounded-full object-cover" alt="" />
+                                    : <div className="w-6 h-6 rounded-full bg-stone-200 flex items-center justify-center"><User size={12} className="text-stone-500" /></div>}
+                                <span className="text-xs font-semibold text-stone-500">{currentUser?.name}</span>
+                            </div>
+                            <button
+                                onClick={() => setIsPrivatePost(p => !p)}
+                                className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-all ${isPrivatePost ? 'bg-stone-800 text-white border-stone-800' : 'bg-white/80 text-stone-500 border-stone-300 hover:border-stone-500'}`}
+                            >
+                                {isPrivatePost ? <Lock size={9} /> : <Globe size={9} />}
+                                {isPrivatePost ? 'Private' : 'Public'}
+                            </button>
+                        </div>
+
+                        {/* Color swatches */}
+                        <div className="flex items-center gap-1.5 px-3 pb-2">
+                            <span className="text-[9px] font-bold text-stone-400 uppercase tracking-widest mr-0.5">Color</span>
+                            {[
+                                { color: '#fffef0', label: 'Yellow' },
+                                { color: '#F0FDF4', label: 'Green' },
+                                { color: '#FFF7ED', label: 'Peach' },
+                                { color: '#F5F3FF', label: 'Lavender' },
+                                { color: '#EFF6FF', label: 'Blue' },
+                                { color: '#FDF2F8', label: 'Pink' },
+                                { color: '#F1F5F9', label: 'White' },
+                            ].map(({ color, label }) => (
+                                <button
+                                    key={color}
+                                    title={label}
+                                    onClick={() => setSelectedNoteColor(selectedNoteColor === color ? null : color)}
+                                    className="w-5 h-5 rounded-full border-2 transition-all hover:scale-110"
+                                    style={{
+                                        background: color,
+                                        borderColor: selectedNoteColor === color ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.15)',
+                                        boxShadow: selectedNoteColor === color ? '0 0 0 1px rgba(0,0,0,0.3)' : 'none',
+                                        transform: selectedNoteColor === color ? 'scale(1.25)' : undefined,
+                                    }}
+                                />
+                            ))}
+                        </div>
+
+                        {/* Textarea */}
+                        <textarea
+                            ref={boardTextareaRef}
+                            autoFocus
+                            className="w-full pl-11 pr-4 py-2 bg-transparent outline-none resize-none text-stone-800 placeholder:text-stone-300 text-sm"
+                            style={{ minHeight: '150px', lineHeight: '28px', fontFamily: 'inherit' }}
+                            placeholder="What's on your mind?"
+                            value={boardMessage}
+                            onChange={e => setBoardMessage(e.target.value)}
+                            maxLength={500}
+                        />
+
+                        {/* Image preview */}
+                        {boardAttachmentPreview && (
+                            <div className="mx-3 mb-2 rounded-lg overflow-hidden">
+                                <img src={boardAttachmentPreview} className="w-full max-h-32 object-cover" alt="preview" />
+                            </div>
+                        )}
+
+                        {/* File attachment chip (non-image) */}
+                        {boardAttachmentFile && !boardAttachmentPreview && (
+                            <div className="mx-3 mb-2 flex items-center gap-2 bg-stone-100 rounded-lg px-2.5 py-1.5">
+                                <Paperclip size={13} className="text-stone-500 flex-shrink-0" />
+                                <span className="text-[11px] text-stone-700 font-medium truncate flex-1">{boardAttachmentFile.name}</span>
+                                <button onClick={() => { setBoardAttachmentFile(null); setBoardAttachmentPreview(null); }} className="text-stone-400 hover:text-stone-600"><X size={11} /></button>
+                            </div>
+                        )}
+
+                        {/* Bottom toolbar */}
+                        <div className="flex items-center justify-between px-3 pb-3 pt-1 border-t border-stone-100/60">
+                            <div className="flex items-center gap-2">
+                                {/* Attach button — visible */}
+                                <input
+                                    ref={boardAttachmentInputRef}
+                                    type="file"
+                                    accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+                                    className="hidden"
+                                    onChange={e => {
+                                        const file = e.target.files?.[0] ?? null;
+                                        setBoardAttachmentFile(file);
+                                        if (file && file.type.startsWith('image/')) {
+                                            const reader = new FileReader();
+                                            reader.onload = ev => setBoardAttachmentPreview(ev.target?.result as string);
+                                            reader.readAsDataURL(file);
+                                        } else {
+                                            setBoardAttachmentPreview(null);
+                                        }
+                                        e.target.value = '';
+                                    }}
+                                />
+                                <button
+                                    onClick={() => boardAttachmentInputRef.current?.click()}
+                                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${boardAttachmentFile ? 'bg-indigo-100 text-indigo-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
+                                >
+                                    <Paperclip size={14} /> {boardAttachmentFile ? 'Change' : 'Attach'}
+                                </button>
+                            </div>
+                            <span className={`text-[10px] font-medium ${boardMessage.length > 450 ? 'text-red-400' : 'text-stone-300'}`}>{boardMessage.length}/500</span>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-2 px-3 pb-3">
+                            <button
+                                onClick={() => { setIsComposing(false); setBoardMessage(''); setSelectedSticker(null); setIsPrivatePost(false); setBoardAttachmentFile(null); setBoardAttachmentPreview(null); }}
+                                className="flex-1 py-2.5 rounded-full border border-stone-300/80 text-stone-600 text-sm font-medium hover:bg-white/80 transition-colors bg-white/50"
+                            >Cancel</button>
+                            <button
+                                onClick={handleBoardPost}
+                                disabled={!boardMessage.trim() || isBoardSubmitting}
+                                className="flex-[2] py-2.5 rounded-full bg-stone-900 text-white text-sm font-semibold hover:bg-stone-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                style={creator.diemButtonColor && boardMessage.trim() ? { backgroundColor: creator.diemButtonColor, color: getContrastColor(creator.diemButtonColor) } : undefined}
+                            >
+                                {isBoardSubmitting
+                                    ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    : <><Send size={14} /> Post on Board</>}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+      )}
+
       {/* Profile Tutorial Overlay */}
       {showTutorial && (
         <>
@@ -1677,10 +2471,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
               <p className="text-sm text-stone-500 leading-relaxed mb-4">{PROFILE_TUTORIAL_STEPS[tutorialStep].desc}</p>
               {tutorialStep === 1 && (
                 <button
-                  onClick={() => { setShowTutorial(false); onTutorialDone?.(); currentUser ? handleOpenModal() : onLoginRequest('FAN'); }}
+                  onClick={() => { setShowTutorial(false); onTutorialDone?.(); currentUser ? setIsComposing(true) : onLoginRequest('FAN'); }}
                   className="w-full mb-3 px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-stone-900 text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
-                  <MessageSquare size={15} /> Try Sending a Diem
+                  <MessageSquare size={15} /> Try Posting a Diem
                 </button>
               )}
               <div className="flex items-center justify-between">
