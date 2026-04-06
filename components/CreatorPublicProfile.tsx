@@ -1225,11 +1225,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                   );
                               })()}
 
-                              {/* Scroll hint */}
-                              {boardPosts.length > 2 && !selectedBoardPost && (
-                                  <p className="text-center text-[10px] text-stone-400 -mt-2 mb-2">← scroll to explore →</p>
-                              )}
-
                               {/* Thread view — popup modal */}
                               {selectedBoardPost && (() => {
                                   const post = selectedBoardPost;
