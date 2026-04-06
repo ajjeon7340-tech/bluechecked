@@ -3355,6 +3355,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
                                                     zIndex: isDraggingLink ? 1000 : isEditingLink ? 50 : 2,
                                                 }}
+                                                onTouchStart={e => handleNoteTouchStart(e, link.id, currentPos, 'LINK')}
+                                                onTouchMove={handleNoteTouchMove}
+                                                onTouchEnd={cancelLongPress}
+                                                onTouchCancel={cancelLongPress}
                                             >
                                                 {/* Tape — drag handle */}
                                                 <div
