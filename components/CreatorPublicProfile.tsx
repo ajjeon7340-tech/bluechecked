@@ -1260,7 +1260,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                   >
                                                       <ChevronLeft size={15} />
                                                   </button>
-                                                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{post.isPrivate ? 'Private Post' : 'Public Post'}</span>
+                                                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{post.isPrivate ? 'Private' : 'Public'}</span>
                                                   {post.isPinned && <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100"><Pin size={8} className="fill-current" /> Pinned</span>}
                                                   {post.reply && !post.isPinned && <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100"><CheckCircle2 size={8} className="fill-current" /> Answered</span>}
                                               </div>

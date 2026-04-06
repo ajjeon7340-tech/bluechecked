@@ -3363,8 +3363,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 {/* Tape — drag handle */}
                                                 <div
                                                     className={`h-4 mx-auto rounded-b-sm flex-shrink-0 ${sqSize ? (sqSize === 220 ? 'w-12' : sqSize === 160 ? 'w-10' : 'w-8') : 'w-12'}`}
-                                                    style={{ background: linkTapes[lc], cursor: 'grab' }}
+                                                    style={{ background: linkTapes[lc], cursor: 'grab', touchAction: 'none' }}
                                                     onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
+                                                    onTouchStart={e => {
+                                                        e.stopPropagation();
+                                                        const touch = e.touches[0];
+                                                        setBoardLinkDragging({
+                                                            id: link.id,
+                                                            startMouseX: touch.clientX,
+                                                            startMouseY: touch.clientY,
+                                                            startNoteX: currentPos.x,
+                                                            startNoteY: currentPos.y,
+                                                        });
+                                                    }}
                                                     title="Drag to reposition"
                                                 />
                                                 {isEditingLink ? (
@@ -3595,8 +3606,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 {/* Tape strip — drag handle */}
                                                 <div
                                                     className="h-4 w-14 mx-auto rounded-b-sm flex-shrink-0"
-                                                    style={{ background: tapeColors[nc], cursor: 'grab' }}
+                                                    style={{ background: tapeColors[nc], cursor: 'grab', touchAction: 'none' }}
                                                     onMouseDown={e => handleTapeMouseDown(e, post.id, currentPos)}
+                                                    onTouchStart={e => {
+                                                        e.stopPropagation();
+                                                        const touch = e.touches[0];
+                                                        setBoardDragging({
+                                                            id: post.id,
+                                                            startMouseX: touch.clientX,
+                                                            startMouseY: touch.clientY,
+                                                            startNoteX: currentPos.x,
+                                                            startNoteY: currentPos.y,
+                                                        });
+                                                        setSelectedBoardId(post.id);
+                                                    }}
                                                     title="Drag to reposition"
                                                 />
                                                 {/* Note card — use fan-chosen color if available */}
@@ -4099,7 +4122,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             {/* Modal header */}
                             <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200/60">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-stone-400 uppercase tracking-widest">{livePost.isPrivate ? 'Private Post' : 'Public Post'}</span>
+                                    <span className="text-xs font-bold text-stone-400 uppercase tracking-widest">{livePost.isPrivate ? 'Private' : 'Public'}</span>
                                     {livePost.isPinned
                                         ? <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100"><Pin size={8} className="fill-current" /> Pinned</span>
                                         : livePost.reply 
@@ -4120,7 +4143,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${livePost.isPinned ? 'translate-x-4' : 'translate-x-0.5'}`} />
                                         </span>
                                         <Pin size={10} className={livePost.isPinned ? 'text-amber-600 fill-current' : 'text-stone-400'} />
-                                        <span className={livePost.isPinned ? 'text-amber-700 font-semibold' : 'text-stone-500'}>Pin post</span>
                                     </button>
                                     <button
                                         onClick={async () => {
@@ -4479,7 +4501,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${post.isPinned ? 'translate-x-4' : 'translate-x-0.5'}`} />
                                                     </span>
                                                     <Pin size={10} className={post.isPinned ? 'text-amber-600 fill-current' : 'text-stone-400'} />
-                                                    <span className={post.isPinned ? 'text-amber-700 font-semibold' : 'text-stone-500'}>Pin post</span>
                                                 </button>
                                                 <button
                                                     onClick={async () => {
