@@ -2205,7 +2205,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
       {/* Board Compose Modal */}
       {isComposing && (
         <div
-            className="fixed inset-0 z-[250] flex items-center justify-center p-4"
+            className="fixed inset-0 z-[250] flex items-start sm:items-center justify-center p-4 pt-12 sm:pt-4"
             style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)' }}
             onClick={() => { setIsComposing(false); setBoardMessage(''); setSelectedSticker(null); setIsPrivatePost(false); setBoardAttachmentFile(null); setBoardAttachmentPreview(null); }}
         >
@@ -2215,7 +2215,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
             >
                 {/* Left panel — emoji picker */}
                 <div
-                    className="w-32 flex-shrink-0 rounded-xl shadow-xl overflow-hidden"
+                    className="hidden sm:block w-32 flex-shrink-0 rounded-xl shadow-xl overflow-hidden"
                     style={{ background: '#fffef0' }}
                 >
                     <div className="px-2 pt-2.5 pb-1">
