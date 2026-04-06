@@ -1348,7 +1348,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                               })()}
 
                               {/* Post Diem button — always visible */}
-                              <div className="flex justify-center pt-0 pb-6 -mt-2 relative z-10">
+                              <div className="flex justify-center pt-0 pb-6 -mt-6 relative z-10">
                                   <button
                                       onClick={() => currentUser ? setIsComposing(true) : onLoginRequest()}
                                       className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-2.5 rounded-full font-semibold text-sm hover:bg-stone-700 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
