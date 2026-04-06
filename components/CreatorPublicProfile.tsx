@@ -964,7 +964,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           <div
                                                               key={link.id}
                                                               className="absolute"
-                                                          style={{ left: pos.x, top: pos.y, width: sqSize || PROFILE_W, zIndex: 2, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
+                                                          style={{ left: pos.x, top: pos.y, width: sqSize || PROFILE_W, zIndex: 20 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
                                                               onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '10'; }}
                                                               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = '2'; }}
                                                           >
@@ -1014,7 +1014,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                               rel="noopener noreferrer"
                                                                               onClick={e => e.stopPropagation()}
                                                                               className="block rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
-                                                                              style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                              style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
                                                                           >
                                                                               <div className="p-2.5">
                                                                                   {/* Thumbnail */}
@@ -1104,7 +1104,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           key={post.id}
                                                           data-post-id={post.id}
                                                           className="absolute cursor-pointer"
-                                                          style={{ left: pos.x, top: pos.y, width: NOTE_W, transform: `rotate(${rot}deg)`, transition: 'transform 0.2s ease', zIndex: 1 }}
+                                                              style={{ left: pos.x, top: pos.y, width: NOTE_W, transform: `rotate(${rot}deg)`, transition: 'transform 0.2s ease', zIndex: 30 + i }}
                                                           onClick={() => { setSelectedBoardPost(post); setIsComposing(false); }}
                                                           onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '10'; }}
                                                           onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${rot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = '1'; }}
@@ -1171,7 +1171,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           key={post.id}
                                                           data-post-id={post.id}
                                                           className="absolute"
-                                                          style={{ left: leftOffset, top: topOffset, width: NOTE_W, zIndex: isNew ? 20 : 1 }}
+                                                          style={{ left: leftOffset, top: topOffset, width: NOTE_W, zIndex: isNew ? 200 : 40 + i }}
                                                       >
                                                           {/* Tape strip */}
                                                           <div className="h-4 w-14 mx-auto rounded-b-sm" style={{ background: 'rgba(200,193,185,0.45)' }} />
@@ -1260,7 +1260,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                   >
                                                       <ChevronLeft size={15} />
                                                   </button>
-                                                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{post.isPrivate ? 'Private' : 'Public'}</span>
+                                              <span className="flex items-center gap-1 text-stone-400"><DiemLogo size={14} className="text-stone-400" /></span>
                                                   {post.isPinned && <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100"><Pin size={8} className="fill-current" /> Pinned</span>}
                                                   {post.reply && !post.isPinned && <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100"><CheckCircle2 size={8} className="fill-current" /> Answered</span>}
                                               </div>
@@ -1675,6 +1675,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                 <div className="space-y-6">
                   {/* Payment UI remains same */}
                   <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100">
+                     <div className="flex items-start gap-2.5 mb-4 p-3 bg-blue-50/50 border border-blue-100/60 rounded-xl">
+                         <Lock size={14} className="text-blue-500 mt-0.5 flex-shrink-0" />
+                         <p className="text-xs text-blue-700 font-medium leading-relaxed">
+                             This is a <strong>Private Message</strong>. It goes directly to {creator.displayName}'s inbox and will <strong className="underline">never</strong> appear on the public board.
+                         </p>
+                     </div>
                      <div className="flex justify-between text-sm mb-3">
                        <span className="text-stone-500 font-medium">{t('profile.requestPrice')}</span>
                        <span className="font-bold text-stone-900">{creator.pricePerMessage} {t('common.credits')}</span>
@@ -2265,13 +2271,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                     : <div className="w-6 h-6 rounded-full bg-stone-200 flex items-center justify-center"><User size={12} className="text-stone-500" /></div>}
                                 <span className="text-xs font-semibold text-stone-500">{currentUser?.name}</span>
                             </div>
-                            <button
-                                onClick={() => setIsPrivatePost(p => !p)}
-                                className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-all ${isPrivatePost ? 'bg-stone-800 text-white border-stone-800' : 'bg-white/80 text-stone-500 border-stone-300 hover:border-stone-500'}`}
-                            >
-                                {isPrivatePost ? <Lock size={9} /> : <Globe size={9} />}
-                                {isPrivatePost ? 'Private' : 'Public'}
-                            </button>
                         </div>
 
                         {/* Color swatches */}
@@ -2362,21 +2361,53 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                         </div>
 
                         {/* Actions */}
-                        <div className="flex gap-2 px-3 pb-3">
-                            <button
-                                onClick={() => { setIsComposing(false); setBoardMessage(''); setSelectedSticker(null); setIsPrivatePost(false); setBoardAttachmentFile(null); setBoardAttachmentPreview(null); }}
-                                className="flex-1 py-2.5 rounded-full border border-stone-300/80 text-stone-600 text-sm font-medium hover:bg-white/80 transition-colors bg-white/50"
-                            >Cancel</button>
-                            <button
-                                onClick={handleBoardPost}
-                                disabled={!boardMessage.trim() || isBoardSubmitting}
-                                className="flex-[2] py-2.5 rounded-full bg-stone-900 text-white text-sm font-semibold hover:bg-stone-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                style={creator.diemButtonColor && boardMessage.trim() ? { backgroundColor: creator.diemButtonColor, color: getContrastColor(creator.diemButtonColor) } : undefined}
-                            >
-                                {isBoardSubmitting
-                                    ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    : <><Send size={14} /> Post on Board</>}
-                            </button>
+                        <div className="flex flex-col gap-2 px-3 pb-3">
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => { setIsComposing(false); setBoardMessage(''); setSelectedSticker(null); setIsPrivatePost(false); setBoardAttachmentFile(null); setBoardAttachmentPreview(null); }}
+                                    className="flex-1 py-2.5 rounded-full border border-stone-300/80 text-stone-600 text-sm font-medium hover:bg-white/80 transition-colors bg-white/50"
+                                >Cancel</button>
+                                <button
+                                    onClick={() => {
+                                        setGeneralMessage(boardMessage);
+                                        if (boardAttachmentFile) {
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => {
+                                                setAttachments([{
+                                                    url: reader.result as string,
+                                                    type: boardAttachmentFile.type.startsWith('image/') ? 'IMAGE' : 'FILE',
+                                                    name: boardAttachmentFile.name
+                                                }]);
+                                                setIsComposing(false);
+                                                setStep('payment');
+                                                setIsModalOpen(true);
+                                            };
+                                            reader.readAsDataURL(boardAttachmentFile);
+                                        } else {
+                                            setIsComposing(false);
+                                            setStep('payment');
+                                            setIsModalOpen(true);
+                                        }
+                                    }}
+                                    disabled={!boardMessage.trim() || isBoardSubmitting}
+                                    className="flex-[1.5] py-2.5 rounded-full border border-stone-300/80 text-stone-700 text-sm font-semibold hover:bg-white/80 transition-colors bg-white flex items-center justify-center gap-1.5 disabled:opacity-40"
+                                >
+                                    <Lock size={13} /> Private Message
+                                </button>
+                                <button
+                                    onClick={handleBoardPost}
+                                    disabled={!boardMessage.trim() || isBoardSubmitting}
+                                    className="flex-[1.5] py-2.5 rounded-full bg-stone-900 text-white text-sm font-semibold hover:bg-stone-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                                    style={creator.diemButtonColor && boardMessage.trim() ? { backgroundColor: creator.diemButtonColor, color: getContrastColor(creator.diemButtonColor) } : undefined}
+                                >
+                                    {isBoardSubmitting
+                                        ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        : <><Send size={14} /> Post Publicly</>}
+                                </button>
+                            </div>
+                            <p className="text-[10px] text-stone-400 text-center flex items-center justify-center gap-1 mt-1">
+                                <Lock size={10} /> Private messages go directly to the inbox and are never shown on the board.
+                            </p>
                         </div>
                     </div>
                 </div>

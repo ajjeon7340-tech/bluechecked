@@ -407,6 +407,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null>(null);
   const [boardPlatformUrlDraft, setBoardPlatformUrlDraft] = useState('');
   const [boardYoutubeDraft, setBoardYoutubeDraft] = useState('');
+  const [mobileAddMenuOpen, setMobileAddMenuOpen] = useState(false);
 
   const _closeAllBoardAdding = () => {
     setBoardAddingLink(false);
@@ -419,6 +420,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setBoardChatPickerOpen(false);
     setBoardLinkDraft({ title: '', url: '', price: '', type: 'EXTERNAL', color: undefined });
     setBoardYoutubeDraft('');
+    setMobileAddMenuOpen(false);
   };
   const [boardLinkDraft, setBoardLinkDraft] = useState<{ title: string; url: string; price: string; type: 'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT'; color?: string }>({ title: '', url: '', price: '', type: 'EXTERNAL' });
   const [boardReplyDraft, setBoardReplyDraft] = useState<Record<string, string>>({});
@@ -2976,7 +2978,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const visibleBoardLinks = (editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden);
                             const filtered = boardFilter === 'LINKS' ? [] : boardPosts.filter(p =>
                                 boardFilter === 'ALL' ? true : boardFilter === 'PENDING' ? (!p.reply && !p.isPinned) : (!!p.reply || p.isPinned)
-                            );
+                            ).sort((a, b) => {
+                                if (a.displayOrder !== null && b.displayOrder !== null) return (a.displayOrder ?? 0) - (b.displayOrder ?? 0);
+                                return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                            });
                             const showLinks = boardFilter === 'ALL' || boardFilter === 'LINKS';
                             if (filtered.length === 0 && (boardFilter !== 'LINKS' ? visibleBoardLinks.length === 0 : visibleBoardLinks.length === 0)) return (
                                 <div className="text-center py-20 text-stone-400">
@@ -3353,7 +3358,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     width: sqSize || LINK_W,
                                                     transform: isDraggingLink ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
                                                     transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
-                                                    zIndex: isDraggingLink ? 1000 : isEditingLink ? 50 : 2,
+                                                    zIndex: isDraggingLink ? 1000 : isEditingLink ? 50 : 20 + i,
                                                 }}
                                                 onTouchStart={e => handleNoteTouchStart(e, link.id, currentPos, 'LINK')}
                                                 onTouchMove={handleNoteTouchMove}
@@ -3592,7 +3597,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     width: NOTE_W,
                                                     transform: isActive ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
                                                     transition: isDragging ? 'none' : 'transform 0.2s ease',
-                                                    zIndex: isDragging ? 1000 : isActive ? 10 : 1,
+                                                    zIndex: isDragging ? 1000 : isActive ? 100 : 30 + i,
                                                     cursor: isDragging ? 'grabbing' : 'pointer',
                                                 }}
                                                 onMouseEnter={() => !boardDragging && setSelectedBoardId(post.id)}
@@ -3662,12 +3667,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         })()}
                     </div>
 
+                    {(() => {
+                        const isAddingSticker = boardAddingLink || boardAddingProduct || boardAddingSupport || boardAddingYoutube || boardAddingPlatform;
+                        return (
                     {/* Sticky bottom toolbar */}
                     <div className="sticky bottom-0 z-20 pb-4 pt-2 pointer-events-none">
                         <div className="pointer-events-auto flex items-end justify-center gap-3 flex-wrap px-4" style={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.12))' }}>
 
                             {/* ── 🔗 External Link ── */}
-                            {boardAddingLink ? (
+                            {boardAddingLink && (
                                 <div className="flex flex-col" style={{ width: 240 }}>
                                     <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(200,193,185,0.55)' }} />
                                     <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#FFFEF0', border: '2px solid rgba(0,0,0,0.12)' }}>
@@ -3719,21 +3727,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </div>
                                     </div>
                                 </div>
-                            ) : (
-                                <div className="flex flex-col" style={{ width: 130 }}>
-                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(200,193,185,0.45)' }} />
-                                    <button
-                                        className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700 hover:bg-white/80 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold"
-                                        style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }}
-                                        onClick={() => { _closeAllBoardAdding(); setBoardAddingLink(true); }}
-                                    >
-                                        🔗 Link
-                                    </button>
-                                </div>
                             )}
 
                             {/* ── 📦 Digital Product ── */}
-                            {boardAddingProduct ? (
+                            {boardAddingProduct && (
                                 <div className="flex flex-col" style={{ width: 240 }}>
                                     <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(139,92,246,0.35)' }} />
                                     <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#F5F3FF', border: '2px solid rgba(139,92,246,0.25)' }}>
@@ -3776,21 +3773,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </div>
                                     </div>
                                 </div>
-                            ) : (
-                                <div className="flex flex-col" style={{ width: 130 }}>
-                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(139,92,246,0.35)' }} />
-                                    <button
-                                        className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold"
-                                        style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }}
-                                        onClick={() => { _closeAllBoardAdding(); setBoardAddingProduct(true); setBoardLinkDraft({ title: '', url: '', price: '', type: 'DIGITAL_PRODUCT' }); }}
-                                    >
-                                        📦 Product
-                                    </button>
-                                </div>
                             )}
 
                             {/* ── 💝 Support / Tip ── */}
-                            {boardAddingSupport ? (
+                            {boardAddingSupport && (
                                 <div className="flex flex-col" style={{ width: 220 }}>
                                     <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(236,72,153,0.3)' }} />
                                     <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#FDF2F8', border: '2px solid rgba(236,72,153,0.2)' }}>
@@ -3826,21 +3812,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </div>
                                     </div>
                                 </div>
-                            ) : (
-                                <div className="flex flex-col" style={{ width: 130 }}>
-                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(236,72,153,0.3)' }} />
-                                    <button
-                                        className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-pink-400 hover:text-pink-600 hover:bg-pink-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold"
-                                        style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }}
-                                        onClick={() => { _closeAllBoardAdding(); setBoardAddingSupport(true); setBoardLinkDraft({ title: '', url: '', price: '', type: 'SUPPORT' }); }}
-                                    >
-                                        💝 Support
-                                    </button>
-                                </div>
                             )}
 
                             {/* ── ▶ YouTube ── */}
-                            {boardAddingYoutube ? (
+                            {boardAddingYoutube && (
                                 <div className="flex flex-col" style={{ width: 240 }}>
                                     <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(220,50,50,0.35)' }} />
                                     <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#0f0f0f', border: '2px solid rgba(255,0,0,0.3)' }}>
@@ -3902,22 +3877,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </div>
                                     </div>
                                 </div>
-                            ) : (
-                                <div className="flex flex-col" style={{ width: 160 }}>
-                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(220,50,50,0.35)' }} />
-                                    <button
-                                        className="rounded-xl py-2.5 px-4 border-2 border-dashed border-stone-300 text-stone-500 hover:border-red-400 hover:text-red-600 hover:bg-red-50/60 transition-all flex items-center justify-center gap-2 text-xs font-semibold"
-                                        style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }}
-                                        onClick={() => { setBoardAddingYoutube(true); setBoardAddingLink(false); setBoardChatPickerOpen(false); setBoardYoutubeDraft(''); }}
-                                    >
-                                        <svg viewBox="0 0 24 24" className="w-3 h-3" fill="#FF0000"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.55A3.02 3.02 0 0 0 .5 6.19C0 8.03 0 12 0 12s0 3.97.5 5.81a3.02 3.02 0 0 0 2.12 2.14C4.46 20.5 12 20.5 12 20.5s7.54 0 9.38-.55a3.02 3.02 0 0 0 2.12-2.14C24 15.97 24 12 24 12s0-3.97-.5-5.81zM9.75 15.52V8.48L15.5 12l-5.75 3.52z"/></svg>
-                                        YouTube
-                                    </button>
-                                </div>
                             )}
 
                             {/* ── 📱 Platform ── */}
-                            {boardAddingPlatform ? (
+                            {boardAddingPlatform && (
                                 <div className="flex flex-col" style={{ width: 240 }}>
                                     <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(59,130,246,0.35)' }} />
                                     <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#EFF6FF', border: '2px solid rgba(59,130,246,0.25)' }}>
@@ -3988,32 +3951,88 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         )}
                                     </div>
                                 </div>
-                            ) : (
+                            )}
+                        </div>
+
+                        {/* DESKTOP BUTTONS */}
+                        {!isAddingSticker && (
+                            <div className="hidden md:flex pointer-events-auto items-end justify-center gap-3 flex-wrap px-4 mt-2" style={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.12))' }}>
+                                <div className="flex flex-col" style={{ width: 130 }}>
+                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(200,193,185,0.45)' }} />
+                                    <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700 hover:bg-white/80 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingLink(true); }}>
+                                        🔗 Link
+                                    </button>
+                                </div>
+                                <div className="flex flex-col" style={{ width: 130 }}>
+                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(139,92,246,0.35)' }} />
+                                    <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingProduct(true); setBoardLinkDraft({ title: '', url: '', price: '', type: 'DIGITAL_PRODUCT' }); }}>
+                                        📦 Product
+                                    </button>
+                                </div>
+                                <div className="flex flex-col" style={{ width: 130 }}>
+                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(236,72,153,0.3)' }} />
+                                    <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-pink-400 hover:text-pink-600 hover:bg-pink-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingSupport(true); setBoardLinkDraft({ title: '', url: '', price: '', type: 'SUPPORT' }); }}>
+                                        💝 Support
+                                    </button>
+                                </div>
+                                <div className="flex flex-col" style={{ width: 160 }}>
+                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(220,50,50,0.35)' }} />
+                                    <button className="rounded-xl py-2.5 px-4 border-2 border-dashed border-stone-300 text-stone-500 hover:border-red-400 hover:text-red-600 hover:bg-red-50/60 transition-all flex items-center justify-center gap-2 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingYoutube(true); setBoardYoutubeDraft(''); }}>
+                                        <svg viewBox="0 0 24 24" className="w-3 h-3" fill="#FF0000"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.55A3.02 3.02 0 0 0 .5 6.19C0 8.03 0 12 0 12s0 3.97.5 5.81a3.02 3.02 0 0 0 2.12 2.14C4.46 20.5 12 20.5 12 20.5s7.54 0 9.38-.55a3.02 3.02 0 0 0 2.12-2.14C24 15.97 24 12 24 12s0-3.97-.5-5.81zM9.75 15.52V8.48L15.5 12l-5.75 3.52z"/></svg> YouTube
+                                    </button>
+                                </div>
                                 <div className="flex flex-col" style={{ width: 110 }}>
                                     <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(59,130,246,0.35)' }} />
-                                    <button
-                                        className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold"
-                                        style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }}
-                                        onClick={() => { _closeAllBoardAdding(); setBoardAddingPlatform(true); }}
-                                    >
+                                    <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingPlatform(true); }}>
                                         📱 Platform
                                     </button>
                                 </div>
-                            )}
+                                <div className="flex flex-col" style={{ width: 160 }}>
+                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(110,170,240,0.45)' }} />
+                                    <button className={`rounded-xl py-2.5 px-4 border-2 border-dashed text-xs font-semibold transition-all flex items-center justify-center gap-2 ${boardChatPickerOpen ? 'border-blue-400 text-blue-700 bg-blue-50' : 'border-stone-300 text-stone-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/60'}`} style={{ backgroundColor: boardChatPickerOpen ? undefined : 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardChatPickerOpen(p => !p); }}>
+                                        <MessageSquare size={13} /> From Chat
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
-                            {/* Pull from Chat button */}
-                            <div className="flex flex-col" style={{ width: 160 }}>
-                                <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(110,170,240,0.45)' }} />
+                        {/* MOBILE FAB MENU */}
+                        {!isAddingSticker && (
+                            <div className="md:hidden pointer-events-auto flex flex-col items-end px-4 w-full mt-2">
+                                {mobileAddMenuOpen && (
+                                    <div className="flex flex-col gap-1.5 bg-white/90 backdrop-blur-xl p-3 rounded-2xl border border-stone-200 shadow-2xl mb-3 w-48 ml-auto animate-in slide-in-from-bottom-2">
+                                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-1 px-2">Add Sticker</p>
+                                        <button className="flex items-center gap-3 text-sm font-semibold text-stone-700 py-2.5 px-3 hover:bg-stone-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardAddingLink(true); }}>
+                                            <span className="text-lg leading-none">🔗</span> Link
+                                        </button>
+                                        <button className="flex items-center gap-3 text-sm font-semibold text-violet-700 py-2.5 px-3 hover:bg-violet-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardAddingProduct(true); setBoardLinkDraft({ title: '', url: '', price: '', type: 'DIGITAL_PRODUCT' }); }}>
+                                            <span className="text-lg leading-none">📦</span> Product
+                                        </button>
+                                        <button className="flex items-center gap-3 text-sm font-semibold text-pink-600 py-2.5 px-3 hover:bg-pink-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardAddingSupport(true); setBoardLinkDraft({ title: '', url: '', price: '', type: 'SUPPORT' }); }}>
+                                            <span className="text-lg leading-none">💝</span> Support / Tip
+                                        </button>
+                                        <button className="flex items-center gap-3 text-sm font-semibold text-red-600 py-2.5 px-3 hover:bg-red-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardAddingYoutube(true); setBoardYoutubeDraft(''); }}>
+                                            <span className="text-lg leading-none">▶️</span> YouTube
+                                        </button>
+                                        <button className="flex items-center gap-3 text-sm font-semibold text-blue-600 py-2.5 px-3 hover:bg-blue-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardAddingPlatform(true); }}>
+                                            <span className="text-lg leading-none">📱</span> Platform
+                                        </button>
+                                        <button className="flex items-center gap-3 text-sm font-semibold text-emerald-600 py-2.5 px-3 hover:bg-emerald-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardChatPickerOpen(true); }}>
+                                            <span className="text-lg leading-none">💬</span> From Chat
+                                        </button>
+                                    </div>
+                                )}
                                 <button
-                                    className={`rounded-xl py-2.5 px-4 border-2 border-dashed text-xs font-semibold transition-all flex items-center justify-center gap-2 ${boardChatPickerOpen ? 'border-blue-400 text-blue-700 bg-blue-50' : 'border-stone-300 text-stone-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/60'}`}
-                                    style={{ backgroundColor: boardChatPickerOpen ? undefined : 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }}
-                                    onClick={() => { setBoardChatPickerOpen(p => !p); setBoardAddingLink(false); setBoardAddingYoutube(false); }}
+                                    onClick={() => setMobileAddMenuOpen(!mobileAddMenuOpen)}
+                                    className="bg-stone-900 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-transform ml-auto border-2 border-white/10"
                                 >
-                                    <MessageSquare size={13} /> From Chat
+                                    {mobileAddMenuOpen ? <X size={24} /> : <Plus size={24} />}
                                 </button>
                             </div>
-                        </div>
+                        )}
                     </div>
+                    );
+                    })()}
 
                     {/* Chat history picker panel */}
                     {boardChatPickerOpen && (() => {
@@ -4122,7 +4141,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             {/* Modal header */}
                             <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200/60">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-stone-400 uppercase tracking-widest">{livePost.isPrivate ? 'Private' : 'Public'}</span>
+                                <span className="flex items-center gap-1 text-stone-400"><DiemLogo size={16} /></span>
                                     {livePost.isPinned
                                         ? <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100"><Pin size={8} className="fill-current" /> Pinned</span>
                                         : livePost.reply 
