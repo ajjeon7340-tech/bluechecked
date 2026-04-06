@@ -746,16 +746,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       className="relative overflow-hidden rounded-2xl border border-stone-200/60"
                       style={{ backgroundColor: '#FAFAF9', backgroundImage: 'linear-gradient(rgba(168,162,158,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(168,162,158,0.07) 1px, transparent 1px)', backgroundSize: '32px 32px' }}
                   >
-                      {/* Header */}
-                      <div className="px-6 pt-5 pb-3 flex items-center justify-between">
-                          <div>
-                              <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-0.5">
-                                  Community
-                              </p>
-                              <h2 className="text-base font-bold text-stone-900">Board</h2>
-                          </div>
-                      </div>
-
                       {/* Always-on board */}
                       <div>
                               {/* Wide horizontally-scrollable board with profile stickers */}
