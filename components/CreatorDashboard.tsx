@@ -4095,7 +4095,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             {/* Modal header */}
                             <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200/60">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-stone-400 uppercase tracking-widest">Community Q&amp;A</span>
+                                    <span className="text-xs font-bold text-stone-400 uppercase tracking-widest">{livePost.isPrivate ? 'Private Post' : 'Public Post'}</span>
                                     {livePost.isPinned
                                         ? <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100"><Pin size={8} className="fill-current" /> Pinned</span>
                                         : livePost.reply 
