@@ -899,9 +899,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                           {/* Viewport guidelines — only visible to the creator viewing their own board */}
                                           {isCreatorOwner && boardContainerW > 0 && (() => {
                                               // Desktop: actual container width (capped at max-w-2xl 640px)
-                                              const desktopVW = Math.min(640, boardContainerW);
+                                      const desktopVW = 640;
                                               // Mobile: 390px screen - 32px padding = 358px
-                                              const mobileVW = Math.min(358, desktopVW);
+                                      const mobileVW = 358;
                                               const GuideRect = ({ w, h, color, dash, label }: { w: number; h: number; color: string; dash?: boolean; label: string }) => (
                                                   <div className="absolute pointer-events-none" style={{ left: 0, top: 0, width: w, height: h, zIndex: 5 }}>
                                                       <div className="absolute inset-0" style={{ border: `2px ${dash ? 'dashed' : 'solid'} ${color}`, borderRadius: 2 }} />

@@ -3289,9 +3289,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     {boardViewportW > 0 && (() => {
                                         const BOARD_MAX_H = 440; // matches public profile max-height
                                         // Desktop: actual public board container = max-w-2xl(672) - px-4*2(32) = 640px
-                                        const desktopVW = Math.min(640, boardViewportW);
+                                        const desktopVW = 640;
                                         // Mobile: 390px screen - 32px padding = 358px
-                                        const mobileVW = Math.min(358, desktopVW);
+                                        const mobileVW = 358;
                                         const GuideRect = ({ w, h, color, dash, label }: { w: number; h: number; color: string; dash?: boolean; label: string }) => (
                                             <div className="absolute pointer-events-none" style={{ left: 0, top: 0, width: w, height: h, zIndex: 0 }}>
                                                 <div className="absolute inset-0" style={{ border: `2px ${dash ? 'dashed' : 'solid'} ${color}`, borderRadius: 2 }} />
