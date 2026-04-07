@@ -442,6 +442,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   } | null>(null);
   const [boardChatPickerOpen, setBoardChatPickerOpen] = useState(false);
   const [boardLinkPositions, setBoardLinkPositions] = useState<Record<string, {x: number, y: number}>>({});
+  const [linkZOrder, setLinkZOrder] = useState<string[]>([]);
   const [boardLinkDragging, setBoardLinkDragging] = useState<{
       id: string;
       startMouseX: number;
@@ -3298,6 +3299,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         );
                                         await saveBoardLinkChange(updatedLinks);
                                     }
+                                    const droppedId = boardLinkDragging.id;
+                                    setLinkZOrder(prev => [...prev.filter(id => id !== droppedId), droppedId]);
                                     setBoardLinkDragging(null);
                                 }
                             };
@@ -3393,7 +3396,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     width: isEditingLink ? Math.max(sqSize || LINK_W, 220) : sqSize || LINK_W,
                                                     transform: isDraggingLink ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
                                                     transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
-                                                    zIndex: isDraggingLink ? 1000 : isEditingLink ? 50 : 20 + i,
+                                                    zIndex: isDraggingLink ? 1000 : isEditingLink ? 500 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (20 + i),
                                                 }}
                                                 onTouchStart={e => handleNoteTouchStart(e, link.id, currentPos, 'LINK')}
                                                 onTouchMove={handleNoteTouchMove}
