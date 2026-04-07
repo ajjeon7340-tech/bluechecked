@@ -476,28 +476,21 @@ const ComposeModal: React.FC<{
                         </span>
                     </div>
 
-                    {/* Public / Private toggle — styled as two paper options */}
-                    <div className="flex rounded-sm overflow-hidden"
-                        style={{ border: `2px solid rgba(0,0,0,0.12)` }}>
-                        {[
-                            { val: false, icon: <Globe size={13} />, label: 'Public' },
-                            { val: true,  icon: <Lock size={13}  />, label: 'Private' },
-                        ].map(({ val, icon, label }) => (
-                            <button
-                                key={String(val)}
-                                onClick={() => setIsPrivate(val)}
-                                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 transition-all"
-                                style={{
-                                    fontFamily: "'Caveat', cursive",
-                                    fontSize: 15,
-                                    fontWeight: isPrivate === val ? 700 : 400,
-                                    background: isPrivate === val ? 'rgba(0,0,0,0.14)' : 'transparent',
-                                    color: text,
-                                }}>
-                                {icon} {label}
-                            </button>
-                        ))}
-                    </div>
+                    {/* Public / Private toggle */}
+                    <button
+                        onClick={() => setIsPrivate(p => !p)}
+                        className="w-full flex items-center justify-between px-4 py-2.5 rounded-sm transition-all"
+                        style={{ background: 'rgba(0,0,0,0.10)', border: '2px solid rgba(0,0,0,0.12)' }}>
+                        <span className="flex items-center gap-2" style={{ fontFamily: "'Caveat', cursive", fontSize: 15, fontWeight: 700, color: text }}>
+                            {isPrivate ? <Lock size={14} /> : <Globe size={14} />}
+                            {isPrivate ? 'Private' : 'Public'}
+                        </span>
+                        <span className="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors duration-200"
+                            style={{ background: isPrivate ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.18)' }}>
+                            <span className="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200"
+                                style={{ transform: isPrivate ? 'translateX(18px)' : 'translateX(2px)' }} />
+                        </span>
+                    </button>
 
                     <p style={{ fontFamily: "'Kalam', cursive", fontSize: 12, color: text, opacity: 0.65, lineHeight: 1.6 }}>
                         {isPrivate
