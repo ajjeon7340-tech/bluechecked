@@ -3523,7 +3523,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         }}
                                                     >
                                                         {/* Action buttons — show on hover */}
-                                                        <div className="absolute top-1.5 right-1.5 hidden group-hover:flex items-center gap-1">
+                                                        <div className="absolute top-1.5 right-1.5 hidden group-hover:flex items-center gap-1 z-10">
                                                             <button
                                                                 className="p-1 rounded-full bg-white/80 text-stone-500 hover:text-stone-800 hover:bg-white transition-all shadow-sm"
                                                                 onClick={e => {
