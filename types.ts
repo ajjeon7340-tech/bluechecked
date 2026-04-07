@@ -30,7 +30,7 @@ export interface AffiliateLink {
   type?: 'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT';
   price?: number; // In Credits
   thumbnailUrl?: string;
-  iconShape?: 'circle' | 'rounded' | 'square';
+  iconShape?: 'circle' | 'rounded' | 'square' | 'square-xs' | 'square-s' | 'square-m' | 'square-l';
   sectionId?: string;
   buttonColor?: string;
   hidden?: boolean;
