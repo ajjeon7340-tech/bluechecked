@@ -470,53 +470,51 @@ const ComposeModal: React.FC<{
                         <div className="absolute top-0 left-9 w-px h-full" style={{ background: 'rgba(255,100,100,0.25)' }} />
                     </div>
 
-                    <div className="flex items-center justify-between">
-                        <span style={{ fontFamily: "'Kalam', cursive", fontSize: 12, color: text, opacity: 0.5 }}>
+                    {/* Bottom row: char count + privacy toggle + post button */}
+                    <div className="flex items-center gap-3">
+                        {/* Privacy toggle */}
+                        <button
+                            onClick={() => setIsPrivate(p => !p)}
+                            className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition-opacity"
+                        >
+                            <span
+                                className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200"
+                                style={{ background: isPrivate ? 'rgba(0,0,0,0.40)' : 'rgba(0,0,0,0.18)' }}
+                            >
+                                <span
+                                    className="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200"
+                                    style={{ transform: isPrivate ? 'translateX(18px)' : 'translateX(2px)' }}
+                                />
+                            </span>
+                            <span className="flex items-center gap-1" style={{ fontFamily: "'Caveat', cursive", fontSize: 14, fontWeight: 700, color: text }}>
+                                {isPrivate ? <Lock size={12} /> : <Globe size={12} />}
+                                {isPrivate ? 'Private' : 'Public'}
+                            </span>
+                        </button>
+
+                        <span className="flex-1" />
+
+                        <span style={{ fontFamily: "'Kalam', cursive", fontSize: 11, color: text, opacity: 0.4 }}>
                             {content.length}/500
                         </span>
+
+                        {/* Submit */}
+                        <button
+                            onClick={submit}
+                            disabled={!content.trim() || isSubmitting}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-sm transition-all active:scale-95 disabled:opacity-40"
+                            style={{
+                                background: 'rgba(0,0,0,0.18)',
+                                fontFamily: "'Caveat', cursive",
+                                fontSize: 16,
+                                fontWeight: 700,
+                                color: text,
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
+                            }}>
+                            {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <span>📌</span>}
+                            {isSubmitting ? 'Posting…' : 'Post'}
+                        </button>
                     </div>
-
-                    {/* Public / Private toggle */}
-                    <button
-                        onClick={() => setIsPrivate(p => !p)}
-                        className="w-full flex items-center justify-between px-4 py-2.5 rounded-sm transition-all"
-                        style={{ background: 'rgba(0,0,0,0.10)', border: '2px solid rgba(0,0,0,0.12)' }}>
-                        <span className="flex items-center gap-2" style={{ fontFamily: "'Caveat', cursive", fontSize: 15, fontWeight: 700, color: text }}>
-                            {isPrivate ? <Lock size={14} /> : <Globe size={14} />}
-                            {isPrivate ? 'Private' : 'Public'}
-                        </span>
-                        <span className="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors duration-200"
-                            style={{ background: isPrivate ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.18)' }}>
-                            <span className="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200"
-                                style={{ transform: isPrivate ? 'translateX(18px)' : 'translateX(2px)' }} />
-                        </span>
-                    </button>
-
-                    <p style={{ fontFamily: "'Kalam', cursive", fontSize: 12, color: text, opacity: 0.65, lineHeight: 1.6 }}>
-                        {isPrivate
-                            ? '🔒 Only you and the creator will ever see this.'
-                            : `🌐 Becomes public once ${creator.displayName} replies.`}
-                    </p>
-
-                    {/* Submit */}
-                    <button
-                        onClick={submit}
-                        disabled={!content.trim() || isSubmitting}
-                        className="w-full py-3 rounded-sm flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-40"
-                        style={{
-                            background: 'rgba(0,0,0,0.18)',
-                            fontFamily: "'Caveat', cursive",
-                            fontSize: 17,
-                            fontWeight: 700,
-                            color: text,
-                            boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
-                        }}>
-                        {isSubmitting
-                            ? <Loader2 size={16} className="animate-spin" />
-                            : <span>📌</span>
-                        }
-                        {isSubmitting ? 'Pinning to board...' : 'Pin to Board'}
-                    </button>
                 </div>
             </div>
         </div>
