@@ -643,7 +643,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                     </div>
 
                     {/* ── board content ── */}
-                    <div className="max-w-5xl mx-auto px-5 pt-12 pb-32">
+                    <div className="max-w-2xl mx-auto px-4 pt-12 pb-32">
 
                         {/* Creator card — centered at top */}
                         {creator && (

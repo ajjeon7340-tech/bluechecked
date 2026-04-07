@@ -3297,8 +3297,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         const desktopVW = 640;
                                         // Mobile: 390px screen - 32px padding = 358px
                                         const mobileVW = 358;
+                                        const guideLeft = (w: number) => Math.max(0, (boardViewportW - w) / 2);
                                         const GuideRect = ({ w, h, color, dash, label }: { w: number; h: number; color: string; dash?: boolean; label: string }) => (
-                                            <div className="absolute pointer-events-none" style={{ left: 0, top: 0, width: w, height: h, zIndex: 0 }}>
+                                            <div className="absolute pointer-events-none" style={{ left: guideLeft(w), top: 0, width: w, height: h, zIndex: 0 }}>
                                                 <div className="absolute inset-0" style={{ border: `2px ${dash ? 'dashed' : 'solid'} ${color}`, borderRadius: 2 }} />
                                                 {/* Top-right label */}
                                                 <div className="absolute top-0 right-0 flex items-center gap-1 px-1.5 py-0.5 rounded-bl" style={{ background: `${color}22`, borderLeft: `1px solid ${color}55`, borderBottom: `1px solid ${color}55` }}>
