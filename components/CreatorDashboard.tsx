@@ -397,7 +397,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Board State
   const [boardPosts, setBoardPosts] = useState<BoardPost[]>([]);
   const [boardLoading, setBoardLoading] = useState(false);
-  const [boardFilter, setBoardFilter] = useState<'ALL' | 'PENDING' | 'ANSWERED' | 'LINKS'>('ALL');
+  const [boardFilter, setBoardFilter] = useState<'ALL' | 'PENDING' | 'LINKS'>('ALL');
   const [boardLinkEditId, setBoardLinkEditId] = useState<string | null>(null);
   const [boardAddingLink, setBoardAddingLink] = useState(false);
   const [boardAddingProduct, setBoardAddingProduct] = useState(false);
@@ -2966,13 +2966,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         </div>
                         {/* Filter tabs */}
                         <div className="flex gap-2 mt-4 max-w-4xl mx-auto overflow-x-auto">
-                            {(['ALL', 'PENDING', 'ANSWERED', 'LINKS'] as const).map(f => (
+                            {(['ALL', 'PENDING', 'LINKS'] as const).map(f => (
                                 <button
                                     key={f}
                                     onClick={() => setBoardFilter(f)}
                                     className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-all ${boardFilter === f ? 'bg-stone-900 text-white' : 'bg-white text-stone-500 border border-stone-200 hover:bg-stone-50'}`}
                                 >
-                                    {f === 'ALL' ? `All (${boardPosts.length})` : f === 'PENDING' ? `Pending (${boardPosts.filter(p => !p.reply && !p.isPinned).length})` : f === 'ANSWERED' ? `Answered (${boardPosts.filter(p => !!p.reply || p.isPinned).length})` : `Links (${(editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden).length})`}
+                                    {f === 'ALL' ? `All (${boardPosts.filter(p => !p.isPrivate && (!p.reply || p.isPinned)).length})` : f === 'PENDING' ? `Pending (${boardPosts.filter(p => !p.isPrivate && !p.reply && !p.isPinned).length})` : `Links (${(editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden).length})`}
                                 </button>
                             ))}
                         </div>
@@ -2990,7 +2990,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         ) : (() => {
                             const visibleBoardLinks = (editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden);
                             const filtered = boardFilter === 'LINKS' ? [] : boardPosts.filter(p => !p.isPrivate).filter(p =>
-                                boardFilter === 'ALL' ? true : boardFilter === 'PENDING' ? (!p.reply && !p.isPinned) : (!!p.reply || p.isPinned)
+                                boardFilter === 'PENDING' ? (!p.reply && !p.isPinned) : (!p.reply || p.isPinned)
                             ).sort((a, b) => {
                                 if (a.displayOrder !== null && b.displayOrder !== null) return (a.displayOrder ?? 0) - (b.displayOrder ?? 0);
                                 return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -2999,7 +2999,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             if (filtered.length === 0 && (boardFilter !== 'LINKS' ? visibleBoardLinks.length === 0 : visibleBoardLinks.length === 0)) return (
                                 <div className="text-center py-20 text-stone-400">
                                     <div className="text-4xl mb-3">📋</div>
-                                    <p className="text-sm font-medium">{boardFilter === 'PENDING' ? 'No pending questions' : boardFilter === 'ANSWERED' ? 'No answered questions yet' : boardFilter === 'LINKS' ? 'No links added yet' : 'No posts on the board yet'}</p>
+                                    <p className="text-sm font-medium">{boardFilter === 'PENDING' ? 'No pending questions' : boardFilter === 'LINKS' ? 'No links added yet' : 'No posts on the board yet'}</p>
                                 </div>
                             );
 
@@ -3088,41 +3088,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                             const getPos = (post: BoardPost, _idx: number): _BP =>
                                 computedPositions.get(post.id) ?? { x: guideOffsetX + BOARD_PAD, y: guideOffsetY + BOARD_PAD };
-
-                            // Collision uses sticker body only (excludes tape strip at top)
-                            const TAPE_H = 16;
-                            // Actual rendered card body is ~140px — much shorter than NOTE_H_EST grid spacing
-                            const COLLISION_BODY_H = 140;
-                            const bodiesOverlap = (pos: {x: number, y: number}, op: {x: number, y: number}) =>
-                                Math.abs(pos.x - op.x) < NOTE_W &&
-                                Math.abs((pos.y + TAPE_H) - (op.y + TAPE_H)) < COLLISION_BODY_H;
-
-                            // Find nearest non-colliding position via binary search along 8 directions
-                            const resolveCollision = (droppedId: string, rawPos: {x: number, y: number}): {x: number, y: number} => {
-                                const others = filtered.filter(p => p.id !== droppedId);
-                                const isOverlapping = (pos: {x: number, y: number}) =>
-                                    others.some((p) => {
-                                        const op = boardPositions[p.id] || getPos(p, filtered.findIndex(f => f.id === p.id));
-                                        return bodiesOverlap(pos, op);
-                                    });
-                                if (!isOverlapping(rawPos)) return rawPos;
-                                const MAX_R = Math.max(NOTE_W, NOTE_H_EST) * 4;
-                                const dirs = [[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]]
-                                    .map(([dx, dy]) => { const l = Math.sqrt(dx*dx+dy*dy); return [dx/l, dy/l]; });
-                                let best: {x: number, y: number} | null = null;
-                                let bestDist = Infinity;
-                                for (const [dx, dy] of dirs) {
-                                    let lo = 0, hi = MAX_R;
-                                    while (hi - lo > 1) {
-                                        const mid = (lo + hi) / 2;
-                                        const c = { x: Math.max(0, rawPos.x + dx * mid), y: Math.max(0, rawPos.y + dy * mid) };
-                                        if (isOverlapping(c)) lo = mid; else hi = mid;
-                                    }
-                                    const c = { x: Math.max(0, rawPos.x + dx * hi), y: Math.max(0, rawPos.y + dy * hi) };
-                                    if (hi < bestDist && !isOverlapping(c)) { bestDist = hi; best = c; }
-                                }
-                                return best ?? rawPos;
-                            };
 
                             // Extra buffer during drag so canvas always extends below the dragged card
                             const dragBuffer = boardDragging ? 500 : 160;
@@ -3274,19 +3239,14 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 if (boardDragging) {
                                     const rawPos = boardPositions[boardDragging.id];
                                     if (rawPos) {
-                                        const finalPos = resolveCollision(boardDragging.id, rawPos);
-                                        const moved = finalPos.x !== rawPos.x || finalPos.y !== rawPos.y;
-                                        if (moved) {
-                                            setBoardPositions(prev => ({ ...prev, [boardDragging.id]: finalPos }));
-                                        }
                                         const allPositioned = filtered.map((p, idx) => ({
                                             id: p.id,
                                             pos: boardPositions[p.id] || getPos(p, idx),
                                         })).sort((a, b) => a.pos.y !== b.pos.y ? a.pos.y - b.pos.y : a.pos.x - b.pos.x);
                                         const order = allPositioned.findIndex(item => item.id === boardDragging.id);
                                         try {
-                                            await updateBoardPostPosition(boardDragging.id, finalPos.x - guideOffsetX, finalPos.y - guideOffsetY, order);
-                                            setBoardPosts(prev => prev.map(p => p.id === boardDragging.id ? { ...p, positionX: finalPos.x - guideOffsetX, positionY: finalPos.y - guideOffsetY, displayOrder: order } : p));
+                                            await updateBoardPostPosition(boardDragging.id, rawPos.x - guideOffsetX, rawPos.y - guideOffsetY, order);
+                                            setBoardPosts(prev => prev.map(p => p.id === boardDragging.id ? { ...p, positionX: rawPos.x - guideOffsetX, positionY: rawPos.y - guideOffsetY, displayOrder: order } : p));
                                         } catch {}
                                     }
                                     setBoardDragging(null);
@@ -3624,40 +3584,74 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 <p className={`${sqSize === 220 ? 'text-lg mb-1 px-4' : sqSize === 160 ? 'text-base mb-1 px-2' : 'text-xs mb-0.5 px-1'} font-bold text-stone-800 leading-tight w-full truncate`}>{link.title}</p>
                                                                     <p className="text-[8px] text-stone-500 uppercase tracking-wider font-semibold">{link.type === 'DIGITAL_PRODUCT' ? 'Buy' : link.type === 'SUPPORT' ? 'Tip' : 'Visit'}</p>
                                                             </>
-                                                        ) : link.type === 'DIGITAL_PRODUCT' ? (
-                                                            <div className="flex flex-col h-full w-full">
-                                                                <div className="flex items-center gap-2.5 pb-2.5">
+                                                        ) : (() => {
+                                                            // Wide format: real photo → thumbnail banner layout
+                                                            const hasRealPhoto = link.thumbnailUrl && !link.thumbnailUrl.startsWith('data:emoji,');
+                                                            if (hasRealPhoto) {
+                                                                return (
+                                                                    <div className="flex flex-col h-full w-full">
+                                                                        <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%' }}>
+                                                                            <img src={link.thumbnailUrl} className="absolute inset-0 w-full h-full object-cover" alt={link.title} />
+                                                                        </div>
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            {link.type === 'DIGITAL_PRODUCT' ? (
+                                                                                <ShoppingBag size={10} className="text-violet-400 flex-shrink-0" />
+                                                                            ) : link.type === 'SUPPORT' ? (
+                                                                                <Heart size={10} className="text-pink-400 flex-shrink-0" />
+                                                                            ) : detectedPlatform ? (
+                                                                                <span className="scale-75 flex-shrink-0">{getPreviewPlatformIcon(detectedPlatform)}</span>
+                                                                            ) : (
+                                                                                <LinkIcon size={10} className="text-stone-400 flex-shrink-0" />
+                                                                            )}
+                                                                            <span className="text-xs font-semibold text-stone-700 truncate flex-1 text-left">{link.title}</span>
+                                                                            {link.type === 'DIGITAL_PRODUCT' && link.price != null && (
+                                                                                <span className="text-[10px] font-bold text-violet-500 bg-violet-50 px-1.5 py-0.5 rounded-full flex-shrink-0">{link.price}cr</span>
+                                                                            )}
+                                                                            {link.type === 'SUPPORT' && (
+                                                                                <span className="text-[10px] font-bold text-pink-500 bg-pink-50 px-1.5 py-0.5 rounded-full flex-shrink-0">Tip ♥</span>
+                                                                            )}
+                                                                            {link.type === 'EXTERNAL' && <ExternalLink size={9} className="text-stone-300 flex-shrink-0" />}
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            }
+                                                            if (link.type === 'DIGITAL_PRODUCT') return (
+                                                                <div className="flex flex-col h-full w-full">
+                                                                    <div className="flex items-center gap-2.5 pb-2.5">
+                                                                        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5">
+                                                                            {link.thumbnailUrl?.startsWith('data:emoji,') ? <span className="text-xl leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span> : <ShoppingBag size={16} className="text-violet-400" />}
+                                                                        </div>
+                                                                        <div className="flex-1 min-w-0 text-left">
+                                                                            <p className="text-xs font-bold text-stone-800 truncate">{link.title}</p>
+                                                                            {link.price != null && <p className="text-[10px] text-stone-400 font-medium">{link.price} credits</p>}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="mt-auto py-1.5 rounded-md text-[10px] font-bold text-center text-violet-600 bg-violet-50">
+                                                                        <ShoppingBag size={9} className="inline mr-1" />Buy
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                            if (link.type === 'SUPPORT') return (
+                                                                <div className="flex items-center gap-2.5 h-full w-full">
                                                                     <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5">
-                                                                        {link.thumbnailUrl?.startsWith('data:emoji,') ? <span className="text-xl leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span> : link.thumbnailUrl ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : <ShoppingBag size={16} className="text-violet-400" />}
+                                                                        {link.thumbnailUrl?.startsWith('data:emoji,') ? <span className="text-xl leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span> : <Heart size={16} className="text-pink-400" />}
                                                                     </div>
                                                                     <div className="flex-1 min-w-0 text-left">
                                                                         <p className="text-xs font-bold text-stone-800 truncate">{link.title}</p>
-                                                                        {link.price != null && <p className="text-[10px] text-stone-400 font-medium">{link.price} credits</p>}
                                                                     </div>
+                                                                    <span className="text-[10px] font-bold text-pink-500 bg-pink-50 px-2 py-1 rounded-full flex-shrink-0">Tip ♥</span>
                                                                 </div>
-                                                                <div className="mt-auto py-1.5 rounded-md text-[10px] font-bold text-center text-violet-600 bg-violet-50">
-                                                                    <ShoppingBag size={9} className="inline mr-1" />Buy
+                                                            );
+                                                            return (
+                                                                <div className="flex items-center gap-2.5 h-full w-full">
+                                                                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5 text-stone-600">
+                                                                        {link.thumbnailUrl?.startsWith('data:emoji,') ? <span className="text-base leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span> : detectedPlatform ? getPreviewPlatformIcon(detectedPlatform) : <LinkIcon size={13} />}
+                                                                    </div>
+                                                                    <span className="text-xs font-semibold text-stone-700 truncate flex-1 text-left">{link.title}</span>
+                                                                    <ExternalLink size={9} className="text-stone-300 flex-shrink-0" />
                                                                 </div>
-                                                            </div>
-                                                        ) : link.type === 'SUPPORT' ? (
-                                                            <div className="flex items-center gap-2.5 h-full w-full">
-                                                                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5">
-                                                                    {link.thumbnailUrl?.startsWith('data:emoji,') ? <span className="text-xl leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span> : link.thumbnailUrl ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : <Heart size={16} className="text-pink-400" />}
-                                                                </div>
-                                                                <div className="flex-1 min-w-0 text-left">
-                                                                    <p className="text-xs font-bold text-stone-800 truncate">{link.title}</p>
-                                                                </div>
-                                                                <span className="text-[10px] font-bold text-pink-500 bg-pink-50 px-2 py-1 rounded-full flex-shrink-0">Tip ♥</span>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="flex items-center gap-2.5 h-full w-full">
-                                                                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5 text-stone-600">
-                                                                    {link.thumbnailUrl?.startsWith('data:emoji,') ? <span className="text-base leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span> : link.thumbnailUrl ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : detectedPlatform ? getPreviewPlatformIcon(detectedPlatform) : <LinkIcon size={13} />}
-                                                                </div>
-                                                                <span className="text-xs font-semibold text-stone-700 truncate flex-1 text-left">{link.title}</span>
-                                                                <ExternalLink size={9} className="text-stone-300 flex-shrink-0" />
-                                                            </div>
-                                                        )}
+                                                            );
+                                                        })()}
                                                     </div>
                                                 )}
                                             </div>
@@ -4136,8 +4130,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                     {/* Chat history picker panel */}
                     {boardChatPickerOpen && (() => {
-                        const repliedMessages = messages.filter(m => m.status === 'REPLIED' && m.replyContent);
-                        const alreadyPinned = new Set(boardPosts.map(p => p.fanId).filter(Boolean));
+                        const repliedDMs = messages.filter(m => m.status === 'REPLIED' && m.replyContent);
+                        const answeredBoardPosts = boardPosts.filter(p => !p.isPrivate && !!p.reply && !p.isPinned);
+                        const totalItems = repliedDMs.length + answeredBoardPosts.length;
                         return (
                             <div
                                 className="sticky bottom-0 z-10 mx-4 mb-4 rounded-2xl border border-stone-200 overflow-hidden"
@@ -4145,16 +4140,46 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             >
                                 <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200/60">
                                     <div>
-                                        <p className="text-xs font-bold text-stone-800">Pull from Chat History</p>
-                                        <p className="text-[10px] text-stone-400 mt-0.5">Pick a replied DM to pin as a public Q&A sticker</p>
+                                        <p className="text-xs font-bold text-stone-800">Pull from Answered</p>
+                                        <p className="text-[10px] text-stone-400 mt-0.5">Pick an answered Q&A to feature on the board</p>
                                     </div>
                                     <button onClick={() => setBoardChatPickerOpen(false)} className="p-1.5 rounded-full text-stone-400 hover:bg-stone-200/60 transition-colors"><X size={14} /></button>
                                 </div>
-                                {repliedMessages.length === 0 ? (
-                                    <div className="py-8 text-center text-stone-400 text-xs">No replied messages yet</div>
+                                {totalItems === 0 ? (
+                                    <div className="py-8 text-center text-stone-400 text-xs">No answered posts yet</div>
                                 ) : (
                                     <div className="flex gap-3 overflow-x-auto p-4" style={{ scrollbarWidth: 'none' }}>
-                                        {repliedMessages.map(msg => {
+                                        {/* Answered board posts first */}
+                                        {answeredBoardPosts.map(post => (
+                                            <div
+                                                key={post.id}
+                                                className="flex-shrink-0 w-52 rounded-xl border p-3 cursor-pointer hover:border-stone-400 hover:shadow-md transition-all"
+                                                style={{ backgroundColor: '#F0FDF4', border: '1px solid rgba(0,0,0,0.09)' }}
+                                                onClick={async () => {
+                                                    try {
+                                                        await pinBoardPost(post.id, true);
+                                                        setBoardPosts(prev => prev.map(p => p.id === post.id ? { ...p, isPinned: true } : p));
+                                                    } catch {}
+                                                }}
+                                            >
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className="w-6 h-6 rounded-full bg-stone-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                                        {post.fanAvatarUrl
+                                                            ? <img src={post.fanAvatarUrl} className="w-full h-full object-cover" alt={post.fanName} />
+                                                            : <span className="text-white text-[9px] font-bold">{(post.fanName || '?').charAt(0).toUpperCase()}</span>}
+                                                    </div>
+                                                    <span className="text-[10px] font-bold text-stone-700 truncate">{post.fanName || 'Fan'}</span>
+                                                    <span className="ml-auto text-[9px] text-emerald-600 font-semibold flex-shrink-0 bg-emerald-50 px-1.5 py-0.5 rounded-full">Answered</span>
+                                                </div>
+                                                <p className="text-[10px] text-stone-600 line-clamp-2 mb-1.5 leading-relaxed">{post.content}</p>
+                                                <div className="pt-1.5 border-t border-black/5">
+                                                    <p className="text-[9px] text-stone-400 font-semibold uppercase tracking-wide mb-0.5">Reply</p>
+                                                    <p className="text-[10px] text-stone-500 line-clamp-2 leading-relaxed">{post.reply}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {/* Replied DMs */}
+                                        {repliedDMs.map(msg => {
                                             const alreadyOnBoard = boardPosts.some(p => p.content === msg.content && p.reply === msg.replyContent);
                                             return (
                                                 <div
@@ -4182,7 +4207,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 : <span className="text-white text-[9px] font-bold">{msg.senderName.charAt(0).toUpperCase()}</span>}
                                                         </div>
                                                         <span className="text-[10px] font-bold text-stone-700 truncate">{msg.senderName}</span>
-                                                        {alreadyOnBoard && <span className="ml-auto text-[9px] text-emerald-600 font-semibold flex-shrink-0">Pinned</span>}
+                                                        {alreadyOnBoard && <span className="ml-auto text-[9px] text-emerald-600 font-semibold flex-shrink-0">On board</span>}
                                                     </div>
                                                     <p className="text-[10px] text-stone-600 line-clamp-2 mb-1.5 leading-relaxed">{msg.content}</p>
                                                     <div className="pt-1.5 border-t border-black/5">
