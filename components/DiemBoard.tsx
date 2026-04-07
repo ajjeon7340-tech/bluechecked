@@ -542,7 +542,8 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
     const loadPosts = useCallback(async () => {
         if (!creator) return;
         setIsLoading(true);
-        setPosts(await getBoardPosts(creator.id));
+        const all = await getBoardPosts(creator.id);
+        setPosts(all.filter(p => !p.isPrivate));
         setIsLoading(false);
     }, [creator]);
 
@@ -569,9 +570,19 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
         ...(creator?.products || []).map((p: any) => ({ ...p, _isProduct: true })),
     ];
 
-    const col1 = posts.filter((_, i) => i % 2 === 0);
-    const col2 = posts.filter((_, i) => i % 2 === 1);
-    const col3 = posts.filter((_, i) => i % 3 === 2);
+    const NOTE_W = 252;
+    const NOTE_H_EST = 272;
+    const NOTE_GAP_X = 28;
+    const NOTE_GAP_Y = 36;
+    const BOARD_PAD = 32;
+    const PUB_COLS = 2; // 2 cols fit within 640px guide width
+    const publicPositions = posts.map((post, idx) => {
+        if (post.positionX != null && post.positionY != null) return { x: post.positionX, y: post.positionY };
+        const col = idx % PUB_COLS;
+        const row = Math.floor(idx / PUB_COLS);
+        return { x: BOARD_PAD + col * (NOTE_W + NOTE_GAP_X), y: BOARD_PAD + row * (NOTE_H_EST + NOTE_GAP_Y) };
+    });
+    const publicCanvasH = Math.max(...publicPositions.map(p => p.y + NOTE_H_EST), 440);
 
     return (
         <>
@@ -702,31 +713,20 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                                 </div>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 items-start">
-                                <div className="space-y-0">
-                                    {col1.map((post, i) => (
-                                        <PaperNote key={post.id} post={post} idx={i * 2}
-                                            isOwn={currentUser?.id === post.fanId} isCreator={isCreator}
-                                            delay={200 + i * 55}
-                                            onClick={() => handleNoteClick(post)} />
-                                    ))}
-                                </div>
-                                <div className="space-y-0 mt-10">
-                                    {col2.map((post, i) => (
-                                        <PaperNote key={post.id} post={post} idx={i * 2 + 1}
-                                            isOwn={currentUser?.id === post.fanId} isCreator={isCreator}
-                                            delay={240 + i * 55}
-                                            onClick={() => handleNoteClick(post)} />
-                                    ))}
-                                </div>
-                                <div className="hidden md:block space-y-0 mt-20">
-                                    {col3.map((post, i) => (
-                                        <PaperNote key={post.id} post={post} idx={i * 3 + 2}
-                                            isOwn={currentUser?.id === post.fanId} isCreator={isCreator}
-                                            delay={280 + i * 55}
-                                            onClick={() => handleNoteClick(post)} />
-                                    ))}
-                                </div>
+                            <div className="relative" style={{ height: publicCanvasH }}>
+                                {posts.map((post, i) => {
+                                    const { x, y } = publicPositions[i];
+                                    return (
+                                        <div key={post.id} style={{ position: 'absolute', left: x, top: y, width: NOTE_W }}>
+                                            <PaperNote
+                                                post={post} idx={i}
+                                                isOwn={currentUser?.id === post.fanId} isCreator={isCreator}
+                                                delay={200 + i * 55}
+                                                onClick={() => handleNoteClick(post)}
+                                            />
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>

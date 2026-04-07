@@ -3019,7 +3019,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const savedPositions = new Map<string, _BP>();
                             filtered.forEach(p => {
                                 if (boardPositions[p.id]) savedPositions.set(p.id, boardPositions[p.id]);
-                                else if (p.positionX != null && p.positionY != null) savedPositions.set(p.id, { x: p.positionX, y: p.positionY });
+                                else if (p.positionX != null && p.positionY != null) savedPositions.set(p.id, { x: p.positionX + guideOffsetX, y: p.positionY + guideOffsetY });
                             });
 
                             // Second pass: assign positions for unsaved posts via adjacent-slot finder
@@ -3142,7 +3142,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const getLinkPos = (link: AffiliateLink, idx: number): {x: number, y: number} => {
                                 if (boardLinkPositions[link.id]) return boardLinkPositions[link.id];
                                 if (link.positionX !== null && link.positionX !== undefined && link.positionY !== null && link.positionY !== undefined) {
-                                    return { x: link.positionX, y: link.positionY };
+                                    return { x: link.positionX + guideOffsetX, y: link.positionY + guideOffsetY };
                                 }
                                 let y = guideOffsetY + BOARD_PAD;
                                 for (let i = 0; i < idx; i++) {
@@ -3255,8 +3255,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         })).sort((a, b) => a.pos.y !== b.pos.y ? a.pos.y - b.pos.y : a.pos.x - b.pos.x);
                                         const order = allPositioned.findIndex(item => item.id === boardDragging.id);
                                         try {
-                                            await updateBoardPostPosition(boardDragging.id, finalPos.x, finalPos.y, order);
-                                            setBoardPosts(prev => prev.map(p => p.id === boardDragging.id ? { ...p, positionX: finalPos.x, positionY: finalPos.y, displayOrder: order } : p));
+                                            await updateBoardPostPosition(boardDragging.id, finalPos.x - guideOffsetX, finalPos.y - guideOffsetY, order);
+                                            setBoardPosts(prev => prev.map(p => p.id === boardDragging.id ? { ...p, positionX: finalPos.x - guideOffsetX, positionY: finalPos.y - guideOffsetY, displayOrder: order } : p));
                                         } catch {}
                                     }
                                     setBoardDragging(null);
@@ -3265,7 +3265,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     const pos = boardLinkPositions[boardLinkDragging.id];
                                     if (pos) {
                                         const updatedLinks = (editedCreator.links || []).map(l =>
-                                            l.id === boardLinkDragging.id ? { ...l, positionX: pos.x, positionY: pos.y } : l
+                                            l.id === boardLinkDragging.id ? { ...l, positionX: pos.x - guideOffsetX, positionY: pos.y - guideOffsetY } : l
                                         );
                                         await saveBoardLinkChange(updatedLinks);
                                     }
