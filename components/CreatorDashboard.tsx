@@ -3389,7 +3389,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 style={{
                                                     left: currentPos.x,
                                                     top: currentPos.y,
-                                                    width: sqSize || LINK_W,
+                                                    width: isEditingLink ? Math.max(sqSize || LINK_W, 220) : sqSize || LINK_W,
                                                     transform: isDraggingLink ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
                                                     transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
                                                     zIndex: isDraggingLink ? 1000 : isEditingLink ? 50 : 20 + i,
