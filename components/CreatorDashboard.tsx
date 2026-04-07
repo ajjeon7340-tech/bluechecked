@@ -452,6 +452,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const boardCanvasRef = useRef<HTMLDivElement>(null);
   const boardScrollContainerRef = useRef<HTMLDivElement>(null);
   const [boardViewportW, setBoardViewportW] = useState(0);
+  const [boardViewportH, setBoardViewportH] = useState(0);
 
   // Long Press Drag State (Mobile)
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -2964,7 +2965,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             (boardScrollContainerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
                             if (el && boardViewportW === 0) {
                                 setBoardViewportW(el.offsetWidth);
-                                const ro = new ResizeObserver(() => setBoardViewportW(el.offsetWidth));
+                                setBoardViewportH(el.offsetHeight);
+                                const ro = new ResizeObserver(() => { setBoardViewportW(el.offsetWidth); setBoardViewportH(el.offsetHeight); });
                                 ro.observe(el);
                             }
                         }}
@@ -2997,6 +2999,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const COLS = 3;
                             const stableIdx = (id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xFFFFFF; return Math.abs(h); };
                             const BOARD_PAD = 32;
+                            const GUIDE_DESKTOP_W = 640;
+                            const GUIDE_H = 440;
+                            const guideOffsetX = Math.max(0, (boardViewportW - GUIDE_DESKTOP_W) / 2);
+                            const guideOffsetY = Math.max(0, (boardViewportH - GUIDE_H) / 2);
 
                             // Compute positions: saved positions are fixed; unsaved use adjacent-slot finder
                             const DB_MARGIN = 8;
@@ -3020,8 +3026,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 const col = idx % COLS;
                                 const row = Math.floor(idx / COLS);
                                 const gridPos: _BP = {
-                                    x: BOARD_PAD + col * (NOTE_W + NOTE_GAP_X) + (row % 2) * 12,
-                                    y: BOARD_PAD + row * (NOTE_H_EST + NOTE_GAP_Y),
+                                    x: guideOffsetX + BOARD_PAD + col * (NOTE_W + NOTE_GAP_X) + (row % 2) * 12,
+                                    y: guideOffsetY + BOARD_PAD + row * (NOTE_H_EST + NOTE_GAP_Y),
                                 };
                                 const placed = Array.from(computedPositions.values());
                                 if (!placed.some(op => _bpOverlaps(gridPos, op))) {
@@ -3029,7 +3035,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     return;
                                 }
                                 // Find adjacent non-colliding slot
-                                const cands: _BP[] = [{ x: BOARD_PAD, y: BOARD_PAD }];
+                                const cands: _BP[] = [{ x: guideOffsetX + BOARD_PAD, y: guideOffsetY + BOARD_PAD }];
                                 for (const op of placed) {
                                     cands.push({ x: op.x + NOTE_W + DB_MARGIN, y: op.y });
                                     cands.push({ x: op.x, y: op.y + NOTE_H_EST + DB_MARGIN });
@@ -3048,7 +3054,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             });
 
                             const getPos = (post: BoardPost, _idx: number): _BP =>
-                                computedPositions.get(post.id) ?? { x: BOARD_PAD, y: BOARD_PAD };
+                                computedPositions.get(post.id) ?? { x: guideOffsetX + BOARD_PAD, y: guideOffsetY + BOARD_PAD };
 
                             // Collision uses sticker body only (excludes tape strip at top)
                             const TAPE_H = 16;
@@ -3090,7 +3096,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const maxY = filtered.reduce((max, post, idx) => {
                                 const pos = getPos(post, idx);
                                 return Math.max(max, pos.y + NOTE_H_EST + dragBuffer);
-                            }, 400 + dragBuffer);
+                            }, guideOffsetY + GUIDE_H + dragBuffer);
 
                             const noteColors = ['#FFFEF0', '#F0FDF4', '#FFF7ED', '#F5F3FF', '#EFF6FF', '#FDF2F8'];
                             const tapeColors = ['rgba(200,193,185,0.55)', 'rgba(110,200,140,0.45)', 'rgba(240,160,80,0.4)', 'rgba(180,150,240,0.4)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)'];
@@ -3134,7 +3140,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 if (link.positionX !== null && link.positionX !== undefined && link.positionY !== null && link.positionY !== undefined) {
                                     return { x: link.positionX, y: link.positionY };
                                 }
-                                let y = BOARD_PAD;
+                                let y = guideOffsetY + BOARD_PAD;
                                 for (let i = 0; i < idx; i++) {
                                     const l = visibleBoardLinks[i];
                                     if (!l.positionY && !boardLinkPositions[l.id]) {
@@ -3291,15 +3297,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     onTouchCancel={handleCanvasMouseUp}
                                 >
                                     {/* Viewport guidelines — two rectangles showing exact visible area per device */}
-                                    {boardViewportW > 0 && (() => {
-                                        const BOARD_MAX_H = 440; // matches public profile max-height
-                                        // Desktop: actual public board container = max-w-2xl(672) - px-4*2(32) = 640px
-                                        const desktopVW = 640;
-                                        // Mobile: 390px screen - 32px padding = 358px
+                                    {boardViewportW > 0 && boardViewportH > 0 && (() => {
                                         const mobileVW = 358;
-                                        const guideLeft = (w: number) => Math.max(0, (boardViewportW - w) / 2);
                                         const GuideRect = ({ w, h, color, dash, label }: { w: number; h: number; color: string; dash?: boolean; label: string }) => (
-                                            <div className="absolute pointer-events-none" style={{ left: guideLeft(w), top: 0, width: w, height: h, zIndex: 0 }}>
+                                            <div className="absolute pointer-events-none" style={{ left: Math.max(0, (boardViewportW - w) / 2), top: guideOffsetY, width: w, height: h, zIndex: 0 }}>
                                                 <div className="absolute inset-0" style={{ border: `2px ${dash ? 'dashed' : 'solid'} ${color}`, borderRadius: 2 }} />
                                                 {/* Top-right label */}
                                                 <div className="absolute top-0 right-0 flex items-center gap-1 px-1.5 py-0.5 rounded-bl" style={{ background: `${color}22`, borderLeft: `1px solid ${color}55`, borderBottom: `1px solid ${color}55` }}>
@@ -3318,9 +3319,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         return (
                                             <>
                                                 {/* Desktop frame */}
-                                                <GuideRect w={desktopVW} h={BOARD_MAX_H} color="rgba(99,102,241,0.5)" label="Computer" />
+                                                <GuideRect w={GUIDE_DESKTOP_W} h={GUIDE_H} color="rgba(99,102,241,0.5)" label="Computer" />
                                                 {/* Mobile frame */}
-                                                <GuideRect w={mobileVW} h={BOARD_MAX_H} color="rgba(251,146,60,0.6)" dash label="Mobile" />
+                                                <GuideRect w={mobileVW} h={GUIDE_H} color="rgba(251,146,60,0.6)" dash label="Mobile" />
                                             </>
                                         );
                                     })()}
