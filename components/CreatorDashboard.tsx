@@ -3028,15 +3028,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 else if (p.positionX != null && p.positionY != null) savedPositions.set(p.id, { x: p.positionX + guideOffsetX, y: p.positionY + guideOffsetY });
                             });
 
+                            // Max columns that fit inside the guide width (with padding)
+                            const GUIDE_COLS = Math.max(1, Math.floor((GUIDE_DESKTOP_W - BOARD_PAD) / (NOTE_W + NOTE_GAP_X)));
+                            // Max rows that fit inside the guide height (with padding)
+                            const GUIDE_ROWS = Math.max(1, Math.floor((GUIDE_H - BOARD_PAD) / (NOTE_H_EST + NOTE_GAP_Y)));
+
                             // Second pass: assign positions for unsaved posts via adjacent-slot finder
                             const computedPositions = new Map<string, _BP>(savedPositions);
                             filtered.forEach((p, idx) => {
                                 if (computedPositions.has(p.id)) return;
-                                // Default grid slot
-                                const col = idx % COLS;
-                                const row = Math.floor(idx / COLS);
+                                // Default grid slot — capped to guide columns so it never overflows right
+                                const col = idx % GUIDE_COLS;
+                                const row = Math.floor(idx / GUIDE_COLS);
                                 const gridPos: _BP = {
-                                    x: guideOffsetX + BOARD_PAD + col * (NOTE_W + NOTE_GAP_X) + (row % 2) * 12,
+                                    x: guideOffsetX + BOARD_PAD + col * (NOTE_W + NOTE_GAP_X),
                                     y: guideOffsetY + BOARD_PAD + row * (NOTE_H_EST + NOTE_GAP_Y),
                                 };
                                 const placed = Array.from(computedPositions.values());
@@ -3047,15 +3052,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 // Find nearest non-colliding slot, preferring positions inside the guide
                                 const gx = guideOffsetX + BOARD_PAD;
                                 const gy = guideOffsetY + BOARD_PAD;
-                                const distToGuide = (c: _BP) => (c.x - gx) ** 2 + (c.y - gy) ** 2;
-                                // Seed candidates with every grid slot inside the guide boundary
+                                // Sort: Y-closeness to guide first, then X-closeness
+                                const distToGuide = (c: _BP) => Math.abs(c.y - gy) * 10000 + Math.abs(c.x - gx);
+                                // Seed candidates: every slot within the guide boundary
                                 const cands: _BP[] = [];
-                                for (let r = 0; r * (NOTE_H_EST + NOTE_GAP_Y) < GUIDE_H - BOARD_PAD; r++) {
-                                    for (let cl = 0; cl < COLS; cl++) {
+                                for (let r = 0; r < GUIDE_ROWS; r++) {
+                                    for (let cl = 0; cl < GUIDE_COLS; cl++) {
                                         cands.push({ x: guideOffsetX + BOARD_PAD + cl * (NOTE_W + NOTE_GAP_X), y: guideOffsetY + BOARD_PAD + r * (NOTE_H_EST + NOTE_GAP_Y) });
                                     }
                                 }
-                                // Also add adjacency-based candidates from already-placed posts
+                                // Overflow candidates: below the guide, column-aligned
+                                for (let r = GUIDE_ROWS; r < GUIDE_ROWS + 10; r++) {
+                                    for (let cl = 0; cl < GUIDE_COLS; cl++) {
+                                        cands.push({ x: guideOffsetX + BOARD_PAD + cl * (NOTE_W + NOTE_GAP_X), y: guideOffsetY + BOARD_PAD + r * (NOTE_H_EST + NOTE_GAP_Y) });
+                                    }
+                                }
+                                // Also add adjacency candidates from placed posts as a last resort
                                 for (const op of placed) {
                                     cands.push({ x: op.x + NOTE_W + DB_MARGIN, y: op.y });
                                     cands.push({ x: op.x, y: op.y + NOTE_H_EST + DB_MARGIN });
