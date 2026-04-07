@@ -4365,11 +4365,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 const answeredBoardPosts = boardPosts
                     .filter(p => p.isPrivate && p.reply !== null)
                     .sort((a, b) => new Date(b.replyAt ?? b.createdAt).getTime() - new Date(a.replyAt ?? a.createdAt).getTime());
-                const inboxFiltered = answeredBoardPosts.filter(p =>
-                    inboxBoardFilter === 'ALL' ? true :
-                    inboxBoardFilter === 'PINNED' ? p.isPinned :
-                    !p.isPinned
-                );
+                const inboxFiltered = answeredBoardPosts;
                 const inboxPost = inboxSelectedPostId ? boardPosts.find(p => p.id === inboxSelectedPostId) ?? null : null;
                 const noteColors = ['#FFFEF0', '#F0FDF4', '#FFF7ED', '#F5F3FF', '#EFF6FF', '#FDF2F8'];
                 const tapeColors = ['rgba(200,193,185,0.55)', 'rgba(110,200,140,0.45)', 'rgba(240,160,80,0.4)', 'rgba(180,150,240,0.4)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)'];
@@ -4396,17 +4392,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col ${inboxPost ? 'hidden md:flex' : 'flex'}`}
                             style={{ background: 'linear-gradient(135deg, #FAFAF8 0%, #F5F3EF 100%)', backgroundImage: 'linear-gradient(to right, rgba(168,162,158,0.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,162,158,0.07) 1px, transparent 1px)', backgroundSize: '28px 28px' }}>
                             <div className="p-3 border-b border-stone-200/40 bg-white/60 backdrop-blur-sm">
-                                <div className="flex gap-1 bg-stone-100/60 p-1 rounded-lg">
-                                    {(['ALL', 'PINNED', 'UNPINNED'] as const).map(f => (
-                                        <button
-                                            key={f}
-                                            onClick={() => setInboxBoardFilter(f)}
-                                            className={`flex-1 px-2 py-1.5 text-[10px] font-semibold rounded transition-all whitespace-nowrap ${inboxBoardFilter === f ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
-                                        >
-                                            {f === 'ALL' ? `All (${answeredBoardPosts.length})` : f === 'PINNED' ? `Pinned (${answeredBoardPosts.filter(p => p.isPinned).length})` : `Unpinned (${answeredBoardPosts.filter(p => !p.isPinned).length})`}
-                                        </button>
-                                    ))}
-                                </div>
+                                <p className="text-xs text-stone-500 font-medium">All ({answeredBoardPosts.length})</p>
                             </div>
                             <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
                                 {boardLoading ? (
@@ -4414,7 +4400,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 ) : inboxFiltered.length === 0 ? (
                                     <div className="p-8 text-center space-y-2">
                                         <div className="text-3xl">📭</div>
-                                        <p className="text-sm text-stone-400 font-medium">{inboxBoardFilter === 'PINNED' ? 'No pinned posts yet' : inboxBoardFilter === 'UNPINNED' ? 'All answered posts are pinned' : 'No answered posts yet'}</p>
+                                        <p className="text-sm text-stone-400 font-medium">No answered posts yet</p>
                                         <p className="text-xs text-stone-300">Answer questions on the Board to see them here</p>
                                     </div>
                                 ) : (
@@ -4440,9 +4426,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         boxShadow: isActive ? '0 6px 20px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.07)',
                                                     }}
                                                 >
-                                                    {post.isPinned && (
-                                                        <span className="absolute top-2 right-2"><Pin size={10} className="text-amber-500 fill-amber-400" /></span>
-                                                    )}
                                                     <div className="flex items-center gap-2 mb-2">
                                                         <div className="w-7 h-7 rounded-full bg-stone-800 flex items-center justify-center flex-shrink-0 overflow-hidden border border-stone-200/60">
                                                             {post.fanAvatarUrl
@@ -4508,19 +4491,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => {
-                                                        const next = !post.isPinned;
-                                                        setBoardPosts(prev => prev.map(p => p.id === post.id ? { ...p, isPinned: next } : p));
-                                                        pinBoardPost(post.id, next);
-                                                    }}
-                                                    className="flex items-center gap-2 text-xs font-medium hover:opacity-80 transition-opacity"
-                                                >
-                                                    <span className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors duration-200 ${post.isPinned ? 'bg-amber-400' : 'bg-stone-200'}`}>
-                                                        <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${post.isPinned ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                                                    </span>
-                                                    <Pin size={10} className={post.isPinned ? 'text-amber-600 fill-current' : 'text-stone-400'} />
-                                                </button>
                                                 <button
                                                     onClick={async () => {
                                                         if (!window.confirm('Delete this post?')) return;
