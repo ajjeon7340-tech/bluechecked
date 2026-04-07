@@ -3044,15 +3044,25 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     computedPositions.set(p.id, gridPos);
                                     return;
                                 }
-                                // Find adjacent non-colliding slot
-                                const cands: _BP[] = [{ x: guideOffsetX + BOARD_PAD, y: guideOffsetY + BOARD_PAD }];
+                                // Find nearest non-colliding slot, preferring positions inside the guide
+                                const gx = guideOffsetX + BOARD_PAD;
+                                const gy = guideOffsetY + BOARD_PAD;
+                                const distToGuide = (c: _BP) => (c.x - gx) ** 2 + (c.y - gy) ** 2;
+                                // Seed candidates with every grid slot inside the guide boundary
+                                const cands: _BP[] = [];
+                                for (let r = 0; r * (NOTE_H_EST + NOTE_GAP_Y) < GUIDE_H - BOARD_PAD; r++) {
+                                    for (let cl = 0; cl < COLS; cl++) {
+                                        cands.push({ x: guideOffsetX + BOARD_PAD + cl * (NOTE_W + NOTE_GAP_X), y: guideOffsetY + BOARD_PAD + r * (NOTE_H_EST + NOTE_GAP_Y) });
+                                    }
+                                }
+                                // Also add adjacency-based candidates from already-placed posts
                                 for (const op of placed) {
                                     cands.push({ x: op.x + NOTE_W + DB_MARGIN, y: op.y });
                                     cands.push({ x: op.x, y: op.y + NOTE_H_EST + DB_MARGIN });
                                     cands.push({ x: op.x - NOTE_W - DB_MARGIN, y: op.y });
                                     cands.push({ x: op.x, y: op.y - NOTE_H_EST - DB_MARGIN });
                                 }
-                                cands.sort((a, b) => (a.x**2 + a.y**2) - (b.x**2 + b.y**2));
+                                cands.sort((a, b) => distToGuide(a) - distToGuide(b));
                                 for (const c of cands) {
                                     if (c.x < 0 || c.y < 0) continue;
                                     if (!placed.some(op => _bpOverlaps(c, op))) {
