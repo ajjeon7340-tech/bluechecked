@@ -3423,7 +3423,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             onClick={e => e.stopPropagation()}
                                                         />
                                                         {/* Color swatches */}
-                                                        <div className="flex items-center gap-1 mb-2.5" onClick={e => e.stopPropagation()}>
+                                                        <div className="flex flex-wrap items-center gap-1 mb-2.5" onClick={e => e.stopPropagation()}>
                                                             {['#FFFEF0','#F0FDF4','#FFF7ED','#F5F3FF','#EFF6FF','#FDF2F8','#FFF1F2','#ECFDF5','#FFFBEB','#F0F9FF'].map(c => (
                                                                 <button
                                                                     key={c}
