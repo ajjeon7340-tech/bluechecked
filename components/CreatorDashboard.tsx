@@ -1035,16 +1035,30 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             setBoardPosts(posts);
             setBoardLoading(false);
         });
-        // Reset scroll so the centered guide is immediately visible
-        requestAnimationFrame(() => {
-            boardScrollContainerRef.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
-        });
+        // Scroll handled by the boardViewportH effect below
     }
   }, [currentView, statsTimeFrame, statsDate]);
 
   useEffect(() => {
     setEditedCreator(creator);
   }, [creator]);
+
+  // Measure board canvas viewport and scroll to center the guide whenever the board mounts
+  useEffect(() => {
+    if (currentView !== 'BOARD') return;
+    const el = boardScrollContainerRef.current;
+    if (!el) return;
+    const measure = () => {
+      setBoardViewportW(el.offsetWidth);
+      setBoardViewportH(el.offsetHeight);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    // Scroll so the guide is centered (scrollTop=0 when guideOffsetY=(viewportH-GUIDE_H)/2)
+    el.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+    return () => ro.disconnect();
+  }, [currentView]);
 
   // Keep ref in sync for use inside async callbacks
   useEffect(() => { selectedSenderEmailRef.current = selectedSenderEmail; }, [selectedSenderEmail]);
@@ -2936,7 +2950,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             )}
 
             {currentView === 'BOARD' && (
-                <div className="h-full overflow-auto">
+                <div className="h-full flex flex-col overflow-hidden">
                     {/* Header */}
                     <div className="sticky top-0 z-10 bg-[#F5F3EE]/95 backdrop-blur-sm border-b border-stone-200/60 px-4 sm:px-6 py-4">
                         <div className="flex items-center justify-between max-w-4xl mx-auto">
@@ -2965,15 +2979,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                     {/* Freeform corkboard canvas */}
                     <div
-                        ref={el => {
-                            (boardScrollContainerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-                            if (el && boardViewportW === 0) {
-                                setBoardViewportW(el.offsetWidth);
-                                setBoardViewportH(el.offsetHeight);
-                                const ro = new ResizeObserver(() => { setBoardViewportW(el.offsetWidth); setBoardViewportH(el.offsetHeight); });
-                                ro.observe(el);
-                            }
-                        }}
+                        ref={boardScrollContainerRef}
                         className="relative flex-1 overflow-auto"
                     >
                         {boardLoading ? (
