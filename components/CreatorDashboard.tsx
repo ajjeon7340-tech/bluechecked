@@ -3422,9 +3422,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             onChange={e => setBoardLinkDraft(p => ({ ...p, url: e.target.value }))}
                                                             onClick={e => e.stopPropagation()}
                                                         />
-                                                        {/* Color swatches */}
-                                                        <div className="flex flex-wrap items-center gap-1 mb-2.5" onClick={e => e.stopPropagation()}>
-                                                            {['#FFFEF0','#F0FDF4','#FFF7ED','#F5F3FF','#EFF6FF','#FDF2F8','#FFF1F2','#ECFDF5','#FFFBEB','#F0F9FF'].map(c => (
+                                                        {/* Color swatches + palette picker */}
+                                                        <div className="flex items-center gap-1 mb-2.5" onClick={e => e.stopPropagation()}>
+                                                            {['#FFFEF0','#F0FDF4','#FFF7ED'].map(c => (
                                                                 <button
                                                                     key={c}
                                                                     onClick={e => { e.stopPropagation(); setBoardLinkDraft(p => ({ ...p, color: c })); }}
@@ -3436,6 +3436,24 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     }}
                                                                 />
                                                             ))}
+                                                            {/* Custom color picker */}
+                                                            <label
+                                                                className="w-4 h-4 rounded-full flex-shrink-0 cursor-pointer flex items-center justify-center hover:scale-110 transition-transform overflow-hidden"
+                                                                style={{
+                                                                    background: 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)',
+                                                                    border: '1.5px solid rgba(0,0,0,0.15)',
+                                                                }}
+                                                                title="Pick a color"
+                                                                onClick={e => e.stopPropagation()}
+                                                            >
+                                                                <input
+                                                                    type="color"
+                                                                    className="opacity-0 absolute w-0 h-0"
+                                                                    value={boardLinkDraft.color || linkColors[lc]}
+                                                                    onChange={e => setBoardLinkDraft(p => ({ ...p, color: e.target.value }))}
+                                                                    onClick={e => e.stopPropagation()}
+                                                                />
+                                                            </label>
                                                         </div>
                                                         {/* Size Swatches (Always visible for all links) */}
                                                         <div className="flex items-center gap-1 mb-2.5" onClick={e => e.stopPropagation()}>
