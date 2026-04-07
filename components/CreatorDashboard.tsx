@@ -3456,8 +3456,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             </label>
                                                         </div>
                                                         {/* Size Swatches (Always visible for all links) */}
-                                                        <div className="flex items-center gap-1 mb-2.5" onClick={e => e.stopPropagation()}>
-                                                            <span className="text-[10px] font-bold text-stone-400 uppercase mr-1">Size</span>
+                                                        <div className="mb-2.5" onClick={e => e.stopPropagation()}>
+                                                            <span className="text-[10px] font-bold text-stone-400 uppercase block mb-1">Size</span>
+                                                            <div className="flex gap-1">
                                                             {([['wide', 'Wide'], ['square-s', 'S'], ['square-m', 'M'], ['square-l', 'L']] as const).map(([sVal, sLabel]) => {
                                                                 const isSelected = link.iconShape === sVal || (link.iconShape === 'square' && sVal === 'square-s') || (sVal === 'wide' && !['square-s', 'square-m', 'square-l', 'square'].includes(link.iconShape || ''));
                                                                 return (
@@ -3475,6 +3476,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     </button>
                                                                 );
                                                             })}
+                                                            </div>
                                                         </div>
                                                         <div className="flex gap-1.5">
                                                             <button
