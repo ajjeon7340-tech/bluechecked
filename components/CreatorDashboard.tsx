@@ -3671,7 +3671,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     {(() => {
                         const isAddingSticker = boardAddingLink || boardAddingProduct || boardAddingSupport || boardAddingYoutube || boardAddingPlatform;
                         return (
-                    {/* Sticky bottom toolbar */}
                     <div className="sticky bottom-0 z-20 pb-4 pt-2 pointer-events-none">
                         <div className="pointer-events-auto flex items-end justify-center gap-3 flex-wrap px-4" style={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.12))' }}>
 
