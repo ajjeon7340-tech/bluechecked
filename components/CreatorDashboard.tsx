@@ -1035,6 +1035,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             setBoardPosts(posts);
             setBoardLoading(false);
         });
+        // Reset scroll so the centered guide is immediately visible
+        requestAnimationFrame(() => {
+            boardScrollContainerRef.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+        });
     }
   }, [currentView, statsTimeFrame, statsDate]);
 
