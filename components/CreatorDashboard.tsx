@@ -2976,7 +2976,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             </div>
                         ) : (() => {
                             const visibleBoardLinks = (editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden);
-                            const filtered = boardFilter === 'LINKS' ? [] : boardPosts.filter(p =>
+                            const filtered = boardFilter === 'LINKS' ? [] : boardPosts.filter(p => !p.isPrivate).filter(p =>
                                 boardFilter === 'ALL' ? true : boardFilter === 'PENDING' ? (!p.reply && !p.isPinned) : (!!p.reply || p.isPinned)
                             ).sort((a, b) => {
                                 if (a.displayOrder !== null && b.displayOrder !== null) return (a.displayOrder ?? 0) - (b.displayOrder ?? 0);
@@ -4363,7 +4363,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
             {currentView === 'INBOX' && (() => {
                 const answeredBoardPosts = boardPosts
-                    .filter(p => p.reply !== null)
+                    .filter(p => p.isPrivate && p.reply !== null)
                     .sort((a, b) => new Date(b.replyAt ?? b.createdAt).getTime() - new Date(a.replyAt ?? a.createdAt).getTime());
                 const inboxFiltered = answeredBoardPosts.filter(p =>
                     inboxBoardFilter === 'ALL' ? true :
