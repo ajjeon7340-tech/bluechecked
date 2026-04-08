@@ -957,6 +957,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                       }
                                                       const isYoutube = detectedPlatform === 'youtube' && !isProduct && !isSupport;
                                                       const sqSize = _getLinkSize(link);
+                                                      const isThumbnailMode = link.displayStyle === 'thumbnail' && !isYoutube;
                                                       const pos = getLinkPos(link, li);
 
                                                       const linkRot = rotations[(stableIdx(link.id) + li) % rotations.length];
@@ -964,12 +965,50 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           <div
                                                               key={link.id}
                                                               className="absolute"
-                                                          style={{ left: pos.x, top: pos.y, width: sqSize || PROFILE_W, zIndex: 20 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
+                                                          style={{ left: pos.x, top: pos.y, width: isThumbnailMode ? PROFILE_W : (sqSize || PROFILE_W), zIndex: 20 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
                                                               onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '10'; }}
                                                               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = '2'; }}
                                                           >
-                                                          <div className={`h-3 mx-auto rounded-b-sm ${sqSize ? (sqSize === 220 ? 'w-10' : sqSize === 160 ? 'w-8' : 'w-6') : 'w-10'}`} style={{ background: tapeColors[nc] }} />
-                                                              {isProduct ? (
+                                                          <div className={`h-3 mx-auto rounded-b-sm ${isThumbnailMode ? 'w-10' : sqSize ? (sqSize === 220 ? 'w-10' : sqSize === 160 ? 'w-8' : 'w-6') : 'w-10'}`} style={{ background: tapeColors[nc] }} />
+                                                              {isThumbnailMode ? (
+                                                                  (() => {
+                                                                      const thumbBg = detectedPlatform ? '#0f0f0f' : isProduct ? '#ede9fe' : isSupport ? '#fdf2f8' : '#e5e7eb';
+                                                                      const typeIcon = isProduct
+                                                                          ? <ShoppingBag size={10} className="text-violet-500 flex-shrink-0" />
+                                                                          : isSupport
+                                                                              ? <Heart size={10} className="text-pink-500 flex-shrink-0" />
+                                                                              : detectedPlatform
+                                                                                  ? <span className="w-3 h-3 flex-shrink-0">{getPlatformIcon(detectedPlatform)}</span>
+                                                                                  : <ExternalLink size={10} className="text-stone-400 flex-shrink-0" />;
+                                                                      const handleThumbClick = () => {
+                                                                          if (isProduct) handleProductClick(link);
+                                                                          else if (isSupport) handleSupportClick(link.price);
+                                                                          else if (link.url) window.open(ensureProtocol(link.url), '_blank');
+                                                                      };
+                                                                      return (
+                                                                          <button
+                                                                              onClick={e => { e.stopPropagation(); handleThumbClick(); }}
+                                                                              className="w-full text-left rounded-lg overflow-hidden hover:opacity-90 transition-opacity p-3"
+                                                                              style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                          >
+                                                                              <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%', backgroundColor: thumbBg }}>
+                                                                                  {hasThumbnail
+                                                                                      ? <img src={link.thumbnailUrl} className="absolute inset-0 w-full h-full object-cover" alt={link.title} />
+                                                                                      : <div className="absolute inset-0 flex items-center justify-center">
+                                                                                          {detectedPlatform ? <div className="scale-[2.5]">{getPlatformIcon(detectedPlatform)}</div>
+                                                                                              : isProduct ? <ShoppingBag size={28} className="text-violet-300" />
+                                                                                              : isSupport ? <Heart size={28} className="text-pink-300" />
+                                                                                              : <ExternalLink size={28} className="text-stone-300" />}
+                                                                                        </div>}
+                                                                              </div>
+                                                                              <div className="flex items-center gap-1">
+                                                                                  {typeIcon}
+                                                                                  <p className="text-[10px] font-bold text-stone-700 truncate">{link.title}</p>
+                                                                              </div>
+                                                                          </button>
+                                                                      );
+                                                                  })()
+                                                              ) : isProduct ? (
                                                                   <button
                                                                       onClick={() => handleProductClick(link)}
                                                                       className="w-full text-left rounded-lg overflow-hidden hover:opacity-90 transition-opacity"

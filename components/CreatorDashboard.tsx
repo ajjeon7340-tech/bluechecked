@@ -3535,7 +3535,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     </div>
                                                 ) : (
                                                     <div
-                                                        className={`relative rounded-lg ${sqSize === 64 ? 'p-1.5 aspect-square flex items-center justify-center' : sqSize ? 'p-3 aspect-square flex flex-col items-center justify-center text-center' : 'p-3'}`}
+                                                        className={`relative rounded-lg ${isThumbnailMode ? 'p-3' : sqSize === 64 ? 'p-1.5 aspect-square flex items-center justify-center' : sqSize ? 'p-3 aspect-square flex flex-col items-center justify-center text-center' : 'p-3'}`}
                                                         style={{
                                                             backgroundColor: link.buttonColor || linkColors[lc],
                                                             border: isDraggingLink ? '2px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.08)',
@@ -3575,7 +3575,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                         ? <span className="w-3 h-3 flex-shrink-0">{getPreviewPlatformIcon(detectedPlatform)}</span>
                                                                         : <LinkIcon size={10} className="text-stone-400 flex-shrink-0" />;
                                                             return (
-                                                                <div className="flex flex-col h-full w-full">
+                                                                <div className="flex flex-col w-full">
                                                                     <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%', backgroundColor: thumbBg }}>
                                                                         {hasRealPhoto
                                                                             ? <img src={link.thumbnailUrl} className="absolute inset-0 w-full h-full object-cover" alt={link.title} />
@@ -3652,7 +3652,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                             ? <span className="w-3 h-3 flex-shrink-0">{getPreviewPlatformIcon(detectedPlatform)}</span>
                                                                             : <LinkIcon size={10} className="text-stone-400 flex-shrink-0" />;
                                                                 return (
-                                                                    <div className="flex flex-col h-full w-full">
+                                                                    <div className="flex flex-col w-full">
                                                                         {/* Thumbnail image — same style as YouTube card */}
                                                                         <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%', backgroundColor: thumbBg }}>
                                                                             {hasRealPhoto
