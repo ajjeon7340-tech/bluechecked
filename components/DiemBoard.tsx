@@ -254,10 +254,6 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
                                     : detectedPlatform
                                         ? <span className="w-3 h-3 flex-shrink-0">{pubPlatformIcon(detectedPlatform)}</span>
                                         : <LinkIcon size={10} className="text-stone-400 flex-shrink-0" />;
-                            const typeLabel = link.type === 'DIGITAL_PRODUCT' ? 'Digital Product'
-                                : link.type === 'SUPPORT' ? 'Support'
-                                : detectedPlatform ? detectedPlatform.charAt(0).toUpperCase() + detectedPlatform.slice(1) + ' Video'
-                                : 'Link';
                             return (
                                 <>
                                     <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%', backgroundColor: thumbBg }}>
@@ -274,7 +270,6 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
                                         {typeIcon}
                                         <p className="text-[10px] font-bold text-stone-700 truncate">{link.title}</p>
                                     </div>
-                                    <p className="text-[9px] text-stone-400 mt-0.5">{typeLabel}</p>
                                 </>
                             );
                         })()}

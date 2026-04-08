@@ -3574,10 +3574,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     : detectedPlatform
                                                                         ? <span className="w-3 h-3 flex-shrink-0">{getPreviewPlatformIcon(detectedPlatform)}</span>
                                                                         : <LinkIcon size={10} className="text-stone-400 flex-shrink-0" />;
-                                                            const typeLabel = link.type === 'DIGITAL_PRODUCT' ? 'Digital Product'
-                                                                : link.type === 'SUPPORT' ? 'Support'
-                                                                : detectedPlatform ? detectedPlatform.charAt(0).toUpperCase() + detectedPlatform.slice(1) + ' Video'
-                                                                : 'Link';
                                                             return (
                                                                 <div className="flex flex-col h-full w-full">
                                                                     <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%', backgroundColor: thumbBg }}>
@@ -3595,7 +3591,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                         {typeIcon}
                                                                         <p className="text-[10px] font-bold text-stone-700 truncate">{link.title}</p>
                                                                     </div>
-                                                                    <p className="text-[9px] text-stone-400 mt-0.5">{typeLabel}</p>
                                                                 </div>
                                                             );
                                                         })() : _ytIdLink && link.displayStyle !== 'icon' ? (
@@ -3656,10 +3651,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                         : detectedPlatform
                                                                             ? <span className="w-3 h-3 flex-shrink-0">{getPreviewPlatformIcon(detectedPlatform)}</span>
                                                                             : <LinkIcon size={10} className="text-stone-400 flex-shrink-0" />;
-                                                                const typeLabel = link.type === 'DIGITAL_PRODUCT' ? 'Digital Product'
-                                                                    : link.type === 'SUPPORT' ? 'Support'
-                                                                    : detectedPlatform ? detectedPlatform.charAt(0).toUpperCase() + detectedPlatform.slice(1) + ' Video'
-                                                                    : 'Link';
                                                                 return (
                                                                     <div className="flex flex-col h-full w-full">
                                                                         {/* Thumbnail image — same style as YouTube card */}
@@ -3679,7 +3670,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                             {typeIcon}
                                                                             <p className="text-[10px] font-bold text-stone-700 truncate">{link.title}</p>
                                                                         </div>
-                                                                        <p className="text-[9px] text-stone-400 mt-0.5">{typeLabel}</p>
                                                                     </div>
                                                                 );
                                                             }
