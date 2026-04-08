@@ -31,6 +31,7 @@ export interface AffiliateLink {
   price?: number; // In Credits
   thumbnailUrl?: string;
   iconShape?: 'circle' | 'rounded' | 'square' | 'square-xs' | 'square-s' | 'square-m' | 'square-l';
+  displayStyle?: 'icon' | 'thumbnail';
   sectionId?: string;
   buttonColor?: string;
   hidden?: boolean;

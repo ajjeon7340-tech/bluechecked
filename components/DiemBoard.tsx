@@ -204,6 +204,7 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
     const ytId = link.url ? pubGetYtId(link.url) : null;
     const detectedPlatform = link.url ? pubDetectPlatform(link.url) : null;
     const hasRealPhoto = link.thumbnailUrl && !link.thumbnailUrl.startsWith('data:emoji,');
+    const isThumbnailStyle = link.displayStyle === 'thumbnail' || (!link.displayStyle && hasRealPhoto);
 
     const handleClick = () => {
         if (link.url && link.url !== '#') window.open(link.url.startsWith('http') ? link.url : `https://${link.url}`, '_blank');
@@ -263,10 +264,14 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
                         <p className={`${sqSize === 220 ? 'text-lg mb-1 px-4' : sqSize === 160 ? 'text-base mb-1 px-2' : 'text-xs mb-0.5 px-1'} font-bold text-stone-800 leading-tight w-full truncate`}>{link.title}</p>
                         <p className="text-[8px] text-stone-500 uppercase tracking-wider font-semibold">{link.type === 'DIGITAL_PRODUCT' ? 'Buy' : link.type === 'SUPPORT' ? 'Tip' : 'Visit'}</p>
                     </>
-                ) : hasRealPhoto ? (
+                ) : isThumbnailStyle ? (
                     <div className="flex flex-col h-full w-full">
                         <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%' }}>
-                            <img src={link.thumbnailUrl} className="absolute inset-0 w-full h-full object-cover" alt={link.title} />
+                            {hasRealPhoto
+                                ? <img src={link.thumbnailUrl} className="absolute inset-0 w-full h-full object-cover" alt={link.title} />
+                                : <div className="absolute inset-0 flex items-center justify-center bg-stone-100/60">
+                                    {detectedPlatform ? <div className="scale-[2]">{pubPlatformIcon(detectedPlatform)}</div> : <LinkIcon size={24} className="text-stone-300" />}
+                                  </div>}
                         </div>
                         <div className="flex items-center gap-1.5">
                             {link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={10} className="text-violet-400 flex-shrink-0" />

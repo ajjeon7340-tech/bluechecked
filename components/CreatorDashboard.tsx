@@ -422,7 +422,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setBoardYoutubeDraft('');
     setMobileAddMenuOpen(false);
   };
-  const [boardLinkDraft, setBoardLinkDraft] = useState<{ title: string; url: string; price: string; type: 'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT'; color?: string; thumbnailUrl?: string }>({ title: '', url: '', price: '', type: 'EXTERNAL' });
+  const [boardLinkDraft, setBoardLinkDraft] = useState<{ title: string; url: string; price: string; type: 'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT'; color?: string; thumbnailUrl?: string; displayStyle?: 'icon' | 'thumbnail' }>({ title: '', url: '', price: '', type: 'EXTERNAL' });
   const [boardReplyDraft, setBoardReplyDraft] = useState<Record<string, string>>({});
   const [boardReplyingId, setBoardReplyingId] = useState<string | null>(null);
   const [boardReplyAttachmentFile, setBoardReplyAttachmentFile] = useState<File | null>(null);
@@ -3454,6 +3454,27 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             })}
                                                             </div>
                                                         </div>
+                                                        {/* Style picker — Icon vs Thumbnail */}
+                                                        <div className="mb-2.5" onClick={e => e.stopPropagation()}>
+                                                            <span className="text-[10px] font-bold text-stone-400 uppercase block mb-1">Style</span>
+                                                            <div className="flex gap-1">
+                                                                {([
+                                                                    ['icon', 'Icon', '▤'],
+                                                                    ['thumbnail', 'Thumb', '▣'],
+                                                                ] as const).map(([val, label, icon]) => {
+                                                                    const isSelected = (boardLinkDraft.displayStyle || 'icon') === val;
+                                                                    return (
+                                                                        <button
+                                                                            key={val}
+                                                                            onClick={e => { e.stopPropagation(); setBoardLinkDraft(p => ({ ...p, displayStyle: val })); }}
+                                                                            className={`flex-1 py-0.5 text-[10px] font-bold rounded border transition-colors flex items-center justify-center gap-0.5 ${isSelected ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-500 border-stone-200 hover:bg-stone-50'}`}
+                                                                        >
+                                                                            <span className="text-[11px]">{icon}</span> {label}
+                                                                        </button>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
                                                         {/* Photo preview upload */}
                                                         <div className="mb-2.5" onClick={e => e.stopPropagation()}>
                                                             <span className="text-[10px] font-bold text-stone-400 uppercase block mb-1">Photo</span>
@@ -3497,6 +3518,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                             url: boardLinkDraft.url || l.url,
                                                                             ...(boardLinkDraft.color ? { buttonColor: boardLinkDraft.color } : {}),
                                                                             ...(boardLinkDraft.thumbnailUrl !== undefined ? { thumbnailUrl: boardLinkDraft.thumbnailUrl } : {}),
+                                                                            ...(boardLinkDraft.displayStyle !== undefined ? { displayStyle: boardLinkDraft.displayStyle } : {}),
                                                                         } : l
                                                                     );
                                                                     await saveBoardLinkChange(updatedLinks);
@@ -3525,7 +3547,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 onClick={e => {
                                                                     e.stopPropagation();
                                                                     setBoardLinkEditId(link.id);
-                                                                    setBoardLinkDraft({ title: link.title, url: link.url, price: link.price?.toString() || '', type: (link.type as any) || 'EXTERNAL', color: link.buttonColor, thumbnailUrl: link.thumbnailUrl });
+                                                                    setBoardLinkDraft({ title: link.title, url: link.url, price: link.price?.toString() || '', type: (link.type as any) || 'EXTERNAL', color: link.buttonColor, thumbnailUrl: link.thumbnailUrl, displayStyle: link.displayStyle });
                                                                 }}
                                                                 title="Edit"
                                                             ><Pencil size={10} /></button>
@@ -3585,13 +3607,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     <p className="text-[8px] text-stone-500 uppercase tracking-wider font-semibold">{link.type === 'DIGITAL_PRODUCT' ? 'Buy' : link.type === 'SUPPORT' ? 'Tip' : 'Visit'}</p>
                                                             </>
                                                         ) : (() => {
-                                                            // Wide format: real photo → thumbnail banner layout
+                                                            // Wide format: thumbnail style when explicitly set OR auto-detected (real photo)
                                                             const hasRealPhoto = link.thumbnailUrl && !link.thumbnailUrl.startsWith('data:emoji,');
-                                                            if (hasRealPhoto) {
+                                                            const isThumbnailStyle = link.displayStyle === 'thumbnail' || (!link.displayStyle && hasRealPhoto);
+                                                            if (isThumbnailStyle) {
                                                                 return (
                                                                     <div className="flex flex-col h-full w-full">
                                                                         <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%' }}>
-                                                                            <img src={link.thumbnailUrl} className="absolute inset-0 w-full h-full object-cover" alt={link.title} />
+                                                                            {hasRealPhoto
+                                                                                ? <img src={link.thumbnailUrl} className="absolute inset-0 w-full h-full object-cover" alt={link.title} />
+                                                                                : <div className="absolute inset-0 flex items-center justify-center bg-stone-100/60">
+                                                                                    {detectedPlatform ? <div className="scale-[2]">{getPreviewPlatformIcon(detectedPlatform)}</div> : <LinkIcon size={24} className="text-stone-300" />}
+                                                                                  </div>}
                                                                         </div>
                                                                         <div className="flex items-center gap-1.5">
                                                                             {link.type === 'DIGITAL_PRODUCT' ? (
