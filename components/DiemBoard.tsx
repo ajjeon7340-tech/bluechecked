@@ -227,7 +227,7 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
                     boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
                 }}
             >
-                {ytId ? (
+                {ytId && link.displayStyle !== 'icon' ? (
                     <>
                         <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%' }}>
                             <img src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`} className="absolute inset-0 w-full h-full object-cover" alt={link.title} />
@@ -266,13 +266,21 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
                     </>
                 ) : isThumbnailStyle ? (
                     <div className="flex flex-col h-full w-full">
-                        <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%' }}>
-                            {hasRealPhoto
-                                ? <img src={link.thumbnailUrl} className="absolute inset-0 w-full h-full object-cover" alt={link.title} />
-                                : <div className="absolute inset-0 flex items-center justify-center bg-stone-100/60">
-                                    {detectedPlatform ? <div className="scale-[2]">{pubPlatformIcon(detectedPlatform)}</div> : <LinkIcon size={24} className="text-stone-300" />}
-                                  </div>}
-                        </div>
+                        {(() => {
+                            const thumbBg = link.type === 'DIGITAL_PRODUCT' ? 'bg-violet-50' : link.type === 'SUPPORT' ? 'bg-pink-50' : detectedPlatform ? 'bg-stone-900' : 'bg-stone-100';
+                            return (
+                                <div className={`relative w-full rounded-md overflow-hidden mb-2 ${thumbBg}`} style={{ paddingBottom: '56.25%' }}>
+                                    {hasRealPhoto
+                                        ? <img src={link.thumbnailUrl} className="absolute inset-0 w-full h-full object-cover" alt={link.title} />
+                                        : <div className="absolute inset-0 flex items-center justify-center">
+                                            {detectedPlatform ? <div className="scale-[2.5]">{pubPlatformIcon(detectedPlatform)}</div>
+                                                : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={28} className="text-violet-300" />
+                                                : link.type === 'SUPPORT' ? <Heart size={28} className="text-pink-300" />
+                                                : <LinkIcon size={28} className="text-stone-300" />}
+                                          </div>}
+                                </div>
+                            );
+                        })()}
                         <div className="flex items-center gap-1.5">
                             {link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={10} className="text-violet-400 flex-shrink-0" />
                                 : link.type === 'SUPPORT' ? <Heart size={10} className="text-pink-400 flex-shrink-0" />

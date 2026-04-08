@@ -3561,7 +3561,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 title="Delete"
                                                             ><Trash2 size={10} /></button>
                                                         </div>
-                                                        {_ytIdLink ? (
+                                                        {_ytIdLink && link.displayStyle !== 'icon' ? (
                                                             <>
                                                                 {/* YouTube thumbnail */}
                                                                 <div className="relative w-full rounded-md overflow-hidden -mx-0 mb-2" style={{ paddingBottom: '56.25%' }}>
@@ -3611,13 +3611,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             const hasRealPhoto = link.thumbnailUrl && !link.thumbnailUrl.startsWith('data:emoji,');
                                                             const isThumbnailStyle = link.displayStyle === 'thumbnail' || (!link.displayStyle && hasRealPhoto);
                                                             if (isThumbnailStyle) {
+                                                                const thumbBg = link.type === 'DIGITAL_PRODUCT' ? 'bg-violet-50' : link.type === 'SUPPORT' ? 'bg-pink-50' : detectedPlatform ? 'bg-stone-900' : 'bg-stone-100';
                                                                 return (
                                                                     <div className="flex flex-col h-full w-full">
-                                                                        <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%' }}>
+                                                                        <div className={`relative w-full rounded-md overflow-hidden mb-2 ${thumbBg}`} style={{ paddingBottom: '56.25%' }}>
                                                                             {hasRealPhoto
                                                                                 ? <img src={link.thumbnailUrl} className="absolute inset-0 w-full h-full object-cover" alt={link.title} />
-                                                                                : <div className="absolute inset-0 flex items-center justify-center bg-stone-100/60">
-                                                                                    {detectedPlatform ? <div className="scale-[2]">{getPreviewPlatformIcon(detectedPlatform)}</div> : <LinkIcon size={24} className="text-stone-300" />}
+                                                                                : <div className="absolute inset-0 flex items-center justify-center">
+                                                                                    {detectedPlatform
+                                                                                        ? <div className="scale-[2.5]">{getPreviewPlatformIcon(detectedPlatform)}</div>
+                                                                                        : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={28} className="text-violet-300" />
+                                                                                        : link.type === 'SUPPORT' ? <Heart size={28} className="text-pink-300" />
+                                                                                        : <LinkIcon size={28} className="text-stone-300" />}
                                                                                   </div>}
                                                                         </div>
                                                                         <div className="flex items-center gap-1.5">
