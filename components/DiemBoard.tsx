@@ -197,14 +197,15 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
 
     const sqSize = getLinkSize(link);
     const LINK_W = 220;
-    const width = sqSize || LINK_W;
-    const tapeW = sqSize === 220 ? 'w-12' : sqSize === 160 ? 'w-10' : sqSize === 64 ? 'w-5' : sqSize ? 'w-8' : 'w-12';
-    const bgColor = link.buttonColor || linkColors[lc];
-
     const ytId = link.url ? pubGetYtId(link.url) : null;
     const detectedPlatform = link.url ? pubDetectPlatform(link.url) : null;
     const hasRealPhoto = link.thumbnailUrl && !link.thumbnailUrl.startsWith('data:emoji,');
-    const isThumbnailStyle = link.displayStyle === 'thumbnail' || (!link.displayStyle && hasRealPhoto);
+    const isThumbnailStyle = link.displayStyle === 'thumbnail' || (!link.displayStyle && hasRealPhoto && !sqSize);
+    // Thumbnail mode forces wide card regardless of iconShape
+    const isThumbnailMode = isThumbnailStyle && !(ytId && link.displayStyle !== 'icon');
+    const width = isThumbnailMode ? LINK_W : (sqSize || LINK_W);
+    const tapeW = isThumbnailMode ? 'w-12' : sqSize === 220 ? 'w-12' : sqSize === 160 ? 'w-10' : sqSize === 64 ? 'w-5' : sqSize ? 'w-8' : 'w-12';
+    const bgColor = link.buttonColor || linkColors[lc];
 
     const handleClick = () => {
         if (link.url && link.url !== '#') window.open(link.url.startsWith('http') ? link.url : `https://${link.url}`, '_blank');
@@ -220,7 +221,7 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
             <div className={`h-4 mx-auto rounded-b-sm flex-shrink-0 ${tapeW}`} style={{ background: linkTapes[lc] }} />
             {/* Card body */}
             <div
-                className={`rounded-lg shadow-md ${sqSize === 64 ? 'p-1.5 aspect-square flex items-center justify-center' : sqSize ? 'p-3 aspect-square flex flex-col items-center justify-center text-center' : 'p-3'}`}
+                className={`rounded-lg shadow-md ${isThumbnailMode ? 'p-3' : sqSize === 64 ? 'p-1.5 aspect-square flex items-center justify-center' : sqSize ? 'p-3 aspect-square flex flex-col items-center justify-center text-center' : 'p-3'}`}
                 style={{
                     backgroundColor: bgColor,
                     border: '1px solid rgba(0,0,0,0.08)',
@@ -242,29 +243,7 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
                             <p className="text-[10px] font-bold text-stone-700 truncate">{link.title}</p>
                         </div>
                     </>
-                ) : sqSize === 64 ? (
-                    <div className="w-10 h-10 rounded-xl bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto">
-                        {detectedPlatform ? <div className="scale-[1.25]">{pubPlatformIcon(detectedPlatform)}</div>
-                            : link.thumbnailUrl?.startsWith('data:emoji,') ? <span className="text-xl">{link.thumbnailUrl.replace('data:emoji,', '')}</span>
-                            : hasRealPhoto ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-xl" alt={link.title} />
-                            : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={18} className="text-violet-500" />
-                            : link.type === 'SUPPORT' ? <Heart size={18} className="text-pink-500" />
-                            : <LinkIcon size={18} className="text-stone-500" />}
-                    </div>
-                ) : sqSize ? (
-                    <>
-                        <div className={`${sqSize === 220 ? 'w-16 h-16 rounded-2xl mb-3' : sqSize === 160 ? 'w-14 h-14 rounded-2xl mb-2' : 'w-12 h-12 rounded-xl mb-1.5'} bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto`}>
-                            {detectedPlatform ? <div className={sqSize === 220 ? "scale-[2]" : sqSize === 160 ? "scale-[1.75]" : "scale-[1.5]"}>{pubPlatformIcon(detectedPlatform)}</div>
-                                : link.thumbnailUrl?.startsWith('data:emoji,') ? <span className={sqSize === 220 ? "text-4xl" : sqSize === 160 ? "text-3xl" : "text-2xl"}>{link.thumbnailUrl.replace('data:emoji,', '')}</span>
-                                : hasRealPhoto ? <img src={link.thumbnailUrl} className={`w-full h-full object-cover ${sqSize >= 160 ? 'rounded-2xl' : 'rounded-xl'}`} alt={link.title} />
-                                : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={sqSize === 220 ? 24 : 20} className="text-violet-500" />
-                                : link.type === 'SUPPORT' ? <Heart size={sqSize === 220 ? 24 : 20} className="text-pink-500" />
-                                : <LinkIcon size={sqSize === 220 ? 24 : 20} className="text-stone-500" />}
-                        </div>
-                        <p className={`${sqSize === 220 ? 'text-lg mb-1 px-4' : sqSize === 160 ? 'text-base mb-1 px-2' : 'text-xs mb-0.5 px-1'} font-bold text-stone-800 leading-tight w-full truncate`}>{link.title}</p>
-                        <p className="text-[8px] text-stone-500 uppercase tracking-wider font-semibold">{link.type === 'DIGITAL_PRODUCT' ? 'Buy' : link.type === 'SUPPORT' ? 'Tip' : 'Visit'}</p>
-                    </>
-                ) : isThumbnailStyle ? (
+                ) : isThumbnailMode ? (
                     <div className="flex flex-col h-full w-full">
                         {(() => {
                             const thumbBg = detectedPlatform ? '#0f0f0f' : link.type === 'DIGITAL_PRODUCT' ? '#ede9fe' : link.type === 'SUPPORT' ? '#fdf2f8' : '#e5e7eb';
@@ -300,6 +279,28 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
                             );
                         })()}
                     </div>
+                ) : sqSize === 64 ? (
+                    <div className="w-10 h-10 rounded-xl bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto">
+                        {detectedPlatform ? <div className="scale-[1.25]">{pubPlatformIcon(detectedPlatform)}</div>
+                            : link.thumbnailUrl?.startsWith('data:emoji,') ? <span className="text-xl">{link.thumbnailUrl.replace('data:emoji,', '')}</span>
+                            : hasRealPhoto ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-xl" alt={link.title} />
+                            : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={18} className="text-violet-500" />
+                            : link.type === 'SUPPORT' ? <Heart size={18} className="text-pink-500" />
+                            : <LinkIcon size={18} className="text-stone-500" />}
+                    </div>
+                ) : sqSize ? (
+                    <>
+                        <div className={`${sqSize === 220 ? 'w-16 h-16 rounded-2xl mb-3' : sqSize === 160 ? 'w-14 h-14 rounded-2xl mb-2' : 'w-12 h-12 rounded-xl mb-1.5'} bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto`}>
+                            {detectedPlatform ? <div className={sqSize === 220 ? "scale-[2]" : sqSize === 160 ? "scale-[1.75]" : "scale-[1.5]"}>{pubPlatformIcon(detectedPlatform)}</div>
+                                : link.thumbnailUrl?.startsWith('data:emoji,') ? <span className={sqSize === 220 ? "text-4xl" : sqSize === 160 ? "text-3xl" : "text-2xl"}>{link.thumbnailUrl.replace('data:emoji,', '')}</span>
+                                : hasRealPhoto ? <img src={link.thumbnailUrl} className={`w-full h-full object-cover ${sqSize >= 160 ? 'rounded-2xl' : 'rounded-xl'}`} alt={link.title} />
+                                : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={sqSize === 220 ? 24 : 20} className="text-violet-500" />
+                                : link.type === 'SUPPORT' ? <Heart size={sqSize === 220 ? 24 : 20} className="text-pink-500" />
+                                : <LinkIcon size={sqSize === 220 ? 24 : 20} className="text-stone-500" />}
+                        </div>
+                        <p className={`${sqSize === 220 ? 'text-lg mb-1 px-4' : sqSize === 160 ? 'text-base mb-1 px-2' : 'text-xs mb-0.5 px-1'} font-bold text-stone-800 leading-tight w-full truncate`}>{link.title}</p>
+                        <p className="text-[8px] text-stone-500 uppercase tracking-wider font-semibold">{link.type === 'DIGITAL_PRODUCT' ? 'Buy' : link.type === 'SUPPORT' ? 'Tip' : 'Visit'}</p>
+                    </>
                 ) : link.type === 'DIGITAL_PRODUCT' ? (
                     <div className="flex flex-col h-full w-full">
                         <div className="flex items-center gap-2.5 pb-2.5">

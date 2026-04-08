@@ -3330,6 +3330,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         const isEditingLink = boardLinkEditId === link.id;
                                         const typeIcon = link.type === 'DIGITAL_PRODUCT' ? '📦' : link.type === 'SUPPORT' ? '💝' : '🔗';
                                         const sqSize = _getLinkSize(link);
+                                        // Thumbnail style forces wide card regardless of iconShape
+                                        const isThumbnailMode = link.displayStyle === 'thumbnail';
                                         let detectedPlatform: string | null = null;
                                         if (link.type === 'EXTERNAL' && link.url) {
                                             try {
@@ -3353,7 +3355,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 style={{
                                                     left: currentPos.x,
                                                     top: currentPos.y,
-                                                    width: isEditingLink ? Math.max(sqSize || LINK_W, 220) : sqSize || LINK_W,
+                                                    width: isEditingLink ? Math.max(isThumbnailMode ? LINK_W : (sqSize || LINK_W), 220) : isThumbnailMode ? LINK_W : (sqSize || LINK_W),
                                                     transform: isDraggingLink ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
                                                     transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
                                                     zIndex: isDraggingLink ? 1000 : isEditingLink ? 500 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (20 + i),
@@ -3561,7 +3563,42 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 title="Delete"
                                                             ><Trash2 size={10} /></button>
                                                         </div>
-                                                        {_ytIdLink && link.displayStyle !== 'icon' ? (
+                                                        {isThumbnailMode && !_ytIdLink ? (() => {
+                                                            // Forced thumbnail style (non-YouTube) — always wide 16:9 card
+                                                            const hasRealPhoto = link.thumbnailUrl && !link.thumbnailUrl.startsWith('data:emoji,');
+                                                            const thumbBg = detectedPlatform ? '#0f0f0f' : link.type === 'DIGITAL_PRODUCT' ? '#ede9fe' : link.type === 'SUPPORT' ? '#fdf2f8' : '#e5e7eb';
+                                                            const typeIcon = link.type === 'DIGITAL_PRODUCT'
+                                                                ? <ShoppingBag size={10} className="text-violet-500 flex-shrink-0" />
+                                                                : link.type === 'SUPPORT'
+                                                                    ? <Heart size={10} className="text-pink-500 flex-shrink-0" />
+                                                                    : detectedPlatform
+                                                                        ? <span className="w-3 h-3 flex-shrink-0">{getPreviewPlatformIcon(detectedPlatform)}</span>
+                                                                        : <LinkIcon size={10} className="text-stone-400 flex-shrink-0" />;
+                                                            const typeLabel = link.type === 'DIGITAL_PRODUCT' ? 'Digital Product'
+                                                                : link.type === 'SUPPORT' ? 'Support'
+                                                                : detectedPlatform ? detectedPlatform.charAt(0).toUpperCase() + detectedPlatform.slice(1) + ' Video'
+                                                                : 'Link';
+                                                            return (
+                                                                <div className="flex flex-col h-full w-full">
+                                                                    <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%', backgroundColor: thumbBg }}>
+                                                                        {hasRealPhoto
+                                                                            ? <img src={link.thumbnailUrl} className="absolute inset-0 w-full h-full object-cover" alt={link.title} />
+                                                                            : <div className="absolute inset-0 flex items-center justify-center">
+                                                                                {detectedPlatform
+                                                                                    ? <div className="scale-[2.5]">{getPreviewPlatformIcon(detectedPlatform)}</div>
+                                                                                    : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={28} className="text-violet-300" />
+                                                                                    : link.type === 'SUPPORT' ? <Heart size={28} className="text-pink-300" />
+                                                                                    : <LinkIcon size={28} className="text-stone-300" />}
+                                                                              </div>}
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1">
+                                                                        {typeIcon}
+                                                                        <p className="text-[10px] font-bold text-stone-700 truncate">{link.title}</p>
+                                                                    </div>
+                                                                    <p className="text-[9px] text-stone-400 mt-0.5">{typeLabel}</p>
+                                                                </div>
+                                                            );
+                                                        })() : _ytIdLink && link.displayStyle !== 'icon' ? (
                                                             <>
                                                                 {/* YouTube thumbnail */}
                                                                 <div className="relative w-full rounded-md overflow-hidden -mx-0 mb-2" style={{ paddingBottom: '56.25%' }}>
