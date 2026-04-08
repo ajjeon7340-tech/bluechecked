@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { CreatorProfile, CurrentUser } from '../types';
 import { getBoardPosts, createBoardPost, BoardPost } from '../services/realBackend';
-import { ArrowLeft, Lock, Globe, CheckCircle, ExternalLink, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, Lock, Globe, CheckCircle, ExternalLink, X, Loader2, ShoppingBag, Heart, Link as LinkIcon } from 'lucide-react';
 
 interface Props {
     creator: CreatorProfile | null;
@@ -139,56 +139,180 @@ const CreatorCard: React.FC<{ creator: CreatorProfile; delay: number }> = ({ cre
     </div>
 );
 
-// ── link sticky note ──────────────────────────────────────────────────────────
+// ── platform helpers (mirrors CreatorDashboard) ───────────────────────────────
 
-const LinkNote: React.FC<{ link: any; idx: number; delay: number }> = ({ link, idx, delay }) => {
-    const { bg, strip, text } = getStickyStyle(idx);
-    const pc   = getPinColor(link.id || String(idx), idx);
-    const rot  = noteRot(link.id   || String(idx), idx + 20);
+const PUB_PLATFORM_DOMAINS: { pattern: RegExp; id: string }[] = [
+    { pattern: /youtube\.com|youtu\.be/, id: 'youtube' },
+    { pattern: /instagram\.com/, id: 'instagram' },
+    { pattern: /twitter\.com|x\.com/, id: 'twitter' },
+    { pattern: /tiktok\.com/, id: 'tiktok' },
+    { pattern: /spotify\.com/, id: 'spotify' },
+    { pattern: /twitch\.tv/, id: 'twitch' },
+    { pattern: /github\.com/, id: 'github' },
+    { pattern: /discord\.gg|discord\.com/, id: 'discord' },
+];
+
+const pubPlatformIcon = (platform: string) => {
+    switch (platform) {
+        case 'youtube':  return <svg viewBox="0 0 24 24" className="w-4 h-4" fill="#FF0000"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.55A3.02 3.02 0 0 0 .5 6.19C0 8.03 0 12 0 12s0 3.97.5 5.81a3.02 3.02 0 0 0 2.12 2.14C4.46 20.5 12 20.5 12 20.5s7.54 0 9.38-.55a3.02 3.02 0 0 0 2.12-2.14C24 15.97 24 12 24 12s0-3.97-.5-5.81zM9.75 15.52V8.48L15.5 12l-5.75 3.52z"/></svg>;
+        case 'instagram': return <svg viewBox="0 0 24 24" className="w-4 h-4"><defs><radialGradient id="ig" cx="30%" cy="107%" r="150%"><stop offset="0%" stopColor="#ffd600"/><stop offset="50%" stopColor="#ff0069"/><stop offset="100%" stopColor="#6e00ff"/></radialGradient></defs><rect width="24" height="24" rx="6" fill="url(#ig)"/><circle cx="12" cy="12" r="4.5" fill="none" stroke="white" strokeWidth="1.8"/><circle cx="17.5" cy="6.5" r="1" fill="white"/></svg>;
+        case 'twitter':  return <svg viewBox="0 0 24 24" className="w-4 h-4" fill="#000"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.23H2.747l7.73-8.835L1.254 2.25H8.08l4.259 5.629L18.244 2.25z"/></svg>;
+        case 'tiktok':   return <svg viewBox="0 0 24 24" className="w-4 h-4" fill="#000"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.35 6.35 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>;
+        case 'spotify':  return <svg viewBox="0 0 24 24" className="w-4 h-4" fill="#1DB954"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>;
+        case 'twitch':   return <svg viewBox="0 0 24 24" className="w-4 h-4" fill="#9146FF"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>;
+        default:         return <ExternalLink size={14} className="text-stone-400" />;
+    }
+};
+
+const pubGetYtId = (url: string): string | null => {
+    try {
+        const u = new URL(url.startsWith('http') ? url : `https://${url}`);
+        if (u.hostname.includes('youtube.com')) return u.searchParams.get('v');
+        if (u.hostname === 'youtu.be') return u.pathname.slice(1);
+    } catch {}
+    return null;
+};
+
+const pubDetectPlatform = (url: string): string | null => {
+    try {
+        const h = new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
+        return PUB_PLATFORM_DOMAINS.find(p => p.pattern.test(h))?.id || null;
+    } catch { return null; }
+};
+
+// ── link sticker (matches creator board style) ────────────────────────────────
+
+const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
+    const linkColors = ['#FFF7ED', '#F0FDF4', '#EFF6FF', '#FDF2F8', '#FFFEF0', '#F5F3FF'];
+    const linkTapes  = ['rgba(240,160,80,0.45)', 'rgba(110,200,140,0.45)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)', 'rgba(200,193,185,0.55)', 'rgba(180,150,240,0.4)'];
+    const lc = idx % linkColors.length;
+
+    const getLinkSize = (l: any): number | null => {
+        if (l.iconShape === 'square-l') return 220;
+        if (l.iconShape === 'square-m') return 160;
+        if (l.iconShape === 'square-s' || l.iconShape === 'square') return 110;
+        if (l.iconShape === 'square-xs') return 64;
+        return null;
+    };
+
+    const sqSize = getLinkSize(link);
+    const LINK_W = 220;
+    const width = sqSize || LINK_W;
+    const tapeW = sqSize === 220 ? 'w-12' : sqSize === 160 ? 'w-10' : sqSize === 64 ? 'w-5' : sqSize ? 'w-8' : 'w-12';
+    const bgColor = link.buttonColor || linkColors[lc];
+
+    const ytId = link.url ? pubGetYtId(link.url) : null;
+    const detectedPlatform = link.url ? pubDetectPlatform(link.url) : null;
+    const hasRealPhoto = link.thumbnailUrl && !link.thumbnailUrl.startsWith('data:emoji,');
+
+    const handleClick = () => {
+        if (link.url && link.url !== '#') window.open(link.url.startsWith('http') ? link.url : `https://${link.url}`, '_blank');
+    };
 
     return (
-        <div className="relative note-hover cursor-pointer"
-            style={{ transform: `rotate(${rot}deg)` }}
-            onClick={() => link.url && window.open(link.url, '_blank')}>
-            <PushPin color={pc} delay={delay} />
+        <div
+            className="flex flex-col cursor-pointer hover:scale-[1.02] transition-transform"
+            style={{ width }}
+            onClick={handleClick}
+        >
+            {/* Tape */}
+            <div className={`h-4 mx-auto rounded-b-sm flex-shrink-0 ${tapeW}`} style={{ background: linkTapes[lc] }} />
+            {/* Card body */}
             <div
-                className="note-in note-lift mt-4 w-44 rounded-sm overflow-hidden"
+                className={`rounded-lg shadow-md ${sqSize === 64 ? 'p-1.5 aspect-square flex items-center justify-center' : sqSize ? 'p-3 aspect-square flex flex-col items-center justify-center text-center' : 'p-3'}`}
                 style={{
-                    animationDelay: `${delay}ms`,
-                    background: bg,
-                    backgroundImage: `linear-gradient(to bottom, ${strip} 10%, ${bg} 10%)`,
-                    boxShadow: '2px 5px 14px rgba(0,0,0,0.20), 0 1px 3px rgba(0,0,0,0.08)',
+                    backgroundColor: bgColor,
+                    border: '1px solid rgba(0,0,0,0.08)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
                 }}
             >
-                <div className="px-3.5 pt-4 pb-4">
-                    <p style={{ fontFamily: "'Caveat', cursive", fontSize: 16, fontWeight: 600, color: text, lineHeight: 1.35 }}
-                        className="line-clamp-2 mb-1">
-                        {link.title || link.label || 'Link'}
-                    </p>
-                    {link.description && (
-                        <p style={{ fontFamily: "'Kalam', cursive", fontSize: 12, color: text, opacity: 0.75, lineHeight: 1.5 }}
-                            className="line-clamp-3 mb-2">
-                            {link.description}
-                        </p>
-                    )}
-                    {link.price > 0 && (
-                        <span className="inline-block text-[11px] font-bold rounded-full px-2 py-0.5"
-                            style={{ background: 'rgba(0,0,0,0.12)', color: text }}>
-                            {link.price} credits
-                        </span>
-                    )}
-                    {link.url && (
-                        <div className="mt-2 flex items-center gap-1" style={{ color: text, opacity: 0.5 }}>
-                            <ExternalLink size={9} />
-                            <span className="text-[10px] truncate">
-                                {link.url.replace(/^https?:\/\//, '').split('/')[0]}
-                            </span>
+                {ytId ? (
+                    <>
+                        <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%' }}>
+                            <img src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`} className="absolute inset-0 w-full h-full object-cover" alt={link.title} />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-8 h-6 bg-[#FF0000] rounded-md flex items-center justify-center shadow opacity-90">
+                                    <svg viewBox="0 0 24 24" className="w-3 h-3 fill-white ml-0.5"><path d="M8 5v14l11-7z"/></svg>
+                                </div>
+                            </div>
                         </div>
-                    )}
-                </div>
-                {/* Folded corner */}
-                <div className="absolute bottom-0 right-0 w-5 h-5"
-                    style={{ background: `linear-gradient(225deg, rgba(0,0,0,0.14) 45%, transparent 45%)` }} />
+                        <div className="flex items-center gap-1">
+                            <svg viewBox="0 0 24 24" className="w-3 h-3 flex-shrink-0" fill="#FF0000"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.55A3.02 3.02 0 0 0 .5 6.19C0 8.03 0 12 0 12s0 3.97.5 5.81a3.02 3.02 0 0 0 2.12 2.14C4.46 20.5 12 20.5 12 20.5s7.54 0 9.38-.55a3.02 3.02 0 0 0 2.12-2.14C24 15.97 24 12 24 12s0-3.97-.5-5.81zM9.75 15.52V8.48L15.5 12l-5.75 3.52z"/></svg>
+                            <p className="text-[10px] font-bold text-stone-700 truncate">{link.title}</p>
+                        </div>
+                    </>
+                ) : sqSize === 64 ? (
+                    <div className="w-10 h-10 rounded-xl bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto">
+                        {detectedPlatform ? <div className="scale-[1.25]">{pubPlatformIcon(detectedPlatform)}</div>
+                            : link.thumbnailUrl?.startsWith('data:emoji,') ? <span className="text-xl">{link.thumbnailUrl.replace('data:emoji,', '')}</span>
+                            : hasRealPhoto ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-xl" alt={link.title} />
+                            : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={18} className="text-violet-500" />
+                            : link.type === 'SUPPORT' ? <Heart size={18} className="text-pink-500" />
+                            : <LinkIcon size={18} className="text-stone-500" />}
+                    </div>
+                ) : sqSize ? (
+                    <>
+                        <div className={`${sqSize === 220 ? 'w-16 h-16 rounded-2xl mb-3' : sqSize === 160 ? 'w-14 h-14 rounded-2xl mb-2' : 'w-12 h-12 rounded-xl mb-1.5'} bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto`}>
+                            {detectedPlatform ? <div className={sqSize === 220 ? "scale-[2]" : sqSize === 160 ? "scale-[1.75]" : "scale-[1.5]"}>{pubPlatformIcon(detectedPlatform)}</div>
+                                : link.thumbnailUrl?.startsWith('data:emoji,') ? <span className={sqSize === 220 ? "text-4xl" : sqSize === 160 ? "text-3xl" : "text-2xl"}>{link.thumbnailUrl.replace('data:emoji,', '')}</span>
+                                : hasRealPhoto ? <img src={link.thumbnailUrl} className={`w-full h-full object-cover ${sqSize >= 160 ? 'rounded-2xl' : 'rounded-xl'}`} alt={link.title} />
+                                : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={sqSize === 220 ? 24 : 20} className="text-violet-500" />
+                                : link.type === 'SUPPORT' ? <Heart size={sqSize === 220 ? 24 : 20} className="text-pink-500" />
+                                : <LinkIcon size={sqSize === 220 ? 24 : 20} className="text-stone-500" />}
+                        </div>
+                        <p className={`${sqSize === 220 ? 'text-lg mb-1 px-4' : sqSize === 160 ? 'text-base mb-1 px-2' : 'text-xs mb-0.5 px-1'} font-bold text-stone-800 leading-tight w-full truncate`}>{link.title}</p>
+                        <p className="text-[8px] text-stone-500 uppercase tracking-wider font-semibold">{link.type === 'DIGITAL_PRODUCT' ? 'Buy' : link.type === 'SUPPORT' ? 'Tip' : 'Visit'}</p>
+                    </>
+                ) : hasRealPhoto ? (
+                    <div className="flex flex-col h-full w-full">
+                        <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%' }}>
+                            <img src={link.thumbnailUrl} className="absolute inset-0 w-full h-full object-cover" alt={link.title} />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            {link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={10} className="text-violet-400 flex-shrink-0" />
+                                : link.type === 'SUPPORT' ? <Heart size={10} className="text-pink-400 flex-shrink-0" />
+                                : detectedPlatform ? <span className="scale-75 flex-shrink-0">{pubPlatformIcon(detectedPlatform)}</span>
+                                : <LinkIcon size={10} className="text-stone-400 flex-shrink-0" />}
+                            <span className="text-xs font-semibold text-stone-700 truncate flex-1 text-left">{link.title}</span>
+                            {link.type === 'EXTERNAL' && <ExternalLink size={9} className="text-stone-300 flex-shrink-0" />}
+                        </div>
+                    </div>
+                ) : link.type === 'DIGITAL_PRODUCT' ? (
+                    <div className="flex flex-col h-full w-full">
+                        <div className="flex items-center gap-2.5 pb-2.5">
+                            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5">
+                                {link.thumbnailUrl?.startsWith('data:emoji,') ? <span className="text-xl leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span> : <ShoppingBag size={16} className="text-violet-400" />}
+                            </div>
+                            <div className="flex-1 min-w-0 text-left">
+                                <p className="text-xs font-bold text-stone-800 truncate">{link.title}</p>
+                                {link.price != null && <p className="text-[10px] text-stone-400 font-medium">{link.price} credits</p>}
+                            </div>
+                        </div>
+                        <div className="mt-auto py-1.5 rounded-md text-[10px] font-bold text-center text-violet-600 bg-violet-50">
+                            <ShoppingBag size={9} className="inline mr-1" />Buy
+                        </div>
+                    </div>
+                ) : link.type === 'SUPPORT' ? (
+                    <div className="flex items-center gap-2.5 h-full w-full">
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5">
+                            {link.thumbnailUrl?.startsWith('data:emoji,') ? <span className="text-xl leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span> : <Heart size={16} className="text-pink-400" />}
+                        </div>
+                        <div className="flex-1 min-w-0 text-left">
+                            <p className="text-xs font-bold text-stone-800 truncate">{link.title}</p>
+                        </div>
+                        <span className="text-[10px] font-bold text-pink-500 bg-pink-50 px-2 py-1 rounded-full flex-shrink-0">Tip ♥</span>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-2.5 h-full w-full">
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5 text-stone-600">
+                            {link.thumbnailUrl?.startsWith('data:emoji,') ? <span className="text-base leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span>
+                                : detectedPlatform ? pubPlatformIcon(detectedPlatform)
+                                : <LinkIcon size={13} />}
+                        </div>
+                        <span className="text-xs font-semibold text-stone-700 truncate flex-1 text-left">{link.title}</span>
+                        <ExternalLink size={9} className="text-stone-300 flex-shrink-0" />
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -556,24 +680,58 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
         setCompose(true);
     };
 
-    const allLinks = [
-        ...(creator?.links    || []),
-        ...(creator?.products || []).map((p: any) => ({ ...p, _isProduct: true })),
-    ];
+    const visibleLinks = (creator?.links || []).filter((l: any) => l.id !== '__diem_config__' && !l.hidden);
 
+    // ── shared layout constants (must match CreatorDashboard exactly) ──
     const NOTE_W = 252;
     const NOTE_H_EST = 272;
     const NOTE_GAP_X = 28;
     const NOTE_GAP_Y = 36;
     const BOARD_PAD = 32;
-    const PUB_COLS = 2; // 2 cols fit within 640px guide width
-    const publicPositions = posts.map((post, idx) => {
+    const GUIDE_W = 640;
+    const GUIDE_COLS = Math.max(1, Math.floor((GUIDE_W - BOARD_PAD) / (NOTE_W + NOTE_GAP_X))); // = 2
+    const LINK_W = 220;
+    // Auto-placed links go to the right of the 2-column note grid (same as creator)
+    const LINK_AUTO_X = BOARD_PAD + GUIDE_COLS * (NOTE_W + NOTE_GAP_X) + 20;
+
+    const getLinkSize = (l: any): number | null => {
+        if (l.iconShape === 'square-l') return 220;
+        if (l.iconShape === 'square-m') return 160;
+        if (l.iconShape === 'square-s' || l.iconShape === 'square') return 110;
+        if (l.iconShape === 'square-xs') return 64;
+        return null;
+    };
+    const getLinkH = (l: any): number => {
+        const sq = getLinkSize(l);
+        if (sq) return sq;
+        if (l.type === 'DIGITAL_PRODUCT') return 104;
+        if (l.url && pubGetYtId(l.url)) return 162;
+        return 84;
+    };
+
+    // Post positions (guide-relative coords from DB, or 2-col grid fallback)
+    const postPositions = posts.map((post, idx) => {
         if (post.positionX != null && post.positionY != null) return { x: post.positionX, y: post.positionY };
-        const col = idx % PUB_COLS;
-        const row = Math.floor(idx / PUB_COLS);
+        const col = idx % GUIDE_COLS;
+        const row = Math.floor(idx / GUIDE_COLS);
         return { x: BOARD_PAD + col * (NOTE_W + NOTE_GAP_X), y: BOARD_PAD + row * (NOTE_H_EST + NOTE_GAP_Y) };
     });
-    const publicCanvasH = Math.max(...publicPositions.map(p => p.y + NOTE_H_EST), 440);
+
+    // Link positions (guide-relative coords from DB, or auto-stack on right)
+    let autoLinkY = BOARD_PAD;
+    const linkPositions = visibleLinks.map((link: any) => {
+        if (link.positionX != null && link.positionY != null) return { x: link.positionX, y: link.positionY };
+        const pos = { x: LINK_AUTO_X, y: autoLinkY };
+        autoLinkY += getLinkH(link) + 14;
+        return pos;
+    });
+
+    // Canvas dimensions
+    const maxPostBottom = postPositions.reduce((m, p) => Math.max(m, p.y + NOTE_H_EST), 440);
+    const maxLinkRight  = linkPositions.reduce((m, p, i) => Math.max(m, p.x + (getLinkSize(visibleLinks[i]) || LINK_W)), GUIDE_W);
+    const maxLinkBottom = linkPositions.reduce((m, p, i) => Math.max(m, p.y + getLinkH(visibleLinks[i])), 0);
+    const canvasH = Math.max(maxPostBottom, maxLinkBottom) + 80;
+    const canvasW = Math.max(GUIDE_W, maxLinkRight + 32);
 
     return (
         <>
@@ -645,68 +803,57 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                     </div>
 
                     {/* ── board content ── */}
-                    <div className="max-w-2xl mx-auto px-4 pt-12 pb-32">
+                    <div className="pt-8 pb-32 overflow-x-auto">
 
-                        {/* Creator card — centered at top */}
+                        {/* Creator card — centered above canvas */}
                         {creator && (
-                            <div className="flex justify-center mb-14">
+                            <div className="flex justify-center mb-10" style={{ minWidth: canvasW }}>
                                 <CreatorCard creator={creator} delay={80} />
                             </div>
                         )}
 
-                        {/* Links as sticky notes */}
-                        {allLinks.length > 0 && (
-                            <div className="mb-14">
-                                <div className="flex flex-wrap gap-7 justify-center items-end">
-                                    {allLinks.slice(0, 8).map((link: any, i: number) => (
-                                        <LinkNote key={link.id || i} link={link} idx={i} delay={150 + i * 60} />
-                                    ))}
-                                </div>
-                                {/* Cork board dividing tack-strip */}
-                                <div className="mt-12 flex items-center gap-4">
-                                    <div className="flex-1 h-px" style={{ background: 'rgba(90,56,32,0.2)' }} />
-                                    <div className="flex gap-3">
-                                        {['#dc2626','#1d4ed8','#15803d'].map((c, i) => (
-                                            <div key={i} className="w-3 h-3 rounded-full"
-                                                style={{ background: `radial-gradient(circle at 38% 32%, rgba(255,255,255,0.6) 0%, ${c} 50%, rgba(0,0,0,0.4) 100%)`, boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }} />
-                                        ))}
-                                    </div>
-                                    <div className="flex-1 h-px" style={{ background: 'rgba(90,56,32,0.2)' }} />
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Board posts */}
                         {isLoading ? (
                             <div className="flex justify-center py-20">
                                 <Loader2 size={30} className="animate-spin" style={{ color: 'rgba(254,249,195,0.6)' }} />
                             </div>
-                        ) : posts.length === 0 ? (
-                            <div className="flex justify-center py-20">
-                                <div className="relative note-hover" style={{ transform: 'rotate(-1.2deg)' }}>
-                                    <PushPin color="#1d4ed8" delay={400} />
-                                    <div className="note-in mt-4 rounded-sm p-6 w-64 text-center"
-                                        style={{
-                                            animationDelay: '400ms',
-                                            background: '#fefef0',
-                                            backgroundImage: 'repeating-linear-gradient(transparent 0px, transparent 23px, rgba(0,0,0,0.04) 23px, rgba(0,0,0,0.04) 24px)',
-                                            boxShadow: '2px 5px 14px rgba(0,0,0,0.18)',
-                                        }}>
-                                        <p style={{ fontFamily: "'Kalam', cursive", fontSize: 14, color: '#57534e', lineHeight: 1.7 }}>
-                                            No posts yet. Be the first to pin a Diem on the board!
-                                        </p>
-                                        <button onClick={handleDiemClick}
-                                            style={{ fontFamily: "'Caveat', cursive", fontSize: 15, fontWeight: 700, color: '#1d4ed8' }}
-                                            className="mt-3 hover:underline">
-                                            Post a Diem →
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
                         ) : (
-                            <div className="relative" style={{ height: publicCanvasH }}>
-                                {posts.map((post, i) => {
-                                    const { x, y } = publicPositions[i];
+                            /* Unified absolute canvas — same coordinate space as creator board */
+                            <div className="relative mx-auto" style={{ width: canvasW, height: canvasH }}>
+                                {/* Link stickers */}
+                                {visibleLinks.map((link: any, i: number) => {
+                                    const { x, y } = linkPositions[i];
+                                    const sqSize = getLinkSize(link);
+                                    return (
+                                        <div key={link.id || i} style={{ position: 'absolute', left: x, top: y, width: sqSize || LINK_W }}>
+                                            <LinkSticker link={link} idx={i} />
+                                        </div>
+                                    );
+                                })}
+                                {/* Post stickers */}
+                                {posts.length === 0 ? (
+                                    <div style={{ position: 'absolute', left: BOARD_PAD, top: BOARD_PAD }}>
+                                        <div className="relative note-hover" style={{ transform: 'rotate(-1.2deg)' }}>
+                                            <PushPin color="#1d4ed8" delay={400} />
+                                            <div className="note-in mt-4 rounded-sm p-6 w-64 text-center"
+                                                style={{
+                                                    animationDelay: '400ms',
+                                                    background: '#fefef0',
+                                                    backgroundImage: 'repeating-linear-gradient(transparent 0px, transparent 23px, rgba(0,0,0,0.04) 23px, rgba(0,0,0,0.04) 24px)',
+                                                    boxShadow: '2px 5px 14px rgba(0,0,0,0.18)',
+                                                }}>
+                                                <p style={{ fontFamily: "'Kalam', cursive", fontSize: 14, color: '#57534e', lineHeight: 1.7 }}>
+                                                    No posts yet. Be the first to pin a Diem on the board!
+                                                </p>
+                                                <button onClick={handleDiemClick}
+                                                    style={{ fontFamily: "'Caveat', cursive", fontSize: 15, fontWeight: 700, color: '#1d4ed8' }}
+                                                    className="mt-3 hover:underline">
+                                                    Post a Diem →
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : posts.map((post, i) => {
+                                    const { x, y } = postPositions[i];
                                     return (
                                         <div key={post.id} style={{ position: 'absolute', left: x, top: y, width: NOTE_W }}>
                                             <PaperNote
