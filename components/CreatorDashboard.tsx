@@ -3611,10 +3611,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             const hasRealPhoto = link.thumbnailUrl && !link.thumbnailUrl.startsWith('data:emoji,');
                                                             const isThumbnailStyle = link.displayStyle === 'thumbnail' || (!link.displayStyle && hasRealPhoto);
                                                             if (isThumbnailStyle) {
-                                                                const thumbBg = link.type === 'DIGITAL_PRODUCT' ? 'bg-violet-50' : link.type === 'SUPPORT' ? 'bg-pink-50' : detectedPlatform ? 'bg-stone-900' : 'bg-stone-100';
+                                                                const thumbBg = detectedPlatform ? '#0f0f0f' : link.type === 'DIGITAL_PRODUCT' ? '#ede9fe' : link.type === 'SUPPORT' ? '#fdf2f8' : '#e5e7eb';
+                                                                const typeIcon = link.type === 'DIGITAL_PRODUCT'
+                                                                    ? <ShoppingBag size={10} className="text-violet-500 flex-shrink-0" />
+                                                                    : link.type === 'SUPPORT'
+                                                                        ? <Heart size={10} className="text-pink-500 flex-shrink-0" />
+                                                                        : detectedPlatform
+                                                                            ? <span className="w-3 h-3 flex-shrink-0">{getPreviewPlatformIcon(detectedPlatform)}</span>
+                                                                            : <LinkIcon size={10} className="text-stone-400 flex-shrink-0" />;
+                                                                const typeLabel = link.type === 'DIGITAL_PRODUCT' ? 'Digital Product'
+                                                                    : link.type === 'SUPPORT' ? 'Support'
+                                                                    : detectedPlatform ? detectedPlatform.charAt(0).toUpperCase() + detectedPlatform.slice(1) + ' Video'
+                                                                    : 'Link';
                                                                 return (
                                                                     <div className="flex flex-col h-full w-full">
-                                                                        <div className={`relative w-full rounded-md overflow-hidden mb-2 ${thumbBg}`} style={{ paddingBottom: '56.25%' }}>
+                                                                        {/* Thumbnail image — same style as YouTube card */}
+                                                                        <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%', backgroundColor: thumbBg }}>
                                                                             {hasRealPhoto
                                                                                 ? <img src={link.thumbnailUrl} className="absolute inset-0 w-full h-full object-cover" alt={link.title} />
                                                                                 : <div className="absolute inset-0 flex items-center justify-center">
@@ -3625,25 +3637,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                                         : <LinkIcon size={28} className="text-stone-300" />}
                                                                                   </div>}
                                                                         </div>
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            {link.type === 'DIGITAL_PRODUCT' ? (
-                                                                                <ShoppingBag size={10} className="text-violet-400 flex-shrink-0" />
-                                                                            ) : link.type === 'SUPPORT' ? (
-                                                                                <Heart size={10} className="text-pink-400 flex-shrink-0" />
-                                                                            ) : detectedPlatform ? (
-                                                                                <span className="scale-75 flex-shrink-0">{getPreviewPlatformIcon(detectedPlatform)}</span>
-                                                                            ) : (
-                                                                                <LinkIcon size={10} className="text-stone-400 flex-shrink-0" />
-                                                                            )}
-                                                                            <span className="text-xs font-semibold text-stone-700 truncate flex-1 text-left">{link.title}</span>
-                                                                            {link.type === 'DIGITAL_PRODUCT' && link.price != null && (
-                                                                                <span className="text-[10px] font-bold text-violet-500 bg-violet-50 px-1.5 py-0.5 rounded-full flex-shrink-0">{link.price}cr</span>
-                                                                            )}
-                                                                            {link.type === 'SUPPORT' && (
-                                                                                <span className="text-[10px] font-bold text-pink-500 bg-pink-50 px-1.5 py-0.5 rounded-full flex-shrink-0">Tip ♥</span>
-                                                                            )}
-                                                                            {link.type === 'EXTERNAL' && <ExternalLink size={9} className="text-stone-300 flex-shrink-0" />}
+                                                                        {/* Bottom row — same layout as YouTube card */}
+                                                                        <div className="flex items-center gap-1">
+                                                                            {typeIcon}
+                                                                            <p className="text-[10px] font-bold text-stone-700 truncate">{link.title}</p>
                                                                         </div>
+                                                                        <p className="text-[9px] text-stone-400 mt-0.5">{typeLabel}</p>
                                                                     </div>
                                                                 );
                                                             }
