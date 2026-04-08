@@ -1193,18 +1193,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                   const leftOffset = pos.x;
                                                   const topOffset = pos.y;
                                                   const isNew = post.id === newlyPostedId;
-                                                  // Expiry: 7 days from createdAt
-                                                  const _expMs = new Date(post.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000;
-                                                  const _msLeft = _expMs - Date.now();
-                                                  const _daysLeft = Math.floor(_msLeft / (24 * 60 * 60 * 1000));
-                                                  const _hoursLeft = Math.floor(_msLeft / (60 * 60 * 1000));
-                                                  const expiry = _msLeft <= 0
-                                                      ? { text: 'Expired', cls: 'text-red-500' }
-                                                      : _daysLeft >= 2
-                                                          ? { text: `${_daysLeft}d left`, cls: 'text-stone-400' }
-                                                          : _daysLeft === 1
-                                                              ? { text: '1d left', cls: 'text-amber-600' }
-                                                              : { text: `${_hoursLeft}h left`, cls: 'text-red-500' };
                                                   return (
                                                       <div
                                                           key={post.id}
@@ -1247,13 +1235,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                   )}
                                                               </div>
 
-                                                              {/* Awaiting reply + expiry */}
-                                                              <div className="flex items-center justify-between mt-2 ml-[30px]">
+                                                              {/* Awaiting reply */}
+                                                              <div className="flex items-center mt-2 ml-[30px]">
                                                                   <div className="flex items-center gap-1">
                                                                       <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
                                                                       <span className="text-[9px] font-medium text-stone-400">{creator.stats?.responseTimeAvg ? `Replies in ~${creator.stats.responseTimeAvg}` : 'Awaiting reply…'}</span>
                                                                   </div>
-                                                                  <span className={`text-[9px] font-semibold ${expiry.cls}`}>{expiry.text}</span>
                                                               </div>
                                                           </div>
                                                       </div>

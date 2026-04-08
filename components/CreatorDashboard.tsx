@@ -431,7 +431,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
   const [boardPopupPost, setBoardPopupPost] = useState<BoardPost | null>(null);
   const [inboxSelectedPostId, setInboxSelectedPostId] = useState<string | null>(null);
-  const [inboxBoardFilter, setInboxBoardFilter] = useState<'ALL' | 'PINNED' | 'UNPINNED'>('ALL');
+  const [inboxBoardFilter, setInboxBoardFilter] = useState<'ALL' | 'PUBLIC' | 'PRIVATE' | 'PENDING' | 'ANSWERED'>('ALL');
   const [boardPositions, setBoardPositions] = useState<Record<string, {x: number, y: number}>>({});
   const [boardDragging, setBoardDragging] = useState<{
       id: string;
@@ -3720,20 +3720,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         const nc = stableIdx(post.id) % noteColors.length;
                                         const rot = rotations[stableIdx(post.id) % rotations.length];
                                         const pos = getPos(post, i);
-                                        // Expiry: 7 days from createdAt, unless pinned
-                                        const _expMs = new Date(post.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000;
-                                        const _msLeft = _expMs - Date.now();
-                                        const _daysLeft = Math.floor(_msLeft / (24 * 60 * 60 * 1000));
-                                        const _hoursLeft = Math.floor(_msLeft / (60 * 60 * 1000));
-                                        const expiry = post.isPinned || post.reply
-                                            ? null
-                                            : _msLeft <= 0
-                                                ? { text: 'Expired', cls: 'text-red-500 bg-red-50 border border-red-100' }
-                                                : _daysLeft >= 2
-                                                    ? { text: `${_daysLeft}d left`, cls: 'text-stone-400 bg-stone-50' }
-                                                    : _daysLeft === 1
-                                                        ? { text: '1d left', cls: 'text-amber-600 bg-amber-50 border border-amber-100' }
-                                                        : { text: `${_hoursLeft}h left`, cls: 'text-red-500 bg-red-50 border border-red-100' };
                                         const isDragging = boardDragging?.id === post.id;
                                         const isHovered = !isDragging && !boardDragging && selectedBoardId === post.id;
                                         const isActive = isDragging || isHovered;
@@ -3809,7 +3795,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             : <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100">Awaiting reply</span>}
                                                         {post.isPinned
                                                             ? <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 flex items-center gap-0.5"><Pin size={8} className="fill-current" /> Pinned</span>
-                                                            : expiry && <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${expiry.cls}`}>{expiry.text}</span>}
+                                                            : null}
                                                     </div>
                                                 </div>
                                             </div>
@@ -4292,20 +4278,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 const nc = _stableIdx(post.id) % noteColors.length;
                 const isReplying = boardReplyingId === post.id;
                 const livePost = boardPosts.find(p => p.id === post.id) || post;
-                // Expiry for popup
-                const _popExpMs = new Date(livePost.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000;
-                const _popMsLeft = _popExpMs - Date.now();
-                const _popDaysLeft = Math.floor(_popMsLeft / (24 * 60 * 60 * 1000));
-                const _popHoursLeft = Math.floor(_popMsLeft / (60 * 60 * 1000));
-                const popExpiry = livePost.isPinned || livePost.reply
-                    ? null
-                    : _popMsLeft <= 0
-                        ? { text: 'Expired', cls: 'text-red-500 bg-red-50' }
-                        : _popDaysLeft >= 2
-                            ? { text: `Expires in ${_popDaysLeft}d`, cls: 'text-stone-400' }
-                            : _popDaysLeft === 1
-                                ? { text: 'Expires in 1d', cls: 'text-amber-600' }
-                                : { text: `Expires in ${_popHoursLeft}h`, cls: 'text-red-500' };
                 return (
                     <div
                         className="fixed inset-0 z-[300] flex items-center justify-center p-4"
@@ -4327,9 +4299,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <span className="flex items-center gap-1 text-stone-400"><DiemLogo size={16} /></span>
                                     {livePost.isPinned
                                         ? <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100"><Pin size={8} className="fill-current" /> Pinned</span>
-                                        : livePost.reply 
+                                        : livePost.reply
                                             ? <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100"><CheckCircle2 size={8} className="fill-current" /> Answered</span>
-                                            : popExpiry && <span className={`text-[10px] font-semibold ${popExpiry.cls}`}>{popExpiry.text}</span>}
+                                            : null}
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button
@@ -4347,17 +4319,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <Pin size={10} className={livePost.isPinned ? 'text-amber-600 fill-current' : 'text-stone-400'} />
                                     </button>
                                     <button
-                                        onClick={async () => {
-                                            if (!window.confirm('Delete this post?')) return;
-                                            try {
-                                                await deleteBoardPost(livePost.id);
-                                                setBoardPosts(prev => prev.filter(p => p.id !== livePost.id));
-                                                setBoardPopupPost(null);
-                                            } catch {}
+                                        onClick={() => {
+                                            setBoardPosts(prev => prev.map(p => p.id === livePost.id ? { ...p, isPinned: false } : p));
+                                            pinBoardPost(livePost.id, false);
+                                            setBoardPopupPost(null);
                                         }}
-                                        className="p-1.5 rounded-full text-red-400 hover:bg-red-50 transition-colors"
+                                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-stone-500 hover:bg-stone-100 transition-colors text-[11px] font-medium"
+                                        title="Remove from Board"
                                     >
-                                        <Trash2 size={14} />
+                                        <Trash2 size={12} /> Remove from Board
                                     </button>
                                     <button onClick={() => { setBoardPopupPost(null); setBoardReplyingId(null); }} className="p-1.5 rounded-full text-stone-400 hover:bg-stone-200/60 transition-colors">
                                         <X size={16} />
@@ -4545,10 +4515,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             })()}
 
             {currentView === 'INBOX' && (() => {
-                const answeredBoardPosts = boardPosts
-                    .filter(p => p.isPrivate && p.reply !== null)
-                    .sort((a, b) => new Date(b.replyAt ?? b.createdAt).getTime() - new Date(a.replyAt ?? a.createdAt).getTime());
-                const inboxFiltered = answeredBoardPosts;
+                const allBoardPostsSorted = boardPosts
+                    .slice()
+                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                const inboxFiltered = allBoardPostsSorted.filter(p => {
+                    if (inboxBoardFilter === 'PUBLIC') return !p.isPrivate;
+                    if (inboxBoardFilter === 'PRIVATE') return p.isPrivate;
+                    if (inboxBoardFilter === 'PENDING') return !p.reply;
+                    if (inboxBoardFilter === 'ANSWERED') return !!p.reply;
+                    return true; // ALL
+                });
                 const inboxPost = inboxSelectedPostId ? boardPosts.find(p => p.id === inboxSelectedPostId) ?? null : null;
                 const noteColors = ['#FFFEF0', '#F0FDF4', '#FFF7ED', '#F5F3FF', '#EFF6FF', '#FDF2F8'];
                 const tapeColors = ['rgba(200,193,185,0.55)', 'rgba(110,200,140,0.45)', 'rgba(240,160,80,0.4)', 'rgba(180,150,240,0.4)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)'];
@@ -4564,7 +4540,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <Menu size={24} />
                             </button>
                             <div>
-                                <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-0.5">Q&amp;A History</p>
+                                <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-0.5">All Posts</p>
                                 <h2 className="text-xl sm:text-2xl font-bold text-stone-900">Inbox</h2>
                             </div>
                         </div>
@@ -4574,8 +4550,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         {/* List Column */}
                         <div className={`w-full md:w-80 lg:w-96 border-r border-stone-200/60 flex flex-col ${inboxPost ? 'hidden md:flex' : 'flex'}`}
                             style={{ background: 'linear-gradient(135deg, #FAFAF8 0%, #F5F3EF 100%)', backgroundImage: 'linear-gradient(to right, rgba(168,162,158,0.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,162,158,0.07) 1px, transparent 1px)', backgroundSize: '28px 28px' }}>
-                            <div className="p-3 border-b border-stone-200/40 bg-white/60 backdrop-blur-sm">
-                                <p className="text-xs text-stone-500 font-medium">All ({answeredBoardPosts.length})</p>
+                            <div className="p-2 border-b border-stone-200/40 bg-white/60 backdrop-blur-sm flex flex-wrap gap-1">
+                                {([
+                                    { key: 'ALL', label: 'All', count: allBoardPostsSorted.length },
+                                    { key: 'PUBLIC', label: 'Public', count: allBoardPostsSorted.filter(p => !p.isPrivate).length },
+                                    { key: 'PRIVATE', label: 'Private', count: allBoardPostsSorted.filter(p => p.isPrivate).length },
+                                    { key: 'PENDING', label: 'Pending', count: allBoardPostsSorted.filter(p => !p.reply).length },
+                                    { key: 'ANSWERED', label: 'Answered', count: allBoardPostsSorted.filter(p => !!p.reply).length },
+                                ] as { key: 'ALL' | 'PUBLIC' | 'PRIVATE' | 'PENDING' | 'ANSWERED'; label: string; count: number }[]).map(f => (
+                                    <button
+                                        key={f.key}
+                                        onClick={() => setInboxBoardFilter(f.key)}
+                                        className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors ${inboxBoardFilter === f.key ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}
+                                    >
+                                        {f.label} <span className={`${inboxBoardFilter === f.key ? 'text-stone-300' : 'text-stone-400'}`}>({f.count})</span>
+                                    </button>
+                                ))}
                             </div>
                             <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
                                 {boardLoading ? (
@@ -4583,8 +4573,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 ) : inboxFiltered.length === 0 ? (
                                     <div className="p-8 text-center space-y-2">
                                         <div className="text-3xl">📭</div>
-                                        <p className="text-sm text-stone-400 font-medium">No answered posts yet</p>
-                                        <p className="text-xs text-stone-300">Answer questions on the Board to see them here</p>
+                                        <p className="text-sm text-stone-400 font-medium">
+                                            {inboxBoardFilter === 'ALL' ? 'No posts yet' :
+                                             inboxBoardFilter === 'PUBLIC' ? 'No public posts' :
+                                             inboxBoardFilter === 'PRIVATE' ? 'No private posts' :
+                                             inboxBoardFilter === 'PENDING' ? 'No pending posts' :
+                                             'No answered posts yet'}
+                                        </p>
+                                        <p className="text-xs text-stone-300">
+                                            {inboxBoardFilter === 'ANSWERED' ? 'Answer questions on the Board to see them here' : 'Board posts will appear here'}
+                                        </p>
                                     </div>
                                 ) : (
                                     inboxFiltered.map((post, noteIdx) => {
@@ -4615,7 +4613,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 ? <img src={post.fanAvatarUrl} className="w-full h-full object-cover" alt={post.fanName} />
                                                                 : <span className="text-white text-[10px] font-bold">{post.fanName.charAt(0).toUpperCase()}</span>}
                                                         </div>
-                                                        <p className="text-sm font-bold truncate text-stone-700">{post.fanName}</p>
+                                                        <p className="text-sm font-bold truncate text-stone-700 flex-1">{post.fanName}</p>
+                                                        {post.isPrivate && <Lock size={9} className="text-stone-400 flex-shrink-0" />}
+                                                        {post.reply
+                                                            ? <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 flex-shrink-0">Answered</span>
+                                                            : <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100 flex-shrink-0">Pending</span>}
                                                     </div>
                                                     <p className="text-xs text-stone-600 line-clamp-2 mb-1.5 leading-relaxed">{post.content}</p>
                                                     {post.reply && (
@@ -4676,16 +4678,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             <div className="flex items-center gap-2">
                                                 <button
                                                     onClick={async () => {
-                                                        if (!window.confirm('Delete this post?')) return;
+                                                        if (!window.confirm('Delete this post permanently?')) return;
                                                         try {
                                                             await deleteBoardPost(post.id);
                                                             setBoardPosts(prev => prev.filter(p => p.id !== post.id));
                                                             setInboxSelectedPostId(null);
                                                         } catch {}
                                                     }}
-                                                    className="p-1.5 rounded-full text-red-400 hover:bg-red-50 transition-colors"
+                                                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-red-400 hover:bg-red-50 transition-colors text-[11px] font-medium"
                                                 >
-                                                    <Trash2 size={14} />
+                                                    <Trash2 size={12} /> Delete permanently
                                                 </button>
                                             </div>
                                         </div>
@@ -4751,7 +4753,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         </div>
                                                         {/* Pin callout */}
                                                         <div className="mt-2 ml-1">
-                                                            {post.isPinned ? (
+                                                            {post.isPrivate ? (
+                                                                <span className="inline-flex items-center gap-1 text-[10px] text-stone-400 font-medium"><Lock size={9} /> Private — not shareable to board</span>
+                                                            ) : post.isPinned ? (
                                                                 <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 font-medium"><Pin size={9} className="fill-current" /> Visible on public Community Board</span>
                                                             ) : (
                                                                 <span className="inline-flex items-center gap-1 text-[10px] text-stone-400 font-medium"><Pin size={9} /> Not pinned — only visible here</span>
