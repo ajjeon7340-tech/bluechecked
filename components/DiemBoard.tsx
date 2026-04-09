@@ -675,8 +675,9 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
     const [showCompose, setCompose]   = useState(false);
     const [selectedPost, setSelected] = useState<BoardPost | null>(null);
     const [camera, setCamera]         = useState<{ x: number; y: number; zoom: number }>({ x: 0, y: 0, zoom: 1 });
+    const [animReady, setAnimReady]   = useState(false);
     const initRef   = useRef(false);
-    const canvasRef = useRef<HTMLDivElement>(null);
+    const rafIdRef  = useRef<number>(0);
     const isCreator = !!(currentUser && creator && currentUser.id === creator.id);
 
     const loadPosts = useCallback(async () => {
@@ -739,7 +740,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
     const canvasW = Math.max(GUIDE_W, maxLinkRight + 32);
     const totalH  = CREATOR_CARD_ZONE + canvasH;
 
-    // ── Eagle-eye → focus animation (RAF-based for reliability) ──
+    // ── Eagle-eye → focus animation ──
     useEffect(() => {
         if (isLoading || initRef.current) return;
         initRef.current = true;
@@ -759,16 +760,9 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
             zoom: defZoom,
         };
 
-        // Apply eagle position directly to DOM (no React re-render needed for initial position)
-        const applyCamera = (cam: { x: number; y: number; zoom: number }) => {
-            if (!canvasRef.current) return;
-            const tx = vpW / 2 - cam.x * cam.zoom;
-            const ty = vpH / 2 - cam.y * cam.zoom;
-            canvasRef.current.style.transform = `translate(${tx}px, ${ty}px) scale(${cam.zoom})`;
-        };
-
-        applyCamera(eagleCam);
+        // Set initial eagle position via React state, then reveal
         setCamera(eagleCam);
+        setAnimReady(true);
 
         // Animate to focus using RAF after pause
         const pauseTimer = setTimeout(() => {
@@ -780,27 +774,22 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
             const ease = (t: number) =>
                 t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-            let rafId: number;
             const step = (now: number) => {
                 const p = Math.min((now - startMs) / DURATION, 1);
                 const e = ease(p);
-                const cam = {
+                setCamera({
                     x:    from.x    + (to.x    - from.x)    * e,
                     y:    from.y    + (to.y    - from.y)    * e,
                     zoom: from.zoom + (to.zoom - from.zoom) * e,
-                };
-                applyCamera(cam);
-                if (p < 1) { rafId = requestAnimationFrame(step); }
-                else { setCamera(to); } // sync React state when done
+                });
+                if (p < 1) { rafIdRef.current = requestAnimationFrame(step); }
             };
-            rafId = requestAnimationFrame(step);
-            // Store cleanup ref
-            (canvasRef as any)._rafId = rafId;
+            rafIdRef.current = requestAnimationFrame(step);
         }, 1000);
 
         return () => {
             clearTimeout(pauseTimer);
-            if ((canvasRef as any)._rafId) cancelAnimationFrame((canvasRef as any)._rafId);
+            cancelAnimationFrame(rafIdRef.current);
         };
     }, [isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -891,7 +880,6 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                             </div>
                         ) : (
                             <div
-                                ref={canvasRef}
                                 style={{
                                     position: 'absolute',
                                     left: 0, top: 0,
@@ -900,6 +888,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                                     transformOrigin: '0 0',
                                     transform: `translate(${tx}px, ${ty}px) scale(${camera.zoom})`,
                                     willChange: 'transform',
+                                    opacity: animReady ? 1 : 0,
                                 }}
                             >
                                 {/* Creator card — top-center of canvas */}
