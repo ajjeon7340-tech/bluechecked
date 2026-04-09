@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CreatorProfile, CurrentUser } from '../types';
 import { getBoardPosts, createBoardPost, BoardPost } from '../services/realBackend';
 import { ArrowLeft, Lock, Globe, CheckCircle, ExternalLink, X, Loader2, ShoppingBag, Heart, Link as LinkIcon } from 'lucide-react';
@@ -666,51 +666,38 @@ const ComposeModal: React.FC<{
 
 // ── main ──────────────────────────────────────────────────────────────────────
 
+const NAV_H = 56;
+const CREATOR_CARD_ZONE = 300; // vertical space for the creator card at top of canvas
+
 export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginRequest, onBack }) => {
-    const [posts, setPosts]             = useState<BoardPost[]>([]);
-    const [isLoading, setIsLoading]     = useState(true);
-    const [showCompose, setCompose]     = useState(false);
-    const [selectedPost, setSelected]   = useState<BoardPost | null>(null);
+    const [posts, setPosts]           = useState<BoardPost[]>([]);
+    const [isLoading, setIsLoading]   = useState(true);
+    const [showCompose, setCompose]   = useState(false);
+    const [selectedPost, setSelected] = useState<BoardPost | null>(null);
+    const [camera, setCamera]         = useState<{ x: number; y: number; zoom: number }>({ x: 0, y: 0, zoom: 1 });
+    const [isAnimating, setIsAnimating] = useState(false);
+    const initRef = useRef(false);
     const isCreator = !!(currentUser && creator && currentUser.id === creator.id);
 
     const loadPosts = useCallback(async () => {
         if (!creator) return;
         setIsLoading(true);
         const all = await getBoardPosts(creator.id);
-        setPosts(all.filter(p => !p.isPrivate));
+        setPosts(all.filter(p => p.isPinned && !p.isPrivate));
         setIsLoading(false);
     }, [creator]);
 
     useEffect(() => { loadPosts(); }, [loadPosts]);
 
-    const handlePost = async (content: string, isPrivate: boolean) => {
-        if (!creator) return;
-        const newPost = await createBoardPost(creator.id, content, isPrivate);
-        setPosts(prev => [newPost, ...prev]);
-    };
-
-    const handleNoteClick = (post: BoardPost) => {
-        if (!post.reply) return;
-        setSelected(post);
-    };
-
-    const handleDiemClick = () => {
-        if (!currentUser) { onLoginRequest(); return; }
-        setCompose(true);
-    };
-
-    const visibleLinks = (creator?.links || []).filter((l: any) => l.id !== '__diem_config__' && !l.hidden);
-
-    // ── shared layout constants (must match CreatorDashboard exactly) ──
-    const NOTE_W = 252;
-    const NOTE_H_EST = 272;
-    const NOTE_GAP_X = 28;
-    const NOTE_GAP_Y = 36;
-    const BOARD_PAD = 32;
-    const GUIDE_W = 640;
-    const GUIDE_COLS = Math.max(1, Math.floor((GUIDE_W - BOARD_PAD) / (NOTE_W + NOTE_GAP_X))); // = 2
-    const LINK_W = 220;
-    // Auto-placed links go to the right of the 2-column note grid (same as creator)
+    // ── layout constants (must match CreatorDashboard exactly) ──
+    const NOTE_W      = 252;
+    const NOTE_H_EST  = 272;
+    const NOTE_GAP_X  = 28;
+    const NOTE_GAP_Y  = 36;
+    const BOARD_PAD   = 32;
+    const GUIDE_W     = 640;
+    const GUIDE_COLS  = 2;
+    const LINK_W      = 220;
     const LINK_AUTO_X = BOARD_PAD + GUIDE_COLS * (NOTE_W + NOTE_GAP_X) + 20;
 
     const getLinkSize = (l: any): number | null => {
@@ -728,7 +715,8 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
         return 84;
     };
 
-    // Post positions (guide-relative coords from DB, or 2-col grid fallback)
+    const visibleLinks = (creator?.links || []).filter((l: any) => l.id !== '__diem_config__' && !l.hidden);
+
     const postPositions = posts.map((post, idx) => {
         if (post.positionX != null && post.positionY != null) return { x: post.positionX, y: post.positionY };
         const col = idx % GUIDE_COLS;
@@ -736,7 +724,6 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
         return { x: BOARD_PAD + col * (NOTE_W + NOTE_GAP_X), y: BOARD_PAD + row * (NOTE_H_EST + NOTE_GAP_Y) };
     });
 
-    // Link positions (guide-relative coords from DB, or auto-stack on right)
     let autoLinkY = BOARD_PAD;
     const linkPositions = visibleLinks.map((link: any) => {
         if (link.positionX != null && link.positionY != null) return { x: link.positionX, y: link.positionY };
@@ -745,22 +732,71 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
         return pos;
     });
 
-    // Canvas dimensions
     const maxPostBottom = postPositions.reduce((m, p) => Math.max(m, p.y + NOTE_H_EST), 440);
     const maxLinkRight  = linkPositions.reduce((m, p, i) => Math.max(m, p.x + (getLinkSize(visibleLinks[i]) || LINK_W)), GUIDE_W);
     const maxLinkBottom = linkPositions.reduce((m, p, i) => Math.max(m, p.y + getLinkH(visibleLinks[i])), 0);
     const canvasH = Math.max(maxPostBottom, maxLinkBottom) + 80;
     const canvasW = Math.max(GUIDE_W, maxLinkRight + 32);
+    const totalH  = CREATOR_CARD_ZONE + canvasH;
+
+    // ── Eagle-eye → focus animation ──
+    useEffect(() => {
+        if (isLoading || initRef.current) return;
+        initRef.current = true;
+
+        const vpW = window.innerWidth  - 28; // 14px wood frame each side
+        const vpH = window.innerHeight - 28 - NAV_H;
+
+        // Eagle-eye: fit the entire canvas
+        const eagleZoom = Math.min((vpW * 0.88) / canvasW, (vpH * 0.88) / totalH);
+        const eagleCam = { x: canvasW / 2, y: totalH / 2, zoom: eagleZoom };
+
+        // Creator's saved focus zone, or sensible default
+        const isMobile = window.innerWidth < 768;
+        const saved    = isMobile ? creator?.boardFocusMobile : creator?.boardFocusDesktop;
+        const defZoom  = Math.min(1.0, vpW / 560);
+        const focusCam = saved || {
+            x: canvasW / 2,
+            y: CREATOR_CARD_ZONE + Math.min(canvasH * 0.3, 320),
+            zoom: defZoom,
+        };
+
+        // Set eagle immediately (no CSS transition)
+        setCamera(eagleCam);
+
+        // After a pause, animate to focus
+        const t = setTimeout(() => {
+            setIsAnimating(true);
+            setCamera(focusCam);
+            setTimeout(() => setIsAnimating(false), 1500);
+        }, 900);
+
+        return () => clearTimeout(t);
+    }, [isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handlePost = async (content: string, isPrivate: boolean) => {
+        if (!creator) return;
+        const newPost = await createBoardPost(creator.id, content, isPrivate);
+        setPosts(prev => [newPost, ...prev]);
+    };
+
+    const handleNoteClick = (post: BoardPost) => { if (!post.reply) return; setSelected(post); };
+    const handleDiemClick = () => { if (!currentUser) { onLoginRequest(); return; } setCompose(true); };
+
+    // Transform: center camera point (camera.x, camera.y) in the viewport
+    const vpW = typeof window !== 'undefined' ? window.innerWidth  - 28 : 800;
+    const vpH = typeof window !== 'undefined' ? window.innerHeight - 28 - NAV_H : 600;
+    const tx = vpW / 2 - camera.x * camera.zoom;
+    const ty = vpH / 2 - camera.y * camera.zoom;
 
     return (
         <>
-            {/* Inject animation keyframes once */}
             <style>{BOARD_STYLES}</style>
 
+            {/* Fixed full-screen corkboard */}
             <div
-                className="min-h-screen"
+                className="fixed inset-0"
                 style={{
-                    /* Wooden outer frame */
                     padding: '14px',
                     backgroundImage: `
                         repeating-linear-gradient(92deg, transparent 0px, transparent 3px, rgba(0,0,0,0.025) 3px, rgba(0,0,0,0.025) 4px),
@@ -770,9 +806,9 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                     boxShadow: 'inset 0 0 60px rgba(0,0,0,0.5)',
                 }}
             >
-                {/* Cork board surface */}
+                {/* Cork surface */}
                 <div
-                    className="relative min-h-[calc(100vh-28px)] rounded-sm"
+                    className="relative h-full rounded-sm overflow-hidden"
                     style={{
                         backgroundColor: '#c9a76b',
                         backgroundImage: `
@@ -784,12 +820,14 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                         boxShadow: 'inset 0 0 50px rgba(0,0,0,0.25), inset 4px 4px 12px rgba(0,0,0,0.15)',
                     }}
                 >
-                    {/* ── sticky top nav ── */}
+                    {/* ── Nav bar (stays on top) ── */}
                     <div
-                        className="sticky top-0 z-40 flex items-center justify-between px-5 py-3"
+                        className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-5"
                         style={{
+                            height: NAV_H,
                             background: 'rgba(90,56,32,0.78)',
                             backdropFilter: 'blur(10px)',
+                            WebkitBackdropFilter: 'blur(10px)',
                             borderBottom: '1px solid rgba(255,255,255,0.07)',
                             boxShadow: '0 2px 12px rgba(0,0,0,0.25)',
                         }}
@@ -799,58 +837,62 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                             style={{ fontFamily: "'Kalam', cursive", fontSize: 14, color: '#fde68a' }}>
                             <ArrowLeft size={15} /> Back
                         </button>
-
                         <span style={{ fontFamily: "'Caveat', cursive", fontSize: 17, fontWeight: 700, color: '#fef9c3', letterSpacing: '0.02em' }}>
                             {creator ? `${creator.displayName}'s Board` : 'Diem Board'}
                         </span>
-
                         <button
                             onClick={handleDiemClick}
                             className="flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
                             style={{
-                                fontFamily: "'Caveat', cursive",
-                                fontSize: 14,
-                                fontWeight: 700,
-                                background: '#fde68a',
-                                color: '#78350f',
-                                padding: '5px 14px',
-                                borderRadius: 3,
+                                fontFamily: "'Caveat', cursive", fontSize: 14, fontWeight: 700,
+                                background: '#fde68a', color: '#78350f',
+                                padding: '5px 14px', borderRadius: 3,
                                 boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
                             }}>
                             📌 Post a Diem
                         </button>
                     </div>
 
-                    {/* ── board content ── */}
-                    <div className="pt-8 pb-32 overflow-x-auto">
-
-                        {/* Creator card — centered above canvas */}
-                        {creator && (
-                            <div className="flex justify-center mb-10" style={{ minWidth: canvasW }}>
-                                <CreatorCard creator={creator} delay={80} />
-                            </div>
-                        )}
-
+                    {/* ── Canvas viewport (below nav) ── */}
+                    <div className="absolute left-0 right-0 overflow-hidden" style={{ top: NAV_H, bottom: 0 }}>
                         {isLoading ? (
-                            <div className="flex justify-center py-20">
+                            <div className="flex items-center justify-center h-full">
                                 <Loader2 size={30} className="animate-spin" style={{ color: 'rgba(254,249,195,0.6)' }} />
                             </div>
                         ) : (
-                            /* Unified absolute canvas — same coordinate space as creator board */
-                            <div className="relative mx-auto" style={{ width: canvasW, height: canvasH }}>
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    left: 0, top: 0,
+                                    width: canvasW,
+                                    height: totalH,
+                                    transformOrigin: '0 0',
+                                    transform: `translate(${tx}px, ${ty}px) scale(${camera.zoom})`,
+                                    transition: isAnimating ? 'transform 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+                                    willChange: 'transform',
+                                }}
+                            >
+                                {/* Creator card — top-center of canvas */}
+                                {creator && (
+                                    <div style={{ position: 'absolute', left: canvasW / 2, top: 52, transform: 'translateX(-50%)' }}>
+                                        <CreatorCard creator={creator} delay={80} />
+                                    </div>
+                                )}
+
                                 {/* Link stickers */}
                                 {visibleLinks.map((link: any, i: number) => {
                                     const { x, y } = linkPositions[i];
                                     const sqSize = getLinkSize(link);
                                     return (
-                                        <div key={link.id || i} style={{ position: 'absolute', left: x, top: y, width: sqSize || LINK_W }}>
+                                        <div key={link.id || i} style={{ position: 'absolute', left: x, top: CREATOR_CARD_ZONE + y, width: sqSize || LINK_W }}>
                                             <LinkSticker link={link} idx={i} />
                                         </div>
                                     );
                                 })}
+
                                 {/* Post stickers */}
                                 {posts.length === 0 ? (
-                                    <div style={{ position: 'absolute', left: BOARD_PAD, top: BOARD_PAD }}>
+                                    <div style={{ position: 'absolute', left: BOARD_PAD, top: CREATOR_CARD_ZONE + BOARD_PAD }}>
                                         <div className="relative note-hover" style={{ transform: 'rotate(-1.2deg)' }}>
                                             <PushPin color="#1d4ed8" delay={400} />
                                             <div className="note-in mt-4 rounded-sm p-6 w-64 text-center"
@@ -874,7 +916,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                                 ) : posts.map((post, i) => {
                                     const { x, y } = postPositions[i];
                                     return (
-                                        <div key={post.id} style={{ position: 'absolute', left: x, top: y, width: NOTE_W }}>
+                                        <div key={post.id} style={{ position: 'absolute', left: x, top: CREATOR_CARD_ZONE + y, width: NOTE_W }}>
                                             <PaperNote
                                                 post={post} idx={i}
                                                 isOwn={currentUser?.id === post.fanId} isCreator={isCreator}
@@ -888,18 +930,15 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                         )}
                     </div>
 
-                    {/* Floating pin button */}
+                    {/* Floating post button */}
                     <button
                         onClick={handleDiemClick}
-                        className="fixed bottom-8 right-7 z-30 flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+                        className="absolute bottom-8 right-7 z-30 transition-all hover:scale-105 active:scale-95"
                         style={{
                             background: 'radial-gradient(circle at 38% 32%, rgba(255,255,255,0.4) 0%, #dc2626 40%, #7f1d1d 100%)',
-                            width: 60, height: 60,
-                            borderRadius: '50%',
+                            width: 60, height: 60, borderRadius: '50%',
                             boxShadow: '0 5px 20px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.25), inset 0 1px 4px rgba(255,255,255,0.4)',
-                            color: 'white',
-                            fontSize: 24,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}
                         title="Post a Diem"
                     >

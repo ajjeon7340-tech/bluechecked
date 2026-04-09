@@ -398,6 +398,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [boardPosts, setBoardPosts] = useState<BoardPost[]>([]);
   const [boardLoading, setBoardLoading] = useState(false);
   const [boardFilter, setBoardFilter] = useState<'ALL' | 'PENDING' | 'LINKS'>('ALL');
+  const [boardFocusModeOpen, setBoardFocusModeOpen] = useState(false);
+  const [boardFocusTab, setBoardFocusTab] = useState<'DESKTOP' | 'MOBILE'>('DESKTOP');
+  const [boardFocusState, setBoardFocusState] = useState<{ x: number; y: number; zoom: number }>({ x: 300, y: 400, zoom: 1.0 });
   const [boardLinkEditId, setBoardLinkEditId] = useState<string | null>(null);
   const [boardAddingLink, setBoardAddingLink] = useState(false);
   const [boardAddingProduct, setBoardAddingProduct] = useState(false);
@@ -2976,6 +2979,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </button>
                             ))}
                         </div>
+                        {/* Focus Zone button */}
+                        <div className="flex justify-end mt-2 max-w-4xl mx-auto">
+                            <button
+                                onClick={() => {
+                                    const isMob = boardFocusTab === 'MOBILE';
+                                    const saved = isMob ? editedCreator.boardFocusMobile : editedCreator.boardFocusDesktop;
+                                    setBoardFocusState(saved || { x: 300, y: 400, zoom: 1.0 });
+                                    setBoardFocusModeOpen(true);
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-stone-200 text-stone-600 hover:bg-stone-50 transition-colors"
+                            >
+                                <Eye size={12} /> Focus Zone
+                            </button>
+                        </div>
                     </div>
 
                     {/* Freeform corkboard canvas */}
@@ -4268,6 +4285,161 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     })()}
                 </div>
             )}
+
+                    {/* Focus Zone Modal */}
+                    {boardFocusModeOpen && (() => {
+                        const CREATOR_CARD_ZONE = 300;
+                        const BOARD_PAD = 32;
+                        const GUIDE_COLS = 2;
+                        const NOTE_W = 252;
+                        const NOTE_H_EST = 272;
+                        const NOTE_GAP_X = 28;
+                        const NOTE_GAP_Y = 36;
+                        const LINK_W = 220;
+                        const LINK_AUTO_X = BOARD_PAD + GUIDE_COLS * (NOTE_W + NOTE_GAP_X) + 20;
+
+                        const getLSz = (l: AffiliateLink): number | null => {
+                            if (l.iconShape === 'square-l') return 220;
+                            if (l.iconShape === 'square-m') return 160;
+                            if (l.iconShape === 'square-s' || l.iconShape === 'square') return 110;
+                            if (l.iconShape === 'square-xs') return 64;
+                            return null;
+                        };
+                        const getLH = (l: AffiliateLink): number => {
+                            const sq = getLSz(l);
+                            if (sq) return sq;
+                            if (l.type === 'DIGITAL_PRODUCT') return 104;
+                            if (l.url?.match(/youtube\.com|youtu\.be/)) return 162;
+                            return 84;
+                        };
+
+                        const fposts = boardPosts.filter(p => p.isPinned);
+                        const flinks = (editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden);
+
+                        const fpostPos = fposts.map((p, idx) => {
+                            if (p.positionX != null && p.positionY != null) return { x: p.positionX, y: p.positionY };
+                            const col = idx % GUIDE_COLS, row = Math.floor(idx / GUIDE_COLS);
+                            return { x: BOARD_PAD + col * (NOTE_W + NOTE_GAP_X), y: BOARD_PAD + row * (NOTE_H_EST + NOTE_GAP_Y) };
+                        });
+                        let aly = BOARD_PAD;
+                        const flinkPos = flinks.map(l => {
+                            if (l.positionX != null && l.positionY != null) return { x: l.positionX, y: l.positionY };
+                            const pos = { x: LINK_AUTO_X, y: aly }; aly += getLH(l) + 14; return pos;
+                        });
+
+                        const maxPB = fpostPos.reduce((m, p) => Math.max(m, p.y + NOTE_H_EST), 440);
+                        const maxLR = flinkPos.reduce((m, p, i) => Math.max(m, p.x + (getLSz(flinks[i]) || LINK_W)), 640);
+                        const maxLB = flinkPos.reduce((m, p, i) => Math.max(m, p.y + getLH(flinks[i])), 0);
+                        const cH = Math.max(maxPB, maxLB) + 80;
+                        const cW = Math.max(640, maxLR + 32);
+                        const tH = CREATOR_CARD_ZONE + cH;
+
+                        const MMAP_W = Math.min(typeof window !== 'undefined' ? window.innerWidth - 80 : 480, 500);
+                        const MMAP_H = 200;
+                        const mmScale = Math.min(MMAP_W / cW, MMAP_H / tH);
+
+                        const vpW = boardFocusTab === 'DESKTOP' ? 1200 : 390;
+                        const vpH = boardFocusTab === 'DESKTOP' ? 700 : 720;
+                        const rW = (vpW / boardFocusState.zoom) * mmScale;
+                        const rH = (vpH / boardFocusState.zoom) * mmScale;
+                        const rL = boardFocusState.x * mmScale - rW / 2;
+                        const rT = boardFocusState.y * mmScale - rH / 2;
+
+                        const handleDragStart = (e: React.MouseEvent) => {
+                            e.preventDefault();
+                            const sx = e.clientX, sy = e.clientY;
+                            const sfx = boardFocusState.x, sfy = boardFocusState.y;
+                            const onMove = (ev: MouseEvent) => {
+                                const dx = (ev.clientX - sx) / mmScale;
+                                const dy = (ev.clientY - sy) / mmScale;
+                                setBoardFocusState(prev => ({ ...prev, x: Math.max(0, Math.min(cW, sfx + dx)), y: Math.max(0, Math.min(tH, sfy + dy)) }));
+                            };
+                            const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+                            document.addEventListener('mousemove', onMove);
+                            document.addEventListener('mouseup', onUp);
+                        };
+
+                        return (
+                            <div className="fixed inset-0 z-[500] flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}>
+                                <div className="w-full max-w-2xl bg-white rounded-t-2xl p-5 shadow-2xl animate-in slide-in-from-bottom-4">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div>
+                                            <h3 className="font-bold text-stone-900 text-sm">Focus Zone</h3>
+                                            <p className="text-[11px] text-stone-400 mt-0.5">Visitors see an eagle-eye overview first, then zoom to your focus</p>
+                                        </div>
+                                        <button onClick={() => setBoardFocusModeOpen(false)} className="p-1.5 rounded-full hover:bg-stone-100 text-stone-400 transition-colors"><X size={16} /></button>
+                                    </div>
+
+                                    {/* Desktop / Mobile tabs */}
+                                    <div className="flex gap-2 mb-3">
+                                        {(['DESKTOP', 'MOBILE'] as const).map(tab => (
+                                            <button key={tab}
+                                                onClick={() => {
+                                                    setBoardFocusTab(tab);
+                                                    const saved = tab === 'MOBILE' ? editedCreator.boardFocusMobile : editedCreator.boardFocusDesktop;
+                                                    setBoardFocusState(saved || { x: cW / 2, y: CREATOR_CARD_ZONE + 200, zoom: tab === 'MOBILE' ? 0.8 : 1.0 });
+                                                }}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${boardFocusTab === tab ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}
+                                            >{tab === 'DESKTOP' ? '🖥 Desktop' : '📱 Mobile'}</button>
+                                        ))}
+                                    </div>
+
+                                    {/* Minimap */}
+                                    <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider mb-1.5">Drag the box or click to reposition focus</p>
+                                    <div
+                                        className="relative rounded-lg overflow-hidden border border-stone-200 mb-4 cursor-crosshair"
+                                        style={{ width: MMAP_W, height: Math.max(100, tH * mmScale), backgroundColor: '#c9a76b' }}
+                                        onClick={e => {
+                                            const r = e.currentTarget.getBoundingClientRect();
+                                            setBoardFocusState(prev => ({ ...prev, x: (e.clientX - r.left) / mmScale, y: (e.clientY - r.top) / mmScale }));
+                                        }}
+                                    >
+                                        {/* Creator card placeholder */}
+                                        <div style={{ position: 'absolute', left: (cW / 2 - 130) * mmScale, top: 40 * mmScale, width: 260 * mmScale, height: (CREATOR_CARD_ZONE - 60) * mmScale, background: '#fefef0', borderRadius: 2, opacity: 0.8 }} />
+                                        {/* Post rectangles */}
+                                        {fpostPos.map((pos, i) => (
+                                            <div key={i} style={{ position: 'absolute', left: pos.x * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: NOTE_W * mmScale, height: 70 * mmScale, background: '#fefef0', borderRadius: 1, opacity: 0.85 }} />
+                                        ))}
+                                        {/* Link rectangles */}
+                                        {flinkPos.map((pos, i) => (
+                                            <div key={i} style={{ position: 'absolute', left: pos.x * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: (getLSz(flinks[i]) || LINK_W) * mmScale, height: getLH(flinks[i]) * mmScale, background: 'rgba(255,255,255,0.75)', borderRadius: 1, opacity: 0.85 }} />
+                                        ))}
+                                        {/* Viewport indicator */}
+                                        <div
+                                            style={{ position: 'absolute', left: rL, top: rT, width: rW, height: rH, border: `2px solid ${boardFocusTab === 'DESKTOP' ? 'rgba(59,130,246,0.9)' : 'rgba(234,88,12,0.9)'}`, background: boardFocusTab === 'DESKTOP' ? 'rgba(59,130,246,0.1)' : 'rgba(234,88,12,0.1)', borderRadius: 2, cursor: 'move', boxShadow: '0 0 0 1px rgba(255,255,255,0.4)' }}
+                                            onMouseDown={handleDragStart}
+                                            onClick={e => e.stopPropagation()}
+                                        />
+                                    </div>
+
+                                    {/* Zoom slider */}
+                                    <div className="flex items-center gap-3 mb-5">
+                                        <span className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider w-10">Zoom</span>
+                                        <input type="range" min="0.4" max="2.2" step="0.05" value={boardFocusState.zoom}
+                                            onChange={e => setBoardFocusState(prev => ({ ...prev, zoom: parseFloat(e.target.value) }))}
+                                            className="flex-1 accent-stone-800" />
+                                        <span className="text-xs font-mono text-stone-500 w-10 text-right">{boardFocusState.zoom.toFixed(2)}×</span>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex gap-2">
+                                        <button onClick={() => setBoardFocusModeOpen(false)} className="flex-1 py-2.5 text-sm font-semibold rounded-xl border border-stone-200 text-stone-500 hover:bg-stone-50 transition-colors">Cancel</button>
+                                        <button
+                                            onClick={async () => {
+                                                const updated = boardFocusTab === 'DESKTOP'
+                                                    ? { ...editedCreator, boardFocusDesktop: boardFocusState }
+                                                    : { ...editedCreator, boardFocusMobile: boardFocusState };
+                                                setEditedCreator(updated);
+                                                setBoardFocusModeOpen(false);
+                                                try { await updateCreatorProfile(updated); } catch {}
+                                            }}
+                                            className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-stone-900 text-white hover:bg-stone-700 transition-colors"
+                                        >Save Focus</button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
 
             {/* Board post popup modal */}
             {boardPopupPost && (() => {

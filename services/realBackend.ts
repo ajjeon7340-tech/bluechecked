@@ -660,6 +660,8 @@ const enrichCreatorProfile = async (data: any): Promise<CreatorProfile> => {
         profileFont: (data.links || []).find((l: any) => l.id === '__diem_config__')?.profileFont || 'inter',
         bannerGradient: (data.links || []).find((l: any) => l.id === '__diem_config__')?.bannerGradient || undefined,
         cornerRadius: (data.links || []).find((l: any) => l.id === '__diem_config__')?.cornerRadius || 'rounded',
+        boardFocusDesktop: data.board_focus_desktop ?? undefined,
+        boardFocusMobile: data.board_focus_mobile ?? undefined,
     };
 };
 
@@ -796,6 +798,8 @@ export const getCreatorProfileFast = async (creatorId?: string): Promise<Creator
         profileFont: (data.links || []).find((l: any) => l.id === '__diem_config__')?.profileFont || 'inter',
         bannerGradient: (data.links || []).find((l: any) => l.id === '__diem_config__')?.bannerGradient || undefined,
         cornerRadius: (data.links || []).find((l: any) => l.id === '__diem_config__')?.cornerRadius || 'rounded',
+        boardFocusDesktop: data.board_focus_desktop ?? undefined,
+        boardFocusMobile: data.board_focus_mobile ?? undefined,
     };
 };
 
@@ -830,6 +834,8 @@ export const updateCreatorProfile = async (profile: CreatorProfile): Promise<Cre
             show_likes: profile.showLikes ?? true,
             show_rating: profile.showRating ?? true,
             show_bio: profile.showBio ?? true,
+            board_focus_desktop: profile.boardFocusDesktop ?? null,
+            board_focus_mobile: profile.boardFocusMobile ?? null,
         })
         .eq('id', session.session.user.id);
 

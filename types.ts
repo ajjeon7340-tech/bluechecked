@@ -80,6 +80,8 @@ export interface CreatorProfile {
   diemIconShape?: 'circle' | 'rounded' | 'square';
   profileFont?: 'inter' | 'playfair' | 'space-grotesk' | 'dm-serif';
   cornerRadius?: 'soft' | 'rounded' | 'pill';
+  boardFocusDesktop?: { x: number; y: number; zoom: number };
+  boardFocusMobile?: { x: number; y: number; zoom: number };
   stats: {
     responseTimeAvg: string;
     replyRate: string;
