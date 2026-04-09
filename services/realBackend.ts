@@ -2681,6 +2681,7 @@ export interface BoardPost {
     replyAttachmentUrl: string | null;
     noteColor: string | null;
     isPinned: boolean;
+    isAddedToChat: boolean;
 }
 
 const mapBoardPost = (row: any): BoardPost => ({
@@ -2701,6 +2702,7 @@ const mapBoardPost = (row: any): BoardPost => ({
     replyAttachmentUrl: row.reply_attachment_url ?? null,
     noteColor: row.note_color ?? null,
     isPinned: row.is_pinned ?? false,
+    isAddedToChat: row.is_added_to_chat ?? false,
 });
 
 // Returns all board posts visible to the current caller for a given creator.
@@ -2853,6 +2855,12 @@ export const pinBoardPost = async (postId: string, isPinned: boolean): Promise<v
     if (!isConfigured) return;
     const { error } = await supabase.from('board_posts').update({ is_pinned: isPinned }).eq('id', postId);
     if (error) console.warn('[Board] pinBoardPost:', error);
+};
+
+export const markBoardPostAsAddedToChat = async (postId: string, value: boolean): Promise<void> => {
+    if (!isConfigured) return;
+    const { error } = await supabase.from('board_posts').update({ is_added_to_chat: value }).eq('id', postId);
+    if (error) console.warn('[Board] markBoardPostAsAddedToChat:', error);
 };
 
 export const updateBoardNoteColor = async (postId: string, noteColor: string): Promise<void> => {

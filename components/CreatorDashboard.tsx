@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n/config';
 import { CreatorProfile, Message, DashboardStats, MonthlyStat, AffiliateLink, LinkSection, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
-import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, uploadPremiumContent, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, sendWelcomeMessage, sendSupportMessage, Withdrawal, isBackendConfigured, getBoardPosts, getPendingBoardPosts, replyToBoardPost, deleteBoardPost, updateBoardPostVisibility, pinBoardPost, updateBoardNoteColor, updateBoardPostPosition, promoteMessageToBoardPost, uploadBoardAttachment, BoardPost} from '../services/realBackend';
+import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, uploadPremiumContent, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, sendWelcomeMessage, sendSupportMessage, Withdrawal, isBackendConfigured, getBoardPosts, getPendingBoardPosts, replyToBoardPost, deleteBoardPost, updateBoardPostVisibility, pinBoardPost, markBoardPostAsAddedToChat, updateBoardNoteColor, updateBoardPostPosition, promoteMessageToBoardPost, uploadBoardAttachment, BoardPost} from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import {
@@ -2972,7 +2972,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     onClick={() => setBoardFilter(f)}
                                     className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-all ${boardFilter === f ? 'bg-stone-900 text-white' : 'bg-white text-stone-500 border border-stone-200 hover:bg-stone-50'}`}
                                 >
-                                    {f === 'ALL' ? `All (${boardPosts.filter(p => !p.isPrivate && (!p.reply || p.isPinned)).length})` : f === 'PENDING' ? `Pending (${boardPosts.filter(p => !p.isPrivate && !p.reply && !p.isPinned).length})` : `Links (${(editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden).length})`}
+                                    {f === 'ALL' ? `Community Board (${boardPosts.filter(p => p.isPinned).length})` : f === 'PENDING' ? `From Chat (${boardPosts.filter(p => p.isAddedToChat && !p.isPinned).length})` : `Links (${(editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden).length})`}
                                 </button>
                             ))}
                         </div>
@@ -2989,8 +2989,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             </div>
                         ) : (() => {
                             const visibleBoardLinks = (editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden);
-                            const filtered = boardFilter === 'LINKS' ? [] : boardPosts.filter(p => !p.isPrivate).filter(p =>
-                                boardFilter === 'PENDING' ? (!p.reply && !p.isPinned) : (!p.reply || p.isPinned)
+                            const filtered = boardFilter === 'LINKS' ? [] : boardPosts.filter(p =>
+                                boardFilter === 'PENDING' ? (p.isAddedToChat && !p.isPinned) : p.isPinned
                             ).sort((a, b) => {
                                 if (a.displayOrder !== null && b.displayOrder !== null) return (a.displayOrder ?? 0) - (b.displayOrder ?? 0);
                                 return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -2999,7 +2999,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             if (filtered.length === 0 && (boardFilter !== 'LINKS' ? visibleBoardLinks.length === 0 : visibleBoardLinks.length === 0)) return (
                                 <div className="text-center py-20 text-stone-400">
                                     <div className="text-4xl mb-3">📋</div>
-                                    <p className="text-sm font-medium">{boardFilter === 'PENDING' ? 'No pending questions' : boardFilter === 'LINKS' ? 'No links added yet' : 'No posts on the board yet'}</p>
+                                    <p className="text-sm font-medium">{boardFilter === 'PENDING' ? 'Nothing in From Chat yet' : boardFilter === 'LINKS' ? 'No links added yet' : 'No pinned posts yet'}</p>
                                 </div>
                             );
 
@@ -4175,7 +4175,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     {/* Chat history picker panel */}
                     {boardChatPickerOpen && (() => {
                         const repliedDMs = messages.filter(m => m.status === 'REPLIED' && m.replyContent);
-                        const answeredBoardPosts = boardPosts.filter(p => !p.isPrivate && !!p.reply && !p.isPinned);
+                        const answeredBoardPosts = boardPosts.filter(p => p.isAddedToChat && !p.isPinned);
                         const totalItems = repliedDMs.length + answeredBoardPosts.length;
                         return (
                             <div
@@ -4319,15 +4319,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <Pin size={10} className={livePost.isPinned ? 'text-amber-600 fill-current' : 'text-stone-400'} />
                                     </button>
                                     <button
-                                        onClick={() => {
-                                            setBoardPosts(prev => prev.map(p => p.id === livePost.id ? { ...p, isPinned: false } : p));
-                                            pinBoardPost(livePost.id, false);
+                                        onClick={async () => {
+                                            try {
+                                                await markBoardPostAsAddedToChat(livePost.id, false);
+                                                if (livePost.isPinned) await pinBoardPost(livePost.id, false);
+                                            } catch {}
+                                            setBoardPosts(prev => prev.map(p => p.id === livePost.id ? { ...p, isAddedToChat: false, isPinned: false } : p));
                                             setBoardPopupPost(null);
                                         }}
                                         className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-stone-500 hover:bg-stone-100 transition-colors text-[11px] font-medium"
-                                        title="Remove from Board"
+                                        title="Remove from Chat"
                                     >
-                                        <Trash2 size={12} /> Remove from Board
+                                        <Trash2 size={12} /> Remove from Chat
                                     </button>
                                     <button onClick={() => { setBoardPopupPost(null); setBoardReplyingId(null); }} className="p-1.5 rounded-full text-stone-400 hover:bg-stone-200/60 transition-colors">
                                         <X size={16} />
@@ -4581,7 +4584,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                              'No answered posts yet'}
                                         </p>
                                         <p className="text-xs text-stone-300">
-                                            {inboxBoardFilter === 'ANSWERED' ? 'Answer questions on the Board to see them here' : 'Board posts will appear here'}
+                                            {inboxBoardFilter === 'ANSWERED' ? 'Answer questions in inbox to see them here' : 'Board posts will appear here'}
                                         </p>
                                     </div>
                                 ) : (
@@ -4751,14 +4754,39 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     : <a href={post.replyAttachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 text-xs text-stone-500 hover:text-stone-800 font-medium transition-colors"><Paperclip size={12} /> {post.replyAttachmentUrl.split('/').pop()}</a>
                                                             )}
                                                         </div>
-                                                        {/* Pin callout */}
+                                                        {/* Add to Chat callout */}
                                                         <div className="mt-2 ml-1">
                                                             {post.isPrivate ? (
-                                                                <span className="inline-flex items-center gap-1 text-[10px] text-stone-400 font-medium"><Lock size={9} /> Private — not shareable to board</span>
-                                                            ) : post.isPinned ? (
-                                                                <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 font-medium"><Pin size={9} className="fill-current" /> Visible on public Community Board</span>
+                                                                <span className="inline-flex items-center gap-1 text-[10px] text-stone-400 font-medium"><Lock size={9} /> Private — cannot be added to board</span>
+                                                            ) : post.isAddedToChat ? (
+                                                                <span className="inline-flex items-center gap-2 text-[10px] font-medium">
+                                                                    <span className="text-emerald-600 flex items-center gap-1">
+                                                                        <MessageSquare size={9} />
+                                                                        {post.isPinned ? 'Pinned to Community Board' : 'In From Chat — ready to pin'}
+                                                                    </span>
+                                                                    <button
+                                                                        onClick={async () => {
+                                                                            try {
+                                                                                await markBoardPostAsAddedToChat(post.id, false);
+                                                                                if (post.isPinned) await pinBoardPost(post.id, false);
+                                                                                setBoardPosts(prev => prev.map(p => p.id === post.id ? { ...p, isAddedToChat: false, isPinned: false } : p));
+                                                                            } catch {}
+                                                                        }}
+                                                                        className="text-stone-400 hover:text-red-400 transition-colors underline"
+                                                                    >Remove</button>
+                                                                </span>
                                                             ) : (
-                                                                <span className="inline-flex items-center gap-1 text-[10px] text-stone-400 font-medium"><Pin size={9} /> Not pinned — only visible here</span>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        try {
+                                                                            await markBoardPostAsAddedToChat(post.id, true);
+                                                                            setBoardPosts(prev => prev.map(p => p.id === post.id ? { ...p, isAddedToChat: true } : p));
+                                                                        } catch {}
+                                                                    }}
+                                                                    className="inline-flex items-center gap-1 text-[10px] font-semibold text-stone-500 hover:text-stone-800 bg-stone-100 hover:bg-stone-200 px-2 py-1 rounded-full transition-colors"
+                                                                >
+                                                                    <MessageSquare size={9} /> Add to Chat
+                                                                </button>
                                                             )}
                                                         </div>
                                                     </div>
