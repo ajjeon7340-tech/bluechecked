@@ -788,6 +788,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
         }, 1000);
 
         return () => {
+            initRef.current = false; // allow re-run on remount (fixes React StrictMode)
             clearTimeout(pauseTimer);
             cancelAnimationFrame(rafIdRef.current);
         };
