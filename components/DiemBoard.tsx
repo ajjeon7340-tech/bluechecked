@@ -675,8 +675,8 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
     const [showCompose, setCompose]   = useState(false);
     const [selectedPost, setSelected] = useState<BoardPost | null>(null);
     const [camera, setCamera]         = useState<{ x: number; y: number; zoom: number }>({ x: 0, y: 0, zoom: 1 });
-    const [isAnimating, setIsAnimating] = useState(false);
-    const initRef = useRef(false);
+    const initRef   = useRef(false);
+    const canvasRef = useRef<HTMLDivElement>(null);
     const isCreator = !!(currentUser && creator && currentUser.id === creator.id);
 
     const loadPosts = useCallback(async () => {
@@ -739,19 +739,17 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
     const canvasW = Math.max(GUIDE_W, maxLinkRight + 32);
     const totalH  = CREATOR_CARD_ZONE + canvasH;
 
-    // ── Eagle-eye → focus animation ──
+    // ── Eagle-eye → focus animation (RAF-based for reliability) ──
     useEffect(() => {
         if (isLoading || initRef.current) return;
         initRef.current = true;
 
-        const vpW = window.innerWidth  - 28; // 14px wood frame each side
+        const vpW = window.innerWidth  - 28;
         const vpH = window.innerHeight - 28 - NAV_H;
 
-        // Eagle-eye: fit the entire canvas
-        const eagleZoom = Math.min((vpW * 0.88) / canvasW, (vpH * 0.88) / totalH);
-        const eagleCam = { x: canvasW / 2, y: totalH / 2, zoom: eagleZoom };
+        const eagleZoom = Math.min((vpW * 0.72) / canvasW, (vpH * 0.72) / totalH);
+        const eagleCam  = { x: canvasW / 2, y: totalH / 2, zoom: eagleZoom };
 
-        // Creator's saved focus zone, or sensible default
         const isMobile = window.innerWidth < 768;
         const saved    = isMobile ? creator?.boardFocusMobile : creator?.boardFocusDesktop;
         const defZoom  = Math.min(1.0, vpW / 560);
@@ -761,17 +759,49 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
             zoom: defZoom,
         };
 
-        // Set eagle immediately (no CSS transition)
+        // Apply eagle position directly to DOM (no React re-render needed for initial position)
+        const applyCamera = (cam: { x: number; y: number; zoom: number }) => {
+            if (!canvasRef.current) return;
+            const tx = vpW / 2 - cam.x * cam.zoom;
+            const ty = vpH / 2 - cam.y * cam.zoom;
+            canvasRef.current.style.transform = `translate(${tx}px, ${ty}px) scale(${cam.zoom})`;
+        };
+
+        applyCamera(eagleCam);
         setCamera(eagleCam);
 
-        // After a pause, animate to focus
-        const t = setTimeout(() => {
-            setIsAnimating(true);
-            setCamera(focusCam);
-            setTimeout(() => setIsAnimating(false), 1500);
-        }, 900);
+        // Animate to focus using RAF after pause
+        const pauseTimer = setTimeout(() => {
+            const from = { ...eagleCam };
+            const to   = { ...focusCam };
+            const DURATION = 1400;
+            const startMs  = performance.now();
 
-        return () => clearTimeout(t);
+            const ease = (t: number) =>
+                t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+            let rafId: number;
+            const step = (now: number) => {
+                const p = Math.min((now - startMs) / DURATION, 1);
+                const e = ease(p);
+                const cam = {
+                    x:    from.x    + (to.x    - from.x)    * e,
+                    y:    from.y    + (to.y    - from.y)    * e,
+                    zoom: from.zoom + (to.zoom - from.zoom) * e,
+                };
+                applyCamera(cam);
+                if (p < 1) { rafId = requestAnimationFrame(step); }
+                else { setCamera(to); } // sync React state when done
+            };
+            rafId = requestAnimationFrame(step);
+            // Store cleanup ref
+            (canvasRef as any)._rafId = rafId;
+        }, 1000);
+
+        return () => {
+            clearTimeout(pauseTimer);
+            if ((canvasRef as any)._rafId) cancelAnimationFrame((canvasRef as any)._rafId);
+        };
     }, [isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handlePost = async (content: string, isPrivate: boolean) => {
@@ -861,6 +891,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                             </div>
                         ) : (
                             <div
+                                ref={canvasRef}
                                 style={{
                                     position: 'absolute',
                                     left: 0, top: 0,
@@ -868,7 +899,6 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                                     height: totalH,
                                     transformOrigin: '0 0',
                                     transform: `translate(${tx}px, ${ty}px) scale(${camera.zoom})`,
-                                    transition: isAnimating ? 'transform 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
                                     willChange: 'transform',
                                 }}
                             >

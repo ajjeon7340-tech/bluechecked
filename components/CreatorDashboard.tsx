@@ -3309,6 +3309,28 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     onTouchEnd={handleCanvasMouseUp}
                                     onTouchCancel={handleCanvasMouseUp}
                                 >
+                                    {/* Focus zone overlay — moves with minimap drag */}
+                                    {boardFocusModeOpen && (() => {
+                                        const CREATOR_CARD_ZONE_O = 300;
+                                        const focusVpW = boardFocusTab === 'DESKTOP' ? 1200 : 390;
+                                        const focusVpH = boardFocusTab === 'DESKTOP' ? 700 : 720;
+                                        const fRectW = focusVpW / boardFocusState.zoom;
+                                        const fRectH = focusVpH / boardFocusState.zoom;
+                                        const fLeft = guideOffsetX + boardFocusState.x - fRectW / 2;
+                                        const fTop  = guideOffsetY + (boardFocusState.y - CREATOR_CARD_ZONE_O) - fRectH / 2;
+                                        const fColor = boardFocusTab === 'DESKTOP' ? 'rgba(59,130,246,0.85)' : 'rgba(234,88,12,0.85)';
+                                        return (
+                                            <div className="absolute pointer-events-none" style={{ left: fLeft, top: fTop, width: fRectW, height: fRectH, zIndex: 60 }}>
+                                                <div className="absolute inset-0" style={{ border: `2px dashed ${fColor}`, borderRadius: 4, background: boardFocusTab === 'DESKTOP' ? 'rgba(59,130,246,0.06)' : 'rgba(234,88,12,0.06)' }} />
+                                                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full pb-1">
+                                                    <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: fColor, color: 'white' }}>
+                                                        {boardFocusTab} focus
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+
                                     {/* Viewport guidelines — two rectangles showing exact visible area per device */}
                                     {boardViewportW > 0 && boardViewportH > 0 && (() => {
                                         const mobileVW = 358;
@@ -4868,7 +4890,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         </div>
 
                                         {/* Thread content */}
-                                        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-1">
+                                        <div className="flex-1 overflow-y-auto px-5 py-5">
+                                        <div className="max-w-2xl mx-auto space-y-1">
                                             {/* Fan message */}
                                             <div className="flex relative z-10">
                                                 <div className="flex flex-col items-center mr-3 relative flex-shrink-0">
@@ -5008,6 +5031,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     </button>
                                                 </div>
                                             )}
+                                        </div>
                                         </div>
                                     </div>
                                 );
