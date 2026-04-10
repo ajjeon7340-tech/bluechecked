@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Globe, Pin } from 'lucide-react';
 import { CreatorProfile, CurrentUser, AffiliateLink, Product } from '../types';
@@ -63,8 +64,15 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const boardScrollRef = useRef<HTMLDivElement>(null);
   const [boardContainerW, setBoardContainerW] = useState(0);
-  // Fixed board visible height — mirrors the max-height set on the scroll container
+  // Fixed board visible height — mirrors the height set on the board container
   const BOARD_MAX_H = 440;
+
+  // Board camera animation state
+  const boardInitRef = useRef(false);
+  const [boardCamera, setBoardCamera] = useState<{ x: number; y: number; zoom: number }>({ x: 0, y: 0, zoom: 1 });
+  const [boardAnimReady, setBoardAnimReady] = useState(false);
+  const [boardCamTransition, setBoardCamTransition] = useState('none');
+  const [boardPostsLoaded, setBoardPostsLoaded] = useState(false);
 
   // Profile Tutorial
   const [tutorialStep, setTutorialStep] = useState(0);
@@ -183,27 +191,70 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   useEffect(() => {
     getBoardPosts(creator.id).then(posts => {
         setBoardPosts(posts);
-    }).catch(() => {});
+        setBoardPostsLoaded(true);
+    }).catch(() => { setBoardPostsLoaded(true); }); // trigger animation even on error
   }, [creator.id]);
 
-  // Wheel inside the board: scroll vertically when there's room, otherwise redirect to horizontal
+  // Board camera animation — eagle-eye → focus (CSS transition, reliable across React 18)
   useEffect(() => {
-    const el = boardScrollRef.current;
-    if (!el) return;
-    const handler = (e: WheelEvent) => {
-        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return; // already horizontal — let it pass
-        const atTop = el.scrollTop === 0;
-        const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
-        // If scrolling up and already at top, or scrolling down and already at bottom → redirect to X
-        if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) {
-            e.preventDefault();
-            el.scrollLeft += e.deltaY * 1.2;
+    if (!boardPostsLoaded || boardContainerW === 0 || boardInitRef.current) return;
+    boardInitRef.current = true;
+
+    // Compute canvas bounds from pinnedPosts + links at time of animation
+    const NOTE_W = 252, NOTE_H_EST = 272, NOTE_GAP_X = 28, NOTE_GAP_Y = 36;
+    const BOARD_PAD = 32, COLS = 3, PROFILE_W = 220;
+    const LINK_START_X = BOARD_PAD + COLS * (NOTE_W + NOTE_GAP_X) + 32;
+    const pinned = boardPosts.filter(p => p.isPinned && !p.isPrivate);
+    const links = (creator.links || []).filter((l: any) => l.id !== '__diem_config__' && !l.hidden);
+    const getLH = (l: any) => {
+        if (['square-l','square-m','square-s','square','square-xs'].includes(l.iconShape)) {
+            return l.iconShape === 'square-l' ? 220 : l.iconShape === 'square-m' ? 160 : l.iconShape === 'square-xs' ? 64 : 110;
         }
-        // Otherwise let vertical scroll happen naturally
+        if (l.type === 'DIGITAL_PRODUCT') return 104;
+        return 84;
     };
-    el.addEventListener('wheel', handler, { passive: false });
-    return () => el.removeEventListener('wheel', handler);
-  }, []);
+    let autoLY = BOARD_PAD;
+    const linkBottoms = links.map((l: any) => {
+        if (l.positionY != null) return l.positionY + getLH(l) + 160;
+        const b = autoLY + getLH(l) + 160; autoLY += getLH(l) + 14; return b;
+    });
+    const postBottoms = pinned.map((p: any, idx: number) => {
+        if (p.positionY != null) return p.positionY + NOTE_H_EST + 160;
+        const row = Math.floor(idx / COLS);
+        return BOARD_PAD + row * (NOTE_H_EST + NOTE_GAP_Y) + NOTE_H_EST + 160;
+    });
+    const cW = Math.max(900, LINK_START_X + PROFILE_W + BOARD_PAD, ...links.map((l: any, i: number) => (l.positionX ?? LINK_START_X) + (PROFILE_W)));
+    const cH = Math.max(300, ...postBottoms, ...linkBottoms);
+
+    const eagleZoom = Math.min((boardContainerW * 0.82) / cW, (BOARD_MAX_H * 0.82) / cH, 0.95);
+    const eagleCam = { x: cW / 2, y: cH / 2, zoom: eagleZoom };
+
+    const isMobile = boardContainerW < 600;
+    const saved = isMobile ? creator.boardFocusMobile : creator.boardFocusDesktop;
+    const CREATOR_CARD_ZONE = 300; // offset used in DiemBoard minimap coordinate system
+    const focusX = saved?.x ?? cW / 2;
+    const focusY = saved ? Math.max(0, saved.y - CREATOR_CARD_ZONE) : cH * 0.3;
+    const focusZoom = 1.0;
+    const focusCam = { x: focusX, y: focusY, zoom: focusZoom };
+
+    flushSync(() => {
+        setBoardCamera(eagleCam);
+        setBoardAnimReady(true);
+    });
+
+    const pauseTimer = setTimeout(() => {
+        setBoardCamTransition('transform 1.4s cubic-bezier(0.33, 1, 0.68, 1)');
+        setBoardCamera(focusCam);
+        setTimeout(() => setBoardCamTransition('none'), 1500);
+    }, 900);
+
+    return () => {
+        boardInitRef.current = false;
+        clearTimeout(pauseTimer);
+    };
+  }, [boardPostsLoaded, boardContainerW]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // (wheel handler removed — board now uses CSS-transform camera instead of scroll)
 
   const handleBoardPost = async () => {
     if (!boardMessage.trim()) return;
@@ -226,16 +277,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
         getBoardPosts(creator.id).then(posts => {
             setBoardPosts(posts);
             setNewlyPostedId(newPost.id);
-            // Scroll to the new sticker after render
-            setTimeout(() => {
-                const el = boardScrollRef.current;
-                const sticker = el?.querySelector(`[data-post-id="${newPost.id}"]`) as HTMLElement | null;
-                if (el && sticker) {
-                    el.scrollTo({ left: sticker.offsetLeft - 32, top: sticker.offsetTop - 32, behavior: 'smooth' });
-                }
-                // Clear highlight after 3s
-                setTimeout(() => setNewlyPostedId(null), 3000);
-            }, 80);
+            // Clear highlight after 3s
+            setTimeout(() => setNewlyPostedId(null), 3000);
         }).catch(() => {});
     } catch (e: any) {
         alert(e.message);
@@ -876,6 +919,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                   const containerW = Math.max(900, maxX + BOARD_PAD, linkMaxX + BOARD_PAD);
 
                                   const isCreatorOwner = !!(currentUser && currentUser.id === creator.id);
+
+                                  // Camera transform: center camera.x/y in the viewport
+                                  const bTx = boardContainerW / 2 - boardCamera.x * boardCamera.zoom;
+                                  const bTy = BOARD_MAX_H / 2 - boardCamera.y * boardCamera.zoom;
+
                                   return (
                                       <div
                                           ref={el => {
@@ -886,13 +934,21 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                   ro.observe(el);
                                               }
                                           }}
-                                          className="overflow-x-auto overflow-y-auto select-none"
-                                          style={{ cursor: 'grab', scrollbarWidth: 'none', msOverflowStyle: 'none', maxHeight: `${BOARD_MAX_H}px` }}
+                                          className="overflow-hidden select-none relative"
+                                          style={{ height: `${BOARD_MAX_H}px` }}
                                       >
-                                          <style>{`.board-scroll::-webkit-scrollbar { display: none; }`}</style>
                                           <div
-                                              className="relative board-scroll"
-                                              style={{ width: `${containerW}px`, minHeight: `${containerH}px` }}
+                                              className="absolute"
+                                              style={{
+                                                  left: 0, top: 0,
+                                                  width: `${containerW}px`,
+                                                  height: `${containerH}px`,
+                                                  transformOrigin: '0 0',
+                                                  transform: `translate(${bTx}px, ${bTy}px) scale(${boardCamera.zoom})`,
+                                                  transition: boardCamTransition,
+                                                  willChange: 'transform',
+                                                  opacity: boardAnimReady ? 1 : 0,
+                                              }}
                                           >
                                           {/* Viewport guidelines — only visible to the creator viewing their own board */}
                                           {isCreatorOwner && boardContainerW > 0 && (() => {
