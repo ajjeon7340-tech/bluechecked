@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { CreatorProfile, CurrentUser } from '../types';
 import { getBoardPosts, createBoardPost, BoardPost } from '../services/realBackend';
 import { ArrowLeft, Lock, Globe, CheckCircle, ExternalLink, X, Loader2, ShoppingBag, Heart, Link as LinkIcon } from 'lucide-react';
@@ -676,8 +677,8 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
     const [selectedPost, setSelected] = useState<BoardPost | null>(null);
     const [camera, setCamera]         = useState<{ x: number; y: number; zoom: number }>({ x: 0, y: 0, zoom: 1 });
     const [animReady, setAnimReady]   = useState(false);
+    const [camTransition, setCamTransition] = useState('none');
     const initRef   = useRef(false);
-    const rafIdRef  = useRef<number>(0);
     const isCreator = !!(currentUser && creator && currentUser.id === creator.id);
 
     const loadPosts = useCallback(async () => {
@@ -740,7 +741,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
     const canvasW = Math.max(GUIDE_W, maxLinkRight + 32);
     const totalH  = CREATOR_CARD_ZONE + canvasH;
 
-    // ── Eagle-eye → focus animation ──
+    // ── Eagle-eye → focus animation (CSS transition, reliable across React 18) ──
     useEffect(() => {
         if (isLoading || initRef.current) return;
         initRef.current = true;
@@ -760,37 +761,23 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
             zoom: defZoom,
         };
 
-        // Set initial eagle position via React state, then reveal
-        setCamera(eagleCam);
-        setAnimReady(true);
+        // Step 1: commit eagle position synchronously so browser paints it
+        flushSync(() => {
+            setCamera(eagleCam);
+            setAnimReady(true);
+        });
 
-        // Animate to focus using RAF after pause
+        // Step 2: after pause, enable CSS transition and set focus position in one render
         const pauseTimer = setTimeout(() => {
-            const from = { ...eagleCam };
-            const to   = { ...focusCam };
-            const DURATION = 1400;
-            const startMs  = performance.now();
-
-            const ease = (t: number) =>
-                t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
-            const step = (now: number) => {
-                const p = Math.min((now - startMs) / DURATION, 1);
-                const e = ease(p);
-                setCamera({
-                    x:    from.x    + (to.x    - from.x)    * e,
-                    y:    from.y    + (to.y    - from.y)    * e,
-                    zoom: from.zoom + (to.zoom - from.zoom) * e,
-                });
-                if (p < 1) { rafIdRef.current = requestAnimationFrame(step); }
-            };
-            rafIdRef.current = requestAnimationFrame(step);
+            setCamTransition('transform 1.4s cubic-bezier(0.33, 1, 0.68, 1)');
+            setCamera(focusCam);
+            // Step 3: clear transition after animation completes
+            setTimeout(() => setCamTransition('none'), 1500);
         }, 1000);
 
         return () => {
             initRef.current = false; // allow re-run on remount (fixes React StrictMode)
             clearTimeout(pauseTimer);
-            cancelAnimationFrame(rafIdRef.current);
         };
     }, [isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -888,6 +875,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                                     height: totalH,
                                     transformOrigin: '0 0',
                                     transform: `translate(${tx}px, ${ty}px) scale(${camera.zoom})`,
+                                    transition: camTransition,
                                     willChange: 'transform',
                                     opacity: animReady ? 1 : 0,
                                 }}

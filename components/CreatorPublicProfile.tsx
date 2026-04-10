@@ -769,16 +769,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                   const PROFILE_W = 220;
                                   const LINK_START_X = BOARD_PAD + COLS * (NOTE_W + NOTE_GAP_X) + 32;
 
-                                  // All posts sorted: answered + pinned first (by displayOrder/time), unanswered at end
-                                  const answeredPosts = [...boardPosts]
-                                      .filter(p => !!p.reply || p.isPinned)
+                                  // Only pinned, non-private posts appear on the public board
+                                  const pinnedPosts = [...boardPosts]
+                                      .filter(p => p.isPinned && !p.isPrivate)
                                       .sort((a, b) => {
                                           if (a.displayOrder !== null && b.displayOrder !== null) return (a.displayOrder ?? 0) - (b.displayOrder ?? 0);
                                           return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
                                       });
-                                  const unansweredPosts = [...boardPosts]
-                                      .filter(p => !p.reply && !p.isPinned)
-                                      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
                                   const _getLinkSize = (l: typeof allPublicLinks[0]) => {
                                       if (l.iconShape === 'square-l') return 220;
@@ -819,12 +816,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       Math.abs(a.y - b.y) < NOTE_H_EST + DB_MARGIN;
 
                                   const savedPositions = new Map<string, _BP>();
-                                  boardPosts.forEach(p => {
+                                  pinnedPosts.forEach(p => {
                                       if (p.positionX != null && p.positionY != null) savedPositions.set(p.id, { x: p.positionX, y: p.positionY });
                                   });
 
                                   const computedPositions = new Map<string, _BP>(savedPositions);
-                                  boardPosts.forEach((p, idx) => {
+                                  pinnedPosts.forEach((p, idx) => {
                                       if (computedPositions.has(p.id)) return;
                                       const col = idx % COLS;
                                       const row = Math.floor(idx / COLS);
@@ -866,11 +863,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       const sqSize = _getLinkSize(link);
                                       return Math.max(max, pos.x + (sqSize || PROFILE_W));
                                   }, LINK_START_X + PROFILE_W);
-                                  const maxY = boardPosts.reduce((max, p) => {
+                                  const maxY = pinnedPosts.reduce((max, p) => {
                                       const pos = getPos(p);
                                       return Math.max(max, pos.y + NOTE_H_EST + 160);
                                   }, BOARD_PAD);
-                                  const maxX = boardPosts.reduce((max, p) => {
+                                  const maxX = pinnedPosts.reduce((max, p) => {
                                       const pos = getPos(p);
                                       return Math.max(max, pos.x + NOTE_W);
                                   }, BOARD_PAD + NOTE_W);
@@ -1144,8 +1141,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                   });
                                               })()}
 
-                                              {/* --- Fan Q&A stickers --- */}
-                                              {answeredPosts.length === 0 && unansweredPosts.length === 0 && allPublicLinks.length === 0 && (
+                                              {/* --- Pinned stickers --- */}
+                                              {pinnedPosts.length === 0 && allPublicLinks.length === 0 && (
                                                   <div className="absolute inset-0 flex items-center justify-center opacity-40">
                                                       <div className="text-center">
                                                           <div className="text-4xl mb-3">📋</div>
@@ -1153,7 +1150,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                       </div>
                                                   </div>
                                               )}
-                                              {answeredPosts.map((post, i) => {
+                                              {pinnedPosts.map((post, i) => {
                                                   const nc = stableIdx(post.id) % noteColors.length;
                                                   const rot = rotations[stableIdx(post.id) % rotations.length];
                                                   const pos = getPos(post);
@@ -1206,65 +1203,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                   );
                                               })}
 
-                                              {/* --- Unanswered (pending) stickers — grid-wrapped within viewport --- */}
-                                              {unansweredPosts.map((post, i) => {
-                                                  const pos = getPos(post);
-                                                  const leftOffset = pos.x;
-                                                  const topOffset = pos.y;
-                                                  const isNew = post.id === newlyPostedId;
-                                                  return (
-                                                      <div
-                                                          key={post.id}
-                                                          data-post-id={post.id}
-                                                          className="absolute"
-                                                          style={{ left: leftOffset, top: topOffset, width: NOTE_W, zIndex: isNew ? 200 : 40 + i }}
-                                                      >
-                                                          {/* Tape strip */}
-                                                          <div className="h-4 w-14 mx-auto rounded-b-sm" style={{ background: 'rgba(200,193,185,0.45)' }} />
-                                                          {/* Pending note card — dotted border */}
-                                                          <div
-                                                              className="relative rounded-lg p-3 overflow-hidden"
-                                                              style={{
-                                                                  backgroundColor: '#FAFAF8',
-                                                                  backgroundImage: 'repeating-linear-gradient(to bottom, transparent, transparent 23px, rgba(0,0,0,0.03) 23px, rgba(0,0,0,0.03) 24px)',
-                                                                  backgroundPositionY: '36px',
-                                                                  border: `2px dashed ${isNew ? 'rgba(99,102,241,0.7)' : 'rgba(0,0,0,0.18)'}`,
-                                                                  boxShadow: isNew ? '0 0 0 3px rgba(99,102,241,0.15), 0 4px 16px rgba(0,0,0,0.1)' : '0 2px 8px rgba(0,0,0,0.06)',
-                                                                  transition: 'box-shadow 0.3s ease, border-color 0.3s ease',
-                                                              }}
-                                                          >
-                                                              {/* Pending badge */}
-                                                              <span className="absolute top-2 right-2 text-[9px] font-bold text-stone-400 bg-stone-100 px-1.5 py-0.5 rounded-full uppercase tracking-wide">Pending</span>
-
-                                                              {/* Fan: avatar + name */}
-                                                              <div className="flex items-center gap-1.5 mb-1.5 pr-16">
-                                                                  <div className="w-6 h-6 rounded-full bg-stone-300 flex-shrink-0 overflow-hidden flex items-center justify-center">
-                                                                      {post.fanAvatarUrl
-                                                                          ? <img src={post.fanAvatarUrl} className="w-full h-full object-cover" alt={post.fanName} />
-                                                                          : <span className="text-white text-[9px] font-bold">{post.fanName.charAt(0).toUpperCase()}</span>}
-                                                                  </div>
-                                                                  <span className="text-[11px] font-semibold text-stone-600 truncate">{post.fanName}</span>
-                                                              </div>
-
-                                                              {/* Message */}
-                                                              <div className="ml-[30px] bg-white/60 rounded-xl rounded-tl-sm border border-dashed border-stone-200 p-2">
-                                                                  <p className="text-[11px] text-stone-500 leading-relaxed line-clamp-4 italic">{post.content}</p>
-                                                                  {post.attachmentUrl && /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(post.attachmentUrl) && (
-                                                                      <img src={post.attachmentUrl} className="mt-1.5 w-full max-h-16 object-cover rounded-lg opacity-70" alt="attachment" />
-                                                                  )}
-                                                              </div>
-
-                                                              {/* Awaiting reply */}
-                                                              <div className="flex items-center mt-2 ml-[30px]">
-                                                                  <div className="flex items-center gap-1">
-                                                                      <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                                                                      <span className="text-[9px] font-medium text-stone-400">{creator.stats?.responseTimeAvg ? `Replies in ~${creator.stats.responseTimeAvg}` : 'Awaiting reply…'}</span>
-                                                                  </div>
-                                                              </div>
-                                                          </div>
-                                                      </div>
-                                                  );
-                                              })}
                                           </div>
                                       </div>
                                   );
