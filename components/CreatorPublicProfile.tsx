@@ -67,12 +67,16 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   // Fixed board visible height — mirrors the height set on the board container
   const BOARD_MAX_H = 440;
 
-  // Board camera animation state
-  const boardInitRef = useRef(false);
-  const [boardCamera, setBoardCamera] = useState<{ x: number; y: number; zoom: number }>({ x: 0, y: 0, zoom: 1 });
-  const [boardAnimReady, setBoardAnimReady] = useState(false);
+  // Board camera animation + pan state
+  const boardInitRef    = useRef(false);
+  const boardAnimating  = useRef(false);
+  const boardDragRef    = useRef<{ startX: number; startY: number; camX: number; camY: number } | null>(null);
+  const boardTouchRef   = useRef<{ startX: number; startY: number; camX: number; camY: number } | null>(null);
+  const [boardCamera, setBoardCamera]             = useState<{ x: number; y: number; zoom: number }>({ x: 0, y: 0, zoom: 1 });
+  const [boardAnimReady, setBoardAnimReady]       = useState(false);
   const [boardCamTransition, setBoardCamTransition] = useState('none');
-  const [boardPostsLoaded, setBoardPostsLoaded] = useState(false);
+  const [boardPostsLoaded, setBoardPostsLoaded]   = useState(false);
+  const [boardIsDragging, setBoardIsDragging]     = useState(false);
 
   // Profile Tutorial
   const [tutorialStep, setTutorialStep] = useState(0);
@@ -237,6 +241,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     const focusZoom = 1.0;
     const focusCam = { x: focusX, y: focusY, zoom: focusZoom };
 
+    boardAnimating.current = true;
+
     flushSync(() => {
         setBoardCamera(eagleCam);
         setBoardAnimReady(true);
@@ -245,16 +251,35 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     const pauseTimer = setTimeout(() => {
         setBoardCamTransition('transform 1.4s cubic-bezier(0.33, 1, 0.68, 1)');
         setBoardCamera(focusCam);
-        setTimeout(() => setBoardCamTransition('none'), 1500);
+        setTimeout(() => {
+            setBoardCamTransition('none');
+            boardAnimating.current = false; // animation done — pan enabled
+        }, 1500);
     }, 900);
 
     return () => {
         boardInitRef.current = false;
+        boardAnimating.current = false;
         clearTimeout(pauseTimer);
     };
   }, [boardPostsLoaded, boardContainerW]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // (wheel handler removed — board now uses CSS-transform camera instead of scroll)
+  // Wheel scroll for the board — needs passive:false to preventDefault (React onWheel can't do this)
+  useEffect(() => {
+    const el = boardScrollRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+        if (boardAnimating.current) return;
+        e.preventDefault();
+        setBoardCamera(prev => ({
+            ...prev,
+            x: prev.x + e.deltaX / prev.zoom,
+            y: prev.y + e.deltaY / prev.zoom,
+        }));
+    };
+    el.addEventListener('wheel', handler, { passive: false });
+    return () => el.removeEventListener('wheel', handler);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBoardPost = async () => {
     if (!boardMessage.trim()) return;
@@ -935,7 +960,34 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                               }
                                           }}
                                           className="overflow-hidden select-none relative"
-                                          style={{ height: `${BOARD_MAX_H}px` }}
+                                          style={{ height: `${BOARD_MAX_H}px`, cursor: boardIsDragging ? 'grabbing' : 'grab' }}
+                                          onMouseDown={e => {
+                                              if (boardAnimating.current) return;
+                                              setBoardIsDragging(true);
+                                              boardDragRef.current = { startX: e.clientX, startY: e.clientY, camX: boardCamera.x, camY: boardCamera.y };
+                                          }}
+                                          onMouseMove={e => {
+                                              if (!boardDragRef.current) return;
+                                              const dx = e.clientX - boardDragRef.current.startX;
+                                              const dy = e.clientY - boardDragRef.current.startY;
+                                              setBoardCamera(prev => ({ ...prev, x: boardDragRef.current!.camX - dx / prev.zoom, y: boardDragRef.current!.camY - dy / prev.zoom }));
+                                          }}
+                                          onMouseUp={() => { boardDragRef.current = null; setBoardIsDragging(false); }}
+                                          onMouseLeave={() => { boardDragRef.current = null; setBoardIsDragging(false); }}
+                                          onTouchStart={e => {
+                                              if (boardAnimating.current) return;
+                                              const t = e.touches[0];
+                                              boardTouchRef.current = { startX: t.clientX, startY: t.clientY, camX: boardCamera.x, camY: boardCamera.y };
+                                          }}
+                                          onTouchMove={e => {
+                                              if (!boardTouchRef.current) return;
+                                              e.preventDefault();
+                                              const t = e.touches[0];
+                                              const dx = t.clientX - boardTouchRef.current.startX;
+                                              const dy = t.clientY - boardTouchRef.current.startY;
+                                              setBoardCamera(prev => ({ ...prev, x: boardTouchRef.current!.camX - dx / prev.zoom, y: boardTouchRef.current!.camY - dy / prev.zoom }));
+                                          }}
+                                          onTouchEnd={() => { boardTouchRef.current = null; }}
                                       >
                                           <div
                                               className="absolute"
