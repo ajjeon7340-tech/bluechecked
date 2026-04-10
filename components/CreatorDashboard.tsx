@@ -399,8 +399,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [boardLoading, setBoardLoading] = useState(false);
   const [boardFilter, setBoardFilter] = useState<'ALL' | 'PENDING' | 'LINKS'>('ALL');
   const [boardFocusModeOpen, setBoardFocusModeOpen] = useState(false);
-  const [boardFocusDesktopState, setBoardFocusDesktopState] = useState<{ x: number; y: number }>({ x: 300, y: 400 });
-  const [boardFocusMobileState, setBoardFocusMobileState] = useState<{ x: number; y: number }>({ x: 200, y: 400 });
+  // Single anchor = top-left of the viewport in DiemBoard canvas coords (CREATOR_CARD_ZONE included)
+  const [boardFocusAnchor, setBoardFocusAnchor] = useState<{ x: number; y: number }>({ x: 0, y: 300 });
   const [boardLinkEditId, setBoardLinkEditId] = useState<string | null>(null);
   const [boardAddingLink, setBoardAddingLink] = useState(false);
   const [boardAddingProduct, setBoardAddingProduct] = useState(false);
@@ -2983,10 +2983,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         <div className="flex justify-end mt-2 max-w-4xl mx-auto">
                             <button
                                 onClick={() => {
+                                    const BOARD_MAX_H = 440, CREATOR_CARD_ZONE = 300;
                                     const sd = editedCreator.boardFocusDesktop;
-                                    const sm = editedCreator.boardFocusMobile;
-                                    setBoardFocusDesktopState(sd ? { x: sd.x, y: sd.y } : { x: 300, y: 400 });
-                                    setBoardFocusMobileState(sm ? { x: sm.x, y: sm.y } : { x: 200, y: 400 });
+                                    // anchor = top-left of the focus viewport in canvas coords
+                                    // saved.x = anchor.x + 320  →  anchor.x = saved.x - 320
+                                    // saved.y = anchor.y + BOARD_MAX_H/2  →  anchor.y = saved.y - 220
+                                    const anchor = sd
+                                        ? { x: Math.max(0, sd.x - 320), y: Math.max(CREATOR_CARD_ZONE, sd.y - BOARD_MAX_H / 2) }
+                                        : { x: 0, y: CREATOR_CARD_ZONE };
+                                    setBoardFocusAnchor(anchor);
                                     setBoardFocusModeOpen(true);
                                 }}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-stone-200 text-stone-600 hover:bg-stone-50 transition-colors"
@@ -3310,31 +3315,23 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     onTouchEnd={handleCanvasMouseUp}
                                     onTouchCancel={handleCanvasMouseUp}
                                 >
-                                    {/* Focus zone overlays — both desktop and mobile shown simultaneously */}
+                                    {/* Focus zone overlays — desktop (blue) + mobile (orange) anchored together */}
                                     {boardFocusModeOpen && (() => {
                                         const CREATOR_CARD_ZONE_O = 300;
-                                        const FOCUS_H = 440; // matches BOARD_MAX_H in public view
-                                        const zones = [
-                                            { key: 'DESKTOP', w: 640, state: boardFocusDesktopState, color: 'rgba(59,130,246,0.85)', bg: 'rgba(59,130,246,0.06)' },
-                                            { key: 'MOBILE',  w: 390, state: boardFocusMobileState,  color: 'rgba(234,88,12,0.85)',    bg: 'rgba(234,88,12,0.06)' },
-                                        ];
+                                        const FOCUS_H = 440;
+                                        const fLeft = guideOffsetX + boardFocusAnchor.x;
+                                        const fTop  = guideOffsetY + (boardFocusAnchor.y - CREATOR_CARD_ZONE_O);
                                         return (
-                                            <>
-                                                {zones.map(z => {
-                                                    const fLeft = guideOffsetX + z.state.x - z.w / 2;
-                                                    const fTop  = guideOffsetY + (z.state.y - CREATOR_CARD_ZONE_O) - FOCUS_H / 2;
-                                                    return (
-                                                        <div key={z.key} className="absolute pointer-events-none" style={{ left: fLeft, top: fTop, width: z.w, height: FOCUS_H, zIndex: 60 }}>
-                                                            <div className="absolute inset-0" style={{ border: `2px dashed ${z.color}`, borderRadius: 4, background: z.bg }} />
-                                                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full pb-1">
-                                                                <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: z.color, color: 'white' }}>
-                                                                    {z.key}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </>
+                                            <div className="absolute pointer-events-none" style={{ left: fLeft, top: fTop, height: FOCUS_H, zIndex: 60 }}>
+                                                {/* Desktop box */}
+                                                <div className="absolute" style={{ left: 0, top: 0, width: 640, height: FOCUS_H, border: '2px dashed rgba(99,102,241,0.7)', borderRadius: 4, background: 'rgba(99,102,241,0.05)' }}>
+                                                    <span className="absolute top-0 left-1 text-[9px] font-bold text-indigo-500 translate-y-0.5">DESKTOP</span>
+                                                </div>
+                                                {/* Mobile box */}
+                                                <div className="absolute" style={{ left: 0, top: 0, width: 390, height: FOCUS_H, border: '2px dashed rgba(251,146,60,0.8)', borderRadius: 4, background: 'rgba(251,146,60,0.05)' }}>
+                                                    <span className="absolute top-5 left-1 text-[9px] font-bold text-orange-500 translate-y-0.5">MOBILE</span>
+                                                </div>
+                                            </div>
                                         );
                                     })()}
 
@@ -4367,18 +4364,23 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         const MMAP_H = 200;
                         const mmScale = Math.min(MMAP_W / cW, MMAP_H / tH);
 
-                        // Fixed viewport sizes (no zoom control — sizes are auto-determined by device)
                         const DESKTOP_VW = 640, MOBILE_VW = 390, FOCUS_H = 440;
-                        const zones = [
-                            { key: 'DESKTOP', vw: DESKTOP_VW, state: boardFocusDesktopState, setState: setBoardFocusDesktopState, color: 'rgba(59,130,246,0.9)', bg: 'rgba(59,130,246,0.12)', label: '🖥 Computer' },
-                            { key: 'MOBILE',  vw: MOBILE_VW,  state: boardFocusMobileState,  setState: setBoardFocusMobileState,  color: 'rgba(234,88,12,0.9)',   bg: 'rgba(234,88,12,0.12)',  label: '📱 Mobile' },
-                        ];
 
-                        const makeDragHandler = (setState: React.Dispatch<React.SetStateAction<{x:number;y:number}>>, startX: number, startY: number, sx: number, sy: number) => {
+                        // anchor = top-left of viewport in canvas coords
+                        const aL = boardFocusAnchor.x * mmScale;
+                        const aT = boardFocusAnchor.y * mmScale;
+                        const dW = DESKTOP_VW * mmScale;
+                        const mW = MOBILE_VW * mmScale;
+                        const fH = FOCUS_H * mmScale;
+
+                        const startDrag = (e: React.MouseEvent) => {
+                            e.preventDefault();
+                            const sx = e.clientX, sy = e.clientY;
+                            const sax = boardFocusAnchor.x, say = boardFocusAnchor.y;
                             const onMove = (ev: MouseEvent) => {
-                                const dx = (ev.clientX - startX) / mmScale;
-                                const dy = (ev.clientY - startY) / mmScale;
-                                setState({ x: Math.max(0, Math.min(cW, sx + dx)), y: Math.max(0, Math.min(tH, sy + dy)) });
+                                const dx = (ev.clientX - sx) / mmScale;
+                                const dy = (ev.clientY - sy) / mmScale;
+                                setBoardFocusAnchor({ x: Math.max(0, sax + dx), y: Math.max(CREATOR_CARD_ZONE, Math.min(tH - FOCUS_H, say + dy)) });
                             };
                             const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
                             document.addEventListener('mousemove', onMove);
@@ -4391,59 +4393,57 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     <div className="flex items-center justify-between mb-2">
                                         <div>
                                             <h3 className="font-bold text-stone-900 text-sm">Focus Zone</h3>
-                                            <p className="text-[11px] text-stone-400 mt-0.5">Drag each box to set where visitors zoom in — eagle-eye first, then focus</p>
+                                            <p className="text-[11px] text-stone-400 mt-0.5">Drag the frame to set where visitors zoom in after the eagle-eye overview</p>
                                         </div>
                                         <button onClick={() => setBoardFocusModeOpen(false)} className="p-1.5 rounded-full hover:bg-stone-100 text-stone-400 transition-colors"><X size={16} /></button>
                                     </div>
 
                                     {/* Legend */}
-                                    <div className="flex gap-3 mb-3">
-                                        {zones.map(z => (
-                                            <div key={z.key} className="flex items-center gap-1.5">
-                                                <div className="w-3 h-3 rounded-sm border-2 flex-shrink-0" style={{ borderColor: z.color, background: z.bg }} />
-                                                <span className="text-[11px] font-semibold text-stone-600">{z.label}</span>
-                                            </div>
-                                        ))}
+                                    <div className="flex gap-4 mb-3">
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-3 h-3 rounded-sm border-2 border-indigo-400 bg-indigo-50 flex-shrink-0" />
+                                            <span className="text-[11px] font-semibold text-stone-600">🖥 Computer (640px)</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-3 h-3 rounded-sm border-2 border-orange-400 bg-orange-50 flex-shrink-0" style={{ borderStyle: 'dashed' }} />
+                                            <span className="text-[11px] font-semibold text-stone-600">📱 Mobile (390px)</span>
+                                        </div>
                                     </div>
 
-                                    {/* Minimap — both boxes shown simultaneously */}
-                                    <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider mb-1.5">Drag a box or click the map to move focus</p>
+                                    {/* Minimap */}
+                                    <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider mb-1.5">Drag the frame or click to reposition</p>
                                     <div
                                         className="relative rounded-lg overflow-hidden border border-stone-200 mb-4 cursor-crosshair"
                                         style={{ width: MMAP_W, height: Math.max(100, tH * mmScale), backgroundColor: '#c9a76b' }}
                                         onClick={e => {
-                                            // Click moves the desktop box (most common use)
                                             const r = e.currentTarget.getBoundingClientRect();
-                                            setBoardFocusDesktopState({ x: (e.clientX - r.left) / mmScale, y: (e.clientY - r.top) / mmScale });
+                                            const cx = (e.clientX - r.left) / mmScale;
+                                            const cy = (e.clientY - r.top) / mmScale;
+                                            setBoardFocusAnchor({ x: Math.max(0, cx - DESKTOP_VW / 2), y: Math.max(CREATOR_CARD_ZONE, Math.min(tH - FOCUS_H, cy - FOCUS_H / 2)) });
                                         }}
                                     >
                                         {/* Creator card placeholder */}
                                         <div style={{ position: 'absolute', left: (cW / 2 - 130) * mmScale, top: 40 * mmScale, width: 260 * mmScale, height: (CREATOR_CARD_ZONE - 60) * mmScale, background: '#fefef0', borderRadius: 2, opacity: 0.8 }} />
-                                        {/* Post rectangles */}
                                         {fpostPos.map((pos, i) => (
                                             <div key={i} style={{ position: 'absolute', left: pos.x * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: NOTE_W * mmScale, height: 70 * mmScale, background: '#fefef0', borderRadius: 1, opacity: 0.85 }} />
                                         ))}
-                                        {/* Link rectangles */}
                                         {flinkPos.map((pos, i) => (
                                             <div key={i} style={{ position: 'absolute', left: pos.x * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: (getLSz(flinks[i]) || LINK_W) * mmScale, height: getLH(flinks[i]) * mmScale, background: 'rgba(255,255,255,0.75)', borderRadius: 1, opacity: 0.85 }} />
                                         ))}
-                                        {/* Both viewport boxes */}
-                                        {zones.map(z => {
-                                            const bW = z.vw * mmScale;
-                                            const bH = FOCUS_H * mmScale;
-                                            const bL = z.state.x * mmScale - bW / 2;
-                                            const bT = z.state.y * mmScale - bH / 2;
-                                            return (
-                                                <div
-                                                    key={z.key}
-                                                    style={{ position: 'absolute', left: bL, top: bT, width: bW, height: bH, border: `2px solid ${z.color}`, background: z.bg, borderRadius: 2, cursor: 'move', boxShadow: '0 0 0 1px rgba(255,255,255,0.4)' }}
-                                                    onMouseDown={e => { e.preventDefault(); e.stopPropagation(); makeDragHandler(z.setState, e.clientX, e.clientY, z.state.x, z.state.y); }}
-                                                    onClick={e => e.stopPropagation()}
-                                                >
-                                                    <span className="absolute top-0.5 left-1 text-[8px] font-bold" style={{ color: z.color }}>{z.key}</span>
-                                                </div>
-                                            );
-                                        })}
+                                        {/* Desktop box (blue, wider) */}
+                                        <div
+                                            style={{ position: 'absolute', left: aL, top: aT, width: dW, height: fH, border: '2px solid rgba(99,102,241,0.8)', background: 'rgba(99,102,241,0.08)', borderRadius: 2, cursor: 'move', boxShadow: '0 0 0 1px rgba(255,255,255,0.3)' }}
+                                            onMouseDown={startDrag}
+                                            onClick={e => e.stopPropagation()}
+                                        >
+                                            <span style={{ position: 'absolute', top: 2, left: 4, fontSize: 8, fontWeight: 700, color: 'rgba(99,102,241,0.9)', textTransform: 'uppercase', letterSpacing: 1 }}>Desktop</span>
+                                        </div>
+                                        {/* Mobile box (orange, narrower, dashed) */}
+                                        <div
+                                            style={{ position: 'absolute', left: aL, top: aT, width: mW, height: fH, border: '2px dashed rgba(251,146,60,0.9)', background: 'rgba(251,146,60,0.06)', borderRadius: 2, pointerEvents: 'none' }}
+                                        >
+                                            <span style={{ position: 'absolute', top: 14, left: 4, fontSize: 8, fontWeight: 700, color: 'rgba(251,146,60,0.9)', textTransform: 'uppercase', letterSpacing: 1 }}>Mobile</span>
+                                        </div>
                                     </div>
 
                                     {/* Actions */}
@@ -4451,10 +4451,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <button onClick={() => setBoardFocusModeOpen(false)} className="flex-1 py-2.5 text-sm font-semibold rounded-xl border border-stone-200 text-stone-500 hover:bg-stone-50 transition-colors">Cancel</button>
                                         <button
                                             onClick={async () => {
+                                                // Camera center = anchor top-left + half viewport size
                                                 const updated = {
                                                     ...editedCreator,
-                                                    boardFocusDesktop: { ...boardFocusDesktopState, zoom: 1.0 },
-                                                    boardFocusMobile:  { ...boardFocusMobileState,  zoom: 1.0 },
+                                                    boardFocusDesktop: { x: boardFocusAnchor.x + DESKTOP_VW / 2, y: boardFocusAnchor.y + FOCUS_H / 2, zoom: 1.0 },
+                                                    boardFocusMobile:  { x: boardFocusAnchor.x + MOBILE_VW  / 2, y: boardFocusAnchor.y + FOCUS_H / 2, zoom: 1.0 },
                                                 };
                                                 setEditedCreator(updated);
                                                 setBoardFocusModeOpen(false);
