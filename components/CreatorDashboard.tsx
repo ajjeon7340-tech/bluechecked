@@ -2983,15 +2983,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         <div className="flex justify-end mt-2 max-w-4xl mx-auto">
                             <button
                                 onClick={() => {
-                                    const BOARD_MAX_H = 440, CREATOR_CARD_ZONE = 300;
+                                    const BOARD_MAX_H = 440, CREATOR_CARD_ZONE = 300, DESKTOP_VW = 640;
                                     const sd = editedCreator.boardFocusDesktop;
-                                    // anchor = top-left of the focus viewport in canvas coords
-                                    // saved.x = anchor.x + 320  →  anchor.x = saved.x - 320
-                                    // saved.y = anchor.y + BOARD_MAX_H/2  →  anchor.y = saved.y - 220
-                                    const anchor = sd
-                                        ? { x: sd.x - 320, y: Math.max(0, sd.y - BOARD_MAX_H / 2) }
-                                        : { x: 0, y: CREATOR_CARD_ZONE };
-                                    setBoardFocusAnchor(anchor);
+                                    if (sd) {
+                                        setBoardFocusAnchor({ x: sd.x - 320, y: Math.max(0, sd.y - BOARD_MAX_H / 2) });
+                                    } else {
+                                        // No saved focus — default to horizontally centered over content
+                                        const BOARD_PAD = 32, NOTE_W = 252, NOTE_GAP_X = 28, GUIDE_COLS = 3, LINK_W = 220;
+                                        const LINK_AUTO_X = BOARD_PAD + GUIDE_COLS * (NOTE_W + NOTE_GAP_X) + 32;
+                                        const visLinks = (editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden);
+                                        const maxLR = visLinks.reduce((m, l) => Math.max(m, (l.positionX ?? LINK_AUTO_X) + LINK_W), DESKTOP_VW);
+                                        const cWest = Math.max(DESKTOP_VW, maxLR + 32);
+                                        const defaultX = (cWest - DESKTOP_VW) / 2;
+                                        setBoardFocusAnchor({ x: defaultX, y: CREATOR_CARD_ZONE });
+                                    }
                                     setBoardFocusModeOpen(true);
                                 }}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-stone-200 text-stone-600 hover:bg-stone-50 transition-colors"
@@ -3268,8 +3273,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         })).sort((a, b) => a.pos.y !== b.pos.y ? a.pos.y - b.pos.y : a.pos.x - b.pos.x);
                                         const order = allPositioned.findIndex(item => item.id === boardDragging.id);
                                         try {
-                                            await updateBoardPostPosition(boardDragging.id, rawPos.x - guideOffsetX, rawPos.y - guideOffsetY, order);
-                                            setBoardPosts(prev => prev.map(p => p.id === boardDragging.id ? { ...p, positionX: rawPos.x - guideOffsetX, positionY: rawPos.y - guideOffsetY, displayOrder: order } : p));
+                                            const pX = Math.max(0, rawPos.x - guideOffsetX);
+                                            const pY = Math.max(0, rawPos.y - guideOffsetY);
+                                            await updateBoardPostPosition(boardDragging.id, pX, pY, order);
+                                            setBoardPosts(prev => prev.map(p => p.id === boardDragging.id ? { ...p, positionX: pX, positionY: pY, displayOrder: order } : p));
                                         } catch {}
                                     }
                                     setBoardDragging(null);
@@ -3278,7 +3285,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     const pos = boardLinkPositions[boardLinkDragging.id];
                                     if (pos) {
                                         const updatedLinks = (editedCreator.links || []).map(l =>
-                                            l.id === boardLinkDragging.id ? { ...l, positionX: pos.x - guideOffsetX, positionY: pos.y - guideOffsetY } : l
+                                            l.id === boardLinkDragging.id ? { ...l, positionX: Math.max(0, pos.x - guideOffsetX), positionY: Math.max(0, pos.y - guideOffsetY) } : l
                                         );
                                         await saveBoardLinkChange(updatedLinks);
                                     }

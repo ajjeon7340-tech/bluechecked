@@ -838,7 +838,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                                   // Profile stickers: bio + platform links + featured links/products/support
                                   // Flatten all public links across all groups
-                                  const allPublicLinks = groupedLinks.flatMap(g => g.links);
+                                  const allPublicLinks = groupedLinks.flatMap(g => g.links)
+                                      .filter(l => l.id !== '__diem_config__' && !l.hidden && l.positionX != null && l.positionY != null);
 
                                   const NOTE_W = 252;
                                   const NOTE_H_EST = 272;
