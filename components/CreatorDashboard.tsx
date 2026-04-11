@@ -2989,7 +2989,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     // saved.x = anchor.x + 320  →  anchor.x = saved.x - 320
                                     // saved.y = anchor.y + BOARD_MAX_H/2  →  anchor.y = saved.y - 220
                                     const anchor = sd
-                                        ? { x: Math.max(0, sd.x - 320), y: Math.max(0, sd.y - BOARD_MAX_H / 2) }
+                                        ? { x: sd.x - 320, y: Math.max(0, sd.y - BOARD_MAX_H / 2) }
                                         : { x: 0, y: CREATOR_CARD_ZONE };
                                     setBoardFocusAnchor(anchor);
                                     setBoardFocusModeOpen(true);
@@ -3324,7 +3324,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         const anchor = boardFocusModeOpen ? boardFocusAnchor : (() => {
                                             const sd = editedCreator.boardFocusDesktop;
                                             return sd
-                                                ? { x: Math.max(0, sd.x - DESKTOP_VW / 2), y: Math.max(0, sd.y - FOCUS_H / 2) }
+                                                ? { x: sd.x - DESKTOP_VW / 2, y: Math.max(0, sd.y - FOCUS_H / 2) }
                                                 : { x: 0, y: CREATOR_CARD_ZONE_R };
                                         })();
                                         const fLeft = guideOffsetX + anchor.x;
@@ -4363,7 +4363,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const onMove = (ev: MouseEvent) => {
                                 const dx = (ev.clientX - sx) / mmScale;
                                 const dy = (ev.clientY - sy) / mmScale;
-                                setBoardFocusAnchor({ x: Math.max(0, sax + dx), y: Math.max(0, Math.min(tH - FOCUS_H, say + dy)) });
+                                setBoardFocusAnchor({ x: Math.min(cW - DESKTOP_VW / 2, sax + dx), y: Math.max(0, Math.min(tH - FOCUS_H, say + dy)) });
                             };
                             const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
                             document.addEventListener('mousemove', onMove);
@@ -4403,7 +4403,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             const cx = (e.clientX - r.left) / mmScale;
                                             const cy = (e.clientY - r.top) / mmScale;
                                             // Position frame TOP at the click point (not center) so upper content is reachable
-                                            setBoardFocusAnchor({ x: Math.max(0, cx - DESKTOP_VW / 2), y: Math.max(0, Math.min(tH - FOCUS_H, cy)) });
+                                            setBoardFocusAnchor({ x: Math.min(cW - DESKTOP_VW / 2, cx - DESKTOP_VW / 2), y: Math.max(0, Math.min(tH - FOCUS_H, cy)) });
                                         }}
                                     >
                                         {/* Creator card placeholder */}

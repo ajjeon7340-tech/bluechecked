@@ -1024,7 +1024,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                               const fX = sv?.x ?? DESKTOP_VW / 2;
                                               const fY = sv ? Math.max(0, sv.y - CREATOR_CARD_ZONE) : FOCUS_H / 2;
                                               // Anchor = top-left of the viewport frame in canvas coordinates
-                                              const aX = Math.max(0, fX - DESKTOP_VW / 2);
+                                              const aX = fX - DESKTOP_VW / 2;
                                               const aY = Math.max(0, fY - FOCUS_H / 2);
                                               return (
                                                   <div className="absolute pointer-events-none" style={{ left: aX, top: aY, zIndex: 5 }}>
