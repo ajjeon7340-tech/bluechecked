@@ -1078,22 +1078,17 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                                                       const linkRot = rotations[(stableIdx(link.id) + li) % rotations.length];
 
-                                                      // ── Photo sticker ──
+                                                      // ── Photo (plain image, no sticker chrome) ──
                                                       if (link.type === 'PHOTO') {
                                                           const phW = link.width ?? 220;
                                                           const phH = link.height ?? 160;
                                                           return (
                                                               <div
                                                                   key={link.id}
-                                                                  className="absolute flex flex-col"
-                                                                  style={{ left: pos.x, top: pos.y, width: phW, zIndex: 20 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
-                                                                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.03)'; }}
-                                                                  onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; }}
+                                                                  className="absolute overflow-hidden"
+                                                                  style={{ left: pos.x, top: pos.y, width: phW, height: phH, zIndex: 20 + li, borderRadius: 8, boxShadow: '0 2px 12px rgba(0,0,0,0.12)' }}
                                                               >
-                                                                  <div className="h-3 w-12 mx-auto rounded-b-sm" style={{ background: tapeColors[nc] }} />
-                                                                  <div className="rounded-lg overflow-hidden shadow-md" style={{ width: phW, height: phH, border: '1px solid rgba(0,0,0,0.1)' }}>
-                                                                      {link.thumbnailUrl && <img src={link.thumbnailUrl} alt={link.title || 'photo'} className="w-full h-full object-cover" draggable={false} />}
-                                                                  </div>
+                                                                  {link.thumbnailUrl && <img src={link.thumbnailUrl} alt={link.title || 'photo'} className="w-full h-full object-cover" draggable={false} />}
                                                               </div>
                                                           );
                                                       }

@@ -3416,7 +3416,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             } catch {}
                                             return null;
                                         })();
-                                        // ── Photo sticker ──
+                                        // ── Photo (plain image, no sticker chrome) ──
                                         if (link.type === 'PHOTO') {
                                             const phW = boardLinkSizes[link.id]?.w ?? link.width ?? 220;
                                             const phH = boardLinkSizes[link.id]?.h ?? link.height ?? 160;
@@ -3424,60 +3424,56 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             return (
                                                 <div
                                                     key={link.id}
-                                                    className="absolute flex flex-col group"
+                                                    className="absolute group"
                                                     style={{
                                                         left: currentPos.x,
                                                         top: currentPos.y,
                                                         width: phW,
-                                                        transform: isDraggingLink ? 'rotate(0deg) scale(1.02)' : `rotate(${rot}deg)`,
-                                                        transition: isDraggingLink || isResizing ? 'none' : 'transform 0.2s ease',
+                                                        height: phH,
                                                         zIndex: isDraggingLink ? 1000 : isResizing ? 900 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (20 + i),
+                                                        transition: isDraggingLink || isResizing ? 'none' : undefined,
+                                                        borderRadius: 8,
+                                                        overflow: 'hidden',
+                                                        boxShadow: isDraggingLink ? '0 16px 40px rgba(0,0,0,0.2)' : '0 2px 12px rgba(0,0,0,0.12)',
                                                     }}
                                                     onTouchStart={e => handleNoteTouchStart(e, link.id, currentPos, 'LINK')}
                                                     onTouchMove={handleNoteTouchMove}
                                                     onTouchEnd={cancelLongPress}
                                                     onTouchCancel={cancelLongPress}
                                                 >
-                                                    {/* Tape — drag handle */}
+                                                    {link.thumbnailUrl && (
+                                                        <img src={link.thumbnailUrl} alt={link.title || 'photo'} className="absolute inset-0 w-full h-full object-cover" draggable={false} />
+                                                    )}
+                                                    {/* Drag overlay — full image is the drag handle */}
                                                     <div
-                                                        className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0"
-                                                        style={{ background: linkTapes[lc], cursor: 'grab', touchAction: 'none' }}
+                                                        className="absolute inset-0"
+                                                        style={{ cursor: isDraggingLink ? 'grabbing' : 'grab', touchAction: 'none' }}
                                                         onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
-                                                        title="Drag to reposition"
                                                     />
-                                                    {/* Photo body */}
-                                                    <div
-                                                        className="relative overflow-hidden rounded-lg shadow-md"
-                                                        style={{ width: phW, height: phH, border: isDraggingLink ? '2px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.1)' }}
-                                                    >
-                                                        {link.thumbnailUrl && (
-                                                            <img src={link.thumbnailUrl} alt={link.title || 'photo'} className="absolute inset-0 w-full h-full object-cover" draggable={false} />
-                                                        )}
-                                                        {/* Action buttons */}
-                                                        <div className="absolute top-1.5 right-1.5 hidden group-hover:flex items-center gap-1 z-10">
-                                                            <button
-                                                                className="p-1 rounded-full bg-white/80 text-red-400 hover:text-red-600 hover:bg-white transition-all shadow-sm"
-                                                                onClick={async e => {
-                                                                    e.stopPropagation();
-                                                                    await saveBoardLinkChange((editedCreator.links || []).filter(l => l.id !== link.id));
-                                                                }}
-                                                                title="Delete"
-                                                            ><Trash2 size={10} /></button>
-                                                        </div>
-                                                        {/* Resize handle — bottom-right corner */}
-                                                        <div
-                                                            className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize opacity-0 group-hover:opacity-100 flex items-end justify-end p-0.5 transition-opacity"
-                                                            style={{ touchAction: 'none' }}
-                                                            onMouseDown={e => {
-                                                                e.preventDefault();
+                                                    {/* Action buttons */}
+                                                    <div className="absolute top-1.5 right-1.5 hidden group-hover:flex items-center gap-1 z-10">
+                                                        <button
+                                                            className="p-1 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all shadow-sm"
+                                                            onClick={async e => {
                                                                 e.stopPropagation();
-                                                                setBoardLinkResizing({ id: link.id, startMouseX: e.clientX, startMouseY: e.clientY, startW: phW, startH: phH });
+                                                                await saveBoardLinkChange((editedCreator.links || []).filter(l => l.id !== link.id));
                                                             }}
-                                                        >
-                                                            <svg width="10" height="10" viewBox="0 0 10 10" className="text-white drop-shadow">
-                                                                <path d="M3 10 L10 3 M7 10 L10 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                                                            </svg>
-                                                        </div>
+                                                            title="Delete"
+                                                        ><Trash2 size={10} /></button>
+                                                    </div>
+                                                    {/* Resize handle — bottom-right corner */}
+                                                    <div
+                                                        className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize opacity-0 group-hover:opacity-100 flex items-end justify-end p-1 transition-opacity z-10"
+                                                        style={{ touchAction: 'none' }}
+                                                        onMouseDown={e => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            setBoardLinkResizing({ id: link.id, startMouseX: e.clientX, startMouseY: e.clientY, startW: phW, startH: phH });
+                                                        }}
+                                                    >
+                                                        <svg width="10" height="10" viewBox="0 0 10 10" className="text-white drop-shadow">
+                                                            <path d="M3 10 L10 3 M7 10 L10 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                                        </svg>
                                                     </div>
                                                 </div>
                                             );
