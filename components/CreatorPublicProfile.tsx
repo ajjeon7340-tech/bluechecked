@@ -859,14 +859,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       });
 
                                   const _getLinkSize = (l: typeof allPublicLinks[0]) => {
-                                      if (l.iconShape === 'square-l') return 220;
-                                      if (l.iconShape === 'square-m') return 160;
                                       if (l.iconShape === 'square-s' || l.iconShape === 'square') return 110;
                                       if (l.iconShape === 'square-xs') return 64;
                                       return null;
                                   };
                                   const _getLinkH = (l: typeof allPublicLinks[0]) => {
                                       if (l.type === 'PHOTO') return l.height ?? 160;
+                                      if (l.iconShape === 'square-xxs') return 44;
                                       const sqSize = _getLinkSize(l);
                                       if (sqSize) return sqSize;
                                       if (l.type === 'DIGITAL_PRODUCT') return 104;
@@ -939,7 +938,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                   const linkMaxX = allPublicLinks.reduce((max, link, idx) => {
                                       const pos = getLinkPos(link, idx);
                                       const sqSize = _getLinkSize(link);
-                                      const w = link.type === 'PHOTO' ? (link.width ?? 220) : (sqSize || PROFILE_W);
+                                      const w = link.type === 'PHOTO' ? (link.width ?? 220) : (link.iconShape === 'square-xxs' ? 110 : (sqSize || PROFILE_W));
                                       return Math.max(max, pos.x + w);
                                   }, LINK_START_X + PROFILE_W);
                                   const maxY = pinnedPosts.reduce((max, p) => {
@@ -1097,11 +1096,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           <div
                                                               key={link.id}
                                                               className="absolute"
-                                                          style={{ left: pos.x, top: pos.y, width: isThumbnailMode ? PROFILE_W : (sqSize || PROFILE_W), zIndex: 20 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
+                                                          style={{ left: pos.x, top: pos.y, width: isThumbnailMode ? PROFILE_W : link.iconShape === 'square-xxs' ? 110 : (sqSize || PROFILE_W), zIndex: 20 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
                                                               onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '10'; }}
                                                               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = '2'; }}
                                                           >
-                                                          <div className={`h-3 mx-auto rounded-b-sm ${isThumbnailMode ? 'w-10' : sqSize === 220 ? 'w-10' : sqSize === 160 ? 'w-8' : sqSize === 64 ? 'w-4' : sqSize ? 'w-6' : 'w-10'}`} style={{ background: tapeColors[nc] }} />
+                                                          <div className={`h-3 mx-auto rounded-b-sm ${isThumbnailMode ? 'w-10' : link.iconShape === 'square-xxs' ? 'w-10' : sqSize === 64 ? 'w-4' : sqSize ? 'w-6' : 'w-10'}`} style={{ background: tapeColors[nc] }} />
                                                               {isThumbnailMode ? (
                                                                   (() => {
                                                                       const thumbBg = detectedPlatform ? '#0f0f0f' : isProduct ? '#ede9fe' : isSupport ? '#fdf2f8' : '#e5e7eb';
@@ -1211,6 +1210,30 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                           </a>
                                                                       );
                                                                   }
+                                                                  if (link.iconShape === 'square-xxs') {
+                                                                      const isExternal = link.type === 'EXTERNAL';
+                                                                      const Tag = isExternal ? 'a' : 'button';
+                                                                      return (
+                                                                          <Tag
+                                                                              href={isExternal ? ensureProtocol(link.url) : undefined}
+                                                                              target={isExternal ? "_blank" : undefined}
+                                                                              rel={isExternal ? "noopener noreferrer" : undefined}
+                                                                              onClick={e => {
+                                                                                  e.stopPropagation();
+                                                                                  if (isProduct) handleProductClick(link);
+                                                                                  if (isSupport) handleSupportClick(link.price);
+                                                                              }}
+                                                                              className="flex items-center gap-2.5 rounded-lg overflow-hidden hover:opacity-90 transition-opacity p-2 w-full h-full"
+                                                                              style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                          >
+                                                                              <div className="w-6 h-6 rounded-md bg-white/60 shadow-sm border border-black/5 flex items-center justify-center flex-shrink-0">
+                                                                                  {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-md" alt={link.title} /> : isEmoji ? <span className="text-[14px] leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className="scale-[0.9]">{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={12} className="text-violet-500" /> : isSupport ? <Heart size={12} className="text-pink-500" /> : <ExternalLink size={12} className="text-stone-500" />}
+                                                                              </div>
+                                                                              <p className="text-xs font-bold text-stone-800 leading-tight w-full truncate text-left flex-1">{link.title}</p>
+                                                                              <ExternalLink size={10} className="text-stone-400 flex-shrink-0" />
+                                                                          </Tag>
+                                                                      );
+                                                                  }
                                                                   if (sqSize === 64) {
                                                                       const isExternal = link.type === 'EXTERNAL';
                                                                       const Tag = isExternal ? 'a' : 'button';
@@ -1245,10 +1268,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                               className="flex flex-col items-center justify-center text-center rounded-lg overflow-hidden hover:opacity-90 transition-opacity aspect-square p-2 w-full h-full block"
                                                                               style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
                                                                           >
-                                                                              <div className={`${sqSize === 220 ? 'w-16 h-16 rounded-2xl mb-3' : sqSize === 160 ? 'w-14 h-14 rounded-2xl mb-2' : 'w-12 h-12 rounded-xl mb-1.5'} bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto`}>
-                                                                                  {hasThumbnail ? <img src={link.thumbnailUrl} className={`w-full h-full object-cover ${sqSize >= 160 ? 'rounded-2xl' : 'rounded-xl'}`} alt={link.title} /> : isEmoji ? <span className={`${sqSize === 220 ? 'text-4xl' : sqSize === 160 ? 'text-3xl' : 'text-2xl'} leading-none`}>{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className={sqSize === 220 ? "scale-[2]" : sqSize === 160 ? "scale-[1.75]" : "scale-[1.5]"}>{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={sqSize === 220 ? 24 : 20} className="text-violet-500" /> : isSupport ? <Heart size={sqSize === 220 ? 24 : 20} className="text-pink-500" /> : <ExternalLink size={sqSize === 220 ? 24 : 20} className="text-stone-500" />}
+                                                                              <div className={`w-12 h-12 rounded-xl mb-1.5 bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto`}>
+                                                                                  {hasThumbnail ? <img src={link.thumbnailUrl} className={`w-full h-full object-cover rounded-xl`} alt={link.title} /> : isEmoji ? <span className={`text-2xl leading-none`}>{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className={"scale-[1.5]"}>{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={20} className="text-violet-500" /> : isSupport ? <Heart size={20} className="text-pink-500" /> : <ExternalLink size={20} className="text-stone-500" />}
                                                                               </div>
-                                                                              <p className={`${sqSize === 220 ? 'text-lg mb-1 px-4' : sqSize === 160 ? 'text-base mb-1 px-2' : 'text-xs mb-0.5 px-1'} font-bold text-stone-800 leading-tight w-full truncate`}>{link.title}</p>
+                                                                              <p className={`text-xs mb-0.5 px-1 font-bold text-stone-800 leading-tight w-full truncate`}>{link.title}</p>
                                                                               <p className={`text-[8px] text-stone-500 uppercase tracking-wider font-semibold`}>{isProduct ? 'Buy' : isSupport ? 'Tip' : 'Visit'}</p>
                                                                           </Tag>
                                                                       );

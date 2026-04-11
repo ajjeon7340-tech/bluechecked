@@ -3527,7 +3527,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 style={{
                                                     left: currentPos.x,
                                                     top: currentPos.y,
-                                                    width: isEditingLink ? Math.max(isThumbnailMode ? LINK_W : (link.iconShape === 'square-xxs' ? LINK_W : sqSize || LINK_W), 220) : isThumbnailMode ? LINK_W : (link.iconShape === 'square-xxs' ? LINK_W : sqSize || LINK_W),
+                                                    width: isEditingLink ? Math.max(isThumbnailMode ? LINK_W : (link.iconShape === 'square-xxs' ? 110 : sqSize || LINK_W), 220) : isThumbnailMode ? LINK_W : (link.iconShape === 'square-xxs' ? 110 : sqSize || LINK_W),
                                                     transform: isDraggingLink ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
                                                     transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
                                                     zIndex: isDraggingLink ? 1000 : isEditingLink ? 500 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (20 + i),
@@ -4491,7 +4491,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         });
 
                         const maxPB = fpostPos.reduce((m, p) => Math.max(m, p.y + NOTE_H_EST), 440);
-                        const maxLR = flinkPos.reduce((m, p, i) => Math.max(m, p.x + (getLSz(flinks[i]) || LINK_W)), 640);
+                        const maxLR = flinkPos.reduce((m, p, i) => Math.max(m, p.x + (flinks[i].iconShape === 'square-xxs' ? 110 : getLSz(flinks[i]) || LINK_W)), 640);
                         const maxLB = flinkPos.reduce((m, p, i) => Math.max(m, p.y + getLH(flinks[i])), 0);
                         const cH = Math.max(maxPB, maxLB) + 80;
                         const cW = Math.max(640, maxLR + 32);
@@ -4587,7 +4587,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             const LT = ['rgba(240,160,80,0.5)','rgba(110,200,140,0.5)','rgba(110,170,240,0.45)','rgba(240,140,180,0.45)','rgba(200,193,185,0.6)','rgba(180,150,240,0.45)'];
                                             const ci = i % LC.length;
                                             return (
-                                                <div key={i} style={{ position: 'absolute', left: (mmGuideX + pos.x) * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: (getLSz(flinks[i]) || LINK_W) * mmScale, height: getLH(flinks[i]) * mmScale, background: LC[ci], borderRadius: 2, opacity: 0.93, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                                                <div key={i} style={{ position: 'absolute', left: (mmGuideX + pos.x) * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: (flinks[i].iconShape === 'square-xxs' ? 110 : getLSz(flinks[i]) || LINK_W) * mmScale, height: getLH(flinks[i]) * mmScale, background: LC[ci], borderRadius: 2, opacity: 0.93, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
                                                     <div style={{ position: 'absolute', top: 0, left: '20%', width: '60%', height: Math.max(2.5, 10 * mmScale), background: LT[ci], borderRadius: 1 }} />
                                                 </div>
                                             );
