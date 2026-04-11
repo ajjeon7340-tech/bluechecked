@@ -3315,53 +3315,36 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     onTouchEnd={handleCanvasMouseUp}
                                     onTouchCancel={handleCanvasMouseUp}
                                 >
-                                    {/* Focus zone overlays — desktop (blue) + mobile (orange) anchored together */}
-                                    {boardFocusModeOpen && (() => {
-                                        const CREATOR_CARD_ZONE_O = 300;
+                                    {/* Focus zone guidelines — always visible, live-updating when focus modal is open */}
+                                    {(() => {
+                                        const CREATOR_CARD_ZONE_R = 300;
                                         const FOCUS_H = 440;
-                                        const fLeft = guideOffsetX + boardFocusAnchor.x;
-                                        const fTop  = guideOffsetY + (boardFocusAnchor.y - CREATOR_CARD_ZONE_O);
+                                        const DESKTOP_VW = 640, MOBILE_VW = 390;
+                                        // When modal is open use live anchor; otherwise derive from saved profile
+                                        const anchor = boardFocusModeOpen ? boardFocusAnchor : (() => {
+                                            const sd = editedCreator.boardFocusDesktop;
+                                            return sd
+                                                ? { x: Math.max(0, sd.x - DESKTOP_VW / 2), y: Math.max(CREATOR_CARD_ZONE_R, sd.y - FOCUS_H / 2) }
+                                                : { x: 0, y: CREATOR_CARD_ZONE_R };
+                                        })();
+                                        const fLeft = guideOffsetX + anchor.x;
+                                        const fTop  = guideOffsetY + (anchor.y - CREATOR_CARD_ZONE_R);
+                                        const editing = boardFocusModeOpen;
                                         return (
-                                            <div className="absolute pointer-events-none" style={{ left: fLeft, top: fTop, height: FOCUS_H, zIndex: 60 }}>
-                                                {/* Desktop box */}
-                                                <div className="absolute" style={{ left: 0, top: 0, width: 640, height: FOCUS_H, border: '2px dashed rgba(99,102,241,0.7)', borderRadius: 4, background: 'rgba(99,102,241,0.05)' }}>
-                                                    <span className="absolute top-0 left-1 text-[9px] font-bold text-indigo-500 translate-y-0.5">DESKTOP</span>
+                                            <div className="absolute pointer-events-none" style={{ left: fLeft, top: fTop, zIndex: editing ? 60 : 0 }}>
+                                                {/* Desktop — solid indigo */}
+                                                <div className="absolute" style={{ left: 0, top: 0, width: DESKTOP_VW, height: FOCUS_H, border: `2px solid rgba(99,102,241,${editing ? 0.8 : 0.45})`, borderRadius: 2, background: `rgba(99,102,241,${editing ? 0.06 : 0.02})` }}>
+                                                    <div className="absolute top-0 right-0 flex items-center gap-1 px-1.5 py-0.5 rounded-bl" style={{ background: 'rgba(99,102,241,0.12)', borderLeft: '1px solid rgba(99,102,241,0.3)', borderBottom: '1px solid rgba(99,102,241,0.3)' }}>
+                                                        <span className="text-[8px] font-bold uppercase tracking-wider select-none text-indigo-500">Computer</span>
+                                                    </div>
                                                 </div>
-                                                {/* Mobile box */}
-                                                <div className="absolute" style={{ left: 0, top: 0, width: 390, height: FOCUS_H, border: '2px dashed rgba(251,146,60,0.8)', borderRadius: 4, background: 'rgba(251,146,60,0.05)' }}>
-                                                    <span className="absolute top-5 left-1 text-[9px] font-bold text-orange-500 translate-y-0.5">MOBILE</span>
+                                                {/* Mobile — dashed orange */}
+                                                <div className="absolute" style={{ left: 0, top: 0, width: MOBILE_VW, height: FOCUS_H, border: `2px dashed rgba(251,146,60,${editing ? 0.9 : 0.55})`, borderRadius: 2, background: `rgba(251,146,60,${editing ? 0.05 : 0.01})` }}>
+                                                    <div className="absolute top-0 left-0 flex items-center gap-1 px-1.5 py-0.5 rounded-br" style={{ background: 'rgba(251,146,60,0.12)', borderRight: '1px solid rgba(251,146,60,0.3)', borderBottom: '1px solid rgba(251,146,60,0.3)' }}>
+                                                        <span className="text-[8px] font-bold uppercase tracking-wider select-none text-orange-500">Mobile</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        );
-                                    })()}
-
-                                    {/* Viewport guidelines — two rectangles showing exact visible area per device */}
-                                    {boardViewportW > 0 && boardViewportH > 0 && (() => {
-                                        const mobileVW = 358;
-                                        const GuideRect = ({ w, h, color, dash, label }: { w: number; h: number; color: string; dash?: boolean; label: string }) => (
-                                            <div className="absolute pointer-events-none" style={{ left: Math.max(0, (boardViewportW - w) / 2), top: guideOffsetY, width: w, height: h, zIndex: 0 }}>
-                                                <div className="absolute inset-0" style={{ border: `2px ${dash ? 'dashed' : 'solid'} ${color}`, borderRadius: 2 }} />
-                                                {/* Top-right label */}
-                                                <div className="absolute top-0 right-0 flex items-center gap-1 px-1.5 py-0.5 rounded-bl" style={{ background: `${color}22`, borderLeft: `1px solid ${color}55`, borderBottom: `1px solid ${color}55` }}>
-                                                    <span className="text-[8px] font-bold uppercase tracking-wider select-none" style={{ color }}>{label}</span>
-                                                </div>
-                                                {/* Bottom-center scroll hint */}
-                                                <div className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: `${color}22`, border: `1px solid ${color}55` }}>
-                                                    <span className="text-[8px] font-bold select-none" style={{ color }}>↓ scroll to view more</span>
-                                                </div>
-                                                {/* Right-center scroll hint */}
-                                                <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 flex items-center gap-1 px-1.5 py-0.5 rounded-full" style={{ background: `${color}22`, border: `1px solid ${color}55` }}>
-                                                    <span className="text-[8px] font-bold select-none" style={{ color, writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>→ scroll to view more</span>
-                                                </div>
-                                            </div>
-                                        );
-                                        return (
-                                            <>
-                                                {/* Desktop frame */}
-                                                <GuideRect w={GUIDE_DESKTOP_W} h={GUIDE_H} color="rgba(99,102,241,0.5)" label="Computer" />
-                                                {/* Mobile frame */}
-                                                <GuideRect w={mobileVW} h={GUIDE_H} color="rgba(251,146,60,0.6)" dash label="Mobile" />
-                                            </>
                                         );
                                     })()}
                                     {/* Link stickers */}
