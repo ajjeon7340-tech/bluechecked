@@ -1098,7 +1098,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                       
                                                       const effectiveStyle = link.displayStyle || (link.iconShape ? 'icon' : 'wide');
                                                       const isIconMode = effectiveStyle === 'icon';
-                                                      
+                                                      const isExternal = link.type === 'EXTERNAL';
+                                                      const Tag: React.ElementType = isExternal ? 'a' : 'button';
+
                                                       const pos = getLinkPos(link, li);
 
                                                       const linkRot = rotations[(stableIdx(link.id) + li) % rotations.length];
