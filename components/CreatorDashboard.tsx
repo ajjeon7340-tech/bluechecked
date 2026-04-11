@@ -3160,14 +3160,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const LINK_W = 220;
                             const LINK_START_X = BOARD_PAD + COLS * (NOTE_W + NOTE_GAP_X) + 32;
                             const _getLinkSize = (l: AffiliateLink) => {
-                                if (l.iconShape === 'square-l') return 220;
-                                if (l.iconShape === 'square-m') return 160;
                                 if (l.iconShape === 'square-s' || l.iconShape === 'square') return 110;
                                 if (l.iconShape === 'square-xs') return 64;
                                 return null;
                             };
                             const _getLinkH = (l: AffiliateLink) => {
                                 if (l.type === 'PHOTO') return (boardLinkSizes[l.id]?.h ?? l.height ?? 160);
+                                if (l.iconShape === 'square-xxs') return 44;
                                 const sqSize = _getLinkSize(l);
                                 if (sqSize) return sqSize;
                                 if (l.type === 'DIGITAL_PRODUCT') return 104;
@@ -3528,7 +3527,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 style={{
                                                     left: currentPos.x,
                                                     top: currentPos.y,
-                                                    width: isEditingLink ? Math.max(isThumbnailMode ? LINK_W : (sqSize || LINK_W), 220) : isThumbnailMode ? LINK_W : (sqSize || LINK_W),
+                                                    width: isEditingLink ? Math.max(isThumbnailMode ? LINK_W : (link.iconShape === 'square-xxs' ? LINK_W : sqSize || LINK_W), 220) : isThumbnailMode ? LINK_W : (link.iconShape === 'square-xxs' ? LINK_W : sqSize || LINK_W),
                                                     transform: isDraggingLink ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
                                                     transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
                                                     zIndex: isDraggingLink ? 1000 : isEditingLink ? 500 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (20 + i),
@@ -3540,7 +3539,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             >
                                                 {/* Tape — drag handle */}
                                                 <div
-                                                    className={`h-4 mx-auto rounded-b-sm flex-shrink-0 ${sqSize ? (sqSize === 220 ? 'w-12' : sqSize === 160 ? 'w-10' : sqSize === 64 ? 'w-5' : 'w-8') : 'w-12'}`}
+                                                    className={`h-4 mx-auto rounded-b-sm flex-shrink-0 ${sqSize ? (sqSize === 64 ? 'w-5' : 'w-8') : 'w-12'}`}
                                                     style={{ background: linkTapes[lc], cursor: 'grab', touchAction: 'none' }}
                                                     onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
                                                     onTouchStart={e => {
@@ -3610,8 +3609,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         <div className="mb-2.5" onClick={e => e.stopPropagation()}>
                                                             <span className="text-[10px] font-bold text-stone-400 uppercase block mb-1">Size</span>
                                                             <div className="flex gap-1">
-                                                            {([['square-xs', 'XS'], ['wide', 'Wide'], ['square-s', 'S'], ['square-m', 'M'], ['square-l', 'L']] as const).map(([sVal, sLabel]) => {
-                                                                const isSelected = link.iconShape === sVal || (link.iconShape === 'square' && sVal === 'square-s') || (sVal === 'wide' && !['square-xs', 'square-s', 'square-m', 'square-l', 'square'].includes(link.iconShape || ''));
+                                                            {([['square-xxs', 'XXS'], ['square-xs', 'XS'], ['square-s', 'S'], ['wide', 'Wide']] as const).map(([sVal, sLabel]) => {
+                                                                const isSelected = link.iconShape === sVal || (link.iconShape === 'square' && sVal === 'square-s') || (sVal === 'wide' && !['square-xxs', 'square-xs', 'square-s', 'square-m', 'square-l', 'square'].includes(link.iconShape || ''));
                                                                 return (
                                                                     <button
                                                                         key={sVal}
@@ -3708,7 +3707,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     </div>
                                                 ) : (
                                                     <div
-                                                        className={`relative rounded-lg ${isThumbnailMode ? 'p-3' : sqSize === 64 ? 'p-1.5 aspect-square flex items-center justify-center' : sqSize ? 'p-3 aspect-square flex flex-col items-center justify-center text-center' : 'p-3'}`}
+                                                        className={`relative rounded-lg ${isThumbnailMode ? 'p-3' : link.iconShape === 'square-xxs' ? 'p-2 flex items-center' : sqSize === 64 ? 'p-1.5 aspect-square flex items-center justify-center' : sqSize ? 'p-3 aspect-square flex flex-col items-center justify-center text-center' : 'p-3'}`}
                                                         style={{
                                                             backgroundColor: link.buttonColor || linkColors[lc],
                                                             border: isDraggingLink ? '2px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.08)',
@@ -3786,6 +3785,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     <p className="text-[10px] font-bold text-stone-700 truncate">{link.title}</p>
                                                                 </div>
                                                             </>
+                                                        ) : link.iconShape === 'square-xxs' ? (
+                                                            <div className="flex items-center gap-2.5 h-full w-full">
+                                                                <div className="w-6 h-6 rounded-md bg-white/60 shadow-sm border border-black/5 flex items-center justify-center flex-shrink-0">
+                                                                    {detectedPlatform ? (
+                                                                        <div className="scale-[0.9]">{getPreviewPlatformIcon(detectedPlatform)}</div>
+                                                                    ) : link.thumbnailUrl?.startsWith('data:emoji,') ? (
+                                                                        <span className="text-[14px] leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span>
+                                                                    ) : link.thumbnailUrl ? (
+                                                                        <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-md" alt={link.title} />
+                                                                    ) : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={12} className="text-violet-500" /> : link.type === 'SUPPORT' ? <Heart size={12} className="text-pink-500" /> : <LinkIcon size={12} className="text-stone-500" />}
+                                                                </div>
+                                                                <p className="text-xs font-bold text-stone-800 leading-tight flex-1 truncate text-left">{link.title}</p>
+                                                                <ExternalLink size={10} className="text-stone-400 flex-shrink-0" />
+                                                            </div>
                                                         ) : sqSize === 64 ? (
                                                             /* XS: icon only, no text */
                                                             <div className="w-10 h-10 rounded-xl bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto">
@@ -3799,16 +3812,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             </div>
                                                         ) : sqSize ? (
                                                             <>
-                                                                <div className={`${sqSize === 220 ? 'w-16 h-16 rounded-2xl mb-3' : sqSize === 160 ? 'w-14 h-14 rounded-2xl mb-2' : 'w-12 h-12 rounded-xl mb-1.5'} bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto`}>
+                                                                <div className={`w-12 h-12 rounded-xl mb-1.5 bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto`}>
                                                                     {detectedPlatform ? (
-                                                                        <div className={sqSize === 220 ? "scale-[2]" : sqSize === 160 ? "scale-[1.75]" : "scale-[1.5]"}>{getPreviewPlatformIcon(detectedPlatform)}</div>
+                                                                        <div className="scale-[1.5]">{getPreviewPlatformIcon(detectedPlatform)}</div>
                                                                     ) : link.thumbnailUrl?.startsWith('data:emoji,') ? (
-                                                                        <span className={sqSize === 220 ? "text-4xl" : sqSize === 160 ? "text-3xl" : "text-2xl"}>{link.thumbnailUrl.replace('data:emoji,', '')}</span>
+                                                                        <span className="text-2xl">{link.thumbnailUrl.replace('data:emoji,', '')}</span>
                                                                     ) : link.thumbnailUrl ? (
-                                                                        <img src={link.thumbnailUrl} className={`w-full h-full object-cover ${sqSize >= 160 ? 'rounded-2xl' : 'rounded-xl'}`} alt={link.title} />
-                                                                        ) : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={sqSize === 220 ? 24 : 20} className="text-violet-500" /> : link.type === 'SUPPORT' ? <Heart size={sqSize === 220 ? 24 : 20} className="text-pink-500" /> : <LinkIcon size={sqSize === 220 ? 24 : 20} className="text-stone-500" />}
+                                                                        <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-xl" alt={link.title} />
+                                                                        ) : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={20} className="text-violet-500" /> : link.type === 'SUPPORT' ? <Heart size={20} className="text-pink-500" /> : <LinkIcon size={20} className="text-stone-500" />}
                                                                 </div>
-                                                                <p className={`${sqSize === 220 ? 'text-lg mb-1 px-4' : sqSize === 160 ? 'text-base mb-1 px-2' : 'text-xs mb-0.5 px-1'} font-bold text-stone-800 leading-tight w-full truncate`}>{link.title}</p>
+                                                                <p className="text-xs mb-0.5 px-1 font-bold text-stone-800 leading-tight w-full truncate">{link.title}</p>
                                                                     <p className="text-[8px] text-stone-500 uppercase tracking-wider font-semibold">{link.type === 'DIGITAL_PRODUCT' ? 'Buy' : link.type === 'SUPPORT' ? 'Tip' : 'Visit'}</p>
                                                             </>
                                                         ) : (() => {
@@ -4450,8 +4463,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         const LINK_AUTO_X = BOARD_PAD + GUIDE_COLS * (NOTE_W + NOTE_GAP_X) + 32;
 
                         const getLSz = (l: AffiliateLink): number | null => {
-                            if (l.iconShape === 'square-l') return 220;
-                            if (l.iconShape === 'square-m') return 160;
                             if (l.iconShape === 'square-s' || l.iconShape === 'square') return 110;
                             if (l.iconShape === 'square-xs') return 64;
                             return null;
@@ -4459,6 +4470,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         const getLH = (l: AffiliateLink): number => {
                             const sq = getLSz(l);
                             if (sq) return sq;
+                            if (l.iconShape === 'square-xxs') return 44;
                             if (l.type === 'DIGITAL_PRODUCT') return 104;
                             if (l.url?.match(/youtube\.com|youtu\.be/)) return 162;
                             return 84;
