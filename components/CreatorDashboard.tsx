@@ -4367,7 +4367,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const onMove = (ev: MouseEvent) => {
                                 const dx = (ev.clientX - sx) / mmScale;
                                 const dy = (ev.clientY - sy) / mmScale;
-                                setBoardFocusAnchor({ x: Math.min(cW - DESKTOP_VW / 2, sax + dx), y: Math.max(0, Math.min(tH - FOCUS_H, say + dy)) });
+                                setBoardFocusAnchor({ x: Math.max(-DESKTOP_VW / 2, Math.min(cW - DESKTOP_VW / 2, sax + dx)), y: Math.max(0, Math.min(tH - FOCUS_H, say + dy)) });
                             };
                             const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
                             document.addEventListener('mousemove', onMove);
@@ -4407,7 +4407,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             // subtract mmGuideX to convert minimap pixel → content coord
                                             const cx = (e.clientX - r.left) / mmScale - mmGuideX;
                                             const cy = (e.clientY - r.top) / mmScale;
-                                            setBoardFocusAnchor({ x: Math.min(cW - DESKTOP_VW / 2, cx - DESKTOP_VW / 2), y: Math.max(0, Math.min(tH - FOCUS_H, cy)) });
+                                            setBoardFocusAnchor({ x: Math.max(-DESKTOP_VW / 2, Math.min(cW - DESKTOP_VW / 2, cx - DESKTOP_VW / 2)), y: Math.max(0, Math.min(tH - FOCUS_H, cy)) });
                                         }}
                                     >
                                         {/* Creator card placeholder — centered like the actual board */}
