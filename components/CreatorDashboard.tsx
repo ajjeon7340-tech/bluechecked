@@ -2989,7 +2989,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     // saved.x = anchor.x + 320  →  anchor.x = saved.x - 320
                                     // saved.y = anchor.y + BOARD_MAX_H/2  →  anchor.y = saved.y - 220
                                     const anchor = sd
-                                        ? { x: Math.max(0, sd.x - 320), y: Math.max(CREATOR_CARD_ZONE, sd.y - BOARD_MAX_H / 2) }
+                                        ? { x: Math.max(0, sd.x - 320), y: Math.max(0, sd.y - BOARD_MAX_H / 2) }
                                         : { x: 0, y: CREATOR_CARD_ZONE };
                                     setBoardFocusAnchor(anchor);
                                     setBoardFocusModeOpen(true);
@@ -3324,7 +3324,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         const anchor = boardFocusModeOpen ? boardFocusAnchor : (() => {
                                             const sd = editedCreator.boardFocusDesktop;
                                             return sd
-                                                ? { x: Math.max(0, sd.x - DESKTOP_VW / 2), y: Math.max(CREATOR_CARD_ZONE_R, sd.y - FOCUS_H / 2) }
+                                                ? { x: Math.max(0, sd.x - DESKTOP_VW / 2), y: Math.max(0, sd.y - FOCUS_H / 2) }
                                                 : { x: 0, y: CREATOR_CARD_ZONE_R };
                                         })();
                                         const fLeft = guideOffsetX + anchor.x;
@@ -3338,8 +3338,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         <span className="text-[8px] font-bold uppercase tracking-wider select-none text-indigo-500">Computer</span>
                                                     </div>
                                                 </div>
-                                                {/* Mobile — dashed orange */}
-                                                <div className="absolute" style={{ left: 0, top: 0, width: MOBILE_VW, height: FOCUS_H, border: `2px dashed rgba(251,146,60,${editing ? 0.9 : 0.55})`, borderRadius: 2, background: `rgba(251,146,60,${editing ? 0.05 : 0.01})` }}>
+                                                {/* Mobile — dashed orange, centered within desktop */}
+                                                <div className="absolute" style={{ left: (DESKTOP_VW - MOBILE_VW) / 2, top: 0, width: MOBILE_VW, height: FOCUS_H, border: `2px dashed rgba(251,146,60,${editing ? 0.9 : 0.55})`, borderRadius: 2, background: `rgba(251,146,60,${editing ? 0.05 : 0.01})` }}>
                                                     <div className="absolute top-0 left-0 flex items-center gap-1 px-1.5 py-0.5 rounded-br" style={{ background: 'rgba(251,146,60,0.12)', borderRight: '1px solid rgba(251,146,60,0.3)', borderBottom: '1px solid rgba(251,146,60,0.3)' }}>
                                                         <span className="text-[8px] font-bold uppercase tracking-wider select-none text-orange-500">Mobile</span>
                                                     </div>
@@ -4363,7 +4363,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const onMove = (ev: MouseEvent) => {
                                 const dx = (ev.clientX - sx) / mmScale;
                                 const dy = (ev.clientY - sy) / mmScale;
-                                setBoardFocusAnchor({ x: Math.max(0, sax + dx), y: Math.max(CREATOR_CARD_ZONE, Math.min(tH - FOCUS_H, say + dy)) });
+                                setBoardFocusAnchor({ x: Math.max(0, sax + dx), y: Math.max(0, Math.min(tH - FOCUS_H, say + dy)) });
                             };
                             const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
                             document.addEventListener('mousemove', onMove);
@@ -4403,7 +4403,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             const cx = (e.clientX - r.left) / mmScale;
                                             const cy = (e.clientY - r.top) / mmScale;
                                             // Position frame TOP at the click point (not center) so upper content is reachable
-                                            setBoardFocusAnchor({ x: Math.max(0, cx - DESKTOP_VW / 2), y: Math.max(CREATOR_CARD_ZONE, Math.min(tH - FOCUS_H, cy)) });
+                                            setBoardFocusAnchor({ x: Math.max(0, cx - DESKTOP_VW / 2), y: Math.max(0, Math.min(tH - FOCUS_H, cy)) });
                                         }}
                                     >
                                         {/* Creator card placeholder */}
@@ -4422,9 +4422,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         >
                                             <span style={{ position: 'absolute', top: 2, left: 4, fontSize: 8, fontWeight: 700, color: 'rgba(99,102,241,0.9)', textTransform: 'uppercase', letterSpacing: 1 }}>Desktop</span>
                                         </div>
-                                        {/* Mobile box (orange, narrower, dashed) */}
+                                        {/* Mobile box (orange, narrower, dashed) — centered within desktop */}
                                         <div
-                                            style={{ position: 'absolute', left: aL, top: aT, width: mW, height: fH, border: '2px dashed rgba(251,146,60,0.9)', background: 'rgba(251,146,60,0.06)', borderRadius: 2, pointerEvents: 'none' }}
+                                            style={{ position: 'absolute', left: aL + (dW - mW) / 2, top: aT, width: mW, height: fH, border: '2px dashed rgba(251,146,60,0.9)', background: 'rgba(251,146,60,0.06)', borderRadius: 2, pointerEvents: 'none' }}
                                         >
                                             <span style={{ position: 'absolute', top: 14, left: 4, fontSize: 8, fontWeight: 700, color: 'rgba(251,146,60,0.9)', textTransform: 'uppercase', letterSpacing: 1 }}>Mobile</span>
                                         </div>
@@ -4439,7 +4439,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 const updated = {
                                                     ...editedCreator,
                                                     boardFocusDesktop: { x: boardFocusAnchor.x + DESKTOP_VW / 2, y: boardFocusAnchor.y + FOCUS_H / 2, zoom: 1.0 },
-                                                    boardFocusMobile:  { x: boardFocusAnchor.x + MOBILE_VW  / 2, y: boardFocusAnchor.y + FOCUS_H / 2, zoom: 1.0 },
+                                                    boardFocusMobile:  { x: boardFocusAnchor.x + DESKTOP_VW / 2, y: boardFocusAnchor.y + FOCUS_H / 2, zoom: 1.0 },
                                                 };
                                                 setEditedCreator(updated);
                                                 setBoardFocusModeOpen(false);

@@ -237,7 +237,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     const CREATOR_CARD_ZONE = 300; // offset used in DiemBoard minimap coordinate system
     const DESKTOP_VW = 640, MOBILE_VW = 390;
     // Default: show content from canvas (0,0) — top-left, same as the guideline default
-    const focusX = saved?.x ?? (isMobile ? MOBILE_VW / 2 : DESKTOP_VW / 2);
+    const focusX = saved?.x ?? DESKTOP_VW / 2;
     const focusY = saved ? Math.max(0, saved.y - CREATOR_CARD_ZONE) : BOARD_MAX_H / 2;
     const focusZoom = 1.0;
     const focusCam = { x: focusX, y: focusY, zoom: focusZoom };
@@ -1021,7 +1021,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                               const isMob = boardContainerW < 600;
                                               const sv = isMob ? creator.boardFocusMobile : creator.boardFocusDesktop;
                                               // Default: top-left of content (matches default animation focus)
-                                              const fX = sv?.x ?? (isMob ? MOBILE_VW / 2 : DESKTOP_VW / 2);
+                                              const fX = sv?.x ?? DESKTOP_VW / 2;
                                               const fY = sv ? Math.max(0, sv.y - CREATOR_CARD_ZONE) : FOCUS_H / 2;
                                               // Anchor = top-left of the viewport frame in canvas coordinates
                                               const aX = Math.max(0, fX - DESKTOP_VW / 2);
@@ -1034,8 +1034,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                               <span className="text-[7px] font-bold uppercase tracking-wider select-none text-indigo-400">Desktop</span>
                                                           </div>
                                                       </div>
-                                                      {/* Mobile — dashed orange */}
-                                                      <div className="absolute" style={{ left: 0, top: 0, width: MOBILE_VW, height: FOCUS_H, border: '1.5px dashed rgba(251,146,60,0.45)', borderRadius: 3 }}>
+                                                      {/* Mobile — dashed orange, centered within desktop */}
+                                                      <div className="absolute" style={{ left: (DESKTOP_VW - MOBILE_VW) / 2, top: 0, width: MOBILE_VW, height: FOCUS_H, border: '1.5px dashed rgba(251,146,60,0.45)', borderRadius: 3 }}>
                                                           <div className="absolute top-0 left-0 flex items-center gap-1 px-1.5 py-0.5 rounded-br" style={{ background: 'rgba(251,146,60,0.08)', borderRight: '1px solid rgba(251,146,60,0.2)', borderBottom: '1px solid rgba(251,146,60,0.2)' }}>
                                                               <span className="text-[7px] font-bold uppercase tracking-wider select-none text-orange-400">Mobile</span>
                                                           </div>
