@@ -40,6 +40,17 @@ const getResponseTimeTooltip = (status: string, t: (key: string) => string) => {
 
 const getXXSWidth = (title?: string) => Math.min(220, Math.max(110, 80 + (title?.length || 0) * 8.5));
 const getSWidth = (title?: string) => Math.min(220, Math.max(110, 80 + (title?.length || 0) * 8.5));
+const getWideWidth = (title?: string) => {
+    if (!title) return 160;
+    let charW = 0;
+    for (const ch of title) {
+        const code = ch.codePointAt(0) || 0;
+        if (code >= 0x1100) { charW += 13; }
+        else if (ch === ' ') { charW += 4; }
+        else { charW += 7.5; }
+    }
+    return Math.min(220, Math.max(110, Math.ceil(62 + charW)));
+};
 
 export const CreatorPublicProfile: React.FC<Props> = ({
   creator,
@@ -862,12 +873,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       });
 
                                   const _getLinkSize = (l: typeof allPublicLinks[0]) => {
-                                      if (l.iconShape === 'square-s' || l.iconShape === 'square') return 110;
-                                      if (l.iconShape === 'square-xs') return 64;
                                       const effStyle = l.displayStyle || (l.iconShape ? 'icon' : 'wide');
                                       if (effStyle !== 'icon') return null;
-                                      if (l.iconShape === 'square-l' || l.iconShape === 'square') return 110;
+                                      if (l.iconShape === 'square-s') return 44;
                                       if (l.iconShape === 'square-m') return 64;
+                                      if (l.iconShape === 'square-l' || l.iconShape === 'square') return 110;
                                       return null;
                                   };
                                   const _getLinkH = (l: typeof allPublicLinks[0]) => {
@@ -875,12 +885,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       if (l.iconShape === 'square-xxs') return 44;
                                       const sqSize = _getLinkSize(l);
                                       if (sqSize) return sqSize;
-                                      const effStyle = l.displayStyle || (l.iconShape ? 'icon' : 'wide');
-                                      if (effStyle === 'icon') {
-                                          if (l.iconShape === 'square-s') return 44;
-                                          const sqSize = _getLinkSize(l);
-                                          if (sqSize) return sqSize;
-                                      }
+                                      // Non-icon mode: size hint affects card height
+                                      if (l.iconShape === 'square-s') return 64;
+                                      if (l.iconShape === 'square-l') return 108;
                                       if (l.type === 'DIGITAL_PRODUCT') return 104;
                                       return 84;
                                   };
@@ -952,7 +959,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       const pos = getLinkPos(link, idx);
                                       const sqSize = _getLinkSize(link);
                                       const effStyle = link.displayStyle || (link.iconShape ? 'icon' : 'wide');
-                                      const w = link.type === 'PHOTO' ? (link.width ?? 220) : ((effStyle === 'icon' && link.iconShape === 'square-s') ? getSWidth(link.title) : (sqSize || PROFILE_W));
+                                      const w = link.type === 'PHOTO' ? (link.width ?? 220) : (effStyle === 'icon' ? (sqSize || PROFILE_W) : (link.displayStyle === 'thumbnail' ? PROFILE_W : getWideWidth(link.title)));
                                       return Math.max(max, pos.x + w);
                                   }, LINK_START_X + PROFILE_W);
                                   const maxY = pinnedPosts.reduce((max, p) => {
@@ -1093,11 +1100,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           } catch {}
                                                           return null;
                                                       })() : null;
-                                                      const sqSize = _getLinkSize(link);
-                                                      const isThumbnailMode = link.displayStyle === 'thumbnail' && !isYoutube && !['square-xxs', 'square-xs', 'square-s', 'square'].includes(link.iconShape || '');
-                                                      
                                                       const effectiveStyle = link.displayStyle || (link.iconShape ? 'icon' : 'wide');
                                                       const isIconMode = effectiveStyle === 'icon';
+                                                      const isThumbnailMode = effectiveStyle === 'thumbnail' && !isYoutube;
+                                                      const sqSize = _getLinkSize(link);
                                                       const isExternal = link.type === 'EXTERNAL';
                                                       const Tag: React.ElementType = isExternal ? 'a' : 'button';
 
@@ -1124,11 +1130,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           <div
                                                               key={link.id}
                                                               className="absolute"
-                                                          style={{ left: pos.x, top: pos.y, width: isThumbnailMode ? PROFILE_W : (isIconMode && link.iconShape === 'square-s') ? getSWidth(link.title) : (sqSize || PROFILE_W), zIndex: 50 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
+                                                          style={{ left: pos.x, top: pos.y, width: isIconMode ? (sqSize || PROFILE_W) : (isThumbnailMode || _ytIdLink ? PROFILE_W : getWideWidth(link.title)), zIndex: 50 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
                                                               onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '100'; }}
                                                               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = `${50 + li}`; }}
                                                           >
-                                                          <div className={`h-3 mx-auto rounded-b-sm ${!isIconMode ? 'w-10' : link.iconShape === 'square-s' ? 'w-10' : sqSize === 64 ? 'w-4' : 'w-6'}`} style={{ background: tapeColors[nc] }} />
+                                                          <div className={`h-3 mx-auto rounded-b-sm ${isIconMode ? (sqSize === 44 ? 'w-3' : sqSize === 64 ? 'w-4' : sqSize === 110 ? 'w-6' : 'w-8') : 'w-10'}`} style={{ background: tapeColors[nc] }} />
                                                               {isThumbnailMode ? (
                                                                   (() => {
                                                                       const thumbBg = detectedPlatform ? '#0f0f0f' : isProduct ? '#ede9fe' : isSupport ? '#fdf2f8' : '#e5e7eb';
@@ -1191,7 +1197,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                           </div>
                                                                       </div>
                                                                   </a>
-                                                              ) : isIconMode && link.iconShape === 'square-s' ? (
+                                                              ) : isIconMode && sqSize === 44 ? (
+                                                                  /* S: small square icon, no text */
                                                                   <Tag
                                                                       href={isExternal ? ensureProtocol(link.url) : undefined}
                                                                       target={isExternal ? "_blank" : undefined}
@@ -1201,13 +1208,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                           if (isProduct) handleProductClick(link);
                                                                           if (isSupport) handleSupportClick(link.price);
                                                                       }}
-                                                                      className="flex items-center gap-2.5 rounded-lg overflow-hidden hover:opacity-90 transition-opacity p-2 w-full h-full block"
+                                                                      className="flex items-center justify-center rounded-lg overflow-hidden hover:opacity-90 transition-opacity aspect-square p-1 w-full h-full block"
                                                                       style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
                                                                   >
-                                                                      <div className="w-6 h-6 rounded-md bg-white/60 shadow-sm border border-black/5 flex items-center justify-center flex-shrink-0">
-                                                                          {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-md" alt={link.title} /> : isEmoji ? <span className="text-[14px] leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className="scale-[0.9]">{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={12} className="text-violet-500" /> : isSupport ? <Heart size={12} className="text-pink-500" /> : <ExternalLink size={12} className="text-stone-500" />}
+                                                                      <div className="w-7 h-7 rounded-lg bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto">
+                                                                          {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : isEmoji ? <span className="text-base leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className="scale-[0.85]">{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={14} className="text-violet-500" /> : isSupport ? <Heart size={14} className="text-pink-500" /> : <ExternalLink size={14} className="text-stone-500" />}
                                                                       </div>
-                                                                      <p className="text-xs font-bold text-stone-800 leading-tight w-full truncate text-left flex-1">{link.title}</p>
                                                                   </Tag>
                                                               ) : isIconMode && sqSize === 64 ? (
                                                                   <Tag

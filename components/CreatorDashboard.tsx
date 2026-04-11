@@ -3175,12 +3175,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const LINK_W = 220;
                             const LINK_START_X = BOARD_PAD + COLS * (NOTE_W + NOTE_GAP_X) + 32;
                             const _getLinkSize = (l: AffiliateLink) => {
-                                if (l.iconShape === 'square-s' || l.iconShape === 'square') return 110;
-                                if (l.iconShape === 'square-xs') return 64;
-                                    const effStyle = l.displayStyle || (l.iconShape ? 'icon' : 'wide');
-                                    if (effStyle !== 'icon') return null;
-                                    if (l.iconShape === 'square-l' || l.iconShape === 'square') return 110;
-                                    if (l.iconShape === 'square-m') return 64;
+                                const effStyle = l.displayStyle || (l.iconShape ? 'icon' : 'wide');
+                                if (effStyle !== 'icon') return null;
+                                if (l.iconShape === 'square-s') return 44;
+                                if (l.iconShape === 'square-m') return 64;
+                                if (l.iconShape === 'square-l' || l.iconShape === 'square') return 110;
                                 return null;
                             };
                             const _getLinkH = (l: AffiliateLink) => {
@@ -3188,12 +3187,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 if (l.iconShape === 'square-xxs') return 44;
                                 const sqSize = _getLinkSize(l);
                                 if (sqSize) return sqSize;
-                                    const effStyle = l.displayStyle || (l.iconShape ? 'icon' : 'wide');
-                                    if (effStyle === 'icon') {
-                                        if (l.iconShape === 'square-s') return 44;
-                                        const sqSize = _getLinkSize(l);
-                                        if (sqSize) return sqSize;
-                                    }
+                                // Non-icon mode: size hint affects card height
+                                if (l.iconShape === 'square-s') return 64;
+                                if (l.iconShape === 'square-l') return 108;
                                 if (l.type === 'DIGITAL_PRODUCT') return 104;
                                 return 84;
                             };
@@ -3555,8 +3551,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 style={{
                                                     left: currentPos.x,
                                                     top: currentPos.y,
-                                                    width: isEditingLink ? Math.max(isThumbnailMode ? LINK_W : (link.iconShape === 'square-xxs' ? getXXSWidth(link.title) : sqSize || LINK_W), 220) : isThumbnailMode ? LINK_W : (link.iconShape === 'square-xxs' ? getXXSWidth(link.title) : sqSize || LINK_W),
-                                                        width: isEditingLink ? Math.max(isIconMode ? (link.iconShape === 'square-s' ? getSWidth(link.title) : sqSize || LINK_W) : LINK_W, 220) : (isIconMode ? (link.iconShape === 'square-s' ? getSWidth(link.title) : sqSize || LINK_W) : (isThumbnailMode || _ytIdLink ? LINK_W : getWideWidth(link.title))),
+                                                    width: isEditingLink ? Math.max(isIconMode ? (sqSize || LINK_W) : LINK_W, 220) : (isIconMode ? (sqSize || LINK_W) : (isThumbnailMode || _ytIdLink ? LINK_W : getWideWidth(link.title))),
                                                     transform: isDraggingLink ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
                                                     transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
                                                     zIndex: isDraggingLink ? 1000 : isEditingLink ? 500 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (50 + i),
@@ -3568,8 +3563,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             >
                                                 {/* Tape — drag handle */}
                                                 <div
-                                                    className={`h-4 mx-auto rounded-b-sm flex-shrink-0 ${sqSize ? (sqSize === 64 ? 'w-5' : 'w-8') : 'w-12'}`}
-                                                        className={`h-4 mx-auto rounded-b-sm flex-shrink-0 ${isIconMode ? (sqSize === 64 ? 'w-5' : sqSize === 110 ? 'w-8' : 'w-10') : 'w-12'}`}
+                                                    className={`h-4 mx-auto rounded-b-sm flex-shrink-0 ${isIconMode ? (sqSize === 44 ? 'w-4' : sqSize === 64 ? 'w-5' : sqSize === 110 ? 'w-8' : 'w-10') : 'w-12'}`}
                                                     style={{ background: linkTapes[lc], cursor: 'grab', touchAction: 'none' }}
                                                     onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
                                                     onTouchStart={e => {
@@ -3636,21 +3630,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             </label>
                                                         </div>
                                                         {/* Size Swatches */}
-                                                        {isIconMode && (
                                                         <div className="mb-2.5 animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
                                                             <span className="text-[10px] font-bold text-stone-400 uppercase block mb-1">Size</span>
                                                             <div className="flex gap-1">
                                                             {([['square-s', 'S'], ['square-m', 'M'], ['square-l', 'L']] as const).map(([sVal, sLabel]) => {
-                                                                const isSelected = link.iconShape === sVal || (link.iconShape === 'square' && sVal === 'square-l') || (!link.iconShape && sVal === 'square-s');
+                                                                const isSelected = link.iconShape === sVal || (link.iconShape === 'square' && sVal === 'square-l') || (!link.iconShape && sVal === 'square-m');
                                                                 return (
                                                                     <button
                                                                         key={sVal}
                                                                         onClick={async e => {
                                                                             e.stopPropagation();
                                                                             const updatedLinks = (editedCreator.links || []).map(l => l.id === link.id ? {
-                                                                                ...l, iconShape: sVal, displayStyle: 'icon'
+                                                                                ...l, iconShape: sVal
                                                                             } : l);
-                                                                            setBoardLinkDraft(p => ({ ...p, iconShape: sVal, displayStyle: 'icon' }));
+                                                                            setBoardLinkDraft(p => ({ ...p, iconShape: sVal }));
                                                                             await saveBoardLinkChange(updatedLinks);
                                                                         }}
                                                                         className={`flex-1 py-0.5 text-[10px] font-bold rounded border transition-colors ${isSelected ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-500 border-stone-200 hover:bg-stone-50'}`}
@@ -3661,7 +3654,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             })}
                                                             </div>
                                                         </div>
-                                                        )}
                                                         {/* Style picker — Icon vs Thumbnail */}
                                                         <div className="mb-2.5" onClick={e => e.stopPropagation()}>
                                                             <span className="text-[10px] font-bold text-stone-400 uppercase block mb-1">Style</span>
@@ -3760,8 +3752,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     </div>
                                                 ) : (
                                                     <div
-                                                        className={`relative rounded-lg ${isThumbnailMode ? 'p-3' : link.iconShape === 'square-xxs' ? 'p-2 flex items-center' : sqSize === 64 ? 'p-1.5 aspect-square flex items-center justify-center' : sqSize ? 'p-3 aspect-square flex flex-col items-center justify-center text-center' : 'p-3'}`}
-                                                        className={`relative rounded-lg ${isThumbnailMode ? 'p-3' : isIconMode ? (link.iconShape === 'square-s' ? 'p-2 flex items-center' : sqSize === 64 ? 'p-1.5 aspect-square flex items-center justify-center' : 'p-3 aspect-square flex flex-col items-center justify-center text-center') : 'p-3'}`}
+                                                        className={`relative rounded-lg ${isThumbnailMode ? 'p-3' : isIconMode ? (sqSize === 44 ? 'p-1 aspect-square flex items-center justify-center' : sqSize === 64 ? 'p-1.5 aspect-square flex items-center justify-center' : 'p-3 aspect-square flex flex-col items-center justify-center text-center') : 'p-3'}`}
                                                         style={{
                                                             backgroundColor: link.buttonColor || linkColors[lc],
                                                             border: isDraggingLink ? '2px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.08)',
@@ -3838,18 +3829,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     <p className="text-[10px] font-bold text-stone-700 truncate">{link.title}</p>
                                                                 </div>
                                                             </>
-                                                        ) : isIconMode && link.iconShape === 'square-s' ? (
-                                                            <div className="flex items-center gap-2.5 h-full w-full">
-                                                                <div className="w-6 h-6 rounded-md bg-white/60 shadow-sm border border-black/5 flex items-center justify-center flex-shrink-0">
-                                                                    {detectedPlatform ? (
-                                                                        <div className="scale-[0.9]">{getPreviewPlatformIcon(detectedPlatform)}</div>
-                                                                    ) : link.thumbnailUrl?.startsWith('data:emoji,') ? (
-                                                                        <span className="text-[14px] leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span>
-                                                                    ) : link.thumbnailUrl ? (
-                                                                        <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-md" alt={link.title} />
-                                                                    ) : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={12} className="text-violet-500" /> : link.type === 'SUPPORT' ? <Heart size={12} className="text-pink-500" /> : <LinkIcon size={12} className="text-stone-500" />}
-                                                                </div>
-                                                                <p className="text-xs font-bold text-stone-800 leading-tight flex-1 truncate text-left">{link.title}</p>
+                                                        ) : isIconMode && sqSize === 44 ? (
+                                                            /* S: small square icon, no text */
+                                                            <div className="w-7 h-7 rounded-lg bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto">
+                                                                {detectedPlatform ? (
+                                                                    <div className="scale-[0.85]">{getPreviewPlatformIcon(detectedPlatform)}</div>
+                                                                ) : link.thumbnailUrl?.startsWith('data:emoji,') ? (
+                                                                    <span className="text-base leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span>
+                                                                ) : link.thumbnailUrl ? (
+                                                                    <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} />
+                                                                ) : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={14} className="text-violet-500" /> : link.type === 'SUPPORT' ? <Heart size={14} className="text-pink-500" /> : <LinkIcon size={14} className="text-stone-500" />}
                                                             </div>
                                                         ) : isIconMode && sqSize === 64 ? (
                                                             /* XS: icon only, no text */
@@ -4139,7 +4128,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     const url = boardLinkDraft.url.trim();
                                                     if (!title || !url) return;
                                                     await saveBoardLinkChange([...(editedCreator.links || []), {
-                                                        id: `link_${Date.now()}`, title, url, type: 'DIGITAL_PRODUCT', iconShape: 'square-xxs',
                                                         id: `link_${Date.now()}`, title, url, type: 'DIGITAL_PRODUCT', iconShape: 'square-s', displayStyle: 'icon',
                                                         price: boardLinkDraft.price ? parseInt(boardLinkDraft.price) : undefined,
                                                     }]);
@@ -4179,7 +4167,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     const title = boardLinkDraft.title.trim();
                                                     if (!title) return;
                                                     await saveBoardLinkChange([...(editedCreator.links || []), {
-                                                        id: `link_${Date.now()}`, title, url: '#', type: 'SUPPORT', iconShape: 'square-xxs',
                                                         id: `link_${Date.now()}`, title, url: '#', type: 'SUPPORT', iconShape: 'square-s', displayStyle: 'icon',
                                                         price: boardLinkDraft.price ? parseInt(boardLinkDraft.price) : undefined,
                                                     }]);
@@ -4519,24 +4506,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         const LINK_AUTO_X = BOARD_PAD + GUIDE_COLS * (NOTE_W + NOTE_GAP_X) + 32;
 
                         const getLSz = (l: AffiliateLink): number | null => {
-                            if (l.iconShape === 'square-s' || l.iconShape === 'square') return 110;
-                            if (l.iconShape === 'square-xs') return 64;
                             const effStyle = l.displayStyle || (l.iconShape ? 'icon' : 'wide');
                             if (effStyle !== 'icon') return null;
-                            if (l.iconShape === 'square-l' || l.iconShape === 'square') return 110;
+                            if (l.iconShape === 'square-s') return 44;
                             if (l.iconShape === 'square-m') return 64;
+                            if (l.iconShape === 'square-l' || l.iconShape === 'square') return 110;
                             return null;
                         };
                         const getLH = (l: AffiliateLink): number => {
                             const sq = getLSz(l);
                             if (sq) return sq;
                             if (l.iconShape === 'square-xxs') return 44;
-                            const effStyle = l.displayStyle || (l.iconShape ? 'icon' : 'wide');
-                            if (effStyle === 'icon') {
-                                if (l.iconShape === 'square-s') return 44;
-                                const sq = getLSz(l);
-                                if (sq) return sq;
-                            }
+                            if (l.iconShape === 'square-s') return 64;
+                            if (l.iconShape === 'square-l') return 108;
                             if (l.type === 'DIGITAL_PRODUCT') return 104;
                             if (l.url?.match(/youtube\.com|youtu\.be/)) return 162;
                             return 84;
@@ -4559,7 +4541,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         const maxPB = fpostPos.reduce((m, p) => Math.max(m, p.y + NOTE_H_EST), 440);
                         const maxLR = flinkPos.reduce((m, p, i) => {
                             const effStyle = flinks[i].displayStyle || (flinks[i].iconShape ? 'icon' : 'wide');
-                            return Math.max(m, p.x + ((effStyle === 'icon' && flinks[i].iconShape === 'square-s') ? getSWidth(flinks[i].title) : getLSz(flinks[i]) || LINK_W));
+                            return Math.max(m, p.x + (effStyle === 'icon' ? (getLSz(flinks[i]) || LINK_W) : (flinks[i].displayStyle === 'thumbnail' ? LINK_W : getWideWidth(flinks[i].title))));
                         }, 640);
                         const maxLB = flinkPos.reduce((m, p, i) => Math.max(m, p.y + getLH(flinks[i])), 0);
                         const cH = Math.max(maxPB, maxLB) + 80;
@@ -4657,7 +4639,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             const ci = i % LC.length;
                                             const effStyle = flinks[i].displayStyle || (flinks[i].iconShape ? 'icon' : 'wide');
                                             return (
-                                                <div key={i} style={{ position: 'absolute', left: (mmGuideX + pos.x) * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: ((effStyle === 'icon' && flinks[i].iconShape === 'square-s') ? getSWidth(flinks[i].title) : getLSz(flinks[i]) || LINK_W) * mmScale, height: getLH(flinks[i]) * mmScale, background: LC[ci], borderRadius: 2, opacity: 0.93, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                                                <div key={i} style={{ position: 'absolute', left: (mmGuideX + pos.x) * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: (effStyle === 'icon' ? (getLSz(flinks[i]) || LINK_W) : (flinks[i].displayStyle === 'thumbnail' ? LINK_W : getWideWidth(flinks[i].title))) * mmScale, height: getLH(flinks[i]) * mmScale, background: LC[ci], borderRadius: 2, opacity: 0.93, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
                                                     <div style={{ position: 'absolute', top: 0, left: '20%', width: '60%', height: Math.max(2.5, 10 * mmScale), background: LT[ci], borderRadius: 1 }} />
                                                 </div>
                                             );
