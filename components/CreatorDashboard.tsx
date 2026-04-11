@@ -1732,7 +1732,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Save link changes immediately from the board (auto-save without full profile form)
   const saveBoardLinkChange = async (updatedLinks: AffiliateLink[]) => {
       setEditedCreator(prev => ({ ...prev, links: updatedLinks }));
-      try { await updateCreatorProfile({ ...editedCreator, links: updatedLinks }); } catch {}
+      try { await updateCreatorProfile({ ...editedCreator, links: updatedLinks }); await onRefreshData(); } catch {}
   };
 
   const handleProductFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
