@@ -951,7 +951,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                   const linkMaxX = allPublicLinks.reduce((max, link, idx) => {
                                       const pos = getLinkPos(link, idx);
                                       const sqSize = _getLinkSize(link);
-                                      const w = link.type === 'PHOTO' ? (link.width ?? 220) : (link.iconShape === 'square-xxs' ? getXXSWidth(link.title) : (sqSize || PROFILE_W));
                                       const effStyle = link.displayStyle || (link.iconShape ? 'icon' : 'wide');
                                       const w = link.type === 'PHOTO' ? (link.width ?? 220) : ((effStyle === 'icon' && link.iconShape === 'square-s') ? getSWidth(link.title) : (sqSize || PROFILE_W));
                                       return Math.max(max, pos.x + w);
@@ -1091,7 +1090,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                       
                                                       const effectiveStyle = link.displayStyle || (link.iconShape ? 'icon' : 'wide');
                                                       const isIconMode = effectiveStyle === 'icon';
-                                                      const isThumbnailMode = effectiveStyle === 'thumbnail';
                                                       
                                                       const pos = getLinkPos(link, li);
 

@@ -3423,7 +3423,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             const isWideMode = effectiveStyle === 'wide';
                                         const sqSize = _getLinkSize(link);
                                         // Thumbnail style forces wide card regardless of iconShape
-                                        const isThumbnailMode = link.displayStyle === 'thumbnail';
                                         let detectedPlatform: string | null = null;
                                         if (link.type === 'EXTERNAL' && link.url) {
                                             try {
@@ -3636,32 +3635,22 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 />
                                                             </label>
                                                         </div>
-                                                        {/* Size Swatches (Always visible for all links) */}
-                                                        <div className="mb-2.5" onClick={e => e.stopPropagation()}>
-                                                            {/* Size Swatches */}
-                                                            {isIconMode && (
-                                                            <div className="mb-2.5 animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                                                        {/* Size Swatches */}
+                                                        {isIconMode && (
+                                                        <div className="mb-2.5 animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
                                                             <span className="text-[10px] font-bold text-stone-400 uppercase block mb-1">Size</span>
                                                             <div className="flex gap-1">
-                                                            {([['square-xxs', 'XXS'], ['square-xs', 'XS'], ['square-s', 'S'], ['wide', 'Wide']] as const).map(([sVal, sLabel]) => {
-                                                                const isSelected = link.iconShape === sVal || (link.iconShape === 'square' && sVal === 'square-s') || (sVal === 'wide' && !['square-xxs', 'square-xs', 'square-s', 'square-m', 'square-l', 'square'].includes(link.iconShape || ''));
-                                                                {([['square-s', 'S'], ['square-m', 'M'], ['square-l', 'L']] as const).map(([sVal, sLabel]) => {
-                                                                    const isSelected = link.iconShape === sVal || (link.iconShape === 'square' && sVal === 'square-l') || (!link.iconShape && sVal === 'square-s');
+                                                            {([['square-s', 'S'], ['square-m', 'M'], ['square-l', 'L']] as const).map(([sVal, sLabel]) => {
+                                                                const isSelected = link.iconShape === sVal || (link.iconShape === 'square' && sVal === 'square-l') || (!link.iconShape && sVal === 'square-s');
                                                                 return (
                                                                     <button
                                                                         key={sVal}
                                                                         onClick={async e => {
                                                                             e.stopPropagation();
-                                                                            const shapeToSet = sVal === 'wide' ? undefined : sVal;
-                                                                            const updatedLinks = (editedCreator.links || []).map(l => l.id === link.id ? { 
-                                                                                ...l, 
-                                                                                iconShape: shapeToSet,
-                                                                                ...(shapeToSet ? { displayStyle: 'icon' } : {}) 
-                                                                                    iconShape: sVal,
-                                                                                    displayStyle: 'icon' 
+                                                                            const updatedLinks = (editedCreator.links || []).map(l => l.id === link.id ? {
+                                                                                ...l, iconShape: sVal, displayStyle: 'icon'
                                                                             } : l);
-                                                                            setBoardLinkDraft(p => ({ ...p, ...(shapeToSet ? { displayStyle: 'icon' } : {}) }));
-                                                                                setBoardLinkDraft(p => ({ ...p, iconShape: sVal, displayStyle: 'icon' }));
+                                                                            setBoardLinkDraft(p => ({ ...p, iconShape: sVal, displayStyle: 'icon' }));
                                                                             await saveBoardLinkChange(updatedLinks);
                                                                         }}
                                                                         className={`flex-1 py-0.5 text-[10px] font-bold rounded border transition-colors ${isSelected ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-500 border-stone-200 hover:bg-stone-50'}`}
@@ -3672,7 +3661,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             })}
                                                             </div>
                                                         </div>
-                                                            )}
+                                                        )}
                                                         {/* Style picker — Icon vs Thumbnail */}
                                                         <div className="mb-2.5" onClick={e => e.stopPropagation()}>
                                                             <span className="text-[10px] font-bold text-stone-400 uppercase block mb-1">Style</span>
@@ -3682,26 +3671,24 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                         ['wide', 'Wide', '▭'],
                                                                     ['thumbnail', 'Thumb', '▣'],
                                                                 ] as const).map(([val, label, icon]) => {
-                                                                    const isSelected = (boardLinkDraft.displayStyle || 'icon') === val;
-                                                                        const isSelected = effectiveStyle === val;
+                                                                    const isSelected = effectiveStyle === val;
                                                                     return (
                                                                         <button
                                                                             key={val}
-                                                                            onClick={e => { e.stopPropagation(); setBoardLinkDraft(p => ({ ...p, displayStyle: val })); }}
-                                                                                onClick={async e => { 
-                                                                                    e.stopPropagation(); 
-                                                                                    const updatedLinks = (editedCreator.links || []).map(l => l.id === link.id ? { 
-                                                                                        ...l, 
-                                                                                        displayStyle: val as any,
-                                                                                        ...(val === 'icon' && !l.iconShape ? { iconShape: 'square-s' } : {})
-                                                                                    } : l);
-                                                                                    setBoardLinkDraft(p => ({ 
-                                                                                        ...p, 
-                                                                                        displayStyle: val as 'icon' | 'wide' | 'thumbnail',
-                                                                                        ...(val === 'icon' && !p.iconShape ? { iconShape: 'square-s' } : {})
-                                                                                    }));
-                                                                                    await saveBoardLinkChange(updatedLinks);
-                                                                                }}
+                                                                            onClick={async e => {
+                                                                                e.stopPropagation();
+                                                                                const updatedLinks = (editedCreator.links || []).map(l => l.id === link.id ? {
+                                                                                    ...l,
+                                                                                    displayStyle: val as any,
+                                                                                    ...(val === 'icon' && !l.iconShape ? { iconShape: 'square-s' } : {})
+                                                                                } : l);
+                                                                                setBoardLinkDraft(p => ({
+                                                                                    ...p,
+                                                                                    displayStyle: val as 'icon' | 'wide' | 'thumbnail',
+                                                                                    ...(val === 'icon' && !p.iconShape ? { iconShape: 'square-s' } : {})
+                                                                                }));
+                                                                                await saveBoardLinkChange(updatedLinks);
+                                                                            }}
                                                                             className={`flex-1 py-0.5 text-[10px] font-bold rounded border transition-colors flex items-center justify-center gap-0.5 ${isSelected ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-500 border-stone-200 hover:bg-stone-50'}`}
                                                                         >
                                                                             <span className="text-[11px]">{icon}</span> {label}
@@ -3803,8 +3790,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             ><Trash2 size={10} /></button>
                                                         </div>
                                                         {isThumbnailMode && !_ytIdLink ? (() => {
-                                                        {isThumbnailMode && !_ytIdLink ? (
-                                                            // Forced thumbnail style (non-YouTube) — always wide 16:9 card
                                                             const hasRealPhoto = link.thumbnailUrl && !link.thumbnailUrl.startsWith('data:emoji,');
                                                             const thumbBg = detectedPlatform ? '#0f0f0f' : link.type === 'DIGITAL_PRODUCT' ? '#ede9fe' : link.type === 'SUPPORT' ? '#fdf2f8' : '#e5e7eb';
                                                             const typeIcon = link.type === 'DIGITAL_PRODUCT'
@@ -3814,12 +3799,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     : detectedPlatform
                                                                         ? <span className="w-3 h-3 flex-shrink-0">{getPreviewPlatformIcon(detectedPlatform)}</span>
                                                                         : <LinkIcon size={10} className="text-stone-400 flex-shrink-0" />;
-                                                                    ? <ShoppingBag size={10} className="text-violet-500 flex-shrink-0" />
-                                                                    : link.type === 'SUPPORT'
-                                                                        ? <Heart size={10} className="text-pink-500 flex-shrink-0" />
-                                                                        : detectedPlatform
-                                                                            ? <span className="w-3 h-3 flex-shrink-0">{getPreviewPlatformIcon(detectedPlatform)}</span>
-                                                                            : <LinkIcon size={10} className="text-stone-400 flex-shrink-0" />;
                                                             return (
                                                                 <div className="flex flex-col w-full">
                                                                     <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%', backgroundColor: thumbBg }}>
@@ -3832,22 +3811,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                                     : link.type === 'SUPPORT' ? <Heart size={28} className="text-pink-300" />
                                                                                     : <LinkIcon size={28} className="text-stone-300" />}
                                                                               </div>}
-                                                                    <div className="flex flex-col w-full">
-                                                                        <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%', backgroundColor: thumbBg }}>
-                                                                            {hasRealPhoto
-                                                                                ? <img src={link.thumbnailUrl} className="absolute inset-0 w-full h-full object-cover" alt={link.title} />
-                                                                                : <div className="absolute inset-0 flex items-center justify-center">
-                                                                                    {detectedPlatform
-                                                                                        ? <div className="scale-[2.5]">{getPreviewPlatformIcon(detectedPlatform)}</div>
-                                                                                        : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={28} className="text-violet-300" />
-                                                                                        : link.type === 'SUPPORT' ? <Heart size={28} className="text-pink-300" />
-                                                                                        : <LinkIcon size={28} className="text-stone-300" />}
-                                                                                  </div>}
-                                                                        </div>
-                                                                        <div className="flex items-center gap-1">
-                                                                            {typeIcon}
-                                                                            <p className="text-[10px] font-bold text-stone-700 truncate">{link.title}</p>
-                                                                        </div>
                                                                     </div>
                                                                     <div className="flex items-center gap-1">
                                                                         {typeIcon}
@@ -3855,7 +3818,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     </div>
                                                                 </div>
                                                             );
-                                                        })() : _ytIdLink && link.displayStyle !== 'icon' ? (
                                                         })() : _ytIdLink && !isIconMode ? (
                                                             <>
                                                                 {/* YouTube thumbnail */}
@@ -3876,7 +3838,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     <p className="text-[10px] font-bold text-stone-700 truncate">{link.title}</p>
                                                                 </div>
                                                             </>
-                                                        ) : link.iconShape === 'square-xxs' ? (
                                                         ) : isIconMode && link.iconShape === 'square-s' ? (
                                                             <div className="flex items-center gap-2.5 h-full w-full">
                                                                 <div className="w-6 h-6 rounded-md bg-white/60 shadow-sm border border-black/5 flex items-center justify-center flex-shrink-0">
@@ -3890,7 +3851,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 </div>
                                                                 <p className="text-xs font-bold text-stone-800 leading-tight flex-1 truncate text-left">{link.title}</p>
                                                             </div>
-                                                        ) : sqSize === 64 ? (
                                                         ) : isIconMode && sqSize === 64 ? (
                                                             /* XS: icon only, no text */
                                                             <div className="w-10 h-10 rounded-xl bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto">
@@ -3902,7 +3862,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-xl" alt={link.title} />
                                                                 ) : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={18} className="text-violet-500" /> : link.type === 'SUPPORT' ? <Heart size={18} className="text-pink-500" /> : <LinkIcon size={18} className="text-stone-500" />}
                                                             </div>
-                                                        ) : sqSize ? (
                                                         ) : isIconMode && sqSize === 110 ? (
                                                             <>
                                                                 <div className={`w-12 h-12 rounded-xl mb-1.5 bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto`}>
@@ -4598,7 +4557,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         });
 
                         const maxPB = fpostPos.reduce((m, p) => Math.max(m, p.y + NOTE_H_EST), 440);
-                        const maxLR = flinkPos.reduce((m, p, i) => Math.max(m, p.x + (flinks[i].iconShape === 'square-xxs' ? getXXSWidth(flinks[i].title) : getLSz(flinks[i]) || LINK_W)), 640);
                         const maxLR = flinkPos.reduce((m, p, i) => {
                             const effStyle = flinks[i].displayStyle || (flinks[i].iconShape ? 'icon' : 'wide');
                             return Math.max(m, p.x + ((effStyle === 'icon' && flinks[i].iconShape === 'square-s') ? getSWidth(flinks[i].title) : getLSz(flinks[i]) || LINK_W));
@@ -4699,7 +4657,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             const ci = i % LC.length;
                                             const effStyle = flinks[i].displayStyle || (flinks[i].iconShape ? 'icon' : 'wide');
                                             return (
-                                                <div key={i} style={{ position: 'absolute', left: (mmGuideX + pos.x) * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: (flinks[i].iconShape === 'square-xxs' ? getXXSWidth(flinks[i].title) : getLSz(flinks[i]) || LINK_W) * mmScale, height: getLH(flinks[i]) * mmScale, background: LC[ci], borderRadius: 2, opacity: 0.93, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
                                                 <div key={i} style={{ position: 'absolute', left: (mmGuideX + pos.x) * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: ((effStyle === 'icon' && flinks[i].iconShape === 'square-s') ? getSWidth(flinks[i].title) : getLSz(flinks[i]) || LINK_W) * mmScale, height: getLH(flinks[i]) * mmScale, background: LC[ci], borderRadius: 2, opacity: 0.93, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
                                                     <div style={{ position: 'absolute', top: 0, left: '20%', width: '60%', height: Math.max(2.5, 10 * mmScale), background: LT[ci], borderRadius: 1 }} />
                                                 </div>
