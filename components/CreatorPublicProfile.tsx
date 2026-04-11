@@ -959,7 +959,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       const pos = getLinkPos(link, idx);
                                       const sqSize = _getLinkSize(link);
                                       const effStyle = link.displayStyle || (link.iconShape ? 'icon' : 'wide');
-                                      const w = link.type === 'PHOTO' ? (link.width ?? 220) : (effStyle === 'icon' ? (sqSize || PROFILE_W) : (link.displayStyle === 'thumbnail' ? PROFILE_W : getWideWidth(link.title)));
+                                      const cs = link.iconShape === 'square-s' ? 'S' : link.iconShape === 'square-l' ? 'L' : 'M';
+                                      const w = link.type === 'PHOTO' ? (link.width ?? 220) : (effStyle === 'icon' ? (sqSize || PROFILE_W) : effStyle === 'thumbnail' ? (cs === 'S' ? 160 : PROFILE_W) : (cs === 'S' ? 140 : cs === 'L' ? PROFILE_W : getWideWidth(link.title)));
                                       return Math.max(max, pos.x + w);
                                   }, LINK_START_X + PROFILE_W);
                                   const maxY = pinnedPosts.reduce((max, p) => {
@@ -1106,6 +1107,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                       const sqSize = _getLinkSize(link);
                                                       const isExternal = link.type === 'EXTERNAL';
                                                       const Tag: React.ElementType = isExternal ? 'a' : 'button';
+                                                      // Wide/thumb size: S=compact, M=standard, L=large
+                                                      const cardSize = !isIconMode ? (link.iconShape === 'square-s' ? 'S' : link.iconShape === 'square-l' ? 'L' : 'M') : 'M';
+                                                      const wideCardW = cardSize === 'S' ? 140 : cardSize === 'L' ? PROFILE_W : getWideWidth(link.title);
+                                                      const thumbCardW = cardSize === 'S' ? 160 : PROFILE_W;
 
                                                       const pos = getLinkPos(link, li);
 
@@ -1130,7 +1135,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           <div
                                                               key={link.id}
                                                               className="absolute"
-                                                          style={{ left: pos.x, top: pos.y, width: isIconMode ? (sqSize || PROFILE_W) : (isThumbnailMode || _ytIdLink ? PROFILE_W : getWideWidth(link.title)), zIndex: 50 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
+                                                          style={{ left: pos.x, top: pos.y, width: isIconMode ? (sqSize || PROFILE_W) : (isThumbnailMode ? thumbCardW : _ytIdLink ? PROFILE_W : wideCardW), zIndex: 50 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
                                                               onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '100'; }}
                                                               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = `${50 + li}`; }}
                                                           >
@@ -1389,13 +1394,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                           target="_blank"
                                                                           rel="noopener noreferrer"
                                                                           onClick={e => e.stopPropagation()}
-                                                                          className="flex items-center gap-2.5 rounded-lg p-2.5 hover:opacity-80 transition-opacity"
+                                                                          className={`flex items-center gap-2 rounded-lg hover:opacity-80 transition-opacity ${cardSize === 'S' ? 'p-2' : 'p-2.5'}`}
                                                                           style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}
                                                                       >
-                                                                          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5 text-stone-600">
-                                                                              {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : isEmoji ? <span className="text-base leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? getPlatformIcon(detectedPlatform) : <ExternalLink size={13} />}
+                                                                          <div className={`${cardSize === 'S' ? 'w-5 h-5' : cardSize === 'L' ? 'w-9 h-9' : 'w-7 h-7'} rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5 text-stone-600`}>
+                                                                              {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : isEmoji ? <span className={cardSize === 'S' ? 'text-xs leading-none' : cardSize === 'L' ? 'text-xl leading-none' : 'text-base leading-none'}>{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className={cardSize === 'L' ? 'scale-[1.2]' : 'scale-[0.9]'}>{getPlatformIcon(detectedPlatform)}</div> : <ExternalLink size={cardSize === 'S' ? 10 : cardSize === 'L' ? 16 : 13} />}
                                                                           </div>
-                                                                          <span className="text-xs font-semibold text-stone-700 truncate flex-1">{link.title}</span>
+                                                                          <span className={`${cardSize === 'S' ? 'text-[10px]' : cardSize === 'L' ? 'text-sm' : 'text-xs'} font-semibold text-stone-700 truncate flex-1`}>{link.title}</span>
                                                                       </a>
                                                                   );
                                                               })()}

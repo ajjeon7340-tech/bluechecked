@@ -3418,6 +3418,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             const isThumbnailMode = effectiveStyle === 'thumbnail';
                                             const isWideMode = effectiveStyle === 'wide';
                                         const sqSize = _getLinkSize(link);
+                                        // Wide/thumb size: S=compact, M=standard, L=large
+                                        const cardSize = !isIconMode ? (link.iconShape === 'square-s' ? 'S' : link.iconShape === 'square-l' ? 'L' : 'M') : 'M';
+                                        const wideCardW = cardSize === 'S' ? 140 : cardSize === 'L' ? LINK_W : getWideWidth(link.title);
+                                        const thumbCardW = cardSize === 'S' ? 160 : LINK_W;
                                         // Thumbnail style forces wide card regardless of iconShape
                                         let detectedPlatform: string | null = null;
                                         if (link.type === 'EXTERNAL' && link.url) {
@@ -3551,7 +3555,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 style={{
                                                     left: currentPos.x,
                                                     top: currentPos.y,
-                                                    width: isEditingLink ? Math.max(isIconMode ? (sqSize || LINK_W) : LINK_W, 220) : (isIconMode ? (sqSize || LINK_W) : (isThumbnailMode || _ytIdLink ? LINK_W : getWideWidth(link.title))),
+                                                    width: isEditingLink ? Math.max(isIconMode ? (sqSize || LINK_W) : LINK_W, 220) : (isIconMode ? (sqSize || LINK_W) : (isThumbnailMode ? thumbCardW : _ytIdLink ? LINK_W : wideCardW)),
                                                     transform: isDraggingLink ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
                                                     transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
                                                     zIndex: isDraggingLink ? 1000 : isEditingLink ? 500 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (50 + i),
@@ -3752,7 +3756,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     </div>
                                                 ) : (
                                                     <div
-                                                        className={`relative rounded-lg ${isThumbnailMode ? 'p-3' : isIconMode ? (sqSize === 44 ? 'p-1 aspect-square flex items-center justify-center' : sqSize === 64 ? 'p-1.5 aspect-square flex items-center justify-center' : 'p-3 aspect-square flex flex-col items-center justify-center text-center') : 'p-3'}`}
+                                                        className={`relative rounded-lg ${isThumbnailMode ? (cardSize === 'S' ? 'p-2' : 'p-3') : isIconMode ? (sqSize === 44 ? 'p-1 aspect-square flex items-center justify-center' : sqSize === 64 ? 'p-1.5 aspect-square flex items-center justify-center' : 'p-3 aspect-square flex flex-col items-center justify-center text-center') : (cardSize === 'S' ? 'p-2' : cardSize === 'L' ? 'p-3' : 'p-3')}`}
                                                         style={{
                                                             backgroundColor: link.buttonColor || linkColors[lc],
                                                             border: isDraggingLink ? '2px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.08)',
@@ -3928,11 +3932,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 </div>
                                                             );
                                                             return (
-                                                                <div className="flex items-center gap-2.5 h-full w-full">
-                                                                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5 text-stone-600">
-                                                                        {link.thumbnailUrl?.startsWith('data:emoji,') ? <span className="text-base leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span> : detectedPlatform ? getPreviewPlatformIcon(detectedPlatform) : <LinkIcon size={13} />}
+                                                                <div className="flex items-center gap-2 h-full w-full">
+                                                                    <div className={`${cardSize === 'S' ? 'w-5 h-5' : cardSize === 'L' ? 'w-9 h-9' : 'w-7 h-7'} rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5 text-stone-600`}>
+                                                                        {link.thumbnailUrl?.startsWith('data:emoji,') ? <span className={cardSize === 'S' ? 'text-xs leading-none' : cardSize === 'L' ? 'text-xl leading-none' : 'text-base leading-none'}>{link.thumbnailUrl.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className={cardSize === 'L' ? 'scale-[1.2]' : 'scale-[0.9]'}>{getPreviewPlatformIcon(detectedPlatform)}</div> : <LinkIcon size={cardSize === 'S' ? 10 : cardSize === 'L' ? 16 : 13} />}
                                                                     </div>
-                                                                    <span className="text-xs font-semibold text-stone-700 truncate flex-1 text-left">{link.title}</span>
+                                                                    <span className={`${cardSize === 'S' ? 'text-[10px]' : cardSize === 'L' ? 'text-sm' : 'text-xs'} font-semibold text-stone-700 truncate flex-1 text-left`}>{link.title}</span>
                                                                 </div>
                                                             );
                                                         })()}
@@ -4540,8 +4544,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                         const maxPB = fpostPos.reduce((m, p) => Math.max(m, p.y + NOTE_H_EST), 440);
                         const maxLR = flinkPos.reduce((m, p, i) => {
-                            const effStyle = flinks[i].displayStyle || (flinks[i].iconShape ? 'icon' : 'wide');
-                            return Math.max(m, p.x + (effStyle === 'icon' ? (getLSz(flinks[i]) || LINK_W) : (flinks[i].displayStyle === 'thumbnail' ? LINK_W : getWideWidth(flinks[i].title))));
+                            const l = flinks[i];
+                            const effStyle = l.displayStyle || (l.iconShape ? 'icon' : 'wide');
+                            const cs = l.iconShape === 'square-s' ? 'S' : l.iconShape === 'square-l' ? 'L' : 'M';
+                            const w = effStyle === 'icon' ? (getLSz(l) || LINK_W) : effStyle === 'thumbnail' ? (cs === 'S' ? 160 : LINK_W) : (cs === 'S' ? 140 : cs === 'L' ? LINK_W : getWideWidth(l.title));
+                            return Math.max(m, p.x + w);
                         }, 640);
                         const maxLB = flinkPos.reduce((m, p, i) => Math.max(m, p.y + getLH(flinks[i])), 0);
                         const cH = Math.max(maxPB, maxLB) + 80;
@@ -4639,7 +4646,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             const ci = i % LC.length;
                                             const effStyle = flinks[i].displayStyle || (flinks[i].iconShape ? 'icon' : 'wide');
                                             return (
-                                                <div key={i} style={{ position: 'absolute', left: (mmGuideX + pos.x) * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: (effStyle === 'icon' ? (getLSz(flinks[i]) || LINK_W) : (flinks[i].displayStyle === 'thumbnail' ? LINK_W : getWideWidth(flinks[i].title))) * mmScale, height: getLH(flinks[i]) * mmScale, background: LC[ci], borderRadius: 2, opacity: 0.93, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                                                <div key={i} style={{ position: 'absolute', left: (mmGuideX + pos.x) * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: (() => { const l = flinks[i]; const cs = l.iconShape === 'square-s' ? 'S' : l.iconShape === 'square-l' ? 'L' : 'M'; return effStyle === 'icon' ? (getLSz(l) || LINK_W) : effStyle === 'thumbnail' ? (cs === 'S' ? 160 : LINK_W) : (cs === 'S' ? 140 : cs === 'L' ? LINK_W : getWideWidth(l.title)); })() * mmScale, height: getLH(flinks[i]) * mmScale, background: LC[ci], borderRadius: 2, opacity: 0.93, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
                                                     <div style={{ position: 'absolute', top: 0, left: '20%', width: '60%', height: Math.max(2.5, 10 * mmScale), background: LT[ci], borderRadius: 1 }} />
                                                 </div>
                                             );
