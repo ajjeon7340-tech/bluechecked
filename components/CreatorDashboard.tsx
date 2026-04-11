@@ -4299,13 +4299,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     {boardFocusModeOpen && (() => {
                         const CREATOR_CARD_ZONE = 300;
                         const BOARD_PAD = 32;
-                        const GUIDE_COLS = 2;
+                        const GUIDE_COLS = 3;
                         const NOTE_W = 252;
                         const NOTE_H_EST = 272;
                         const NOTE_GAP_X = 28;
                         const NOTE_GAP_Y = 36;
                         const LINK_W = 220;
-                        const LINK_AUTO_X = BOARD_PAD + GUIDE_COLS * (NOTE_W + NOTE_GAP_X) + 20;
+                        const LINK_AUTO_X = BOARD_PAD + GUIDE_COLS * (NOTE_W + NOTE_GAP_X) + 32;
 
                         const getLSz = (l: AffiliateLink): number | null => {
                             if (l.iconShape === 'square-l') return 220;
@@ -4397,23 +4397,42 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider mb-1.5">Drag the frame or click to reposition</p>
                                     <div
                                         className="relative rounded-lg overflow-hidden border border-stone-200 mb-4 cursor-crosshair"
-                                        style={{ width: MMAP_W, height: Math.max(100, tH * mmScale), backgroundColor: '#c9a76b' }}
+                                        style={{ width: MMAP_W, height: Math.max(100, tH * mmScale), background: 'linear-gradient(135deg,#FAFAF8 0%,#F5F3EF 100%)', backgroundImage: 'radial-gradient(circle,rgba(168,162,158,0.18) 1px,transparent 1px)', backgroundSize: `${Math.max(4, 24 * mmScale)}px ${Math.max(4, 24 * mmScale)}px` }}
                                         onClick={e => {
                                             const r = e.currentTarget.getBoundingClientRect();
                                             const cx = (e.clientX - r.left) / mmScale;
                                             const cy = (e.clientY - r.top) / mmScale;
-                                            // Position frame TOP at the click point (not center) so upper content is reachable
                                             setBoardFocusAnchor({ x: Math.min(cW - DESKTOP_VW / 2, cx - DESKTOP_VW / 2), y: Math.max(0, Math.min(tH - FOCUS_H, cy)) });
                                         }}
                                     >
                                         {/* Creator card placeholder */}
-                                        <div style={{ position: 'absolute', left: (cW / 2 - 130) * mmScale, top: 40 * mmScale, width: 260 * mmScale, height: (CREATOR_CARD_ZONE - 60) * mmScale, background: '#fefef0', borderRadius: 2, opacity: 0.8 }} />
-                                        {fpostPos.map((pos, i) => (
-                                            <div key={i} style={{ position: 'absolute', left: pos.x * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: NOTE_W * mmScale, height: 70 * mmScale, background: '#fefef0', borderRadius: 1, opacity: 0.85 }} />
-                                        ))}
-                                        {flinkPos.map((pos, i) => (
-                                            <div key={i} style={{ position: 'absolute', left: pos.x * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: (getLSz(flinks[i]) || LINK_W) * mmScale, height: getLH(flinks[i]) * mmScale, background: 'rgba(255,255,255,0.75)', borderRadius: 1, opacity: 0.85 }} />
-                                        ))}
+                                        <div style={{ position: 'absolute', left: (cW / 2 - 130) * mmScale, top: 40 * mmScale, width: 260 * mmScale, height: (CREATOR_CARD_ZONE - 60) * mmScale, background: '#fff', borderRadius: 3, opacity: 0.9, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+                                            <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translateX(-50%)', width: '60%', height: Math.max(2, 8 * mmScale), background: 'rgba(0,0,0,0.08)', borderRadius: 2 }} />
+                                            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translateX(-50%)', width: '40%', height: Math.max(2, 6 * mmScale), background: 'rgba(0,0,0,0.06)', borderRadius: 2 }} />
+                                        </div>
+                                        {/* Posts — colored sticky notes matching board */}
+                                        {fpostPos.map((pos, i) => {
+                                            const NC = ['#FFFEF0','#F0FDF4','#FFF7ED','#F5F3FF','#EFF6FF','#FDF2F8'];
+                                            const TC = ['rgba(200,193,185,0.65)','rgba(110,200,140,0.55)','rgba(240,160,80,0.5)','rgba(180,150,240,0.5)','rgba(110,170,240,0.5)','rgba(240,140,180,0.5)'];
+                                            let h = 0; for (let c = 0; c < fposts[i].id.length; c++) h = (h * 31 + fposts[i].id.charCodeAt(c)) & 0xFFFFFF;
+                                            const ci = Math.abs(h) % NC.length;
+                                            return (
+                                                <div key={i} style={{ position: 'absolute', left: pos.x * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: NOTE_W * mmScale, height: NOTE_H_EST * mmScale, background: NC[ci], borderRadius: 2, opacity: 0.93, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                                                    <div style={{ position: 'absolute', top: 0, left: '20%', width: '60%', height: Math.max(2.5, 10 * mmScale), background: TC[ci], borderRadius: 1 }} />
+                                                </div>
+                                            );
+                                        })}
+                                        {/* Links — colored cards matching board */}
+                                        {flinkPos.map((pos, i) => {
+                                            const LC = ['#FFF7ED','#F0FDF4','#EFF6FF','#FDF2F8','#FFFEF0','#F5F3FF'];
+                                            const LT = ['rgba(240,160,80,0.5)','rgba(110,200,140,0.5)','rgba(110,170,240,0.45)','rgba(240,140,180,0.45)','rgba(200,193,185,0.6)','rgba(180,150,240,0.45)'];
+                                            const ci = i % LC.length;
+                                            return (
+                                                <div key={i} style={{ position: 'absolute', left: pos.x * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: (getLSz(flinks[i]) || LINK_W) * mmScale, height: getLH(flinks[i]) * mmScale, background: LC[ci], borderRadius: 2, opacity: 0.93, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                                                    <div style={{ position: 'absolute', top: 0, left: '20%', width: '60%', height: Math.max(2.5, 10 * mmScale), background: LT[ci], borderRadius: 1 }} />
+                                                </div>
+                                            );
+                                        })}
                                         {/* Desktop box (blue, wider) */}
                                         <div
                                             style={{ position: 'absolute', left: aL, top: aT, width: dW, height: fH, border: '2px solid rgba(99,102,241,0.8)', background: 'rgba(99,102,241,0.08)', borderRadius: 2, cursor: 'move', boxShadow: '0 0 0 1px rgba(255,255,255,0.3)' }}
