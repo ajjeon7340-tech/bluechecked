@@ -38,6 +38,8 @@ const getResponseTimeTooltip = (status: string, t: (key: string) => string) => {
     return t('profile.responseTooltipDefault');
 };
 
+const getXXSWidth = (title?: string) => Math.min(220, Math.max(110, 65 + (title?.length || 0) * 7.5));
+
 export const CreatorPublicProfile: React.FC<Props> = ({
   creator,
   currentUser,
@@ -938,7 +940,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                   const linkMaxX = allPublicLinks.reduce((max, link, idx) => {
                                       const pos = getLinkPos(link, idx);
                                       const sqSize = _getLinkSize(link);
-                                      const w = link.type === 'PHOTO' ? (link.width ?? 220) : (link.iconShape === 'square-xxs' ? 110 : (sqSize || PROFILE_W));
+                                      const w = link.type === 'PHOTO' ? (link.width ?? 220) : (link.iconShape === 'square-xxs' ? getXXSWidth(link.title) : (sqSize || PROFILE_W));
                                       return Math.max(max, pos.x + w);
                                   }, LINK_START_X + PROFILE_W);
                                   const maxY = pinnedPosts.reduce((max, p) => {
@@ -1096,7 +1098,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           <div
                                                               key={link.id}
                                                               className="absolute"
-                                                          style={{ left: pos.x, top: pos.y, width: isThumbnailMode ? PROFILE_W : link.iconShape === 'square-xxs' ? 110 : (sqSize || PROFILE_W), zIndex: 20 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
+                                                          style={{ left: pos.x, top: pos.y, width: isThumbnailMode ? PROFILE_W : link.iconShape === 'square-xxs' ? getXXSWidth(link.title) : (sqSize || PROFILE_W), zIndex: 20 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
                                                               onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '10'; }}
                                                               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = '2'; }}
                                                           >

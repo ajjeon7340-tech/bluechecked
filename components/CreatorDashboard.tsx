@@ -138,6 +138,8 @@ const isImage = (url: string) => {
     return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext || '');
 };
 
+const getXXSWidth = (title?: string) => Math.min(220, Math.max(110, 65 + (title?.length || 0) * 7.5));
+
 const DUMMY_PRO_DATA: ProAnalyticsData = {
     trafficSources: [
         { name: 'Google Search', value: 35, color: '#4285F4' },
@@ -3527,7 +3529,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 style={{
                                                     left: currentPos.x,
                                                     top: currentPos.y,
-                                                    width: isEditingLink ? Math.max(isThumbnailMode ? LINK_W : (link.iconShape === 'square-xxs' ? 110 : sqSize || LINK_W), 220) : isThumbnailMode ? LINK_W : (link.iconShape === 'square-xxs' ? 110 : sqSize || LINK_W),
+                                                    width: isEditingLink ? Math.max(isThumbnailMode ? LINK_W : (link.iconShape === 'square-xxs' ? getXXSWidth(link.title) : sqSize || LINK_W), 220) : isThumbnailMode ? LINK_W : (link.iconShape === 'square-xxs' ? getXXSWidth(link.title) : sqSize || LINK_W),
                                                     transform: isDraggingLink ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
                                                     transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
                                                     zIndex: isDraggingLink ? 1000 : isEditingLink ? 500 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (20 + i),
@@ -4005,10 +4007,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#FFFEF0', border: '2px solid rgba(0,0,0,0.12)' }}>
                                         <p className="text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-2">🔗 External Link</p>
                                         <input
-                                            className="w-full text-xs bg-white/70 border border-stone-200 rounded px-2 py-1.5 mb-1.5 outline-none focus:ring-1 focus:ring-stone-400"
+                                            className="w-full text-xs font-semibold bg-white/70 border border-stone-200 rounded px-2 py-1.5 mb-1.5 outline-none focus:ring-1 focus:ring-stone-400"
+                                            placeholder="Title"
+                                            value={boardLinkDraft.title}
+                                            autoFocus
+                                            onChange={e => setBoardLinkDraft(p => ({ ...p, title: e.target.value }))}
+                                        />
+                                        <input
+                                            className="w-full text-xs bg-white/70 border border-stone-200 rounded px-2 py-1.5 mb-2 outline-none focus:ring-1 focus:ring-stone-400"
                                             placeholder="Paste URL (https://...)"
                                             value={boardLinkDraft.url}
-                                            autoFocus
                                             onChange={e => {
                                                 const url = e.target.value;
                                                 setBoardLinkDraft(p => {
@@ -4023,16 +4031,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 });
                                             }}
                                         />
-                                        <input
-                                            className="w-full text-xs font-semibold bg-white/70 border border-stone-200 rounded px-2 py-1.5 mb-2 outline-none focus:ring-1 focus:ring-stone-400"
-                                            placeholder="Title (auto-filled from URL)"
-                                            value={boardLinkDraft.title}
-                                            onChange={e => setBoardLinkDraft(p => ({ ...p, title: e.target.value }))}
-                                        />
                                         <div className="flex gap-1.5">
                                             <button
                                                 className="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-stone-800 text-white hover:bg-stone-700 transition-colors disabled:opacity-40"
-                                                disabled={!boardLinkDraft.url.trim()}
+                                                disabled={!boardLinkDraft.url.trim() || !boardLinkDraft.title.trim()}
                                                 onClick={async () => {
                                                     const url = boardLinkDraft.url.trim();
                                                     if (!url) return;
@@ -4043,7 +4045,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             title = hostname.charAt(0).toUpperCase() + hostname.slice(1).split('.')[0];
                                                         } catch { title = url; }
                                                     }
-                                                    await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title, url, type: 'EXTERNAL' }]);
+                                                            await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title, url, type: 'EXTERNAL', iconShape: 'square-xxs' }]);
                                                     _closeAllBoardAdding();
                                                 }}
                                             >Add Link</button>
@@ -4087,7 +4089,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     const url = boardLinkDraft.url.trim();
                                                     if (!title || !url) return;
                                                     await saveBoardLinkChange([...(editedCreator.links || []), {
-                                                        id: `link_${Date.now()}`, title, url, type: 'DIGITAL_PRODUCT',
+                                                        id: `link_${Date.now()}`, title, url, type: 'DIGITAL_PRODUCT', iconShape: 'square-xxs',
                                                         price: boardLinkDraft.price ? parseInt(boardLinkDraft.price) : undefined,
                                                     }]);
                                                     _closeAllBoardAdding();
@@ -4126,7 +4128,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     const title = boardLinkDraft.title.trim();
                                                     if (!title) return;
                                                     await saveBoardLinkChange([...(editedCreator.links || []), {
-                                                        id: `link_${Date.now()}`, title, url: '#', type: 'SUPPORT',
+                                                        id: `link_${Date.now()}`, title, url: '#', type: 'SUPPORT', iconShape: 'square-xxs',
                                                         price: boardLinkDraft.price ? parseInt(boardLinkDraft.price) : undefined,
                                                     }]);
                                                     _closeAllBoardAdding();
@@ -4222,7 +4224,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 const url = boardPlatformUrlDraft.trim();
                                                                 if (url) {
                                                                     _closeAllBoardAdding();
-                                                                    await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-s' }]);
+                                                                    await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-xxs' }]);
                                                                 }
                                                             }
                                                         }}
@@ -4235,7 +4237,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 const url = boardPlatformUrlDraft.trim();
                                                                 if (!url) return;
                                                                 _closeAllBoardAdding();
-                                                                await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-s' }]);
+                                                                await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-xxs' }]);
                                                             }}
                                                         >Add Link</button>
                                                         <button
@@ -4491,7 +4493,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         });
 
                         const maxPB = fpostPos.reduce((m, p) => Math.max(m, p.y + NOTE_H_EST), 440);
-                        const maxLR = flinkPos.reduce((m, p, i) => Math.max(m, p.x + (flinks[i].iconShape === 'square-xxs' ? 110 : getLSz(flinks[i]) || LINK_W)), 640);
+                        const maxLR = flinkPos.reduce((m, p, i) => Math.max(m, p.x + (flinks[i].iconShape === 'square-xxs' ? getXXSWidth(flinks[i].title) : getLSz(flinks[i]) || LINK_W)), 640);
                         const maxLB = flinkPos.reduce((m, p, i) => Math.max(m, p.y + getLH(flinks[i])), 0);
                         const cH = Math.max(maxPB, maxLB) + 80;
                         const cW = Math.max(640, maxLR + 32);
@@ -4587,7 +4589,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             const LT = ['rgba(240,160,80,0.5)','rgba(110,200,140,0.5)','rgba(110,170,240,0.45)','rgba(240,140,180,0.45)','rgba(200,193,185,0.6)','rgba(180,150,240,0.45)'];
                                             const ci = i % LC.length;
                                             return (
-                                                <div key={i} style={{ position: 'absolute', left: (mmGuideX + pos.x) * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: (flinks[i].iconShape === 'square-xxs' ? 110 : getLSz(flinks[i]) || LINK_W) * mmScale, height: getLH(flinks[i]) * mmScale, background: LC[ci], borderRadius: 2, opacity: 0.93, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                                                <div key={i} style={{ position: 'absolute', left: (mmGuideX + pos.x) * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: (flinks[i].iconShape === 'square-xxs' ? getXXSWidth(flinks[i].title) : getLSz(flinks[i]) || LINK_W) * mmScale, height: getLH(flinks[i]) * mmScale, background: LC[ci], borderRadius: 2, opacity: 0.93, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
                                                     <div style={{ position: 'absolute', top: 0, left: '20%', width: '60%', height: Math.max(2.5, 10 * mmScale), background: LT[ci], borderRadius: 1 }} />
                                                 </div>
                                             );
