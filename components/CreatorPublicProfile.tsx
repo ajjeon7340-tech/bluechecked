@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Globe, Pin } from 'lucide-react';
 import { CreatorProfile, CurrentUser, AffiliateLink, Product } from '../types';
@@ -243,24 +242,35 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
     boardAnimating.current = true;
 
-    flushSync(() => {
-        setBoardCamera(eagleCam);
-        setBoardAnimReady(true);
-    });
+    // Step 1: set eagle position while still invisible (opacity=0)
+    setBoardCamera(eagleCam);
 
-    const pauseTimer = setTimeout(() => {
-        setBoardCamTransition('transform 1.4s cubic-bezier(0.33, 1, 0.68, 1)');
-        setBoardCamera(focusCam);
-        setTimeout(() => {
-            setBoardCamTransition('none');
-            boardAnimating.current = false; // animation done — pan enabled
-        }, 1500);
-    }, 900);
+    // Step 2: double-rAF ensures React has committed + browser has painted before we show
+    let raf1 = 0, raf2 = 0, t1 = 0, t2 = 0;
+    raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => {
+            // Now reveal at eagle position
+            setBoardAnimReady(true);
+
+            // Step 3: pause, then CSS-transition to focus
+            t1 = window.setTimeout(() => {
+                setBoardCamTransition('transform 1.4s cubic-bezier(0.33, 1, 0.68, 1)');
+                setBoardCamera(focusCam);
+                t2 = window.setTimeout(() => {
+                    setBoardCamTransition('none');
+                    boardAnimating.current = false;
+                }, 1500);
+            }, 800);
+        });
+    });
 
     return () => {
         boardInitRef.current = false;
         boardAnimating.current = false;
-        clearTimeout(pauseTimer);
+        cancelAnimationFrame(raf1);
+        cancelAnimationFrame(raf2);
+        clearTimeout(t1);
+        clearTimeout(t2);
     };
   }, [boardPostsLoaded, boardContainerW]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1002,34 +1012,32 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                   opacity: boardAnimReady ? 1 : 0,
                                               }}
                                           >
-                                          {/* Viewport guidelines — only visible to the creator viewing their own board */}
-                                          {isCreatorOwner && boardContainerW > 0 && (() => {
-                                              // Desktop: actual container width (capped at max-w-2xl 640px)
-                                      const desktopVW = 640;
-                                              // Mobile: 390px screen - 32px padding = 358px
-                                      const mobileVW = 358;
-                                              const GuideRect = ({ w, h, color, dash, label }: { w: number; h: number; color: string; dash?: boolean; label: string }) => (
-                                                  <div className="absolute pointer-events-none" style={{ left: 0, top: 0, width: w, height: h, zIndex: 5 }}>
-                                                      <div className="absolute inset-0" style={{ border: `2px ${dash ? 'dashed' : 'solid'} ${color}`, borderRadius: 2 }} />
-                                                      {/* Top-right label */}
-                                                      <div className="absolute top-0 right-0 flex items-center gap-1 px-1.5 py-0.5 rounded-bl" style={{ background: `${color}22`, borderLeft: `1px solid ${color}55`, borderBottom: `1px solid ${color}55` }}>
-                                                          <span className="text-[8px] font-bold uppercase tracking-wider select-none" style={{ color }}>{label}</span>
+                                          {/* Focus zone guidelines — positioned at saved focus anchor, always visible */}
+                                          {boardContainerW > 0 && (() => {
+                                              const DESKTOP_VW = 640, MOBILE_VW = 390, FOCUS_H = BOARD_MAX_H;
+                                              const CREATOR_CARD_ZONE = 300;
+                                              const isMob = boardContainerW < 600;
+                                              const sv = isMob ? creator.boardFocusMobile : creator.boardFocusDesktop;
+                                              const fX = sv?.x ?? containerW / 2;
+                                              const fY = sv ? Math.max(0, sv.y - CREATOR_CARD_ZONE) : containerH * 0.3;
+                                              // Anchor = top-left of the viewport frame in canvas coordinates
+                                              const aX = Math.max(0, fX - DESKTOP_VW / 2);
+                                              const aY = Math.max(0, fY - FOCUS_H / 2);
+                                              return (
+                                                  <div className="absolute pointer-events-none" style={{ left: aX, top: aY, zIndex: 5 }}>
+                                                      {/* Desktop — solid indigo */}
+                                                      <div className="absolute" style={{ left: 0, top: 0, width: DESKTOP_VW, height: FOCUS_H, border: '1.5px solid rgba(99,102,241,0.35)', borderRadius: 3 }}>
+                                                          <div className="absolute top-0 right-0 flex items-center gap-1 px-1.5 py-0.5 rounded-bl" style={{ background: 'rgba(99,102,241,0.08)', borderLeft: '1px solid rgba(99,102,241,0.2)', borderBottom: '1px solid rgba(99,102,241,0.2)' }}>
+                                                              <span className="text-[7px] font-bold uppercase tracking-wider select-none text-indigo-400">Desktop</span>
+                                                          </div>
                                                       </div>
-                                                      {/* Bottom-center scroll hint */}
-                                                      <div className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: `${color}22`, border: `1px solid ${color}55` }}>
-                                                          <span className="text-[8px] font-bold select-none" style={{ color }}>↓ scroll to view more</span>
-                                                      </div>
-                                                      {/* Right-center scroll hint */}
-                                                      <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 flex items-center gap-1 px-1.5 py-0.5 rounded-full" style={{ background: `${color}22`, border: `1px solid ${color}55` }}>
-                                                          <span className="text-[8px] font-bold select-none" style={{ color, writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>→ scroll to view more</span>
+                                                      {/* Mobile — dashed orange */}
+                                                      <div className="absolute" style={{ left: 0, top: 0, width: MOBILE_VW, height: FOCUS_H, border: '1.5px dashed rgba(251,146,60,0.45)', borderRadius: 3 }}>
+                                                          <div className="absolute top-0 left-0 flex items-center gap-1 px-1.5 py-0.5 rounded-br" style={{ background: 'rgba(251,146,60,0.08)', borderRight: '1px solid rgba(251,146,60,0.2)', borderBottom: '1px solid rgba(251,146,60,0.2)' }}>
+                                                              <span className="text-[7px] font-bold uppercase tracking-wider select-none text-orange-400">Mobile</span>
+                                                          </div>
                                                       </div>
                                                   </div>
-                                              );
-                                              return (
-                                                  <>
-                                                      <GuideRect w={desktopVW} h={BOARD_MAX_H} color="rgba(99,102,241,0.5)" label="Computer" />
-                                                      <GuideRect w={mobileVW} h={BOARD_MAX_H} color="rgba(251,146,60,0.6)" dash label="Mobile" />
-                                                  </>
                                               );
                                           })()}
                                               {/* Featured links / products / support stickers */}
