@@ -4402,7 +4402,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             const r = e.currentTarget.getBoundingClientRect();
                                             const cx = (e.clientX - r.left) / mmScale;
                                             const cy = (e.clientY - r.top) / mmScale;
-                                            setBoardFocusAnchor({ x: Math.max(0, cx - DESKTOP_VW / 2), y: Math.max(CREATOR_CARD_ZONE, Math.min(tH - FOCUS_H, cy - FOCUS_H / 2)) });
+                                            // Position frame TOP at the click point (not center) so upper content is reachable
+                                            setBoardFocusAnchor({ x: Math.max(0, cx - DESKTOP_VW / 2), y: Math.max(CREATOR_CARD_ZONE, Math.min(tH - FOCUS_H, cy)) });
                                         }}
                                     >
                                         {/* Creator card placeholder */}

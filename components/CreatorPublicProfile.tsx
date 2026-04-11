@@ -235,8 +235,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     const isMobile = boardContainerW < 600;
     const saved = isMobile ? creator.boardFocusMobile : creator.boardFocusDesktop;
     const CREATOR_CARD_ZONE = 300; // offset used in DiemBoard minimap coordinate system
-    const focusX = saved?.x ?? cW / 2;
-    const focusY = saved ? Math.max(0, saved.y - CREATOR_CARD_ZONE) : cH * 0.3;
+    const DESKTOP_VW = 640, MOBILE_VW = 390;
+    // Default: show content from canvas (0,0) — top-left, same as the guideline default
+    const focusX = saved?.x ?? (isMobile ? MOBILE_VW / 2 : DESKTOP_VW / 2);
+    const focusY = saved ? Math.max(0, saved.y - CREATOR_CARD_ZONE) : BOARD_MAX_H / 2;
     const focusZoom = 1.0;
     const focusCam = { x: focusX, y: focusY, zoom: focusZoom };
 
@@ -1018,8 +1020,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                               const CREATOR_CARD_ZONE = 300;
                                               const isMob = boardContainerW < 600;
                                               const sv = isMob ? creator.boardFocusMobile : creator.boardFocusDesktop;
-                                              const fX = sv?.x ?? containerW / 2;
-                                              const fY = sv ? Math.max(0, sv.y - CREATOR_CARD_ZONE) : containerH * 0.3;
+                                              // Default: top-left of content (matches default animation focus)
+                                              const fX = sv?.x ?? (isMob ? MOBILE_VW / 2 : DESKTOP_VW / 2);
+                                              const fY = sv ? Math.max(0, sv.y - CREATOR_CARD_ZONE) : FOCUS_H / 2;
                                               // Anchor = top-left of the viewport frame in canvas coordinates
                                               const aX = Math.max(0, fX - DESKTOP_VW / 2);
                                               const aY = Math.max(0, fY - FOCUS_H / 2);
