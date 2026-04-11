@@ -140,6 +140,18 @@ const isImage = (url: string) => {
 
 const getXXSWidth = (title?: string) => Math.min(220, Math.max(110, 80 + (title?.length || 0) * 8.5));
 const getSWidth = (title?: string) => Math.min(220, Math.max(110, 80 + (title?.length || 0) * 8.5));
+// Wide-mode: base(icon 28 + gap 10 + padding 24 = 62) + per-char width (CJK chars are ~13px, spaces 4px, ASCII ~7.5px)
+const getWideWidth = (title?: string) => {
+    if (!title) return 160;
+    let charW = 0;
+    for (const ch of title) {
+        const code = ch.codePointAt(0) || 0;
+        if (code >= 0x1100) { charW += 13; } // Korean, CJK, and other wide chars
+        else if (ch === ' ') { charW += 4; }
+        else { charW += 7.5; }
+    }
+    return Math.min(220, Math.max(110, Math.ceil(62 + charW)));
+};
 
 const DUMMY_PRO_DATA: ProAnalyticsData = {
     trafficSources: [
@@ -3545,7 +3557,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     left: currentPos.x,
                                                     top: currentPos.y,
                                                     width: isEditingLink ? Math.max(isThumbnailMode ? LINK_W : (link.iconShape === 'square-xxs' ? getXXSWidth(link.title) : sqSize || LINK_W), 220) : isThumbnailMode ? LINK_W : (link.iconShape === 'square-xxs' ? getXXSWidth(link.title) : sqSize || LINK_W),
-                                                        width: isEditingLink ? Math.max(isIconMode ? (link.iconShape === 'square-s' ? getSWidth(link.title) : sqSize || LINK_W) : LINK_W, 220) : (isIconMode ? (link.iconShape === 'square-s' ? getSWidth(link.title) : sqSize || LINK_W) : LINK_W),
+                                                        width: isEditingLink ? Math.max(isIconMode ? (link.iconShape === 'square-s' ? getSWidth(link.title) : sqSize || LINK_W) : LINK_W, 220) : (isIconMode ? (link.iconShape === 'square-s' ? getSWidth(link.title) : sqSize || LINK_W) : (isThumbnailMode || _ytIdLink ? LINK_W : getWideWidth(link.title))),
                                                     transform: isDraggingLink ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
                                                     transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
                                                     zIndex: isDraggingLink ? 1000 : isEditingLink ? 500 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (50 + i),
