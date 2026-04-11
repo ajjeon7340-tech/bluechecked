@@ -3428,7 +3428,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         top: currentPos.y,
                                                         width: phW,
                                                         height: phH,
-                                                        zIndex: isDraggingLink ? 1000 : isResizing ? 900 : isEditingPhoto ? 800 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (20 + i),
+                                                        zIndex: isDraggingLink ? 1000 : isResizing ? 900 : isEditingPhoto ? 800 : (10 + i),
                                                         transition: isDraggingLink || isResizing ? 'none' : undefined,
                                                         borderRadius: 8,
                                                         overflow: isEditingPhoto ? 'visible' : 'hidden',
@@ -3532,7 +3532,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     width: isEditingLink ? Math.max(isThumbnailMode ? LINK_W : (link.iconShape === 'square-xxs' ? getXXSWidth(link.title) : sqSize || LINK_W), 220) : isThumbnailMode ? LINK_W : (link.iconShape === 'square-xxs' ? getXXSWidth(link.title) : sqSize || LINK_W),
                                                     transform: isDraggingLink ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
                                                     transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
-                                                    zIndex: isDraggingLink ? 1000 : isEditingLink ? 500 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (20 + i),
+                                                    zIndex: isDraggingLink ? 1000 : isEditingLink ? 500 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (50 + i),
                                                 }}
                                                 onTouchStart={e => handleNoteTouchStart(e, link.id, currentPos, 'LINK')}
                                                 onTouchMove={handleNoteTouchMove}
@@ -3619,7 +3619,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                         onClick={async e => {
                                                                             e.stopPropagation();
                                                                             const shapeToSet = sVal === 'wide' ? undefined : sVal;
-                                                                            const updatedLinks = (editedCreator.links || []).map(l => l.id === link.id ? { ...l, iconShape: shapeToSet } : l);
+                                                                            const updatedLinks = (editedCreator.links || []).map(l => l.id === link.id ? { 
+                                                                                ...l, 
+                                                                                iconShape: shapeToSet,
+                                                                                ...(shapeToSet ? { displayStyle: 'icon' } : {}) 
+                                                                            } : l);
+                                                                            setBoardLinkDraft(p => ({ ...p, ...(shapeToSet ? { displayStyle: 'icon' } : {}) }));
                                                                             await saveBoardLinkChange(updatedLinks);
                                                                         }}
                                                                         className={`flex-1 py-0.5 text-[10px] font-bold rounded border transition-colors ${isSelected ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-500 border-stone-200 hover:bg-stone-50'}`}
@@ -3694,7 +3699,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                             url: boardLinkDraft.url || l.url,
                                                                             ...(boardLinkDraft.color ? { buttonColor: boardLinkDraft.color } : {}),
                                                                             ...(boardLinkDraft.thumbnailUrl !== undefined ? { thumbnailUrl: boardLinkDraft.thumbnailUrl } : {}),
-                                                                            ...(boardLinkDraft.displayStyle !== undefined ? { displayStyle: boardLinkDraft.displayStyle } : {}),
+                                                                            ...(boardLinkDraft.displayStyle !== undefined ? { 
+                                                                                displayStyle: boardLinkDraft.displayStyle,
+                                                                                ...(boardLinkDraft.displayStyle === 'thumbnail' ? { iconShape: undefined } : {})
+                                                                            } : {}),
                                                                         } : l
                                                                     );
                                                                     await saveBoardLinkChange(updatedLinks);

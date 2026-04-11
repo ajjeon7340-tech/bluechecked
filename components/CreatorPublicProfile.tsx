@@ -1074,7 +1074,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                       }
                                                       const isYoutube = detectedPlatform === 'youtube' && !isProduct && !isSupport;
                                                       const sqSize = _getLinkSize(link);
-                                                      const isThumbnailMode = link.displayStyle === 'thumbnail' && !isYoutube;
+                                                      const isThumbnailMode = link.displayStyle === 'thumbnail' && !isYoutube && !['square-xxs', 'square-xs', 'square-s', 'square'].includes(link.iconShape || '');
                                                       const pos = getLinkPos(link, li);
 
                                                       const linkRot = rotations[(stableIdx(link.id) + li) % rotations.length];
@@ -1087,7 +1087,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                               <div
                                                                   key={link.id}
                                                                   className="absolute overflow-hidden"
-                                                                  style={{ left: pos.x, top: pos.y, width: phW, height: phH, zIndex: 20 + li, borderRadius: 8, boxShadow: '0 2px 12px rgba(0,0,0,0.12)' }}
+                                                                  style={{ left: pos.x, top: pos.y, width: phW, height: phH, zIndex: 10 + li, borderRadius: 8, boxShadow: '0 2px 12px rgba(0,0,0,0.12)' }}
                                                               >
                                                                   {link.thumbnailUrl && <img src={link.thumbnailUrl} alt={link.title || 'photo'} className="w-full h-full object-cover" draggable={false} />}
                                                               </div>
@@ -1098,7 +1098,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           <div
                                                               key={link.id}
                                                               className="absolute"
-                                                          style={{ left: pos.x, top: pos.y, width: isThumbnailMode ? PROFILE_W : link.iconShape === 'square-xxs' ? getXXSWidth(link.title) : (sqSize || PROFILE_W), zIndex: 20 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
+                                                          style={{ left: pos.x, top: pos.y, width: isThumbnailMode ? PROFILE_W : link.iconShape === 'square-xxs' ? getXXSWidth(link.title) : (sqSize || PROFILE_W), zIndex: 50 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
                                                               onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '10'; }}
                                                               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = '2'; }}
                                                           >
