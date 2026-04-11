@@ -1085,6 +1085,14 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           } catch { /* invalid url */ }
                                                       }
                                                       const isYoutube = detectedPlatform === 'youtube' && !isProduct && !isSupport;
+                                                      const _ytIdLink = isYoutube ? (() => {
+                                                          try {
+                                                              const u = new URL(link.url.startsWith('http') ? link.url : `https://${link.url}`);
+                                                              if (u.hostname.includes('youtube.com')) return u.searchParams.get('v');
+                                                              if (u.hostname === 'youtu.be') return u.pathname.slice(1).split('?')[0];
+                                                          } catch {}
+                                                          return null;
+                                                      })() : null;
                                                       const sqSize = _getLinkSize(link);
                                                       const isThumbnailMode = link.displayStyle === 'thumbnail' && !isYoutube && !['square-xxs', 'square-xs', 'square-s', 'square'].includes(link.iconShape || '');
                                                       
@@ -1114,12 +1122,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           <div
                                                               key={link.id}
                                                               className="absolute"
-                                                          style={{ left: pos.x, top: pos.y, width: isThumbnailMode ? PROFILE_W : link.iconShape === 'square-xxs' ? getXXSWidth(link.title) : (sqSize || PROFILE_W), zIndex: 50 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
                                                           style={{ left: pos.x, top: pos.y, width: isThumbnailMode ? PROFILE_W : (isIconMode && link.iconShape === 'square-s') ? getSWidth(link.title) : (sqSize || PROFILE_W), zIndex: 50 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
                                                               onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '100'; }}
                                                               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = `${50 + li}`; }}
                                                           >
-                                                          <div className={`h-3 mx-auto rounded-b-sm ${isThumbnailMode ? 'w-10' : link.iconShape === 'square-xxs' ? 'w-10' : sqSize === 64 ? 'w-4' : sqSize ? 'w-6' : 'w-10'}`} style={{ background: tapeColors[nc] }} />
                                                           <div className={`h-3 mx-auto rounded-b-sm ${!isIconMode ? 'w-10' : link.iconShape === 'square-s' ? 'w-10' : sqSize === 64 ? 'w-4' : 'w-6'}`} style={{ background: tapeColors[nc] }} />
                                                               {isThumbnailMode ? (
                                                                   (() => {
