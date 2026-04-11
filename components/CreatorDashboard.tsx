@@ -4443,7 +4443,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 };
                                                 setEditedCreator(updated);
                                                 setBoardFocusModeOpen(false);
-                                                try { await updateCreatorProfile(updated); } catch {}
+                                                try { await updateCreatorProfile(updated); await onRefreshData(); } catch {}
                                             }}
                                             className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-stone-900 text-white hover:bg-stone-700 transition-colors"
                                         >Save Focus</button>
