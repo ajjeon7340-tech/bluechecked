@@ -411,7 +411,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [boardPlatformUrlDraft, setBoardPlatformUrlDraft] = useState('');
   const [boardPhotoDraft, setBoardPhotoDraft] = useState<{ file: File | null; previewUrl: string | null; isUploading: boolean }>({ file: null, previewUrl: null, isUploading: false });
   const [boardLinkSizes, setBoardLinkSizes] = useState<Record<string, { w: number; h: number }>>({});
-  const [boardLinkResizing, setBoardLinkResizing] = useState<{ id: string; startMouseX: number; startMouseY: number; startW: number; startH: number } | null>(null);
+  const [boardLinkResizing, setBoardLinkResizing] = useState<{ id: string; startMouseX: number; startMouseY: number; startW: number; startH: number; flipX?: boolean } | null>(null);
+  const [boardPhotoEditId, setBoardPhotoEditId] = useState<string | null>(null);
   const [mobileAddMenuOpen, setMobileAddMenuOpen] = useState(false);
 
   const _closeAllBoardAdding = () => {
@@ -3278,10 +3279,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 if (boardLinkResizing) {
                                     const dx = e.clientX - boardLinkResizing.startMouseX;
                                     const dy = e.clientY - boardLinkResizing.startMouseY;
+                                    const wDelta = boardLinkResizing.flipX ? -dx : dx;
                                     setBoardLinkSizes(prev => ({
                                         ...prev,
                                         [boardLinkResizing.id]: {
-                                            w: Math.max(80, boardLinkResizing.startW + dx),
+                                            w: Math.max(80, boardLinkResizing.startW + wDelta),
                                             h: Math.max(60, boardLinkResizing.startH + dy),
                                         },
                                     }));
@@ -3319,13 +3321,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     setBoardLinkDragging(null);
                                 }
                                 if (boardLinkResizing) {
-                                    const sz = boardLinkSizes[boardLinkResizing.id];
-                                    if (sz) {
-                                        const updatedLinks = (editedCreator.links || []).map(l =>
-                                            l.id === boardLinkResizing.id ? { ...l, width: sz.w, height: sz.h } : l
-                                        );
-                                        await saveBoardLinkChange(updatedLinks);
-                                    }
+                                    // Size is kept live in boardLinkSizes; Done button persists to backend.
                                     setBoardLinkResizing(null);
                                 }
                             };
@@ -3416,11 +3412,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             } catch {}
                                             return null;
                                         })();
-                                        // ── Photo (plain image, no sticker chrome) ──
+                                        // ── Photo (plain image, free resize via edit mode) ──
                                         if (link.type === 'PHOTO') {
                                             const phW = boardLinkSizes[link.id]?.w ?? link.width ?? 220;
                                             const phH = boardLinkSizes[link.id]?.h ?? link.height ?? 160;
                                             const isResizing = boardLinkResizing?.id === link.id;
+                                            const isEditingPhoto = boardPhotoEditId === link.id;
                                             return (
                                                 <div
                                                     key={link.id}
@@ -3430,51 +3427,96 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         top: currentPos.y,
                                                         width: phW,
                                                         height: phH,
-                                                        zIndex: isDraggingLink ? 1000 : isResizing ? 900 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (20 + i),
+                                                        zIndex: isDraggingLink ? 1000 : isResizing ? 900 : isEditingPhoto ? 800 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (20 + i),
                                                         transition: isDraggingLink || isResizing ? 'none' : undefined,
                                                         borderRadius: 8,
-                                                        overflow: 'hidden',
-                                                        boxShadow: isDraggingLink ? '0 16px 40px rgba(0,0,0,0.2)' : '0 2px 12px rgba(0,0,0,0.12)',
+                                                        overflow: isEditingPhoto ? 'visible' : 'hidden',
+                                                        boxShadow: isEditingPhoto ? '0 0 0 2px #6366f1, 0 8px 32px rgba(0,0,0,0.18)' : isDraggingLink ? '0 16px 40px rgba(0,0,0,0.2)' : '0 2px 12px rgba(0,0,0,0.12)',
                                                     }}
                                                     onTouchStart={e => handleNoteTouchStart(e, link.id, currentPos, 'LINK')}
                                                     onTouchMove={handleNoteTouchMove}
                                                     onTouchEnd={cancelLongPress}
                                                     onTouchCancel={cancelLongPress}
                                                 >
-                                                    {link.thumbnailUrl && (
-                                                        <img src={link.thumbnailUrl} alt={link.title || 'photo'} className="absolute inset-0 w-full h-full object-cover" draggable={false} />
+                                                    {/* Image clipped to box */}
+                                                    <div className="absolute inset-0 rounded-lg overflow-hidden">
+                                                        {link.thumbnailUrl && (
+                                                            <img src={link.thumbnailUrl} alt={link.title || 'photo'} className="absolute inset-0 w-full h-full object-cover" draggable={false} />
+                                                        )}
+                                                    </div>
+                                                    {/* Drag overlay — active when NOT in edit mode */}
+                                                    {!isEditingPhoto && (
+                                                        <div
+                                                            className="absolute inset-0"
+                                                            style={{ cursor: isDraggingLink ? 'grabbing' : 'grab', touchAction: 'none' }}
+                                                            onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
+                                                        />
                                                     )}
-                                                    {/* Drag overlay — full image is the drag handle */}
-                                                    <div
-                                                        className="absolute inset-0"
-                                                        style={{ cursor: isDraggingLink ? 'grabbing' : 'grab', touchAction: 'none' }}
-                                                        onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
-                                                    />
-                                                    {/* Action buttons */}
-                                                    <div className="absolute top-1.5 right-1.5 hidden group-hover:flex items-center gap-1 z-10">
-                                                        <button
-                                                            className="p-1 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all shadow-sm"
-                                                            onClick={async e => {
-                                                                e.stopPropagation();
-                                                                await saveBoardLinkChange((editedCreator.links || []).filter(l => l.id !== link.id));
-                                                            }}
-                                                            title="Delete"
-                                                        ><Trash2 size={10} /></button>
-                                                    </div>
-                                                    {/* Resize handle — bottom-right corner */}
-                                                    <div
-                                                        className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize opacity-0 group-hover:opacity-100 flex items-end justify-end p-1 transition-opacity z-10"
-                                                        style={{ touchAction: 'none' }}
-                                                        onMouseDown={e => {
-                                                            e.preventDefault();
-                                                            e.stopPropagation();
-                                                            setBoardLinkResizing({ id: link.id, startMouseX: e.clientX, startMouseY: e.clientY, startW: phW, startH: phH });
-                                                        }}
-                                                    >
-                                                        <svg width="10" height="10" viewBox="0 0 10 10" className="text-white drop-shadow">
-                                                            <path d="M3 10 L10 3 M7 10 L10 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                                                        </svg>
-                                                    </div>
+                                                    {/* Hover toolbar — shown when NOT editing */}
+                                                    {!isEditingPhoto && (
+                                                        <div className="absolute top-1.5 right-1.5 hidden group-hover:flex items-center gap-1 z-10">
+                                                            <button
+                                                                className="p-1 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all shadow-sm"
+                                                                title="Resize"
+                                                                onClick={e => { e.stopPropagation(); setBoardPhotoEditId(link.id); }}
+                                                            ><Pencil size={10} /></button>
+                                                            <button
+                                                                className="p-1 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all shadow-sm"
+                                                                onClick={async e => {
+                                                                    e.stopPropagation();
+                                                                    await saveBoardLinkChange((editedCreator.links || []).filter(l => l.id !== link.id));
+                                                                }}
+                                                                title="Delete"
+                                                            ><Trash2 size={10} /></button>
+                                                        </div>
+                                                    )}
+                                                    {/* Edit mode: corner resize handles + Done button */}
+                                                    {isEditingPhoto && (
+                                                        <>
+                                                            {/* Done button */}
+                                                            <div className="absolute -top-7 left-0 flex items-center gap-1.5 z-20">
+                                                                <button
+                                                                    className="px-2 py-0.5 text-[10px] font-bold rounded bg-indigo-500 text-white hover:bg-indigo-600 shadow"
+                                                                    onClick={async e => {
+                                                                        e.stopPropagation();
+                                                                        setBoardPhotoEditId(null);
+                                                                        const sz = boardLinkSizes[link.id];
+                                                                        if (sz) {
+                                                                            const updatedLinks = (editedCreator.links || []).map(l =>
+                                                                                l.id === link.id ? { ...l, width: sz.w, height: sz.h } : l
+                                                                            );
+                                                                            await saveBoardLinkChange(updatedLinks);
+                                                                        }
+                                                                    }}
+                                                                >Done</button>
+                                                                <span className="text-[9px] text-stone-400 select-none">{phW} × {phH}</span>
+                                                            </div>
+                                                            {/* Bottom-right resize grip */}
+                                                            <div
+                                                                className="absolute -bottom-2 -right-2 w-5 h-5 rounded-full bg-indigo-500 border-2 border-white cursor-se-resize z-20 flex items-center justify-center shadow"
+                                                                style={{ touchAction: 'none' }}
+                                                                onMouseDown={e => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    setBoardLinkResizing({ id: link.id, startMouseX: e.clientX, startMouseY: e.clientY, startW: phW, startH: phH });
+                                                                }}
+                                                            >
+                                                                <svg width="8" height="8" viewBox="0 0 8 8" fill="white"><path d="M2 8 L8 2 M5 8 L8 5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                                                            </div>
+                                                            {/* Bottom-left resize grip */}
+                                                            <div
+                                                                className="absolute -bottom-2 -left-2 w-5 h-5 rounded-full bg-indigo-500 border-2 border-white cursor-sw-resize z-20 flex items-center justify-center shadow"
+                                                                style={{ touchAction: 'none' }}
+                                                                onMouseDown={e => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    setBoardLinkResizing({ id: link.id, startMouseX: e.clientX, startMouseY: e.clientY, startW: phW, startH: phH, flipX: true });
+                                                                }}
+                                                            >
+                                                                <svg width="8" height="8" viewBox="0 0 8 8" fill="white"><path d="M6 8 L0 2 M3 8 L0 5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                                                            </div>
+                                                        </>
+                                                    )}
                                                 </div>
                                             );
                                         }
