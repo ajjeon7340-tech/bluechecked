@@ -3807,7 +3807,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     ) : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={12} className="text-violet-500" /> : link.type === 'SUPPORT' ? <Heart size={12} className="text-pink-500" /> : <LinkIcon size={12} className="text-stone-500" />}
                                                                 </div>
                                                                 <p className="text-xs font-bold text-stone-800 leading-tight flex-1 truncate text-left">{link.title}</p>
-                                                                <ExternalLink size={10} className="text-stone-400 flex-shrink-0" />
                                                             </div>
                                                         ) : sqSize === 64 ? (
                                                             /* XS: icon only, no text */
@@ -3902,7 +3901,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                         {link.thumbnailUrl?.startsWith('data:emoji,') ? <span className="text-base leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span> : detectedPlatform ? getPreviewPlatformIcon(detectedPlatform) : <LinkIcon size={13} />}
                                                                     </div>
                                                                     <span className="text-xs font-semibold text-stone-700 truncate flex-1 text-left">{link.title}</span>
-                                                                    <ExternalLink size={9} className="text-stone-300 flex-shrink-0" />
                                                                 </div>
                                                             );
                                                         })()}

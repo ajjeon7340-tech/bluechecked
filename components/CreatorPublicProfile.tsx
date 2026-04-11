@@ -972,7 +972,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                               }
                                           }}
                                           className="overflow-hidden select-none relative"
-                                          style={{ height: `${BOARD_MAX_H}px`, cursor: boardIsDragging ? 'grabbing' : 'grab' }}
+                                          style={{ height: `${BOARD_MAX_H}px`, cursor: boardIsDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
                                           onMouseDown={e => {
                                               if (boardAnimating.current) return;
                                               setBoardIsDragging(true);
@@ -1099,8 +1099,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                               key={link.id}
                                                               className="absolute"
                                                           style={{ left: pos.x, top: pos.y, width: isThumbnailMode ? PROFILE_W : link.iconShape === 'square-xxs' ? getXXSWidth(link.title) : (sqSize || PROFILE_W), zIndex: 50 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
-                                                              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '10'; }}
-                                                              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = '2'; }}
+                                                              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '100'; }}
+                                                              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = `${50 + li}`; }}
                                                           >
                                                           <div className={`h-3 mx-auto rounded-b-sm ${isThumbnailMode ? 'w-10' : link.iconShape === 'square-xxs' ? 'w-10' : sqSize === 64 ? 'w-4' : sqSize ? 'w-6' : 'w-10'}`} style={{ background: tapeColors[nc] }} />
                                                               {isThumbnailMode ? (
@@ -1232,7 +1232,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                                   {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-md" alt={link.title} /> : isEmoji ? <span className="text-[14px] leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className="scale-[0.9]">{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={12} className="text-violet-500" /> : isSupport ? <Heart size={12} className="text-pink-500" /> : <ExternalLink size={12} className="text-stone-500" />}
                                                                               </div>
                                                                               <p className="text-xs font-bold text-stone-800 leading-tight w-full truncate text-left flex-1">{link.title}</p>
-                                                                              <ExternalLink size={10} className="text-stone-400 flex-shrink-0" />
                                                                           </Tag>
                                                                       );
                                                                   }
@@ -1291,7 +1290,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                               {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : isEmoji ? <span className="text-base leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? getPlatformIcon(detectedPlatform) : <ExternalLink size={13} />}
                                                                           </div>
                                                                           <span className="text-xs font-semibold text-stone-700 truncate flex-1">{link.title}</span>
-                                                                          <ExternalLink size={9} className="text-stone-300 flex-shrink-0" />
                                                                       </a>
                                                                   );
                                                               })()}
@@ -1320,8 +1318,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           className="absolute cursor-pointer"
                                                               style={{ left: pos.x, top: pos.y, width: NOTE_W, transform: `rotate(${rot}deg)`, transition: 'transform 0.2s ease', zIndex: 30 + i }}
                                                           onClick={() => { setSelectedBoardPost(post); setIsComposing(false); }}
-                                                          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '10'; }}
-                                                          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${rot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = '1'; }}
+                                                          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '100'; }}
+                                                          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${rot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = `${30 + i}`; }}
                                                       >
                                                           {/* Tape strip */}
                                                           <div className="h-4 w-14 mx-auto rounded-b-sm" style={{ background: tapeColors[nc] }} />
