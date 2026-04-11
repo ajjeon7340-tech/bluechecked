@@ -866,13 +866,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       return null;
                                   };
                                   const _getLinkH = (l: typeof allPublicLinks[0]) => {
+                                      if (l.type === 'PHOTO') return l.height ?? 160;
                                       const sqSize = _getLinkSize(l);
                                       if (sqSize) return sqSize;
                                       if (l.type === 'DIGITAL_PRODUCT') return 104;
-                                      try {
-                                          const h = new URL(l.url.startsWith('http') ? l.url : `https://${l.url}`).hostname;
-                                          if (h.includes('youtube.com') || h === 'youtu.be') return 162;
-                                      } catch {}
                                       return 84;
                                   };
 
@@ -942,7 +939,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                   const linkMaxX = allPublicLinks.reduce((max, link, idx) => {
                                       const pos = getLinkPos(link, idx);
                                       const sqSize = _getLinkSize(link);
-                                      return Math.max(max, pos.x + (sqSize || PROFILE_W));
+                                      const w = link.type === 'PHOTO' ? (link.width ?? 220) : (sqSize || PROFILE_W);
+                                      return Math.max(max, pos.x + w);
                                   }, LINK_START_X + PROFILE_W);
                                   const maxY = pinnedPosts.reduce((max, p) => {
                                       const pos = getPos(p);
@@ -1079,6 +1077,27 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                       const pos = getLinkPos(link, li);
 
                                                       const linkRot = rotations[(stableIdx(link.id) + li) % rotations.length];
+
+                                                      // ── Photo sticker ──
+                                                      if (link.type === 'PHOTO') {
+                                                          const phW = link.width ?? 220;
+                                                          const phH = link.height ?? 160;
+                                                          return (
+                                                              <div
+                                                                  key={link.id}
+                                                                  className="absolute flex flex-col"
+                                                                  style={{ left: pos.x, top: pos.y, width: phW, zIndex: 20 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
+                                                                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.03)'; }}
+                                                                  onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; }}
+                                                              >
+                                                                  <div className="h-3 w-12 mx-auto rounded-b-sm" style={{ background: tapeColors[nc] }} />
+                                                                  <div className="rounded-lg overflow-hidden shadow-md" style={{ width: phW, height: phH, border: '1px solid rgba(0,0,0,0.1)' }}>
+                                                                      {link.thumbnailUrl && <img src={link.thumbnailUrl} alt={link.title || 'photo'} className="w-full h-full object-cover" draggable={false} />}
+                                                                  </div>
+                                                              </div>
+                                                          );
+                                                      }
+
                                                       return (
                                                           <div
                                                               key={link.id}

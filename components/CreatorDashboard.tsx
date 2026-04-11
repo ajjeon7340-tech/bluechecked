@@ -405,24 +405,26 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [boardAddingLink, setBoardAddingLink] = useState(false);
   const [boardAddingProduct, setBoardAddingProduct] = useState(false);
   const [boardAddingSupport, setBoardAddingSupport] = useState(false);
-  const [boardAddingYoutube, setBoardAddingYoutube] = useState(false);
+  const [boardAddingPhoto, setBoardAddingPhoto] = useState(false);
   const [boardAddingPlatform, setBoardAddingPlatform] = useState(false);
   const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null>(null);
   const [boardPlatformUrlDraft, setBoardPlatformUrlDraft] = useState('');
-  const [boardYoutubeDraft, setBoardYoutubeDraft] = useState('');
+  const [boardPhotoDraft, setBoardPhotoDraft] = useState<{ file: File | null; previewUrl: string | null; isUploading: boolean }>({ file: null, previewUrl: null, isUploading: false });
+  const [boardLinkSizes, setBoardLinkSizes] = useState<Record<string, { w: number; h: number }>>({});
+  const [boardLinkResizing, setBoardLinkResizing] = useState<{ id: string; startMouseX: number; startMouseY: number; startW: number; startH: number } | null>(null);
   const [mobileAddMenuOpen, setMobileAddMenuOpen] = useState(false);
 
   const _closeAllBoardAdding = () => {
     setBoardAddingLink(false);
     setBoardAddingProduct(false);
     setBoardAddingSupport(false);
-    setBoardAddingYoutube(false);
+    setBoardAddingPhoto(false);
     setBoardAddingPlatform(false);
     setBoardSelectedPlatform(null);
     setBoardPlatformUrlDraft('');
     setBoardChatPickerOpen(false);
     setBoardLinkDraft({ title: '', url: '', price: '', type: 'EXTERNAL', color: undefined });
-    setBoardYoutubeDraft('');
+    setBoardPhotoDraft({ file: null, previewUrl: null, isUploading: false });
     setMobileAddMenuOpen(false);
   };
   const [boardLinkDraft, setBoardLinkDraft] = useState<{ title: string; url: string; price: string; type: 'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT'; color?: string; thumbnailUrl?: string; displayStyle?: 'icon' | 'thumbnail' }>({ title: '', url: '', price: '', type: 'EXTERNAL' });
@@ -3164,14 +3166,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 return null;
                             };
                             const _getLinkH = (l: AffiliateLink) => {
+                                if (l.type === 'PHOTO') return (boardLinkSizes[l.id]?.h ?? l.height ?? 160);
                                 const sqSize = _getLinkSize(l);
                                 if (sqSize) return sqSize;
                                 if (l.type === 'DIGITAL_PRODUCT') return 104;
-                                try {
-                                    const h = new URL(l.url.startsWith('http') ? l.url : `https://${l.url}`).hostname;
-                                    if (h.includes('youtube.com') || h === 'youtu.be') return 162;
-                                } catch {}
                                 return 84;
+                            };
+                            const _getLinkW = (l: AffiliateLink) => {
+                                if (l.type === 'PHOTO') return (boardLinkSizes[l.id]?.w ?? l.width ?? 220);
+                                return null;
                             };
                             const getLinkPos = (link: AffiliateLink, idx: number): {x: number, y: number} => {
                                 if (boardLinkPositions[link.id]) return boardLinkPositions[link.id];
@@ -3272,6 +3275,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         },
                                     }));
                                 }
+                                if (boardLinkResizing) {
+                                    const dx = e.clientX - boardLinkResizing.startMouseX;
+                                    const dy = e.clientY - boardLinkResizing.startMouseY;
+                                    setBoardLinkSizes(prev => ({
+                                        ...prev,
+                                        [boardLinkResizing.id]: {
+                                            w: Math.max(80, boardLinkResizing.startW + dx),
+                                            h: Math.max(60, boardLinkResizing.startH + dy),
+                                        },
+                                    }));
+                                }
                             };
 
                             const handleCanvasMouseUp = async () => {
@@ -3304,6 +3318,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     setLinkZOrder(prev => [...prev.filter(id => id !== droppedId), droppedId]);
                                     setBoardLinkDragging(null);
                                 }
+                                if (boardLinkResizing) {
+                                    const sz = boardLinkSizes[boardLinkResizing.id];
+                                    if (sz) {
+                                        const updatedLinks = (editedCreator.links || []).map(l =>
+                                            l.id === boardLinkResizing.id ? { ...l, width: sz.w, height: sz.h } : l
+                                        );
+                                        await saveBoardLinkChange(updatedLinks);
+                                    }
+                                    setBoardLinkResizing(null);
+                                }
                             };
 
                             const linkMaxY = visibleBoardLinks.reduce((max, link, idx) => {
@@ -3324,7 +3348,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         background: 'linear-gradient(135deg, #FAFAF8 0%, #F5F3EF 100%)',
                                         backgroundImage: 'radial-gradient(circle, rgba(168,162,158,0.15) 1px, transparent 1px)',
                                         backgroundSize: '24px 24px',
-                                        cursor: boardDragging || boardLinkDragging ? 'grabbing' : 'default',
+                                        cursor: boardLinkResizing ? 'se-resize' : boardDragging || boardLinkDragging ? 'grabbing' : 'default',
                                     }}
                                     onMouseMove={handleCanvasMouseMove}
                                     onMouseUp={handleCanvasMouseUp}
@@ -3392,6 +3416,73 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             } catch {}
                                             return null;
                                         })();
+                                        // ── Photo sticker ──
+                                        if (link.type === 'PHOTO') {
+                                            const phW = boardLinkSizes[link.id]?.w ?? link.width ?? 220;
+                                            const phH = boardLinkSizes[link.id]?.h ?? link.height ?? 160;
+                                            const isResizing = boardLinkResizing?.id === link.id;
+                                            return (
+                                                <div
+                                                    key={link.id}
+                                                    className="absolute flex flex-col group"
+                                                    style={{
+                                                        left: currentPos.x,
+                                                        top: currentPos.y,
+                                                        width: phW,
+                                                        transform: isDraggingLink ? 'rotate(0deg) scale(1.02)' : `rotate(${rot}deg)`,
+                                                        transition: isDraggingLink || isResizing ? 'none' : 'transform 0.2s ease',
+                                                        zIndex: isDraggingLink ? 1000 : isResizing ? 900 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (20 + i),
+                                                    }}
+                                                    onTouchStart={e => handleNoteTouchStart(e, link.id, currentPos, 'LINK')}
+                                                    onTouchMove={handleNoteTouchMove}
+                                                    onTouchEnd={cancelLongPress}
+                                                    onTouchCancel={cancelLongPress}
+                                                >
+                                                    {/* Tape — drag handle */}
+                                                    <div
+                                                        className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0"
+                                                        style={{ background: linkTapes[lc], cursor: 'grab', touchAction: 'none' }}
+                                                        onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
+                                                        title="Drag to reposition"
+                                                    />
+                                                    {/* Photo body */}
+                                                    <div
+                                                        className="relative overflow-hidden rounded-lg shadow-md"
+                                                        style={{ width: phW, height: phH, border: isDraggingLink ? '2px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.1)' }}
+                                                    >
+                                                        {link.thumbnailUrl && (
+                                                            <img src={link.thumbnailUrl} alt={link.title || 'photo'} className="absolute inset-0 w-full h-full object-cover" draggable={false} />
+                                                        )}
+                                                        {/* Action buttons */}
+                                                        <div className="absolute top-1.5 right-1.5 hidden group-hover:flex items-center gap-1 z-10">
+                                                            <button
+                                                                className="p-1 rounded-full bg-white/80 text-red-400 hover:text-red-600 hover:bg-white transition-all shadow-sm"
+                                                                onClick={async e => {
+                                                                    e.stopPropagation();
+                                                                    await saveBoardLinkChange((editedCreator.links || []).filter(l => l.id !== link.id));
+                                                                }}
+                                                                title="Delete"
+                                                            ><Trash2 size={10} /></button>
+                                                        </div>
+                                                        {/* Resize handle — bottom-right corner */}
+                                                        <div
+                                                            className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize opacity-0 group-hover:opacity-100 flex items-end justify-end p-0.5 transition-opacity"
+                                                            style={{ touchAction: 'none' }}
+                                                            onMouseDown={e => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                setBoardLinkResizing({ id: link.id, startMouseX: e.clientX, startMouseY: e.clientY, startW: phW, startH: phH });
+                                                            }}
+                                                        >
+                                                            <svg width="10" height="10" viewBox="0 0 10 10" className="text-white drop-shadow">
+                                                                <path d="M3 10 L10 3 M7 10 L10 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+
                                         return (
                                             <div
                                                 key={link.id}
@@ -3851,7 +3942,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     </div>
 
                     {(() => {
-                        const isAddingSticker = boardAddingLink || boardAddingProduct || boardAddingSupport || boardAddingYoutube || boardAddingPlatform;
+                        const isAddingSticker = boardAddingLink || boardAddingProduct || boardAddingSupport || boardAddingPhoto || boardAddingPlatform;
                         return (
                     <div className="sticky bottom-0 z-20 pb-4 pt-2 pointer-events-none">
                         <div className="pointer-events-auto flex items-end justify-center gap-3 flex-wrap px-4" style={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.12))' }}>
@@ -3996,65 +4087,60 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
                             )}
 
-                            {/* ── ▶ YouTube ── */}
-                            {boardAddingYoutube && (
+                            {/* ── 🖼 Photo ── */}
+                            {boardAddingPhoto && (
                                 <div className="flex flex-col" style={{ width: 240 }}>
-                                    <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(220,50,50,0.35)' }} />
-                                    <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#0f0f0f', border: '2px solid rgba(255,0,0,0.3)' }}>
-                                        <div className="flex items-center gap-1.5 mb-2">
-                                            <svg viewBox="0 0 24 24" className="w-4 h-4 flex-shrink-0" fill="#FF0000"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.55A3.02 3.02 0 0 0 .5 6.19C0 8.03 0 12 0 12s0 3.97.5 5.81a3.02 3.02 0 0 0 2.12 2.14C4.46 20.5 12 20.5 12 20.5s7.54 0 9.38-.55a3.02 3.02 0 0 0 2.12-2.14C24 15.97 24 12 24 12s0-3.97-.5-5.81zM9.75 15.52V8.48L15.5 12l-5.75 3.52z"/></svg>
-                                            <p className="text-[10px] font-bold text-white/70 uppercase tracking-wider">YouTube Video</p>
-                                        </div>
-                                        <input
-                                            className="w-full text-xs bg-white/10 border border-white/20 rounded px-2 py-1.5 mb-2 outline-none text-white placeholder-white/40 focus:border-red-500/60"
-                                            placeholder="Paste YouTube URL…"
-                                            value={boardYoutubeDraft}
-                                            autoFocus
-                                            onChange={e => setBoardYoutubeDraft(e.target.value)}
-                                            onKeyDown={async e => {
-                                                if (e.key !== 'Enter') return;
-                                                const url = boardYoutubeDraft.trim();
-                                                if (!url) return;
-                                                const newLink: AffiliateLink = { id: `link_${Date.now()}`, title: 'YouTube Video', url, type: 'EXTERNAL' };
-                                                await saveBoardLinkChange([...(editedCreator.links || []), newLink]);
-                                                setBoardAddingYoutube(false);
-                                                setBoardYoutubeDraft('');
-                                            }}
-                                        />
-                                        {/* Thumbnail preview */}
-                                        {(() => {
-                                            try {
-                                                const u = new URL(boardYoutubeDraft.startsWith('http') ? boardYoutubeDraft : `https://${boardYoutubeDraft}`);
-                                                const vid = u.hostname.includes('youtube.com') ? u.searchParams.get('v') : u.hostname === 'youtu.be' ? u.pathname.slice(1).split('?')[0] : null;
-                                                if (vid) return (
-                                                    <div className="relative rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%' }}>
-                                                        <img src={`https://img.youtube.com/vi/${vid}/hqdefault.jpg`} className="absolute inset-0 w-full h-full object-cover" alt="thumbnail" />
-                                                        <div className="absolute inset-0 flex items-center justify-center">
-                                                            <div className="w-8 h-6 bg-[#FF0000] rounded-md flex items-center justify-center shadow opacity-90">
-                                                                <svg viewBox="0 0 24 24" className="w-3 h-3 fill-white ml-0.5"><path d="M8 5v14l11-7z"/></svg>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            } catch {}
-                                            return null;
-                                        })()}
+                                    <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(16,185,129,0.35)' }} />
+                                    <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#F0FDF4', border: '2px solid rgba(16,185,129,0.25)' }}>
+                                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-2">🖼 Photo</p>
+                                        {boardPhotoDraft.previewUrl ? (
+                                            <div className="relative rounded-md overflow-hidden mb-2 bg-stone-100" style={{ height: 120 }}>
+                                                <img src={boardPhotoDraft.previewUrl} className="absolute inset-0 w-full h-full object-cover" alt="preview" />
+                                                <button
+                                                    className="absolute top-1 right-1 p-0.5 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+                                                    onClick={() => setBoardPhotoDraft(p => ({ ...p, file: null, previewUrl: null }))}
+                                                ><X size={10} /></button>
+                                            </div>
+                                        ) : (
+                                            <label className="block w-full rounded-md border-2 border-dashed border-emerald-300 bg-emerald-50 hover:bg-emerald-100 transition-colors cursor-pointer mb-2" style={{ height: 80 }}>
+                                                <div className="h-full flex flex-col items-center justify-center gap-1">
+                                                    <span className="text-lg">🖼</span>
+                                                    <span className="text-[10px] text-emerald-600 font-semibold">Click to choose photo</span>
+                                                </div>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={e => {
+                                                        const file = e.target.files?.[0];
+                                                        if (!file) return;
+                                                        const reader = new FileReader();
+                                                        reader.onload = ev => setBoardPhotoDraft(p => ({ ...p, file, previewUrl: ev.target?.result as string }));
+                                                        reader.readAsDataURL(file);
+                                                    }}
+                                                />
+                                            </label>
+                                        )}
                                         <div className="flex gap-1.5">
                                             <button
-                                                className="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-[#FF0000] text-white hover:bg-red-700 transition-colors disabled:opacity-40"
-                                                disabled={!boardYoutubeDraft.trim()}
+                                                className="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors disabled:opacity-40"
+                                                disabled={!boardPhotoDraft.file || boardPhotoDraft.isUploading}
                                                 onClick={async () => {
-                                                    const url = boardYoutubeDraft.trim();
-                                                    if (!url) return;
-                                                    const newLink: AffiliateLink = { id: `link_${Date.now()}`, title: 'YouTube Video', url, type: 'EXTERNAL' };
-                                                    await saveBoardLinkChange([...(editedCreator.links || []), newLink]);
-                                                    setBoardAddingYoutube(false);
-                                                    setBoardYoutubeDraft('');
+                                                    if (!boardPhotoDraft.file) return;
+                                                    setBoardPhotoDraft(p => ({ ...p, isUploading: true }));
+                                                    try {
+                                                        const url = await uploadPremiumContent(boardPhotoDraft.file, creator.id);
+                                                        const newLink: AffiliateLink = { id: `link_${Date.now()}`, title: boardPhotoDraft.file!.name.replace(/\.[^.]+$/, '') || 'Photo', url, thumbnailUrl: url, type: 'PHOTO', width: 220, height: 160 };
+                                                        await saveBoardLinkChange([...(editedCreator.links || []), newLink]);
+                                                        _closeAllBoardAdding();
+                                                    } catch {
+                                                        setBoardPhotoDraft(p => ({ ...p, isUploading: false }));
+                                                    }
                                                 }}
-                                            >Add Video</button>
+                                            >{boardPhotoDraft.isUploading ? 'Uploading…' : 'Add Photo'}</button>
                                             <button
-                                                className="flex-1 py-1.5 text-[10px] font-bold rounded-lg border border-white/20 text-white/60 hover:bg-white/10 transition-colors"
-                                                onClick={() => { setBoardAddingYoutube(false); setBoardYoutubeDraft(''); }}
+                                                className="flex-1 py-1.5 text-[10px] font-bold rounded-lg border border-emerald-200 text-emerald-500 hover:bg-emerald-50 transition-colors"
+                                                onClick={_closeAllBoardAdding}
                                             >Cancel</button>
                                         </div>
                                     </div>
@@ -4157,10 +4243,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         💝 Support
                                     </button>
                                 </div>
-                                <div className="flex flex-col" style={{ width: 160 }}>
-                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(220,50,50,0.35)' }} />
-                                    <button className="rounded-xl py-2.5 px-4 border-2 border-dashed border-stone-300 text-stone-500 hover:border-red-400 hover:text-red-600 hover:bg-red-50/60 transition-all flex items-center justify-center gap-2 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingYoutube(true); setBoardYoutubeDraft(''); }}>
-                                        <svg viewBox="0 0 24 24" className="w-3 h-3" fill="#FF0000"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.55A3.02 3.02 0 0 0 .5 6.19C0 8.03 0 12 0 12s0 3.97.5 5.81a3.02 3.02 0 0 0 2.12 2.14C4.46 20.5 12 20.5 12 20.5s7.54 0 9.38-.55a3.02 3.02 0 0 0 2.12-2.14C24 15.97 24 12 24 12s0-3.97-.5-5.81zM9.75 15.52V8.48L15.5 12l-5.75 3.52z"/></svg> YouTube
+                                <div className="flex flex-col" style={{ width: 130 }}>
+                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(16,185,129,0.35)' }} />
+                                    <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingPhoto(true); }}>
+                                        🖼 Photo
                                     </button>
                                 </div>
                                 <div className="flex flex-col" style={{ width: 110 }}>
@@ -4193,8 +4279,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <button className="flex items-center gap-3 text-sm font-semibold text-pink-600 py-2.5 px-3 hover:bg-pink-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardAddingSupport(true); setBoardLinkDraft({ title: '', url: '', price: '', type: 'SUPPORT' }); }}>
                                             <span className="text-lg leading-none">💝</span> Support / Tip
                                         </button>
-                                        <button className="flex items-center gap-3 text-sm font-semibold text-red-600 py-2.5 px-3 hover:bg-red-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardAddingYoutube(true); setBoardYoutubeDraft(''); }}>
-                                            <span className="text-lg leading-none">▶️</span> YouTube
+                                        <button className="flex items-center gap-3 text-sm font-semibold text-emerald-600 py-2.5 px-3 hover:bg-emerald-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardAddingPhoto(true); }}>
+                                            <span className="text-lg leading-none">🖼</span> Photo
                                         </button>
                                         <button className="flex items-center gap-3 text-sm font-semibold text-blue-600 py-2.5 px-3 hover:bg-blue-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardAddingPlatform(true); }}>
                                             <span className="text-lg leading-none">📱</span> Platform
