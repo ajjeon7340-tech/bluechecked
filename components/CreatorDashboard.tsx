@@ -138,7 +138,7 @@ const isImage = (url: string) => {
     return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext || '');
 };
 
-const getXXSWidth = (title?: string) => Math.min(220, Math.max(110, 65 + (title?.length || 0) * 7.5));
+const getXXSWidth = (title?: string) => Math.min(220, Math.max(110, 80 + (title?.length || 0) * 8.5));
 
 const DUMMY_PRO_DATA: ProAnalyticsData = {
     trafficSources: [

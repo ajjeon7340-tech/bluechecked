@@ -38,7 +38,7 @@ const getResponseTimeTooltip = (status: string, t: (key: string) => string) => {
     return t('profile.responseTooltipDefault');
 };
 
-const getXXSWidth = (title?: string) => Math.min(220, Math.max(110, 65 + (title?.length || 0) * 7.5));
+const getXXSWidth = (title?: string) => Math.min(220, Math.max(110, 80 + (title?.length || 0) * 8.5));
 
 export const CreatorPublicProfile: React.FC<Props> = ({
   creator,
