@@ -588,6 +588,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [showInboxTutorial, setShowInboxTutorial] = useState(false);
   const [inboxTutorialStep, setInboxTutorialStep] = useState(0);
   const inboxTutorialRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null, null]);
+  // Tracks links that were intentionally changed (delete/add/reorder) so that onRefreshData
+  // does not restore deleted links via the useEffect([creator]) below.
+  const pendingLinksRef = useRef<AffiliateLink[] | null>(null);
   const [, setInboxTutorialScrollTick] = useState(0);
 
   const TUTORIAL_STEPS = [
@@ -1044,7 +1047,13 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   }, [currentView, statsTimeFrame, statsDate]);
 
   useEffect(() => {
-    setEditedCreator(creator);
+    if (pendingLinksRef.current !== null) {
+      // A board link change is in-flight; keep the intended links, sync everything else from backend.
+      setEditedCreator({ ...creator, links: pendingLinksRef.current });
+      pendingLinksRef.current = null;
+    } else {
+      setEditedCreator(creator);
+    }
   }, [creator]);
 
   // Measure board canvas viewport and scroll to center the guide whenever the board mounts
@@ -1731,8 +1740,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   // Save link changes immediately from the board (auto-save without full profile form)
   const saveBoardLinkChange = async (updatedLinks: AffiliateLink[]) => {
+      pendingLinksRef.current = updatedLinks;
       setEditedCreator(prev => ({ ...prev, links: updatedLinks }));
-      try { await updateCreatorProfile({ ...editedCreator, links: updatedLinks }); await onRefreshData(); } catch {}
+      try { await updateCreatorProfile({ ...editedCreator, links: updatedLinks }); } catch (e) { console.error('saveBoardLinkChange save failed', e); }
+      try { await onRefreshData(); } catch (e) { console.error('saveBoardLinkChange refresh failed', e); }
   };
 
   const handleProductFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
