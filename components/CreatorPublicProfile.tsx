@@ -978,10 +978,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                               boardDragRef.current = { startX: e.clientX, startY: e.clientY, camX: boardCamera.x, camY: boardCamera.y };
                                           }}
                                           onMouseMove={e => {
-                                              if (!boardDragRef.current) return;
-                                              const dx = e.clientX - boardDragRef.current.startX;
-                                              const dy = e.clientY - boardDragRef.current.startY;
-                                              setBoardCamera(prev => ({ ...prev, x: boardDragRef.current!.camX - dx / prev.zoom, y: boardDragRef.current!.camY - dy / prev.zoom }));
+                                          const drag = boardDragRef.current;
+                                          if (!drag) return;
+                                          const dx = e.clientX - drag.startX;
+                                          const dy = e.clientY - drag.startY;
+                                          setBoardCamera(prev => ({ ...prev, x: drag.camX - dx / prev.zoom, y: drag.camY - dy / prev.zoom }));
                                           }}
                                           onMouseUp={() => { boardDragRef.current = null; setBoardIsDragging(false); }}
                                           onMouseLeave={() => { boardDragRef.current = null; setBoardIsDragging(false); }}

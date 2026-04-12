@@ -6375,6 +6375,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     <Button size="sm" onClick={handleAddLink} type="button" fullWidth className="mt-2">
                                          <Plus size={16} className="mr-1"/> Add {newLinkType === 'DIGITAL_PRODUCT' ? 'Product' : newLinkType === 'SUPPORT' ? 'Support Item' : 'Link'}
                                     </Button>
+                                </div>
+                            </div>
                             </>)}
                         </div>
 
