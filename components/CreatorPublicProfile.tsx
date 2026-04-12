@@ -811,7 +811,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
               <div ref={tutorialDiemBtnRef} className={`w-full${showTutorial && tutorialStep === 1 ? ' ring-2 ring-amber-400 ring-offset-2 rounded-2xl' : ''}`}>
                   <div
                       className="relative overflow-hidden rounded-2xl border border-stone-200/60"
-                      style={{ backgroundColor: '#FAFAF9', backgroundImage: 'linear-gradient(rgba(168,162,158,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(168,162,158,0.07) 1px, transparent 1px)', backgroundSize: '32px 32px' }}
+                      style={{ backgroundColor: '#FAFAF9' }}
                   >
                       {/* Always-on board */}
                       <div>

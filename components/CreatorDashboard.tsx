@@ -3459,18 +3459,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             return (
                                 <div
                                     ref={boardCanvasRef}
-                                    className="absolute select-none"
+                                    className="absolute inset-0 select-none overflow-hidden"
                                     style={{
-                                        left: 0, top: 0,
-                                        width: `${canvasW}px`,
-                                        height: `${canvasH}px`,
-                                        transformOrigin: '0 0',
-                                        transform: `translate(${bTx}px, ${bTy}px) scale(${dashCamera.zoom})`,
-                                        transition: dashCamTransition,
                                         background: 'linear-gradient(135deg, #FAFAF8 0%, #F5F3EF 100%)',
-                                        backgroundImage: 'radial-gradient(circle, rgba(168,162,158,0.15) 1px, transparent 1px)',
-                                        backgroundSize: '24px 24px',
                                         cursor: boardDragging || boardLinkDragging ? 'grabbing' : boardLinkResizing ? 'se-resize' : 'grab',
+                                        touchAction: 'none'
                                     }}
                                     onMouseDown={e => {
                                         if (e.button !== 0) return;
@@ -3484,6 +3477,23 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     onTouchEnd={handleCanvasMouseUp}
                                     onTouchCancel={handleCanvasMouseUp}
                                 >
+                                    <div
+                                        className="absolute inset-0 pointer-events-none"
+                                        style={{
+                                            backgroundImage: 'radial-gradient(circle, rgba(168,162,158,0.15) 1px, transparent 1px)',
+                                            backgroundSize: `${24 * dashCamera.zoom}px ${24 * dashCamera.zoom}px`,
+                                            backgroundPosition: `${bTx}px ${bTy}px`,
+                                        }}
+                                    />
+                                    <div
+                                        style={{
+                                            position: 'absolute',
+                                            left: 0, top: 0,
+                                            transformOrigin: '0 0',
+                                            transform: `translate(${bTx}px, ${bTy}px) scale(${dashCamera.zoom})`,
+                                            transition: dashCamTransition,
+                                        }}
+                                    >
                                     {/* Focus zone guidelines — always visible, live-updating when focus modal is open */}
                                     {(() => {
                                         const CREATOR_CARD_ZONE_R = 300;
