@@ -3087,17 +3087,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     <div
                         ref={boardScrollContainerRef}
                         className="relative flex-1 overflow-hidden"
-                        style={{ cursor: dashPanRef.current ? 'grabbing' : boardDragging || boardLinkDragging ? 'grabbing' : boardLinkResizing ? 'se-resize' : 'grab' }}
-                        onMouseDown={e => {
-                            if (e.button !== 0) return;
-                            dashPanRef.current = { startX: e.clientX, startY: e.clientY, camX: dashCamera.x, camY: dashCamera.y };
-                        }}
-                        onMouseMove={handleCanvasMouseMove}
-                        onMouseUp={handleCanvasMouseUp}
-                        onMouseLeave={handleCanvasMouseUp}
-                        onTouchMove={handleCanvasTouchMove}
-                        onTouchEnd={handleCanvasMouseUp}
-                        onTouchCancel={handleCanvasMouseUp}
                     >
                         {boardLoading ? (
                             <div className="flex items-center justify-center py-20 text-stone-400">
@@ -3455,7 +3444,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         background: 'linear-gradient(135deg, #FAFAF8 0%, #F5F3EF 100%)',
                                         backgroundImage: 'radial-gradient(circle, rgba(168,162,158,0.15) 1px, transparent 1px)',
                                         backgroundSize: '24px 24px',
+                                        cursor: boardDragging || boardLinkDragging ? 'grabbing' : boardLinkResizing ? 'se-resize' : 'grab',
                                     }}
+                                    onMouseDown={e => {
+                                        if (e.button !== 0) return;
+                                        dashPanRef.current = { startX: e.clientX, startY: e.clientY, camX: dashCamera.x, camY: dashCamera.y };
+                                    }}
+                                    onMouseMove={handleCanvasMouseMove}
+                                    onMouseUp={handleCanvasMouseUp}
+                                    onMouseLeave={handleCanvasMouseUp}
+                                    onTouchMove={handleCanvasTouchMove}
+                                    onTouchEnd={handleCanvasMouseUp}
+                                    onTouchCancel={handleCanvasMouseUp}
                                 >
                                     {/* Focus zone guidelines — always visible, live-updating when focus modal is open */}
                                     {(() => {
