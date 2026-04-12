@@ -862,7 +862,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                               {/* Wide horizontally-scrollable board with profile stickers */}
                               {(() => {
                                   const noteColors = ['#FFFEF0', '#F0FDF4', '#FFF7ED', '#F5F3FF', '#EFF6FF', '#FDF2F8'];
-                                  const tapeColors = ['rgba(200,193,185,0.55)', 'rgba(110,200,140,0.45)', 'rgba(240,160,80,0.4)', 'rgba(180,150,240,0.4)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)'];
                                   const stickers = ['⭐','❤️','✨','🌟','💙','🎯','🔥','💬','🌙','🌸'];
                                   const rotations = [-2.1, 1.2, -0.8, 1.6, -1.4, 0.7, -1.9, 1.0, -0.6, 1.3];
                                   const stableIdx = (id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xFFFFFF; return Math.abs(h); };
@@ -971,6 +970,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                                   const getPos = (post: BoardPost): _BP => computedPositions.get(post.id) ?? { x: BOARD_PAD, y: BOARD_PAD };
 
+                                  const getPostW = (p: BoardPost) => p.noteSize === 'S' ? 160 : p.noteSize === 'L' ? NOTE_W : 210;
+                                  const getPostH = (p: BoardPost) => p.noteSize === 'S' ? 110 : p.noteSize === 'L' ? NOTE_H_EST : 190;
+
                                   const linkMaxY = allPublicLinks.reduce((max, link, idx) => {
                                       const pos = getLinkPos(link, idx);
                                       return Math.max(max, pos.y + _getLinkH(link) + 160);
@@ -985,11 +987,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                   }, LINK_START_X + PROFILE_W);
                                   const maxY = pinnedPosts.reduce((max, p) => {
                                       const pos = getPos(p);
-                                      return Math.max(max, pos.y + NOTE_H_EST + 160);
+                                      return Math.max(max, pos.y + getPostH(p) + 160);
                                   }, BOARD_PAD);
                                   const maxX = pinnedPosts.reduce((max, p) => {
                                       const pos = getPos(p);
-                                      return Math.max(max, pos.x + NOTE_W);
+                                      return Math.max(max, pos.x + getPostW(p));
                                   }, BOARD_PAD + NOTE_W);
 
                                   const containerH = Math.max(300, maxY, linkMaxY);
@@ -1212,7 +1214,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                               onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '100'; }}
                                                               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = `${50 + li}`; }}
                                                           >
-                                                          <div className={`h-3 mx-auto rounded-b-sm ${isIconMode ? (sqSize === 32 ? 'w-2.5' : sqSize === 44 ? 'w-3' : sqSize === 64 ? 'w-4' : 'w-8') : 'w-10'}`} style={{ background: tapeColors[nc] }} />
                                                               {isThumbnailMode ? (
                                                                   (() => {
                                                                       const thumbBg = detectedPlatform ? '#0f0f0f' : isProduct ? '#ede9fe' : isSupport ? '#fdf2f8' : '#e5e7eb';
@@ -1457,13 +1458,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           key={post.id}
                                                           data-post-id={post.id}
                                                           className="absolute cursor-pointer"
-                                                              style={{ left: pos.x, top: pos.y, width: NOTE_W, transform: `rotate(${rot}deg)`, transition: 'transform 0.2s ease', zIndex: 30 + i }}
+                                                              style={{ left: pos.x, top: pos.y, width: getPostW(post), transform: `rotate(${rot}deg)`, transition: 'transform 0.2s ease', zIndex: 30 + i }}
                                                           onClick={() => { setSelectedBoardPost(post); setIsComposing(false); }}
                                                           onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '100'; }}
                                                           onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${rot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = `${30 + i}`; }}
                                                       >
-                                                          {/* Tape strip */}
-                                                          <div className="h-4 w-14 mx-auto rounded-b-sm" style={{ background: tapeColors[nc] }} />
                                                           {/* Note card — use fan-chosen color if available */}
                                                           <div
                                                               className="relative rounded-lg p-3 overflow-hidden"
@@ -1475,22 +1474,17 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                   boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
                                                               }}
                                                           >
-                                                              {/* Fan: avatar + name + badge */}
+                                                              {/* Avatar only */}
                                                               <div className="flex items-center gap-1.5 mb-1.5">
                                                                   <div className="w-6 h-6 rounded-full bg-stone-800 flex-shrink-0 overflow-hidden flex items-center justify-center">
                                                                       {post.fanAvatarUrl
-                                                                          ? <img src={post.fanAvatarUrl} className="w-full h-full object-cover" alt={post.fanName} />
+                                                                          ? <img src={post.fanAvatarUrl} className="w-full h-full object-cover" alt="" />
                                                                           : <span className="text-white text-[9px] font-bold">{post.fanName.charAt(0).toUpperCase()}</span>}
                                                                   </div>
-                                                                  <span className="text-[11px] font-semibold text-stone-800 truncate">{post.fanName}</span>
-                                                                  <span className="flex items-center gap-0.5 bg-stone-100 text-stone-400 px-1.5 py-0.5 rounded-full flex-shrink-0">
-                                                                      <User size={7} className="fill-current" />
-                                                                      <span className="text-[8px] font-semibold uppercase tracking-wide">Fan</span>
-                                                                  </span>
                                                               </div>
 
-                                                              {/* Fan message only — no reply shown in preview */}
-                                                              <div className="ml-[30px] bg-white/80 rounded-xl rounded-tl-sm border border-black/06 p-2">
+                                                              {/* Fan message */}
+                                                              <div className="bg-white/80 rounded-xl border border-black/06 p-2">
                                                                   <p className="text-[11px] text-stone-700 leading-relaxed line-clamp-4">{post.content}</p>
                                                                   {post.attachmentUrl && /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(post.attachmentUrl) && (
                                                                       <img src={post.attachmentUrl} className="mt-1.5 w-full max-h-16 object-cover rounded-lg" alt="attachment" />
@@ -1510,7 +1504,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                               {selectedBoardPost && (() => {
                                   const post = selectedBoardPost;
                                   const noteColors = ['#FFFEF0', '#F0FDF4', '#FFF7ED', '#F5F3FF', '#EFF6FF', '#FDF2F8'];
-                                  const tapeColors = ['rgba(200,193,185,0.55)', 'rgba(110,200,140,0.45)', 'rgba(240,160,80,0.4)', 'rgba(180,150,240,0.4)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)'];
                                   const _si = (id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xFFFFFF; return Math.abs(h); };
                                   const nc = _si(post.id) % noteColors.length;
                                   return (
@@ -1520,8 +1513,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                           onClick={() => setSelectedBoardPost(null)}
                                       >
                                       <div className="animate-in fade-in zoom-in-95 duration-200 w-full max-w-sm" onClick={e => e.stopPropagation()}>
-                                          {/* Tape strip */}
-                                          <div className="h-5 w-16 mx-auto rounded-b-sm" style={{ background: tapeColors[nc] }} />
                                           {/* Expanded note card */}
                                           <div
                                               className="relative rounded-lg overflow-hidden"
@@ -2534,10 +2525,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                 {/* Right panel — note card */}
                 <div className="flex-1 min-w-0">
-                    {/* Tape strip */}
-                    <div className="flex justify-center">
-                        <div className="h-5 w-20 bg-amber-200/80 rounded-b-sm shadow-sm" style={{ transform: 'rotate(-1.5deg)' }} />
-                    </div>
                     <div
                         className="relative rounded-sm shadow-2xl overflow-hidden transition-colors duration-150"
                         style={{ background: selectedNoteColor ?? '#fffef0', backgroundImage: 'repeating-linear-gradient(transparent 0px, transparent 27px, rgba(0,0,0,0.045) 27px, rgba(0,0,0,0.045) 28px)' }}

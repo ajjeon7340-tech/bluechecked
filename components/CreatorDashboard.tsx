@@ -3240,7 +3240,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             }, guideOffsetY + GUIDE_H + dragBuffer);
 
                             const noteColors = ['#FFFEF0', '#F0FDF4', '#FFF7ED', '#F5F3FF', '#EFF6FF', '#FDF2F8'];
-                            const tapeColors = ['rgba(200,193,185,0.55)', 'rgba(110,200,140,0.45)', 'rgba(240,160,80,0.4)', 'rgba(180,150,240,0.4)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)'];
                             const stickers = ['⭐','❤️','✨','🌟','💙','🎯','🔥','💬','🌙','🌸'];
                             const rotations = [-2.1, 1.3, -0.8, 1.7, -1.4, 0.6, -1.9, 1.1, -0.5, 1.4];
 
@@ -3472,7 +3471,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const bTy = boardViewportH / 2 - dashCamera.y * dashCamera.zoom;
 
                             const linkColors = ['#FFF7ED', '#F0FDF4', '#EFF6FF', '#FDF2F8', '#FFFEF0', '#F5F3FF'];
-                            const linkTapes = ['rgba(240,160,80,0.45)', 'rgba(110,200,140,0.45)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)', 'rgba(200,193,185,0.55)', 'rgba(180,150,240,0.4)'];
+
 
                             return (
                                 <div
@@ -3752,15 +3751,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
                                                     zIndex: isDraggingLink ? 1000 : isEditingLink ? 500 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (50 + i),
                                                 }}
+                                                onMouseDown={e => e.stopPropagation()}
                                                 onTouchStart={e => handleNoteTouchStart(e, link.id, currentPos, 'LINK')}
                                                 onTouchMove={handleNoteTouchMove}
                                                 onTouchEnd={cancelLongPress}
                                                 onTouchCancel={cancelLongPress}
                                             >
-                                                {/* Tape — drag handle */}
+                                                {/* Drag grip */}
                                                 <div
-                                                    className={`h-4 mx-auto rounded-b-sm flex-shrink-0 ${isIconMode ? (sqSize === 32 ? 'w-3' : sqSize === 44 ? 'w-4' : sqSize === 64 ? 'w-5' : 'w-8') : 'w-12'}`}
-                                                    style={{ background: linkTapes[lc], cursor: 'grab', touchAction: 'none' }}
+                                                    className="h-5 flex items-center justify-center flex-shrink-0"
+                                                    style={{ cursor: 'grab', touchAction: 'none' }}
                                                     onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
                                                     onTouchStart={e => {
                                                         e.stopPropagation();
@@ -3774,7 +3774,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         });
                                                     }}
                                                     title="Drag to reposition"
-                                                />
+                                                >
+                                                    <div className="w-8 h-1 rounded-full bg-black/15" />
+                                                </div>
                                                 {isEditingLink ? (
                                                     <div className="rounded-lg p-3 shadow-lg" style={{ backgroundColor: boardLinkDraft.color || linkColors[lc], border: '2px solid rgba(0,0,0,0.15)' }}>
                                                         <input
@@ -4159,6 +4161,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     zIndex: isDragging ? 1000 : isActive ? 100 : 30 + i,
                                                     cursor: isDragging ? 'grabbing' : 'pointer',
                                                 }}
+                                                onMouseDown={e => e.stopPropagation()}
                                                 onMouseEnter={() => !boardDragging && setSelectedBoardId(post.id)}
                                                 onMouseLeave={() => !boardDragging && setSelectedBoardId(null)}
                                                 onClick={() => !isDragging && setBoardPopupPost(post)}
@@ -4167,10 +4170,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 onTouchEnd={cancelLongPress}
                                                 onTouchCancel={cancelLongPress}
                                             >
-                                                {/* Tape strip — drag handle */}
+                                                {/* Drag grip */}
                                                 <div
-                                                    className="h-4 w-14 mx-auto rounded-b-sm flex-shrink-0"
-                                                    style={{ background: tapeColors[nc], cursor: 'grab', touchAction: 'none' }}
+                                                    className="h-5 flex items-center justify-center flex-shrink-0"
+                                                    style={{ cursor: 'grab', touchAction: 'none' }}
                                                     onMouseDown={e => handleTapeMouseDown(e, post.id, currentPos)}
                                                     onTouchStart={e => {
                                                         e.stopPropagation();
@@ -4185,7 +4188,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         setSelectedBoardId(post.id);
                                                     }}
                                                     title="Drag to reposition"
-                                                />
+                                                >
+                                                    <div className="w-8 h-1 rounded-full bg-black/15" />
+                                                </div>
                                                 {/* Note card */}
                                                 <div
                                                     className={`relative rounded-lg overflow-hidden ${noteSize === 'S' ? 'p-2' : noteSize === 'M' ? 'p-2.5' : 'p-3'}`}
@@ -4252,7 +4257,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             {/* ── 🔗 Link (with platform picker) ── */}
                             {boardAddingLink && (
                                 <div className="flex flex-col" style={{ width: 260 }}>
-                                    <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(200,193,185,0.55)' }} />
                                     <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#FFFEF0', border: '2px solid rgba(0,0,0,0.12)' }}>
                                         {!boardSelectedPlatform ? (
                                             <>
@@ -4387,7 +4391,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             {/* ── 📦 Digital Product ── */}
                             {boardAddingProduct && (
                                 <div className="flex flex-col" style={{ width: 240 }}>
-                                    <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(139,92,246,0.35)' }} />
                                     <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#F5F3FF', border: '2px solid rgba(139,92,246,0.25)' }}>
                                         <p className="text-[10px] font-bold text-violet-500 uppercase tracking-wider mb-2">📦 Digital Product</p>
                                         <input
@@ -4433,7 +4436,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             {/* ── 💝 Support / Tip ── */}
                             {boardAddingSupport && (
                                 <div className="flex flex-col" style={{ width: 220 }}>
-                                    <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(236,72,153,0.3)' }} />
                                     <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#FDF2F8', border: '2px solid rgba(236,72,153,0.2)' }}>
                                         <p className="text-[10px] font-bold text-pink-500 uppercase tracking-wider mb-2">💝 Support / Tip</p>
                                         <input
@@ -4472,7 +4474,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             {/* ── 🖼 Photo ── */}
                             {boardAddingPhoto && (
                                 <div className="flex flex-col" style={{ width: 240 }}>
-                                    <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(16,185,129,0.35)' }} />
                                     <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#F0FDF4', border: '2px solid rgba(16,185,129,0.25)' }}>
                                         <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-2">🖼 Photo</p>
                                         {boardPhotoDraft.previewUrl ? (
@@ -4532,7 +4533,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             {/* ── 🪵 Panel ── */}
                             {boardAddingPanel && (
                                 <div className="flex flex-col" style={{ width: 240 }}>
-                                    <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(161,110,60,0.45)' }} />
                                     <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#FDF8F0', border: '2px solid rgba(161,110,60,0.3)' }}>
                                         <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-2">🪵 Section Panel</p>
                                         <input
@@ -4593,43 +4593,25 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                         {/* DESKTOP BUTTONS */}
                         {!isAddingSticker && (
-                            <div className="hidden md:flex pointer-events-auto items-end justify-center gap-3 flex-wrap px-4 mt-2" style={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.12))' }}>
-                                <div className="flex flex-col" style={{ width: 130 }}>
-                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(200,193,185,0.45)' }} />
-                                    <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700 hover:bg-white/80 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingLink(true); }}>
-                                        🔗 Link
-                                    </button>
-                                </div>
-                                <div className="flex flex-col" style={{ width: 130 }}>
-                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(139,92,246,0.35)' }} />
-                                    <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingProduct(true); setBoardLinkDraft({ title: '', url: '', price: '', type: 'DIGITAL_PRODUCT' }); }}>
-                                        📦 Product
-                                    </button>
-                                </div>
-                                <div className="flex flex-col" style={{ width: 130 }}>
-                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(236,72,153,0.3)' }} />
-                                    <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-pink-400 hover:text-pink-600 hover:bg-pink-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingSupport(true); setBoardLinkDraft({ title: '', url: '', price: '', type: 'SUPPORT' }); }}>
-                                        💝 Support
-                                    </button>
-                                </div>
-                                <div className="flex flex-col" style={{ width: 130 }}>
-                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(16,185,129,0.35)' }} />
-                                    <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingPhoto(true); }}>
-                                        🖼 Photo
-                                    </button>
-                                </div>
-                                <div className="flex flex-col" style={{ width: 130 }}>
-                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(161,110,60,0.45)' }} />
-                                    <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-amber-500 hover:text-amber-700 hover:bg-amber-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingPanel(true); }}>
-                                        🪵 Panel
-                                    </button>
-                                </div>
-                                <div className="flex flex-col" style={{ width: 160 }}>
-                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(110,170,240,0.45)' }} />
-                                    <button className={`rounded-xl py-2.5 px-4 border-2 border-dashed text-xs font-semibold transition-all flex items-center justify-center gap-2 ${boardChatPickerOpen ? 'border-blue-400 text-blue-700 bg-blue-50' : 'border-stone-300 text-stone-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/60'}`} style={{ backgroundColor: boardChatPickerOpen ? undefined : 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardChatPickerOpen(p => !p); }}>
-                                        <MessageSquare size={13} /> From Chat
-                                    </button>
-                                </div>
+                            <div className="hidden md:flex pointer-events-auto items-center justify-center gap-2 flex-wrap px-4 mt-3" style={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.12))' }}>
+                                <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700 hover:bg-white/80 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingLink(true); }}>
+                                    🔗 Link
+                                </button>
+                                <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingProduct(true); setBoardLinkDraft({ title: '', url: '', price: '', type: 'DIGITAL_PRODUCT' }); }}>
+                                    📦 Product
+                                </button>
+                                <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-pink-400 hover:text-pink-600 hover:bg-pink-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingSupport(true); setBoardLinkDraft({ title: '', url: '', price: '', type: 'SUPPORT' }); }}>
+                                    💝 Support
+                                </button>
+                                <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingPhoto(true); }}>
+                                    🖼 Photo
+                                </button>
+                                <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-amber-500 hover:text-amber-700 hover:bg-amber-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingPanel(true); }}>
+                                    🪵 Panel
+                                </button>
+                                <button className={`rounded-xl py-2.5 px-4 border-2 border-dashed text-xs font-semibold transition-all flex items-center justify-center gap-2 ${boardChatPickerOpen ? 'border-blue-400 text-blue-700 bg-blue-50' : 'border-stone-300 text-stone-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/60'}`} style={{ backgroundColor: boardChatPickerOpen ? undefined : 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardChatPickerOpen(p => !p); }}>
+                                    <MessageSquare size={13} /> From Chat
+                                </button>
                             </div>
                         )}
 
@@ -4966,7 +4948,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
             {boardPopupPost && (() => {
                 const post = boardPopupPost;
                 const noteColors = ['#FFFEF0', '#F0FDF4', '#FFF7ED', '#F5F3FF', '#EFF6FF', '#FDF2F8'];
-                const tapeColors = ['rgba(200,193,185,0.55)', 'rgba(110,200,140,0.45)', 'rgba(240,160,80,0.4)', 'rgba(180,150,240,0.4)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)'];
                 const _stableIdx = (id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xFFFFFF; return Math.abs(h); };
                 const nc = _stableIdx(post.id) % noteColors.length;
                 const isReplying = boardReplyingId === post.id;
@@ -5223,7 +5204,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 });
                 const inboxPost = inboxSelectedPostId ? boardPosts.find(p => p.id === inboxSelectedPostId) ?? null : null;
                 const noteColors = ['#FFFEF0', '#F0FDF4', '#FFF7ED', '#F5F3FF', '#EFF6FF', '#FDF2F8'];
-                const tapeColors = ['rgba(200,193,185,0.55)', 'rgba(110,200,140,0.45)', 'rgba(240,160,80,0.4)', 'rgba(180,150,240,0.4)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)'];
                 const rotations = [-1.8, 0.9, -0.7, 1.4, -1.1, 0.6];
                 const stableIdx = (id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xFFFFFF; return Math.abs(h); };
                 const isReplying = inboxPost ? boardReplyingId === inboxPost.id : false;
@@ -5292,7 +5272,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 className="relative cursor-pointer"
                                                 style={{ transform: isActive ? 'rotate(0deg) scale(1.02)' : `rotate(${rot}deg)`, transition: 'transform 0.2s ease', zIndex: isActive ? 10 : 1 }}
                                             >
-                                                <div className="h-4 w-14 mx-auto rounded-b-sm" style={{ background: tapeColors[nc] }} />
                                                 <div
                                                     className="relative rounded-lg p-3 overflow-hidden"
                                                     style={{
