@@ -423,7 +423,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [boardAddingPhoto, setBoardAddingPhoto] = useState(false);
   const [boardAddingPanel, setBoardAddingPanel] = useState(false);
   const [boardPanelDraft, setBoardPanelDraft] = useState({ label: '', style: 'light' as 'light' | 'dark' | 'warm' });
-  const [boardAddingPlatform, setBoardAddingPlatform] = useState(false);
   const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null>(null);
   const [boardPlatformUrlDraft, setBoardPlatformUrlDraft] = useState('');
   const [boardPhotoDraft, setBoardPhotoDraft] = useState<{ file: File | null; previewUrl: string | null; isUploading: boolean }>({ file: null, previewUrl: null, isUploading: false });
@@ -438,7 +437,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setBoardAddingSupport(false);
     setBoardAddingPhoto(false);
     setBoardAddingPanel(false);
-    setBoardAddingPlatform(false);
     setBoardSelectedPlatform(null);
     setBoardPlatformUrlDraft('');
     setBoardChatPickerOpen(false);
@@ -3427,8 +3425,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         })).sort((a, b) => a.pos.y !== b.pos.y ? a.pos.y - b.pos.y : a.pos.x - b.pos.x);
                                         const order = allPositioned.findIndex(item => item.id === boardDragging.id);
                                         try {
-                                            const pX = Math.max(0, rawPos.x - guideOffsetX);
-                                            const pY = Math.max(0, rawPos.y - guideOffsetY);
+                                            const pX = rawPos.x - guideOffsetX;
+                                            const pY = rawPos.y - guideOffsetY;
                                             await updateBoardPostPosition(boardDragging.id, pX, pY, order);
                                             setBoardPosts(prev => prev.map(p => p.id === boardDragging.id ? { ...p, positionX: pX, positionY: pY, displayOrder: order } : p));
                                         } catch {}
@@ -3439,7 +3437,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     const pos = boardLinkPositions[boardLinkDragging.id];
                                     if (pos) {
                                         const updatedLinks = (editedCreator.links || []).map(l =>
-                                            l.id === boardLinkDragging.id ? { ...l, positionX: Math.max(0, pos.x - guideOffsetX), positionY: Math.max(0, pos.y - guideOffsetY) } : l
+                                            l.id === boardLinkDragging.id ? { ...l, positionX: pos.x - guideOffsetX, positionY: pos.y - guideOffsetY } : l
                                         );
                                         await saveBoardLinkChange(updatedLinks);
                                     }
@@ -4246,62 +4244,142 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     </div>
 
                     {(() => {
-                        const isAddingSticker = boardAddingLink || boardAddingProduct || boardAddingSupport || boardAddingPhoto || boardAddingPanel || boardAddingPlatform;
+                        const isAddingSticker = boardAddingLink || boardAddingProduct || boardAddingSupport || boardAddingPhoto || boardAddingPanel;
                         return (
                     <div className="sticky bottom-0 z-20 pb-4 pt-2 pointer-events-none">
                         <div className="pointer-events-auto flex items-end justify-center gap-3 flex-wrap px-4" style={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.12))' }}>
 
-                            {/* ── 🔗 External Link ── */}
+                            {/* ── 🔗 Link (with platform picker) ── */}
                             {boardAddingLink && (
-                                <div className="flex flex-col" style={{ width: 240 }}>
+                                <div className="flex flex-col" style={{ width: 260 }}>
                                     <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(200,193,185,0.55)' }} />
                                     <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#FFFEF0', border: '2px solid rgba(0,0,0,0.12)' }}>
-                                        <p className="text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-2">🔗 External Link</p>
-                                        <input
-                                            className="w-full text-xs font-semibold bg-white/70 border border-stone-200 rounded px-2 py-1.5 mb-1.5 outline-none focus:ring-1 focus:ring-stone-400"
-                                            placeholder="Title"
-                                            value={boardLinkDraft.title}
-                                            autoFocus
-                                            onChange={e => setBoardLinkDraft(p => ({ ...p, title: e.target.value }))}
-                                        />
-                                        <input
-                                            className="w-full text-xs bg-white/70 border border-stone-200 rounded px-2 py-1.5 mb-2 outline-none focus:ring-1 focus:ring-stone-400"
-                                            placeholder="Paste URL (https://...)"
-                                            value={boardLinkDraft.url}
-                                            onChange={e => {
-                                                const url = e.target.value;
-                                                setBoardLinkDraft(p => {
-                                                    let autoTitle = p.title;
-                                                    if (!p.title) {
-                                                        try {
-                                                            const hostname = new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace('www.', '');
-                                                            autoTitle = hostname.charAt(0).toUpperCase() + hostname.slice(1).split('.')[0];
-                                                        } catch {}
-                                                    }
-                                                    return { ...p, url, title: autoTitle };
-                                                });
-                                            }}
-                                        />
-                                        <div className="flex gap-1.5">
-                                            <button
-                                                className="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-stone-800 text-white hover:bg-stone-700 transition-colors disabled:opacity-40"
-                                                disabled={!boardLinkDraft.url.trim() || !boardLinkDraft.title.trim()}
-                                                onClick={async () => {
-                                                    const url = boardLinkDraft.url.trim();
-                                                    if (!url) return;
-                                                    let title = boardLinkDraft.title.trim();
-                                                    if (!title) {
-                                                        try {
-                                                            const hostname = new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace('www.', '');
-                                                            title = hostname.charAt(0).toUpperCase() + hostname.slice(1).split('.')[0];
-                                                        } catch { title = url; }
-                                                    }
-                                                        await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title, url, type: 'EXTERNAL', iconShape: 'square-s', displayStyle: 'icon' }]);
-                                                    _closeAllBoardAdding();
-                                                }}
-                                            >Add Link</button>
-                                            <button className="flex-1 py-1.5 text-[10px] font-bold rounded-lg border border-stone-200 text-stone-500 hover:bg-stone-100 transition-colors" onClick={_closeAllBoardAdding}>Cancel</button>
-                                        </div>
+                                        {!boardSelectedPlatform ? (
+                                            <>
+                                                <p className="text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-2">🔗 Add Link</p>
+                                                <div className="grid grid-cols-5 gap-1.5 mb-2">
+                                                    {/* Generic link icon first */}
+                                                    <button
+                                                        onClick={() => setBoardSelectedPlatform('EXTERNAL')}
+                                                        className="w-full aspect-square flex items-center justify-center rounded-lg bg-white border-2 border-stone-300 hover:bg-stone-50 hover:border-stone-500 transition-colors"
+                                                        title="External Link"
+                                                    >
+                                                        <span className="text-base">🔗</span>
+                                                    </button>
+                                                    {/* Platform icons */}
+                                                    {SUPPORTED_PLATFORMS.map(p => (
+                                                        <button
+                                                            key={p.id}
+                                                            onClick={() => {
+                                                                const existing = (editedCreator.platforms || []).find(ep => (typeof ep === 'string' ? ep : ep.id) === p.id);
+                                                                const url = typeof existing === 'object' ? existing.url : '';
+                                                                setBoardPlatformUrlDraft(url);
+                                                                setBoardSelectedPlatform(p.id);
+                                                            }}
+                                                            className="w-full aspect-square flex items-center justify-center rounded-lg bg-white border border-stone-100 hover:bg-stone-50 hover:border-stone-300 transition-colors"
+                                                            title={p.label}
+                                                        >
+                                                            {getPreviewPlatformIcon(p.id)}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <button className="w-full py-1.5 text-[10px] font-bold rounded-lg border border-stone-200 text-stone-500 hover:bg-stone-100 transition-colors" onClick={_closeAllBoardAdding}>Cancel</button>
+                                            </>
+                                        ) : boardSelectedPlatform === 'EXTERNAL' ? (
+                                            <>
+                                                <div className="flex items-center gap-1.5 mb-2">
+                                                    <span className="text-sm">🔗</span>
+                                                    <p className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">External Link</p>
+                                                </div>
+                                                <input
+                                                    className="w-full text-xs font-semibold bg-white/70 border border-stone-200 rounded px-2 py-1.5 mb-1.5 outline-none focus:ring-1 focus:ring-stone-400"
+                                                    placeholder="Title"
+                                                    value={boardLinkDraft.title}
+                                                    autoFocus
+                                                    onChange={e => setBoardLinkDraft(p => ({ ...p, title: e.target.value }))}
+                                                />
+                                                <input
+                                                    className="w-full text-xs bg-white/70 border border-stone-200 rounded px-2 py-1.5 mb-2 outline-none focus:ring-1 focus:ring-stone-400"
+                                                    placeholder="Paste URL (https://...)"
+                                                    value={boardLinkDraft.url}
+                                                    onChange={e => {
+                                                        const url = e.target.value;
+                                                        setBoardLinkDraft(p => {
+                                                            let autoTitle = p.title;
+                                                            if (!p.title) {
+                                                                try {
+                                                                    const hostname = new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace('www.', '');
+                                                                    autoTitle = hostname.charAt(0).toUpperCase() + hostname.slice(1).split('.')[0];
+                                                                } catch {}
+                                                            }
+                                                            return { ...p, url, title: autoTitle };
+                                                        });
+                                                    }}
+                                                />
+                                                <div className="flex gap-1.5">
+                                                    <button
+                                                        className="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-stone-800 text-white hover:bg-stone-700 transition-colors disabled:opacity-40"
+                                                        disabled={!boardLinkDraft.url.trim() || !boardLinkDraft.title.trim()}
+                                                        onClick={async () => {
+                                                            const url = boardLinkDraft.url.trim();
+                                                            if (!url) return;
+                                                            let title = boardLinkDraft.title.trim();
+                                                            if (!title) {
+                                                                try {
+                                                                    const hostname = new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace('www.', '');
+                                                                    title = hostname.charAt(0).toUpperCase() + hostname.slice(1).split('.')[0];
+                                                                } catch { title = url; }
+                                                            }
+                                                            await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title, url, type: 'EXTERNAL', iconShape: 'square-s', displayStyle: 'icon' }]);
+                                                            _closeAllBoardAdding();
+                                                        }}
+                                                    >Add Link</button>
+                                                    <button className="flex-1 py-1.5 text-[10px] font-bold rounded-lg border border-stone-200 text-stone-500 hover:bg-stone-100 transition-colors" onClick={() => { setBoardSelectedPlatform(null); setBoardLinkDraft({ title: '', url: '', price: '', type: 'EXTERNAL', color: undefined }); }}>Back</button>
+                                                </div>
+                                            </>
+                                        ) : (() => {
+                                            const platformDef = SUPPORTED_PLATFORMS.find(p => p.id === boardSelectedPlatform);
+                                            return (
+                                                <>
+                                                    <div className="flex items-center gap-1.5 mb-2">
+                                                        {getPreviewPlatformIcon(boardSelectedPlatform)}
+                                                        <p className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">{platformDef?.label}</p>
+                                                    </div>
+                                                    <input
+                                                        className="w-full text-xs bg-white/70 border border-stone-200 rounded px-2 py-1.5 mb-2 outline-none focus:ring-1 focus:ring-stone-400"
+                                                        placeholder="Paste URL..."
+                                                        value={boardPlatformUrlDraft}
+                                                        autoFocus
+                                                        onChange={e => setBoardPlatformUrlDraft(e.target.value)}
+                                                        onKeyDown={async e => {
+                                                            if (e.key === 'Enter') {
+                                                                const url = boardPlatformUrlDraft.trim();
+                                                                if (url) {
+                                                                    _closeAllBoardAdding();
+                                                                    await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-s', displayStyle: 'icon' }]);
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                    <div className="flex gap-1.5">
+                                                        <button
+                                                            className="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-stone-800 text-white hover:bg-stone-700 transition-colors disabled:opacity-40"
+                                                            disabled={!boardPlatformUrlDraft.trim()}
+                                                            onClick={async () => {
+                                                                const url = boardPlatformUrlDraft.trim();
+                                                                if (!url) return;
+                                                                _closeAllBoardAdding();
+                                                                await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-s', displayStyle: 'icon' }]);
+                                                            }}
+                                                        >Add Link</button>
+                                                        <button
+                                                            className="flex-1 py-1.5 text-[10px] font-bold rounded-lg border border-stone-200 text-stone-500 hover:bg-stone-100 transition-colors"
+                                                            onClick={() => { setBoardSelectedPlatform(null); setBoardPlatformUrlDraft(''); }}
+                                                        >Back</button>
+                                                    </div>
+                                                </>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             )}
@@ -4511,81 +4589,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
                             )}
 
-                            {/* ── 📱 Platform ── */}
-                            {boardAddingPlatform && (
-                                <div className="flex flex-col" style={{ width: 240 }}>
-                                    <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(59,130,246,0.35)' }} />
-                                    <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#EFF6FF', border: '2px solid rgba(59,130,246,0.25)' }}>
-                                        {boardSelectedPlatform ? (() => {
-                                            const platformDef = SUPPORTED_PLATFORMS.find(p => p.id === boardSelectedPlatform);
-                                            return (
-                                                <>
-                                                    <div className="flex items-center gap-1.5 mb-2">
-                                                        {getPreviewPlatformIcon(boardSelectedPlatform)}
-                                                        <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">{platformDef?.label}</p>
-                                                    </div>
-                                                    <input
-                                                        className="w-full text-xs bg-white/70 border border-blue-200 rounded px-2 py-1.5 mb-2 outline-none focus:ring-1 focus:ring-blue-400"
-                                                        placeholder="Paste URL..."
-                                                        value={boardPlatformUrlDraft}
-                                                        autoFocus
-                                                        onChange={e => setBoardPlatformUrlDraft(e.target.value)}
-                                                        onKeyDown={async e => {
-                                                            if (e.key === 'Enter') {
-                                                                const url = boardPlatformUrlDraft.trim();
-                                                                if (url) {
-                                                                    _closeAllBoardAdding();
-                                                                    await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-xxs' }]);
-                                                                    await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-s', displayStyle: 'icon' }]);
-                                                                }
-                                                            }
-                                                        }}
-                                                    />
-                                                    <div className="flex gap-1.5">
-                                                        <button
-                                                            className="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors disabled:opacity-40"
-                                                            disabled={!boardPlatformUrlDraft.trim()}
-                                                            onClick={async () => {
-                                                                const url = boardPlatformUrlDraft.trim();
-                                                                if (!url) return;
-                                                                _closeAllBoardAdding();
-                                                                await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-xxs' }]);
-                                                                await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-s', displayStyle: 'icon' }]);
-                                                            }}
-                                                        >Add Link</button>
-                                                        <button
-                                                            className="flex-1 py-1.5 text-[10px] font-bold rounded-lg border border-blue-200 text-blue-500 hover:bg-blue-50 transition-colors"
-                                                            onClick={() => { setBoardSelectedPlatform(null); setBoardPlatformUrlDraft(''); }}
-                                                        >Back</button>
-                                                    </div>
-                                                </>
-                                            );
-                                        })() : (
-                                            <>
-                                                <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-2">📱 Platform</p>
-                                                <div className="grid grid-cols-5 gap-1.5 mb-2">
-                                                    {SUPPORTED_PLATFORMS.map(p => (
-                                                        <button
-                                                            key={p.id}
-                                                            onClick={() => {
-                                                                const existing = (editedCreator.platforms || []).find(ep => (typeof ep === 'string' ? ep : ep.id) === p.id);
-                                                                let url = typeof existing === 'object' ? existing.url : '';
-                                                                setBoardPlatformUrlDraft(url);
-                                                                setBoardSelectedPlatform(p.id);
-                                                            }}
-                                                            className="w-full aspect-square flex items-center justify-center rounded-lg bg-white border border-blue-100 hover:bg-blue-50 hover:border-blue-300 transition-colors"
-                                                            title={p.label}
-                                                        >
-                                                            {getPreviewPlatformIcon(p.id)}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                                <button className="w-full py-1.5 text-[10px] font-bold rounded-lg border border-blue-200 text-blue-500 hover:bg-blue-50 transition-colors" onClick={_closeAllBoardAdding}>Cancel</button>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
                         </div>
 
                         {/* DESKTOP BUTTONS */}
@@ -4621,12 +4624,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         🪵 Panel
                                     </button>
                                 </div>
-                                <div className="flex flex-col" style={{ width: 110 }}>
-                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(59,130,246,0.35)' }} />
-                                    <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingPlatform(true); }}>
-                                        📱 Platform
-                                    </button>
-                                </div>
                                 <div className="flex flex-col" style={{ width: 160 }}>
                                     <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(110,170,240,0.45)' }} />
                                     <button className={`rounded-xl py-2.5 px-4 border-2 border-dashed text-xs font-semibold transition-all flex items-center justify-center gap-2 ${boardChatPickerOpen ? 'border-blue-400 text-blue-700 bg-blue-50' : 'border-stone-300 text-stone-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/60'}`} style={{ backgroundColor: boardChatPickerOpen ? undefined : 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardChatPickerOpen(p => !p); }}>
@@ -4654,8 +4651,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <button className="flex items-center gap-3 text-sm font-semibold text-emerald-600 py-2.5 px-3 hover:bg-emerald-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardAddingPhoto(true); }}>
                                             <span className="text-lg leading-none">🖼</span> Photo
                                         </button>
-                                        <button className="flex items-center gap-3 text-sm font-semibold text-blue-600 py-2.5 px-3 hover:bg-blue-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardAddingPlatform(true); }}>
-                                            <span className="text-lg leading-none">📱</span> Platform
+                                        <button className="flex items-center gap-3 text-sm font-semibold text-amber-700 py-2.5 px-3 hover:bg-amber-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardAddingPanel(true); }}>
+                                            <span className="text-lg leading-none">🪵</span> Panel
                                         </button>
                                         <button className="flex items-center gap-3 text-sm font-semibold text-emerald-600 py-2.5 px-3 hover:bg-emerald-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardChatPickerOpen(true); }}>
                                             <span className="text-lg leading-none">💬</span> From Chat
