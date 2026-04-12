@@ -750,14 +750,14 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
         const vpH = window.innerHeight - 28 - NAV_H;
 
         const eagleZoom = Math.min((vpW * 0.72) / canvasW, (vpH * 0.72) / totalH);
-        const eagleCam  = { x: canvasW / 2, y: totalH / 2, zoom: eagleZoom };
+        const eagleCam  = { x: canvasW / 2 + 300, y: totalH / 2 + 300, zoom: eagleZoom };
 
         const isMobile = window.innerWidth < 768;
         const saved    = isMobile ? creator?.boardFocusMobile : creator?.boardFocusDesktop;
         const defZoom  = Math.min(1.0, vpW / 560);
         const focusCam = saved || {
             x: canvasW / 2,
-            y: CREATOR_CARD_ZONE + Math.min(canvasH * 0.3, 320),
+            y: totalH / 2,
             zoom: defZoom,
         };
 

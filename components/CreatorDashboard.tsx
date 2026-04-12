@@ -1088,7 +1088,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     // Eagle-eye: fit all content
     const eagleZoom = Math.min(boardViewportW / contentW, boardViewportH / contentH, 0.9);
     setDashCamTransition('none');
-    setDashCamera({ x: cx, y: cy, zoom: eagleZoom });
+    // Start slightly from the right and lower to create a panning zoom-in effect
+    setDashCamera({ x: cx + 300, y: cy + 300, zoom: eagleZoom });
 
     // Animate to focus (zoom=1, same center)
     const t = setTimeout(() => {
@@ -3323,12 +3324,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 if (boardDragging) {
                                     const dx = (touch.clientX - boardDragging.startMouseX) / dashCamera.zoom;
                                     const dy = (touch.clientY - boardDragging.startMouseY) / dashCamera.zoom;
-                                    setBoardPositions(prev => ({ ...prev, [boardDragging.id]: { x: Math.max(0, boardDragging.startNoteX + dx), y: Math.max(0, boardDragging.startNoteY + dy) } }));
+                                    setBoardPositions(prev => ({ ...prev, [boardDragging.id]: { x: boardDragging.startNoteX + dx, y: boardDragging.startNoteY + dy } }));
                                 }
                                 if (boardLinkDragging) {
                                     const dx = (touch.clientX - boardLinkDragging.startMouseX) / dashCamera.zoom;
                                     const dy = (touch.clientY - boardLinkDragging.startMouseY) / dashCamera.zoom;
-                                    setBoardLinkPositions(prev => ({ ...prev, [boardLinkDragging.id]: { x: Math.max(0, boardLinkDragging.startNoteX + dx), y: Math.max(0, boardLinkDragging.startNoteY + dy) } }));
+                                    setBoardLinkPositions(prev => ({ ...prev, [boardLinkDragging.id]: { x: boardLinkDragging.startNoteX + dx, y: boardLinkDragging.startNoteY + dy } }));
                                 }
                             };
 
@@ -3359,8 +3360,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     setBoardPositions(prev => ({
                                         ...prev,
                                         [boardDragging.id]: {
-                                            x: Math.max(0, boardDragging.startNoteX + dx),
-                                            y: Math.max(0, boardDragging.startNoteY + dy),
+                                            x: boardDragging.startNoteX + dx,
+                                            y: boardDragging.startNoteY + dy,
                                         },
                                     }));
                                 } else if (boardLinkDragging) {
@@ -3369,8 +3370,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     setBoardLinkPositions(prev => ({
                                         ...prev,
                                         [boardLinkDragging.id]: {
-                                            x: Math.max(0, boardLinkDragging.startNoteX + dx),
-                                            y: Math.max(0, boardLinkDragging.startNoteY + dy),
+                                            x: boardLinkDragging.startNoteX + dx,
+                                            y: boardLinkDragging.startNoteY + dy,
                                         },
                                     }));
                                 } else if (dashPanRef.current && !pendingDragRef.current && !pendingLinkDragRef.current) {
@@ -3478,14 +3479,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     onTouchCancel={handleCanvasMouseUp}
                                 >
                                     <div
-                                        className="absolute inset-0 pointer-events-none"
-                                        style={{
-                                            backgroundImage: 'radial-gradient(circle, rgba(168,162,158,0.15) 1px, transparent 1px)',
-                                            backgroundSize: `${24 * dashCamera.zoom}px ${24 * dashCamera.zoom}px`,
-                                            backgroundPosition: `${bTx}px ${bTy}px`,
-                                        }}
-                                    />
-                                    <div
                                         style={{
                                             position: 'absolute',
                                             left: 0, top: 0,
@@ -3494,6 +3487,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             transition: dashCamTransition,
                                         }}
                                     >
+                                                {/* Infinite Grid Background inside transformed container */}
+                                                <div
+                                                    className="absolute pointer-events-none"
+                                                    style={{
+                                                        left: -50000, top: -50000, width: 100000, height: 100000,
+                                                        backgroundImage: 'radial-gradient(circle, rgba(168,162,158,0.15) 1px, transparent 1px)',
+                                                        backgroundSize: '24px 24px',
+                                                        backgroundPosition: 'center center'
+                                                    }}
+                                                />
                                     {/* Focus zone guidelines — always visible, live-updating when focus modal is open */}
                                     {(() => {
                                         const CREATOR_CARD_ZONE_R = 300;
@@ -3927,7 +3930,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                                 displayStyle: boardLinkDraft.displayStyle,
                                                                                 ...(boardLinkDraft.displayStyle === 'thumbnail' ? { iconShape: undefined } : {})
                                                                             } : {}),
-                                                                                ...(boardLinkDraft.displayStyle !== undefined ? { displayStyle: boardLinkDraft.displayStyle } : {}),
                                                                                 ...(boardLinkDraft.iconShape !== undefined ? { iconShape: boardLinkDraft.iconShape } : {}),
                                                                         } : l
                                                                     );
@@ -4237,6 +4239,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         );
                                     })}
                                 </div>
+                            </div>
                             );
                         })()}
                     </div>

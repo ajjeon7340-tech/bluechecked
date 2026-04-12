@@ -244,7 +244,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     const cH = Math.max(300, ...postBottoms, ...linkBottoms);
 
     const eagleZoom = Math.min((boardContainerW * 0.82) / cW, (BOARD_MAX_H * 0.82) / cH, 0.95);
-    const eagleCam = { x: cW / 2, y: cH / 2, zoom: eagleZoom };
+    const eagleCam = { x: cW / 2 - 300, y: cH / 2 , zoom: eagleZoom };
 
     const isMobile = boardContainerW < 600;
     const saved = isMobile ? creator.boardFocusMobile : creator.boardFocusDesktop;
@@ -1038,6 +1038,16 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                   opacity: boardAnimReady ? 1 : 0,
                                               }}
                                           >
+                                              {/* Infinite Grid Background inside transformed container */}
+                                              <div
+                                                  className="absolute pointer-events-none"
+                                                  style={{
+                                                      left: -50000, top: -50000, width: 100000, height: 100000,
+                                                      backgroundImage: 'linear-gradient(rgba(168,162,158,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(168,162,158,0.07) 1px, transparent 1px)',
+                                                      backgroundSize: '32px 32px',
+                                                      backgroundPosition: 'center center'
+                                                  }}
+                                              />
                                           {/* Focus zone guidelines — only shown to creator to preview what fans see */}
                                           {isCreatorOwner && boardContainerW > 0 && (() => {
                                               const DESKTOP_VW = 640, MOBILE_VW = 390, FOCUS_H = BOARD_MAX_H;
