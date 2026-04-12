@@ -875,9 +875,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                   const _getLinkSize = (l: typeof allPublicLinks[0]) => {
                                       const effStyle = l.displayStyle || (l.iconShape ? 'icon' : 'wide');
                                       if (effStyle !== 'icon') return null;
-                                      if (l.iconShape === 'square-s') return 44;
-                                      if (l.iconShape === 'square-m') return 64;
-                                      if (l.iconShape === 'square-l' || l.iconShape === 'square') return 110;
+                                      if (l.iconShape === 'square-s') return 32;
+                                      if (l.iconShape === 'square-m') return 44;
+                                      if (l.iconShape === 'square-l' || l.iconShape === 'square') return 64;
                                       return null;
                                   };
                                   const _getLinkH = (l: typeof allPublicLinks[0]) => {
@@ -886,8 +886,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       const sqSize = _getLinkSize(l);
                                       if (sqSize) return sqSize;
                                       // Non-icon mode: size hint affects card height
-                                      if (l.iconShape === 'square-s') return 64;
-                                      if (l.iconShape === 'square-l') return 108;
+                                      if (l.iconShape === 'square-s') return 56;
+                                      if (l.iconShape === 'square-l') return 96;
                                       if (l.type === 'DIGITAL_PRODUCT') return 104;
                                       return 84;
                                   };
@@ -1139,7 +1139,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                               onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '100'; }}
                                                               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = `${50 + li}`; }}
                                                           >
-                                                          <div className={`h-3 mx-auto rounded-b-sm ${isIconMode ? (sqSize === 44 ? 'w-3' : sqSize === 64 ? 'w-4' : sqSize === 110 ? 'w-6' : 'w-8') : 'w-10'}`} style={{ background: tapeColors[nc] }} />
+                                                          <div className={`h-3 mx-auto rounded-b-sm ${isIconMode ? (sqSize === 32 ? 'w-2.5' : sqSize === 44 ? 'w-3' : sqSize === 64 ? 'w-4' : 'w-8') : 'w-10'}`} style={{ background: tapeColors[nc] }} />
                                                               {isThumbnailMode ? (
                                                                   (() => {
                                                                       const thumbBg = detectedPlatform ? '#0f0f0f' : isProduct ? '#ede9fe' : isSupport ? '#fdf2f8' : '#e5e7eb';
@@ -1202,8 +1202,26 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                           </div>
                                                                       </div>
                                                                   </a>
+                                                              ) : isIconMode && sqSize === 32 ? (
+                                                                  /* S: tiny icon, no padding */
+                                                                  <Tag
+                                                                      href={isExternal ? ensureProtocol(link.url) : undefined}
+                                                                      target={isExternal ? "_blank" : undefined}
+                                                                      rel={isExternal ? "noopener noreferrer" : undefined}
+                                                                      onClick={e => {
+                                                                          e.stopPropagation();
+                                                                          if (isProduct) handleProductClick(link);
+                                                                          if (isSupport) handleSupportClick(link.price);
+                                                                      }}
+                                                                      className="flex items-center justify-center rounded-md overflow-hidden hover:opacity-90 transition-opacity aspect-square p-0.5 w-full h-full block"
+                                                                      style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                  >
+                                                                      <div className="w-6 h-6 rounded-md bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto">
+                                                                          {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-md" alt={link.title} /> : isEmoji ? <span className="text-xs leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className="scale-[0.75]">{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={11} className="text-violet-500" /> : isSupport ? <Heart size={11} className="text-pink-500" /> : <ExternalLink size={11} className="text-stone-500" />}
+                                                                      </div>
+                                                                  </Tag>
                                                               ) : isIconMode && sqSize === 44 ? (
-                                                                  /* S: small square icon, no text */
+                                                                  /* M: small square icon */
                                                                   <Tag
                                                                       href={isExternal ? ensureProtocol(link.url) : undefined}
                                                                       target={isExternal ? "_blank" : undefined}
@@ -1232,25 +1250,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                       <div className="w-10 h-10 rounded-xl bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto">
                                                                           {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-xl" alt={link.title} /> : isEmoji ? <span className="text-xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className="scale-[1.25]">{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={18} className="text-violet-500" /> : isSupport ? <Heart size={18} className="text-pink-500" /> : <ExternalLink size={18} className="text-stone-500" />}
                                                                       </div>
-                                                                  </Tag>
-                                                              ) : isIconMode && sqSize === 110 ? (
-                                                                  <Tag
-                                                                      href={isExternal ? ensureProtocol(link.url) : undefined}
-                                                                      target={isExternal ? "_blank" : undefined}
-                                                                      rel={isExternal ? "noopener noreferrer" : undefined}
-                                                                      onClick={e => {
-                                                                          e.stopPropagation();
-                                                                          if (isProduct) handleProductClick(link);
-                                                                          if (isSupport) handleSupportClick(link.price);
-                                                                      }}
-                                                                      className="flex flex-col items-center justify-center text-center rounded-lg overflow-hidden hover:opacity-90 transition-opacity aspect-square p-2 w-full h-full block"
-                                                                      style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
-                                                                  >
-                                                                      <div className={`w-12 h-12 rounded-xl mb-1.5 bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto`}>
-                                                                          {hasThumbnail ? <img src={link.thumbnailUrl} className={`w-full h-full object-cover rounded-xl`} alt={link.title} /> : isEmoji ? <span className={`text-2xl leading-none`}>{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className={"scale-[1.5]"}>{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={20} className="text-violet-500" /> : isSupport ? <Heart size={20} className="text-pink-500" /> : <ExternalLink size={20} className="text-stone-500" />}
-                                                                      </div>
-                                                                      <p className={`text-xs mb-0.5 px-1 font-bold text-stone-800 leading-tight w-full truncate`}>{link.title}</p>
-                                                                      <p className={`text-[8px] text-stone-500 uppercase tracking-wider font-semibold`}>{isProduct ? 'Buy' : isSupport ? 'Tip' : 'Visit'}</p>
                                                                   </Tag>
                                                               ) : isProduct ? (
                                                                   <button
@@ -1343,48 +1342,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                                   {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-md" alt={link.title} /> : isEmoji ? <span className="text-[14px] leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className="scale-[0.9]">{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={12} className="text-violet-500" /> : isSupport ? <Heart size={12} className="text-pink-500" /> : <ExternalLink size={12} className="text-stone-500" />}
                                                                               </div>
                                                                               <p className="text-xs font-bold text-stone-800 leading-tight w-full truncate text-left flex-1">{link.title}</p>
-                                                                          </Tag>
-                                                                      );
-                                                                  }
-                                                                  if (sqSize === 64) {
-                                                                      const isExternal = link.type === 'EXTERNAL';
-                                                                      const Tag = isExternal ? 'a' : 'button';
-                                                                      return (
-                                                                          <Tag
-                                                                              href={isExternal ? ensureProtocol(link.url) : undefined}
-                                                                              target={isExternal ? "_blank" : undefined}
-                                                                              rel={isExternal ? "noopener noreferrer" : undefined}
-                                                                              onClick={e => { e.stopPropagation(); if (isProduct) handleProductClick(link); if (isSupport) handleSupportClick(link.price); }}
-                                                                              className="flex items-center justify-center rounded-lg overflow-hidden hover:opacity-90 transition-opacity aspect-square p-1.5 w-full h-full block"
-                                                                              style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
-                                                                          >
-                                                                              <div className="w-10 h-10 rounded-xl bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto">
-                                                                                  {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-xl" alt={link.title} /> : isEmoji ? <span className="text-xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className="scale-[1.25]">{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={18} className="text-violet-500" /> : isSupport ? <Heart size={18} className="text-pink-500" /> : <ExternalLink size={18} className="text-stone-500" />}
-                                                                              </div>
-                                                                          </Tag>
-                                                                      );
-                                                                  }
-                                                                  if (sqSize) {
-                                                                      const isExternal = link.type === 'EXTERNAL';
-                                                                      const Tag = isExternal ? 'a' : 'button';
-                                                                      return (
-                                                                          <Tag
-                                                                              href={isExternal ? ensureProtocol(link.url) : undefined}
-                                                                              target={isExternal ? "_blank" : undefined}
-                                                                              rel={isExternal ? "noopener noreferrer" : undefined}
-                                                                              onClick={e => {
-                                                                                  e.stopPropagation();
-                                                                                  if (isProduct) handleProductClick(link);
-                                                                                  if (isSupport) handleSupportClick(link.price);
-                                                                              }}
-                                                                              className="flex flex-col items-center justify-center text-center rounded-lg overflow-hidden hover:opacity-90 transition-opacity aspect-square p-2 w-full h-full block"
-                                                                              style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
-                                                                          >
-                                                                              <div className={`w-12 h-12 rounded-xl mb-1.5 bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto`}>
-                                                                                  {hasThumbnail ? <img src={link.thumbnailUrl} className={`w-full h-full object-cover rounded-xl`} alt={link.title} /> : isEmoji ? <span className={`text-2xl leading-none`}>{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className={"scale-[1.5]"}>{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={20} className="text-violet-500" /> : isSupport ? <Heart size={20} className="text-pink-500" /> : <ExternalLink size={20} className="text-stone-500" />}
-                                                                              </div>
-                                                                              <p className={`text-xs mb-0.5 px-1 font-bold text-stone-800 leading-tight w-full truncate`}>{link.title}</p>
-                                                                              <p className={`text-[8px] text-stone-500 uppercase tracking-wider font-semibold`}>{isProduct ? 'Buy' : isSupport ? 'Tip' : 'Visit'}</p>
                                                                           </Tag>
                                                                       );
                                                                   }
