@@ -1146,7 +1146,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                       })() : null;
                                                       const effectiveStyle = link.displayStyle || (link.iconShape ? 'icon' : 'wide');
                                                       const isIconMode = effectiveStyle === 'icon';
-                                                      const isThumbnailMode = effectiveStyle === 'thumbnail' || isYoutube;
+                                                      const isThumbnailMode = effectiveStyle === 'thumbnail' && !isYoutube;
                                                       const sqSize = _getLinkSize(link);
                                                       const isExternal = link.type === 'EXTERNAL';
                                                       const Tag: React.ElementType = isExternal ? 'a' : 'button';
@@ -1178,7 +1178,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           <div
                                                               key={link.id}
                                                               className="absolute"
-                                                          style={{ left: pos.x, top: pos.y, width: isIconMode ? (sqSize || PROFILE_W) : (isThumbnailMode ? thumbCardW : wideCardW), zIndex: 50 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
+                                                          style={{ left: pos.x, top: pos.y, width: isIconMode ? (sqSize || PROFILE_W) : (isThumbnailMode || isYoutube ? thumbCardW : wideCardW), zIndex: 50 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
                                                               onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '100'; }}
                                                               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = `${50 + li}`; }}
                                                           >

@@ -3429,8 +3429,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             const effectiveStyle = link.displayStyle || (link.iconShape ? 'icon' : 'wide');
                                             const isIconMode = effectiveStyle === 'icon';
                                             const isYouTubeLink = link.type === 'EXTERNAL' && !!link.url?.match(/youtube\.com|youtu\.be/);
-                                            const isThumbnailMode = effectiveStyle === 'thumbnail' || isYouTubeLink;
-                                            const isWideMode = effectiveStyle === 'wide' && !isYouTubeLink;
+                                            const isThumbnailMode = effectiveStyle === 'thumbnail';
+                                            const isWideMode = effectiveStyle === 'wide';
                                         const sqSize = _getLinkSize(link);
                                         // Wide/thumb size: S=minimal, M=compact(old S), L=auto(old M)
                                         const cardSize = !isIconMode ? (link.iconShape === 'square-s' ? 'S' : link.iconShape === 'square-l' ? 'L' : 'M') : 'M';
@@ -3569,7 +3569,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 style={{
                                                     left: currentPos.x,
                                                     top: currentPos.y,
-                                                    width: isEditingLink ? Math.max(isIconMode ? (sqSize || LINK_W) : LINK_W, 220) : (isIconMode ? (sqSize || LINK_W) : (isThumbnailMode ? thumbCardW : wideCardW)),
+                                                    width: isEditingLink ? Math.max(isIconMode ? (sqSize || LINK_W) : LINK_W, 220) : (isIconMode ? (sqSize || LINK_W) : (isThumbnailMode || isYouTubeLink ? thumbCardW : wideCardW)),
                                                     transform: isDraggingLink ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
                                                     transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
                                                     zIndex: isDraggingLink ? 1000 : isEditingLink ? 500 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (50 + i),
