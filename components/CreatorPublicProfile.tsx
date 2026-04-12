@@ -249,10 +249,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     const isMobile = boardContainerW < 600;
     const saved = isMobile ? creator.boardFocusMobile : creator.boardFocusDesktop;
     const CREATOR_CARD_ZONE = 300; // offset used in DiemBoard minimap coordinate system
-    const DESKTOP_VW = 640, MOBILE_VW = 390;
-    // Default: show content from canvas (0,0) — top-left, same as the guideline default
-    const focusX = saved?.x ?? DESKTOP_VW / 2;
-    const focusY = saved ? Math.max(0, saved.y - CREATOR_CARD_ZONE) : BOARD_MAX_H / 2;
+    // Default: center of the content
+    const focusX = saved?.x ?? cW / 2;
+    const focusY = saved ? Math.max(0, saved.y - CREATOR_CARD_ZONE) : cH / 2;
     const focusZoom = 1.0;
     const focusCam = { x: focusX, y: focusY, zoom: focusZoom };
 
@@ -961,6 +960,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                   const bTy = BOARD_MAX_H / 2 - boardCamera.y * boardCamera.zoom;
 
                                   return (
+                                      <>
                                       <div
                                           ref={el => {
                                               (boardScrollRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
@@ -1044,9 +1044,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                               const CREATOR_CARD_ZONE = 300;
                                               const isMob = boardContainerW < 600;
                                               const sv = isMob ? creator.boardFocusMobile : creator.boardFocusDesktop;
-                                              // Default: top-left of content (matches default animation focus)
-                                              const fX = sv?.x ?? DESKTOP_VW / 2;
-                                              const fY = sv ? Math.max(0, sv.y - CREATOR_CARD_ZONE) : FOCUS_H / 2;
+                                              // Default: center of the content
+                                              const fX = sv?.x ?? cW / 2;
+                                              const fY = sv ? Math.max(0, sv.y - CREATOR_CARD_ZONE) : cH / 2;
                                               // Anchor = top-left of the viewport frame in canvas coordinates
                                               const aX = fX - DESKTOP_VW / 2;
                                               const aY = Math.max(0, fY - FOCUS_H / 2);
@@ -1411,6 +1411,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                   const nc = stableIdx(post.id) % noteColors.length;
                                                   const rot = rotations[stableIdx(post.id) % rotations.length];
                                                   const pos = getPos(post);
+                                                  const noteSize = post.noteSize || 'M';
                                                   return (
                                                       <div
                                                           key={post.id}
@@ -1423,7 +1424,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                       >
                                                           {/* Note card — use fan-chosen color if available */}
                                                           <div
-                                                              className="relative rounded-lg p-3 overflow-hidden"
+                                                              className={`relative rounded-lg overflow-hidden ${noteSize === 'S' ? 'p-2' : noteSize === 'M' ? 'p-2.5' : 'p-3'}`}
                                                               style={{
                                                                   backgroundColor: post.noteColor ?? noteColors[nc],
                                                                   backgroundImage: 'repeating-linear-gradient(to bottom, transparent, transparent 23px, rgba(0,0,0,0.04) 23px, rgba(0,0,0,0.04) 24px)',
@@ -1432,22 +1433,21 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                   boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
                                                               }}
                                                           >
-                                                              {/* Avatar only */}
-                                                              <div className="flex items-center gap-1.5 mb-1.5">
-                                                                  <div className="w-6 h-6 rounded-full bg-stone-800 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                                                              {/* Avatar + Name */}
+                                                              <div className={`flex items-center ${noteSize === 'S' ? 'gap-1.5 mb-1' : 'gap-2 mb-1.5'}`}>
+                                                                  <div className={`${noteSize === 'S' ? 'w-5 h-5' : noteSize === 'M' ? 'w-6 h-6' : 'w-8 h-8'} rounded-full bg-stone-800 flex-shrink-0 overflow-hidden flex items-center justify-center`}>
                                                                       {post.fanAvatarUrl
                                                                           ? <img src={post.fanAvatarUrl} className="w-full h-full object-cover" alt="" />
-                                                                          : <span className="text-white text-[9px] font-bold">{post.fanName.charAt(0).toUpperCase()}</span>}
+                                                                          : <span className={`text-white font-bold ${noteSize === 'S' ? 'text-[8px]' : 'text-[10px]'}`}>{post.fanName.charAt(0).toUpperCase()}</span>}
                                                                   </div>
+                                                                  <p className={`${noteSize === 'S' ? 'text-[10px]' : noteSize === 'M' ? 'text-xs' : 'text-sm'} font-bold text-stone-800 truncate`}>{post.fanName}</p>
                                                               </div>
 
                                                               {/* Fan message */}
-                                                              <div className="bg-white/80 rounded-xl border border-black/06 p-2">
-                                                                  <p className="text-[11px] text-stone-700 leading-relaxed line-clamp-4">{post.content}</p>
-                                                                  {post.attachmentUrl && /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(post.attachmentUrl) && (
-                                                                      <img src={post.attachmentUrl} className="mt-1.5 w-full max-h-16 object-cover rounded-lg" alt="attachment" />
-                                                                  )}
-                                                              </div>
+                                                              <p className={`${noteSize === 'S' ? 'text-[9px] line-clamp-2' : noteSize === 'M' ? 'text-[10px] line-clamp-3' : 'text-[11px] line-clamp-4'} text-stone-600 leading-relaxed`}>{post.content}</p>
+                                                              {noteSize !== 'S' && post.attachmentUrl && /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(post.attachmentUrl) && (
+                                                                  <img src={post.attachmentUrl} className="mt-2 w-full max-h-16 object-cover rounded-lg border border-black/5 shadow-sm" alt="attachment" />
+                                                              )}
                                                           </div>
                                                       </div>
                                                   );
@@ -1455,6 +1455,17 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                                           </div>
                                       </div>
+                                      {/* Floating Post Diem Button (Board Feature) */}
+                                      <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none z-20">
+                                          <button
+                                              onClick={() => currentUser ? setIsComposing(true) : onLoginRequest()}
+                                              className="pointer-events-auto rounded-xl py-2.5 px-4 border-2 border-dashed border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-700 hover:bg-white/80 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold shadow-sm"
+                                              style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }}
+                                          >
+                                              <Plus size={14} /> Post Diem
+                                          </button>
+                                      </div>
+                                      </>
                                   );
                               })()}
 
@@ -1576,17 +1587,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       </div>
                                   );
                               })()}
-
-                              {/* Post Diem button — always visible */}
-                              <div className="flex justify-center pt-0 pb-6 -mt-6 relative z-10">
-                                  <button
-                                      onClick={() => currentUser ? setIsComposing(true) : onLoginRequest()}
-                                      className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-2.5 rounded-full font-semibold text-sm hover:bg-stone-700 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
-                                      style={creator.diemButtonColor ? { backgroundColor: creator.diemButtonColor, color: getContrastColor(creator.diemButtonColor) } : undefined}
-                                  >
-                                      <Plus size={15} /> Post Diem
-                                  </button>
-                              </div>
                       </div>
                   </div>
               </div>

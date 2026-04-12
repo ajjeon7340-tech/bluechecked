@@ -3041,7 +3041,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <div className="h-full flex flex-col overflow-hidden">
                     {/* Header */}
                     <div className="sticky top-0 z-10 bg-[#F5F3EE]/95 backdrop-blur-sm border-b border-stone-200/60 px-4 sm:px-6 py-4">
-                        <div className="flex items-center justify-between max-w-4xl mx-auto">
+                        <div className="flex items-center justify-between w-full">
                             <div className="flex items-center gap-2">
                                 <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0"><Menu size={24} /></button>
                                 <div>
@@ -3052,7 +3052,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             <TopNav hideBurger />
                         </div>
                         {/* Filter tabs */}
-                        <div className="flex gap-2 mt-4 max-w-4xl mx-auto overflow-x-auto">
+                        <div className="flex gap-2 mt-4 w-full overflow-x-auto">
                             {(['ALL', 'PENDING', 'LINKS'] as const).map(f => (
                                 <button
                                     key={f}
@@ -3064,7 +3064,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             ))}
                         </div>
                         {/* Focus Zone button */}
-                        <div className="flex justify-end mt-2 max-w-4xl mx-auto">
+                        <div className="flex justify-end mt-2 w-full">
                             <button
                                 onClick={() => {
                                     const BOARD_MAX_H = 440, CREATOR_CARD_ZONE = 300, DESKTOP_VW = 640;
@@ -3078,8 +3078,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         const visLinks = (editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden);
                                         const maxLR = visLinks.reduce((m, l) => Math.max(m, (l.positionX ?? LINK_AUTO_X) + LINK_W), DESKTOP_VW);
                                         const cWest = Math.max(DESKTOP_VW, maxLR + 32);
-                                        const defaultX = (cWest - DESKTOP_VW) / 2;
-                                        setBoardFocusAnchor({ x: defaultX, y: CREATOR_CARD_ZONE });
+                                        
+                                        const posts = boardPosts.filter(p => p.isPinned);
+                                        const maxPB = posts.reduce((m, p, idx) => {
+                                            const y = p.positionY != null ? p.positionY : BOARD_PAD + Math.floor(idx / GUIDE_COLS) * (272 + 36);
+                                            return Math.max(m, y + 272);
+                                        }, 440);
+                                        const maxLB = visLinks.reduce((m, l, idx) => {
+                                            const y = l.positionY != null ? l.positionY : BOARD_PAD + (idx * 84); // approx
+                                            return Math.max(m, y + 84);
+                                        }, 0);
+                                        const cH = Math.max(maxPB, maxLB) + 80;
+                                        
+                                        setBoardFocusAnchor({ x: cWest / 2 - DESKTOP_VW / 2, y: Math.max(CREATOR_CARD_ZONE, CREATOR_CARD_ZONE + cH / 2 - BOARD_MAX_H / 2) });
                                     }
                                     setBoardFocusModeOpen(true);
                                 }}
@@ -3483,7 +3494,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             const sd = editedCreator.boardFocusDesktop;
                                             return sd
                                                 ? { x: sd.x - DESKTOP_VW / 2, y: Math.max(0, sd.y - FOCUS_H / 2) }
-                                                : { x: 0, y: CREATOR_CARD_ZONE_R };
+                                                : { x: cW / 2 - DESKTOP_VW / 2, y: Math.max(CREATOR_CARD_ZONE_R, CREATOR_CARD_ZONE_R + cH / 2 - FOCUS_H / 2) };
                                         })();
                                         const fLeft = guideOffsetX + anchor.x;
                                         const fTop  = guideOffsetY + (anchor.y - CREATOR_CARD_ZONE_R);
