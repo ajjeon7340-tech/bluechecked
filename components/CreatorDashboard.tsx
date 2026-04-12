@@ -480,6 +480,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartPosRef = useRef<{x: number, y: number} | null>(null);
 
+  // Pending drag: activated only after mouse moves > threshold to avoid accidental drags during scroll
+  const pendingDragRef = useRef<{ id: string; startMouseX: number; startMouseY: number; startNoteX: number; startNoteY: number } | null>(null);
+  const pendingLinkDragRef = useRef<{ id: string; startMouseX: number; startMouseY: number; startNoteX: number; startNoteY: number } | null>(null);
+  const DRAG_THRESHOLD = 6;
+
+  // Infinite canvas camera (pan + zoom) for the board
+  const [dashCamera, setDashCamera] = useState<{ x: number; y: number; zoom: number }>({ x: 0, y: 0, zoom: 1 });
+  const dashPanRef = useRef<{ startX: number; startY: number; camX: number; camY: number } | null>(null);
+  const dashCamInitRef = useRef(false);
+
   useEffect(() => {
       const preventDefault = (e: TouchEvent) => { if (boardDragging || boardLinkDragging) e.preventDefault(); };
       // Block native mobile scrolling actively while dragging a sticker
@@ -1086,10 +1096,48 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
-    // Scroll so the guide is centered (scrollTop=0 when guideOffsetY=(viewportH-GUIDE_H)/2)
-    el.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
     return () => ro.disconnect();
   }, [currentView]);
+
+  // Reset camera init flag when leaving / re-entering the board view
+  useEffect(() => {
+    if (currentView !== 'BOARD') { dashCamInitRef.current = false; }
+  }, [currentView]);
+
+  // Init camera centered on the guide zone once viewport dimensions are known
+  useEffect(() => {
+    if (boardViewportW === 0 || dashCamInitRef.current) return;
+    dashCamInitRef.current = true;
+    const GUIDE_H = 440;
+    const guideOffsetY = Math.max(0, (boardViewportH - GUIDE_H) / 2);
+    // guideOffsetX center = boardViewportW/2 (by definition of the formula)
+    setDashCamera({ x: boardViewportW / 2, y: guideOffsetY + GUIDE_H / 2, zoom: 1 });
+  }, [boardViewportW, boardViewportH]);
+
+  // Wheel handler for board pan / zoom (passive:false required to prevent page scroll)
+  useEffect(() => {
+    const el = boardScrollContainerRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+        e.preventDefault();
+        if (e.metaKey || e.altKey || e.ctrlKey) {
+            const rect = el.getBoundingClientRect();
+            const cx = e.clientX - rect.left;
+            const cy = e.clientY - rect.top;
+            const factor = e.deltaY > 0 ? 0.9 : 1.1;
+            setDashCamera(prev => {
+                const newZoom = Math.min(3, Math.max(0.15, prev.zoom * factor));
+                const wx = prev.x + (cx - el.clientWidth / 2) / prev.zoom;
+                const wy = prev.y + (cy - el.clientHeight / 2) / prev.zoom;
+                return { x: wx + (el.clientWidth / 2 - cx) / newZoom, y: wy + (el.clientHeight / 2 - cy) / newZoom, zoom: newZoom };
+            });
+        } else {
+            setDashCamera(prev => ({ ...prev, x: prev.x + e.deltaX / prev.zoom, y: prev.y + e.deltaY / prev.zoom }));
+        }
+    };
+    el.addEventListener('wheel', handler, { passive: false });
+    return () => el.removeEventListener('wheel', handler);
+  }, [currentView]); // re-attach when view changes (ref may be remounted)
 
   // Keep ref in sync for use inside async callbacks
   useEffect(() => { selectedSenderEmailRef.current = selectedSenderEmail; }, [selectedSenderEmail]);
@@ -3035,10 +3083,21 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         </div>
                     </div>
 
-                    {/* Freeform corkboard canvas */}
+                    {/* Freeform corkboard canvas — infinite camera */}
                     <div
                         ref={boardScrollContainerRef}
-                        className="relative flex-1 overflow-auto"
+                        className="relative flex-1 overflow-hidden"
+                        style={{ cursor: dashPanRef.current ? 'grabbing' : boardDragging || boardLinkDragging ? 'grabbing' : boardLinkResizing ? 'se-resize' : 'grab' }}
+                        onMouseDown={e => {
+                            if (e.button !== 0) return;
+                            dashPanRef.current = { startX: e.clientX, startY: e.clientY, camX: dashCamera.x, camY: dashCamera.y };
+                        }}
+                        onMouseMove={handleCanvasMouseMove}
+                        onMouseUp={handleCanvasMouseUp}
+                        onMouseLeave={handleCanvasMouseUp}
+                        onTouchMove={handleCanvasTouchMove}
+                        onTouchEnd={handleCanvasMouseUp}
+                        onTouchCancel={handleCanvasMouseUp}
                     >
                         {boardLoading ? (
                             <div className="flex items-center justify-center py-20 text-stone-400">
@@ -3161,14 +3220,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const handleTapeMouseDown = (e: React.MouseEvent, postId: string, currentPos: {x: number, y: number}) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                setBoardDragging({
-                                    id: postId,
-                                    startMouseX: e.clientX,
-                                    startMouseY: e.clientY,
-                                    startNoteX: currentPos.x,
-                                    startNoteY: currentPos.y,
-                                });
-                                setSelectedBoardId(postId);
+                                pendingDragRef.current = { id: postId, startMouseX: e.clientX, startMouseY: e.clientY, startNoteX: currentPos.x, startNoteY: currentPos.y };
                             };
 
                             // Link sticker layout constants
@@ -3217,13 +3269,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const handleLinkTapeMouseDown = (e: React.MouseEvent, linkId: string, currentPos: {x: number, y: number}) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                setBoardLinkDragging({
-                                    id: linkId,
-                                    startMouseX: e.clientX,
-                                    startMouseY: e.clientY,
-                                    startNoteX: currentPos.x,
-                                    startNoteY: currentPos.y,
-                                });
+                                pendingLinkDragRef.current = { id: linkId, startMouseX: e.clientX, startMouseY: e.clientY, startNoteX: currentPos.x, startNoteY: currentPos.y };
                             };
 
                             // --- Mobile Touch Handlers (Long Press to Drag) ---
@@ -3264,21 +3310,39 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 if (!boardDragging && !boardLinkDragging) return;
                                 const touch = e.touches[0];
                                 if (boardDragging) {
-                                    const dx = touch.clientX - boardDragging.startMouseX;
-                                    const dy = touch.clientY - boardDragging.startMouseY;
+                                    const dx = (touch.clientX - boardDragging.startMouseX) / dashCamera.zoom;
+                                    const dy = (touch.clientY - boardDragging.startMouseY) / dashCamera.zoom;
                                     setBoardPositions(prev => ({ ...prev, [boardDragging.id]: { x: Math.max(0, boardDragging.startNoteX + dx), y: Math.max(0, boardDragging.startNoteY + dy) } }));
                                 }
                                 if (boardLinkDragging) {
-                                    const dx = touch.clientX - boardLinkDragging.startMouseX;
-                                    const dy = touch.clientY - boardLinkDragging.startMouseY;
+                                    const dx = (touch.clientX - boardLinkDragging.startMouseX) / dashCamera.zoom;
+                                    const dy = (touch.clientY - boardLinkDragging.startMouseY) / dashCamera.zoom;
                                     setBoardLinkPositions(prev => ({ ...prev, [boardLinkDragging.id]: { x: Math.max(0, boardLinkDragging.startNoteX + dx), y: Math.max(0, boardLinkDragging.startNoteY + dy) } }));
                                 }
                             };
 
                             const handleCanvasMouseMove = (e: React.MouseEvent) => {
+                                // Commit pending drags only once mouse moves beyond threshold
+                                if (pendingDragRef.current && !boardDragging) {
+                                    const p = pendingDragRef.current;
+                                    if (Math.hypot(e.clientX - p.startMouseX, e.clientY - p.startMouseY) > DRAG_THRESHOLD) {
+                                        setBoardDragging({ id: p.id, startMouseX: p.startMouseX, startMouseY: p.startMouseY, startNoteX: p.startNoteX, startNoteY: p.startNoteY });
+                                        setSelectedBoardId(p.id);
+                                        dashPanRef.current = null; // cancel any pan that started simultaneously
+                                        pendingDragRef.current = null;
+                                    }
+                                }
+                                if (pendingLinkDragRef.current && !boardLinkDragging) {
+                                    const p = pendingLinkDragRef.current;
+                                    if (Math.hypot(e.clientX - p.startMouseX, e.clientY - p.startMouseY) > DRAG_THRESHOLD) {
+                                        setBoardLinkDragging({ id: p.id, startMouseX: p.startMouseX, startMouseY: p.startMouseY, startNoteX: p.startNoteX, startNoteY: p.startNoteY });
+                                        dashPanRef.current = null;
+                                        pendingLinkDragRef.current = null;
+                                    }
+                                }
                                 if (boardDragging) {
-                                    const dx = e.clientX - boardDragging.startMouseX;
-                                    const dy = e.clientY - boardDragging.startMouseY;
+                                    const dx = (e.clientX - boardDragging.startMouseX) / dashCamera.zoom;
+                                    const dy = (e.clientY - boardDragging.startMouseY) / dashCamera.zoom;
                                     setBoardPositions(prev => ({
                                         ...prev,
                                         [boardDragging.id]: {
@@ -3286,10 +3350,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             y: Math.max(0, boardDragging.startNoteY + dy),
                                         },
                                     }));
-                                }
-                                if (boardLinkDragging) {
-                                    const dx = e.clientX - boardLinkDragging.startMouseX;
-                                    const dy = e.clientY - boardLinkDragging.startMouseY;
+                                } else if (boardLinkDragging) {
+                                    const dx = (e.clientX - boardLinkDragging.startMouseX) / dashCamera.zoom;
+                                    const dy = (e.clientY - boardLinkDragging.startMouseY) / dashCamera.zoom;
                                     setBoardLinkPositions(prev => ({
                                         ...prev,
                                         [boardLinkDragging.id]: {
@@ -3297,10 +3360,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             y: Math.max(0, boardLinkDragging.startNoteY + dy),
                                         },
                                     }));
+                                } else if (dashPanRef.current && !pendingDragRef.current && !pendingLinkDragRef.current) {
+                                    const dx = e.clientX - dashPanRef.current.startX;
+                                    const dy = e.clientY - dashPanRef.current.startY;
+                                    setDashCamera(prev => ({ ...prev, x: dashPanRef.current!.camX - dx / prev.zoom, y: dashPanRef.current!.camY - dy / prev.zoom }));
                                 }
                                 if (boardLinkResizing) {
-                                    const dx = e.clientX - boardLinkResizing.startMouseX;
-                                    const dy = e.clientY - boardLinkResizing.startMouseY;
+                                    dashPanRef.current = null;
+                                    const dx = (e.clientX - boardLinkResizing.startMouseX) / dashCamera.zoom;
+                                    const dy = (e.clientY - boardLinkResizing.startMouseY) / dashCamera.zoom;
                                     const wDelta = boardLinkResizing.flipX ? -dx : dx;
                                     setBoardLinkSizes(prev => ({
                                         ...prev,
@@ -3313,6 +3381,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             };
 
                             const handleCanvasMouseUp = async () => {
+                                pendingDragRef.current = null;
+                                pendingLinkDragRef.current = null;
+                                dashPanRef.current = null;
                                 if (boardDragging) {
                                     const rawPos = boardPositions[boardDragging.id];
                                     if (rawPos) {
@@ -3352,7 +3423,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 const pos = getLinkPos(link, idx);
                                 return Math.max(max, pos.y + _getLinkH(link) + (boardLinkDragging ? 500 : 160));
                             }, 0);
-                            const canvasH = Math.max(maxY, linkMaxY);
+                            const canvasH = Math.max(maxY, linkMaxY, 3000);
 
                             const linkMaxX = visibleBoardLinks.reduce((max, link, idx) => {
                                 const pos = getLinkPos(link, idx);
@@ -3362,7 +3433,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 const w = isIconMode ? (_getLinkSize(link) || LINK_W) : isThumbnailMode ? (cardSize === 'S' ? 120 : cardSize === 'L' ? LINK_W : 160) : (cardSize === 'S' ? 110 : cardSize === 'L' ? getWideWidth(link.title) : 140);
                                 return Math.max(max, pos.x + w);
                             }, 0);
-                            const canvasW = Math.max(guideOffsetX + GUIDE_DESKTOP_W, linkMaxX) + BOARD_PAD;
+                            const canvasW = Math.max(guideOffsetX + GUIDE_DESKTOP_W, linkMaxX, 3000) + BOARD_PAD;
+
+                            // Camera transform
+                            const bTx = boardViewportW / 2 - dashCamera.x * dashCamera.zoom;
+                            const bTy = boardViewportH / 2 - dashCamera.y * dashCamera.zoom;
 
                             const linkColors = ['#FFF7ED', '#F0FDF4', '#EFF6FF', '#FDF2F8', '#FFFEF0', '#F5F3FF'];
                             const linkTapes = ['rgba(240,160,80,0.45)', 'rgba(110,200,140,0.45)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)', 'rgba(200,193,185,0.55)', 'rgba(180,150,240,0.4)'];
@@ -3370,21 +3445,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             return (
                                 <div
                                     ref={boardCanvasRef}
-                                    className="relative select-none"
+                                    className="absolute select-none"
                                     style={{
-                                        minHeight: `${canvasH}px`,
-                                        minWidth: `${canvasW}px`,
+                                        left: 0, top: 0,
+                                        width: `${canvasW}px`,
+                                        height: `${canvasH}px`,
+                                        transformOrigin: '0 0',
+                                        transform: `translate(${bTx}px, ${bTy}px) scale(${dashCamera.zoom})`,
                                         background: 'linear-gradient(135deg, #FAFAF8 0%, #F5F3EF 100%)',
                                         backgroundImage: 'radial-gradient(circle, rgba(168,162,158,0.15) 1px, transparent 1px)',
                                         backgroundSize: '24px 24px',
-                                        cursor: boardLinkResizing ? 'se-resize' : boardDragging || boardLinkDragging ? 'grabbing' : 'default',
                                     }}
-                                    onMouseMove={handleCanvasMouseMove}
-                                    onMouseUp={handleCanvasMouseUp}
-                                    onMouseLeave={handleCanvasMouseUp}
-                                    onTouchMove={handleCanvasTouchMove}
-                                    onTouchEnd={handleCanvasMouseUp}
-                                    onTouchCancel={handleCanvasMouseUp}
                                 >
                                     {/* Focus zone guidelines — always visible, live-updating when focus modal is open */}
                                     {(() => {
