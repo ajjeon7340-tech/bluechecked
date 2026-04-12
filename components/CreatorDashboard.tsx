@@ -3350,9 +3350,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         },
                                     }));
                                 } else if (dashPanRef.current && !pendingDragRef.current && !pendingLinkDragRef.current) {
-                                    const dx = e.clientX - dashPanRef.current.startX;
-                                    const dy = e.clientY - dashPanRef.current.startY;
-                                    setDashCamera(prev => ({ ...prev, x: dashPanRef.current!.camX - dx / prev.zoom, y: dashPanRef.current!.camY - dy / prev.zoom }));
+                                    const pan = dashPanRef.current;
+                                    const dx = e.clientX - pan.startX;
+                                    const dy = e.clientY - pan.startY;
+                                    setDashCamera(prev => ({ ...prev, x: pan.camX - dx / prev.zoom, y: pan.camY - dy / prev.zoom }));
                                 }
                                 if (boardLinkResizing) {
                                     dashPanRef.current = null;
