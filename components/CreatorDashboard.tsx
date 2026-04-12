@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n/config';
 import { CreatorProfile, Message, DashboardStats, MonthlyStat, AffiliateLink, LinkSection, ProAnalyticsData, StatTimeFrame, DetailedStat, DetailedFinancialStat, CurrentUser } from '../types';
-import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, uploadPremiumContent, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, sendWelcomeMessage, sendSupportMessage, Withdrawal, isBackendConfigured, getBoardPosts, getPendingBoardPosts, replyToBoardPost, deleteBoardPost, updateBoardPostVisibility, pinBoardPost, markBoardPostAsAddedToChat, updateBoardNoteColor, updateBoardPostPosition, promoteMessageToBoardPost, uploadBoardAttachment, BoardPost} from '../services/realBackend';
+import { getMessages, getChatLines, invalidateChatLinesCache, replyToMessage, updateCreatorProfile, markMessageAsRead, cancelMessage, getHistoricalStats, getProAnalytics, getDetailedStatistics, getFinancialStatistics, DEFAULT_AVATAR, subscribeToMessages, uploadProductFile, uploadPremiumContent, editChatMessage, deleteChatLine, connectStripeAccount, getStripeConnectionStatus, requestWithdrawal, getWithdrawalHistory, sendWelcomeMessage, sendSupportMessage, Withdrawal, isBackendConfigured, getBoardPosts, getPendingBoardPosts, replyToBoardPost, deleteBoardPost, updateBoardPostVisibility, pinBoardPost, markBoardPostAsAddedToChat, updateBoardNoteColor, updateBoardPostPosition, updateBoardPostSize, promoteMessageToBoardPost, uploadBoardAttachment, BoardPost} from '../services/realBackend';
 import { generateReplyDraft } from '../services/geminiService';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import {
@@ -421,6 +421,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [boardAddingProduct, setBoardAddingProduct] = useState(false);
   const [boardAddingSupport, setBoardAddingSupport] = useState(false);
   const [boardAddingPhoto, setBoardAddingPhoto] = useState(false);
+  const [boardAddingPanel, setBoardAddingPanel] = useState(false);
+  const [boardPanelDraft, setBoardPanelDraft] = useState({ label: '', style: 'light' as 'light' | 'dark' | 'warm' });
   const [boardAddingPlatform, setBoardAddingPlatform] = useState(false);
   const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null>(null);
   const [boardPlatformUrlDraft, setBoardPlatformUrlDraft] = useState('');
@@ -435,6 +437,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setBoardAddingProduct(false);
     setBoardAddingSupport(false);
     setBoardAddingPhoto(false);
+    setBoardAddingPanel(false);
     setBoardAddingPlatform(false);
     setBoardSelectedPlatform(null);
     setBoardPlatformUrlDraft('');
@@ -454,6 +457,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [inboxSelectedPostId, setInboxSelectedPostId] = useState<string | null>(null);
   const [inboxBoardFilter, setInboxBoardFilter] = useState<'ALL' | 'PUBLIC' | 'PRIVATE' | 'PENDING' | 'ANSWERED'>('ALL');
   const [boardPositions, setBoardPositions] = useState<Record<string, {x: number, y: number}>>({});
+  const [boardPostSizes, setBoardPostSizes] = useState<Record<string, 'S' | 'M' | 'L'>>({});
   const [boardDragging, setBoardDragging] = useState<{
       id: string;
       startMouseX: number;
@@ -487,6 +491,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   // Infinite canvas camera (pan + zoom) for the board
   const [dashCamera, setDashCamera] = useState<{ x: number; y: number; zoom: number }>({ x: 0, y: 0, zoom: 1 });
+  const [dashCamTransition, setDashCamTransition] = useState('none');
   const dashPanRef = useRef<{ startX: number; startY: number; camX: number; camY: number } | null>(null);
   const dashCamInitRef = useRef(false);
 
@@ -1104,15 +1109,47 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     if (currentView !== 'BOARD') { dashCamInitRef.current = false; }
   }, [currentView]);
 
-  // Init camera centered on the guide zone once viewport dimensions are known
+  // Init camera: eagle-eye → focus animation once viewport dimensions are known
   useEffect(() => {
-    if (boardViewportW === 0 || dashCamInitRef.current) return;
+    if (boardViewportW === 0 || boardViewportH === 0 || dashCamInitRef.current) return;
     dashCamInitRef.current = true;
-    const GUIDE_H = 440;
-    const guideOffsetY = Math.max(0, (boardViewportH - GUIDE_H) / 2);
-    // guideOffsetX center = boardViewportW/2 (by definition of the formula)
-    setDashCamera({ x: boardViewportW / 2, y: guideOffsetY + GUIDE_H / 2, zoom: 1 });
-  }, [boardViewportW, boardViewportH]);
+
+    const GUIDE_DESKTOP_W = 640, GUIDE_H = 440;
+    const gX = Math.max(0, (boardViewportW - GUIDE_DESKTOP_W) / 2);
+    const gY = Math.max(0, (boardViewportH - GUIDE_H) / 2);
+
+    // Compute content bounding box from saved positions
+    const links = (editedCreator?.links || []).filter((l: AffiliateLink) => l.id !== '__diem_config__' && !l.hidden);
+    const posts = boardPosts.filter(p => p.isPinned);
+    let minX = gX, maxX = gX + GUIDE_DESKTOP_W;
+    let minY = gY, maxY = gY + GUIDE_H;
+    links.forEach(l => {
+        if (l.positionX != null) { minX = Math.min(minX, l.positionX + gX); maxX = Math.max(maxX, l.positionX + gX + 220); }
+        if (l.positionY != null) { minY = Math.min(minY, l.positionY + gY); maxY = Math.max(maxY, l.positionY + gY + 80); }
+    });
+    posts.forEach(p => {
+        if (p.positionX != null) { minX = Math.min(minX, p.positionX + gX); maxX = Math.max(maxX, p.positionX + gX + 252); }
+        if (p.positionY != null) { minY = Math.min(minY, p.positionY + gY); maxY = Math.max(maxY, p.positionY + gY + 272); }
+    });
+
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+    const contentW = maxX - minX + 80;
+    const contentH = maxY - minY + 80;
+
+    // Eagle-eye: fit all content
+    const eagleZoom = Math.min(boardViewportW / contentW, boardViewportH / contentH, 0.9);
+    setDashCamTransition('none');
+    setDashCamera({ x: cx, y: cy, zoom: eagleZoom });
+
+    // Animate to focus (zoom=1, same center)
+    const t = setTimeout(() => {
+        setDashCamTransition('transform 0.85s cubic-bezier(0.25, 0.46, 0.45, 0.94)');
+        setDashCamera({ x: cx, y: cy, zoom: 1 });
+        setTimeout(() => setDashCamTransition('none'), 950);
+    }, 60);
+    return () => clearTimeout(t);
+  }, [boardViewportW, boardViewportH]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Wheel handler for board pan / zoom (passive:false required to prevent page scroll)
   useEffect(() => {
@@ -3111,6 +3148,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const NOTE_W = 252;
                             const NOTE_H_EST = 272;
                             const NOTE_GAP_X = 28;
+                            const getPostNoteSize = (p: BoardPost): 'S' | 'M' | 'L' => boardPostSizes[p.id] ?? p.noteSize ?? 'M';
+                            const getPostH = (p: BoardPost) => { const s = getPostNoteSize(p); return s === 'S' ? 110 : s === 'M' ? 190 : NOTE_H_EST; };
+                            const getPostW = (p: BoardPost) => { const s = getPostNoteSize(p); return s === 'S' ? 160 : s === 'M' ? 210 : NOTE_W; };
                             const NOTE_GAP_Y = 36;
                             const COLS = 3;
                             const stableIdx = (id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xFFFFFF; return Math.abs(h); };
@@ -3198,7 +3238,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const dragBuffer = boardDragging ? 500 : 160;
                             const maxY = filtered.reduce((max, post, idx) => {
                                 const pos = getPos(post, idx);
-                                return Math.max(max, pos.y + NOTE_H_EST + dragBuffer);
+                                return Math.max(max, pos.y + getPostH(post) + dragBuffer);
                             }, guideOffsetY + GUIDE_H + dragBuffer);
 
                             const noteColors = ['#FFFEF0', '#F0FDF4', '#FFF7ED', '#F5F3FF', '#EFF6FF', '#FDF2F8'];
@@ -3224,6 +3264,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 return null;
                             };
                             const _getLinkH = (l: AffiliateLink) => {
+                                if (l.type === 'PANEL') return (l.height ?? 64);
                                 if (l.type === 'PHOTO') return (boardLinkSizes[l.id]?.h ?? l.height ?? 160);
                                 if (l.iconShape === 'square-xxs') return 44;
                                 const sqSize = _getLinkSize(l);
@@ -3237,6 +3278,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 return 56;
                             };
                             const _getLinkW = (l: AffiliateLink) => {
+                                if (l.type === 'PANEL') return (l.width ?? 200);
                                 if (l.type === 'PHOTO') return (boardLinkSizes[l.id]?.w ?? l.width ?? 220);
                                 return null;
                             };
@@ -3315,6 +3357,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 if (pendingDragRef.current && !boardDragging) {
                                     const p = pendingDragRef.current;
                                     if (Math.hypot(e.clientX - p.startMouseX, e.clientY - p.startMouseY) > DRAG_THRESHOLD) {
+                                        setDashCamTransition('none');
                                         setBoardDragging({ id: p.id, startMouseX: p.startMouseX, startMouseY: p.startMouseY, startNoteX: p.startNoteX, startNoteY: p.startNoteY });
                                         setSelectedBoardId(p.id);
                                         dashPanRef.current = null; // cancel any pan that started simultaneously
@@ -3324,6 +3367,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 if (pendingLinkDragRef.current && !boardLinkDragging) {
                                     const p = pendingLinkDragRef.current;
                                     if (Math.hypot(e.clientX - p.startMouseX, e.clientY - p.startMouseY) > DRAG_THRESHOLD) {
+                                        setDashCamTransition('none');
                                         setBoardLinkDragging({ id: p.id, startMouseX: p.startMouseX, startMouseY: p.startMouseY, startNoteX: p.startNoteX, startNoteY: p.startNoteY });
                                         dashPanRef.current = null;
                                         pendingLinkDragRef.current = null;
@@ -3442,6 +3486,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         height: `${canvasH}px`,
                                         transformOrigin: '0 0',
                                         transform: `translate(${bTx}px, ${bTy}px) scale(${dashCamera.zoom})`,
+                                        transition: dashCamTransition,
                                         background: 'linear-gradient(135deg, #FAFAF8 0%, #F5F3EF 100%)',
                                         backgroundImage: 'radial-gradient(circle, rgba(168,162,158,0.15) 1px, transparent 1px)',
                                         backgroundSize: '24px 24px',
@@ -3449,6 +3494,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     }}
                                     onMouseDown={e => {
                                         if (e.button !== 0) return;
+                                        setDashCamTransition('none');
                                         dashPanRef.current = { startX: e.clientX, startY: e.clientY, camX: dashCamera.x, camY: dashCamera.y };
                                     }}
                                     onMouseMove={handleCanvasMouseMove}
@@ -3525,6 +3571,68 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             } catch {}
                                             return null;
                                         })();
+                                        // ── Panel (wooden section label) ──
+                                        if (link.type === 'PANEL') {
+                                            const panelW = link.width ?? 200;
+                                            const panelH = link.height ?? 64;
+                                            const woodStyle = link.buttonColor ?? 'light';
+                                            const woodBg = woodStyle === 'dark'
+                                                ? 'linear-gradient(160deg,#7c5a38 0%,#5c3d20 40%,#6e4f2c 70%,#4a2e14 100%)'
+                                                : woodStyle === 'warm'
+                                                ? 'linear-gradient(160deg,#d4845a 0%,#b05a30 40%,#c86c40 70%,#8c3a14 100%)'
+                                                : 'linear-gradient(160deg,#e8d5b0 0%,#c9a870 35%,#dfc090 65%,#b8885a 100%)';
+                                            const textColor = woodStyle === 'light' ? '#5c3d20' : '#f5e8d0';
+                                            const nailColor = woodStyle === 'light' ? 'rgba(92,61,32,0.35)' : 'rgba(245,232,208,0.35)';
+                                            return (
+                                                <div
+                                                    key={link.id}
+                                                    className="absolute group"
+                                                    style={{
+                                                        left: currentPos.x,
+                                                        top: currentPos.y,
+                                                        width: panelW,
+                                                        height: panelH,
+                                                        zIndex: 50 + i,
+                                                        transform: isDraggingLink ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
+                                                        transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
+                                                    }}
+                                                    onTouchStart={e => handleNoteTouchStart(e, link.id, currentPos, 'LINK')}
+                                                    onTouchMove={handleNoteTouchMove}
+                                                >
+                                                    {/* Drag handle — full panel surface */}
+                                                    <div
+                                                        className="absolute inset-0 rounded-lg overflow-hidden"
+                                                        style={{
+                                                            background: woodBg,
+                                                            backgroundImage: 'repeating-linear-gradient(88deg, transparent, transparent 5px, rgba(0,0,0,0.04) 5px, rgba(0,0,0,0.04) 6px), repeating-linear-gradient(92deg, transparent, transparent 8px, rgba(255,255,255,0.06) 8px, rgba(255,255,255,0.06) 9px)',
+                                                            boxShadow: '0 3px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)',
+                                                            cursor: isDraggingLink ? 'grabbing' : 'grab',
+                                                            touchAction: 'none',
+                                                        }}
+                                                        onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
+                                                    >
+                                                        {/* Left nail */}
+                                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full" style={{ background: nailColor, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)' }}>
+                                                            <div className="absolute inset-[3px] rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} />
+                                                        </div>
+                                                        {/* Right nail */}
+                                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full" style={{ background: nailColor, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)' }}>
+                                                            <div className="absolute inset-[3px] rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} />
+                                                        </div>
+                                                        {/* Label */}
+                                                        <div className="absolute inset-0 flex items-center justify-center px-8">
+                                                            <span className="font-black tracking-widest uppercase text-sm leading-none select-none" style={{ color: textColor, textShadow: woodStyle === 'light' ? 'none' : '0 1px 3px rgba(0,0,0,0.4)', letterSpacing: '0.15em' }}>{link.title}</span>
+                                                        </div>
+                                                    </div>
+                                                    {/* Delete button */}
+                                                    <button
+                                                        className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-stone-700 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10"
+                                                        onClick={e => { e.stopPropagation(); saveBoardLinkChange((editedCreator.links || []).filter(l => l.id !== link.id)); }}
+                                                    ><Trash2 size={10} /></button>
+                                                </div>
+                                            );
+                                        }
+
                                         // ── Photo (plain image, free resize via edit mode) ──
                                         if (link.type === 'PHOTO') {
                                             const phW = boardLinkSizes[link.id]?.w ?? link.width ?? 220;
@@ -4036,17 +4144,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         const isDragging = boardDragging?.id === post.id;
                                         const isHovered = !isDragging && !boardDragging && selectedBoardId === post.id;
                                         const isActive = isDragging || isHovered;
-                                        const isReplying = boardReplyingId === post.id;
                                         const currentPos = boardPositions[post.id] || pos;
+                                        const noteSize = getPostNoteSize(post);
+                                        const noteW = getPostW(post);
 
                                         return (
                                             <div
                                                 key={post.id}
-                                                className="absolute flex flex-col"
+                                                className="absolute flex flex-col group/note"
                                                 style={{
                                                     left: currentPos.x,
                                                     top: currentPos.y,
-                                                    width: NOTE_W,
+                                                    width: noteW,
                                                     transform: isActive ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
                                                     transition: isDragging ? 'none' : 'transform 0.2s ease',
                                                     zIndex: isDragging ? 1000 : isActive ? 100 : 30 + i,
@@ -4079,9 +4188,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     }}
                                                     title="Drag to reposition"
                                                 />
-                                                {/* Note card — use fan-chosen color if available */}
+                                                {/* Note card */}
                                                 <div
-                                                    className="relative rounded-lg p-3 overflow-hidden"
+                                                    className={`relative rounded-lg overflow-hidden ${noteSize === 'S' ? 'p-2' : noteSize === 'M' ? 'p-2.5' : 'p-3'}`}
                                                     style={{
                                                         backgroundColor: post.noteColor ?? noteColors[nc],
                                                         backgroundImage: 'repeating-linear-gradient(to bottom, transparent, transparent 23px, rgba(0,0,0,0.04) 23px, rgba(0,0,0,0.04) 24px)',
@@ -4090,26 +4199,43 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         boxShadow: isDragging ? '0 16px 40px rgba(0,0,0,0.2)' : isActive ? '0 6px 20px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.07)',
                                                     }}
                                                 >
+                                                    {/* Size picker — shown on hover */}
+                                                    <div
+                                                        className="absolute top-1.5 right-1.5 opacity-0 group-hover/note:opacity-100 transition-opacity flex gap-0.5 z-10"
+                                                        onClick={e => e.stopPropagation()}
+                                                    >
+                                                        {(['S', 'M', 'L'] as const).map(sz => (
+                                                            <button
+                                                                key={sz}
+                                                                className={`w-5 h-5 rounded text-[8px] font-bold transition-colors ${noteSize === sz ? 'bg-stone-700 text-white' : 'bg-black/10 text-stone-500 hover:bg-black/20'}`}
+                                                                onClick={async () => {
+                                                                    setBoardPostSizes(prev => ({ ...prev, [post.id]: sz }));
+                                                                    setBoardPosts(prev => prev.map(p => p.id === post.id ? { ...p, noteSize: sz } : p));
+                                                                    await updateBoardPostSize(post.id, sz);
+                                                                }}
+                                                            >{sz}</button>
+                                                        ))}
+                                                    </div>
                                                     {/* Avatar + Name row */}
-                                                    <div className="flex items-center gap-2.5 mb-2">
-                                                        <div className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center flex-shrink-0 overflow-hidden border border-stone-200/60">
+                                                    <div className={`flex items-center ${noteSize === 'S' ? 'gap-1.5 mb-1' : 'gap-2 mb-1.5'}`}>
+                                                        <div className={`${noteSize === 'S' ? 'w-5 h-5' : noteSize === 'M' ? 'w-6 h-6' : 'w-8 h-8'} rounded-full bg-stone-800 flex items-center justify-center flex-shrink-0 overflow-hidden border border-stone-200/60`}>
                                                             {post.fanAvatarUrl
                                                                 ? <img src={post.fanAvatarUrl} className="w-full h-full object-cover" alt={post.fanName} />
-                                                                : <span className="text-white text-xs font-bold">{post.fanName.charAt(0).toUpperCase()}</span>}
+                                                                : <span className={`text-white font-bold ${noteSize === 'S' ? 'text-[8px]' : 'text-[10px]'}`}>{post.fanName.charAt(0).toUpperCase()}</span>}
                                                         </div>
-                                                        <p className="text-sm font-bold text-stone-800 truncate">{post.fanName}</p>
+                                                        <p className={`${noteSize === 'S' ? 'text-[10px]' : noteSize === 'M' ? 'text-xs' : 'text-sm'} font-bold text-stone-800 truncate`}>{post.fanName}</p>
                                                     </div>
                                                     {/* Message preview */}
-                                                    <p className="text-xs text-stone-500 line-clamp-2 mb-2.5 leading-relaxed">{post.content}</p>
+                                                    <p className={`${noteSize === 'S' ? 'text-[9px] line-clamp-1' : 'text-[10px] line-clamp-2'} text-stone-500 ${noteSize === 'S' ? 'mb-1.5' : 'mb-2'} leading-relaxed`}>{post.content}</p>
                                                     {/* Footer */}
-                                                    <div className="flex items-center justify-between gap-1 flex-wrap">
-                                                        {post.reply
-                                                            ? <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Answered</span>
-                                                            : <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100">Awaiting reply</span>}
-                                                        {post.isPinned
-                                                            ? <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 flex items-center gap-0.5"><Pin size={8} className="fill-current" /> Pinned</span>
-                                                            : null}
-                                                    </div>
+                                                    {noteSize !== 'S' && (
+                                                        <div className="flex items-center justify-between gap-1 flex-wrap">
+                                                            {post.reply
+                                                                ? <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Answered</span>
+                                                                : <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100">Awaiting reply</span>}
+                                                            {post.isPinned && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 flex items-center gap-0.5"><Pin size={8} className="fill-current" /> Pinned</span>}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
@@ -4120,7 +4246,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     </div>
 
                     {(() => {
-                        const isAddingSticker = boardAddingLink || boardAddingProduct || boardAddingSupport || boardAddingPhoto || boardAddingPlatform;
+                        const isAddingSticker = boardAddingLink || boardAddingProduct || boardAddingSupport || boardAddingPhoto || boardAddingPanel || boardAddingPlatform;
                         return (
                     <div className="sticky bottom-0 z-20 pb-4 pt-2 pointer-events-none">
                         <div className="pointer-events-auto flex items-end justify-center gap-3 flex-wrap px-4" style={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.12))' }}>
@@ -4325,6 +4451,66 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
                             )}
 
+                            {/* ── 🪵 Panel ── */}
+                            {boardAddingPanel && (
+                                <div className="flex flex-col" style={{ width: 240 }}>
+                                    <div className="h-4 w-12 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(161,110,60,0.45)' }} />
+                                    <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#FDF8F0', border: '2px solid rgba(161,110,60,0.3)' }}>
+                                        <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-2">🪵 Section Panel</p>
+                                        <input
+                                            className="w-full text-sm font-bold bg-white/70 border border-amber-200 rounded px-2 py-1.5 mb-2 outline-none focus:ring-1 focus:ring-amber-400"
+                                            placeholder="e.g. FASHION, OUTFITS, Q&A…"
+                                            value={boardPanelDraft.label}
+                                            autoFocus
+                                            onChange={e => setBoardPanelDraft(p => ({ ...p, label: e.target.value }))}
+                                        />
+                                        <p className="text-[9px] text-stone-400 font-semibold uppercase tracking-wider mb-1.5">Wood Style</p>
+                                        <div className="flex gap-1.5 mb-3">
+                                            {([
+                                                { id: 'light', label: 'Light', bg: 'linear-gradient(160deg,#e8d5b0,#c9a870,#dfc090,#b8885a)', border: '#c9a870' },
+                                                { id: 'dark',  label: 'Dark',  bg: 'linear-gradient(160deg,#7c5a38,#5c3d20,#6e4f2c,#4a2e14)', border: '#7c5a38' },
+                                                { id: 'warm',  label: 'Warm',  bg: 'linear-gradient(160deg,#d4845a,#b05a30,#c86c40,#8c3a14)', border: '#b05a30' },
+                                            ] as const).map(s => (
+                                                <button
+                                                    key={s.id}
+                                                    onClick={() => setBoardPanelDraft(p => ({ ...p, style: s.id }))}
+                                                    className="flex-1 py-1.5 rounded-lg text-[9px] font-bold transition-all"
+                                                    style={{
+                                                        background: s.bg,
+                                                        color: s.id === 'light' ? '#5c3d20' : '#f5e8d0',
+                                                        border: boardPanelDraft.style === s.id ? `2px solid ${s.border}` : '2px solid transparent',
+                                                        boxShadow: boardPanelDraft.style === s.id ? '0 0 0 2px rgba(0,0,0,0.15)' : 'none',
+                                                    }}
+                                                >{s.label}</button>
+                                            ))}
+                                        </div>
+                                        <div className="flex gap-1.5">
+                                            <button
+                                                className="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-amber-700 text-white hover:bg-amber-800 transition-colors disabled:opacity-40"
+                                                disabled={!boardPanelDraft.label.trim()}
+                                                onClick={async () => {
+                                                    const label = boardPanelDraft.label.trim();
+                                                    if (!label) return;
+                                                    const newPanel: AffiliateLink = {
+                                                        id: `panel_${Date.now()}`,
+                                                        title: label,
+                                                        url: '',
+                                                        type: 'PANEL',
+                                                        buttonColor: boardPanelDraft.style,
+                                                        width: Math.max(160, Math.min(360, label.length * 18 + 80)),
+                                                        height: 64,
+                                                    };
+                                                    await saveBoardLinkChange([...(editedCreator.links || []), newPanel]);
+                                                    setBoardPanelDraft({ label: '', style: 'light' });
+                                                    _closeAllBoardAdding();
+                                                }}
+                                            >Add Panel</button>
+                                            <button className="flex-1 py-1.5 text-[10px] font-bold rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-50 transition-colors" onClick={_closeAllBoardAdding}>Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* ── 📱 Platform ── */}
                             {boardAddingPlatform && (
                                 <div className="flex flex-col" style={{ width: 240 }}>
@@ -4427,6 +4613,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(16,185,129,0.35)' }} />
                                     <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingPhoto(true); }}>
                                         🖼 Photo
+                                    </button>
+                                </div>
+                                <div className="flex flex-col" style={{ width: 130 }}>
+                                    <div className="h-4 w-10 mx-auto rounded-b-sm flex-shrink-0" style={{ background: 'rgba(161,110,60,0.45)' }} />
+                                    <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-amber-500 hover:text-amber-700 hover:bg-amber-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingPanel(true); }}>
+                                        🪵 Panel
                                     </button>
                                 </div>
                                 <div className="flex flex-col" style={{ width: 110 }}>

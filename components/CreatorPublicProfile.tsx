@@ -898,6 +898,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       return null;
                                   };
                                   const _getLinkH = (l: typeof allPublicLinks[0]) => {
+                                      if (l.type === 'PANEL') return l.height ?? 64;
                                       if (l.type === 'PHOTO') return l.height ?? 160;
                                       if (l.iconShape === 'square-xxs') return 44;
                                       const sqSize = _getLinkSize(l);
@@ -979,7 +980,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       const sqSize = _getLinkSize(link);
                                       const effStyle = link.displayStyle || (link.iconShape ? 'icon' : 'wide');
                                       const cs = link.iconShape === 'square-s' ? 'S' : link.iconShape === 'square-l' ? 'L' : 'M';
-                                      const w = link.type === 'PHOTO' ? (link.width ?? 220) : (effStyle === 'icon' ? (sqSize || PROFILE_W) : effStyle === 'thumbnail' ? (cs === 'S' ? 120 : cs === 'L' ? PROFILE_W : 160) : (cs === 'S' ? 110 : cs === 'L' ? getWideWidth(link.title) : 140));
+                                      const w = link.type === 'PANEL' ? (link.width ?? 200) : link.type === 'PHOTO' ? (link.width ?? 220) : (effStyle === 'icon' ? (sqSize || PROFILE_W) : effStyle === 'thumbnail' ? (cs === 'S' ? 120 : cs === 'L' ? PROFILE_W : 160) : (cs === 'S' ? 110 : cs === 'L' ? getWideWidth(link.title) : 140));
                                       return Math.max(max, pos.x + w);
                                   }, LINK_START_X + PROFILE_W);
                                   const maxY = pinnedPosts.reduce((max, p) => {
@@ -1158,6 +1159,35 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                       const pos = getLinkPos(link, li);
 
                                                       const linkRot = rotations[(stableIdx(link.id) + li) % rotations.length];
+
+                                                      // ── Panel (wooden section label) ──
+                                                      if (link.type === 'PANEL') {
+                                                          const panelW = link.width ?? 200;
+                                                          const panelH = link.height ?? 64;
+                                                          const woodStyle = link.buttonColor ?? 'light';
+                                                          const woodBg = woodStyle === 'dark'
+                                                              ? 'linear-gradient(160deg,#7c5a38 0%,#5c3d20 40%,#6e4f2c 70%,#4a2e14 100%)'
+                                                              : woodStyle === 'warm'
+                                                              ? 'linear-gradient(160deg,#d4845a 0%,#b05a30 40%,#c86c40 70%,#8c3a14 100%)'
+                                                              : 'linear-gradient(160deg,#e8d5b0 0%,#c9a870 35%,#dfc090 65%,#b8885a 100%)';
+                                                          const textColor = woodStyle === 'light' ? '#5c3d20' : '#f5e8d0';
+                                                          const nailColor = woodStyle === 'light' ? 'rgba(92,61,32,0.35)' : 'rgba(245,232,208,0.35)';
+                                                          return (
+                                                              <div
+                                                                  key={link.id}
+                                                                  className="absolute"
+                                                                  style={{ left: pos.x, top: pos.y, width: panelW, height: panelH, zIndex: 40 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
+                                                              >
+                                                                  <div className="w-full h-full rounded-lg overflow-hidden relative" style={{ background: woodBg, backgroundImage: 'repeating-linear-gradient(88deg, transparent, transparent 5px, rgba(0,0,0,0.04) 5px, rgba(0,0,0,0.04) 6px), repeating-linear-gradient(92deg, transparent, transparent 8px, rgba(255,255,255,0.06) 8px, rgba(255,255,255,0.06) 9px)', boxShadow: '0 3px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)' }}>
+                                                                      <div className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full" style={{ background: nailColor, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)' }}><div className="absolute inset-[3px] rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} /></div>
+                                                                      <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full" style={{ background: nailColor, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)' }}><div className="absolute inset-[3px] rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} /></div>
+                                                                      <div className="absolute inset-0 flex items-center justify-center px-8">
+                                                                          <span className="font-black uppercase text-sm leading-none select-none" style={{ color: textColor, textShadow: woodStyle === 'light' ? 'none' : '0 1px 3px rgba(0,0,0,0.4)', letterSpacing: '0.15em' }}>{link.title}</span>
+                                                                      </div>
+                                                                  </div>
+                                                              </div>
+                                                          );
+                                                      }
 
                                                       // ── Photo (plain image, no sticker chrome) ──
                                                       if (link.type === 'PHOTO') {

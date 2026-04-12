@@ -27,7 +27,7 @@ export interface AffiliateLink {
   url: string;
   fileName?: string;
   isPromoted?: boolean;
-  type?: 'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT' | 'PHOTO';
+  type?: 'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT' | 'PHOTO' | 'PANEL';
   price?: number; // In Credits
   thumbnailUrl?: string;
   iconShape?: 'circle' | 'rounded' | 'square' | 'square-xs' | 'square-s' | 'square-m' | 'square-l';

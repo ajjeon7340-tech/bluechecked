@@ -2686,6 +2686,7 @@ export interface BoardPost {
     attachmentUrl: string | null;
     replyAttachmentUrl: string | null;
     noteColor: string | null;
+    noteSize: 'S' | 'M' | 'L' | null;
     isPinned: boolean;
     isAddedToChat: boolean;
 }
@@ -2707,6 +2708,7 @@ const mapBoardPost = (row: any): BoardPost => ({
     attachmentUrl: row.attachment_url ?? null,
     replyAttachmentUrl: row.reply_attachment_url ?? null,
     noteColor: row.note_color ?? null,
+    noteSize: (row.note_size as 'S' | 'M' | 'L') ?? null,
     isPinned: row.is_pinned ?? false,
     isAddedToChat: row.is_added_to_chat ?? false,
 });
@@ -2916,4 +2918,13 @@ export const updateBoardPostPosition = async (
         .update({ position_x: positionX, position_y: positionY, display_order: displayOrder })
         .eq('id', postId);
     if (error) console.warn('[Board] updateBoardPostPosition:', error);
+};
+
+export const updateBoardPostSize = async (postId: string, noteSize: 'S' | 'M' | 'L'): Promise<void> => {
+    if (!isConfigured) return;
+    const { error } = await supabase
+        .from('board_posts')
+        .update({ note_size: noteSize })
+        .eq('id', postId);
+    if (error) console.warn('[Board] updateBoardPostSize:', error);
 };
