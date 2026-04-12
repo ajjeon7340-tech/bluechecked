@@ -198,17 +198,24 @@ const ProfilePreviewCard: React.FC<{ creator: CreatorProfile; compact?: boolean 
     return (
         <div className="bg-[#FAF9F6] rounded-xl overflow-hidden">
             {/* Main profile card */}
-            <div className="border border-stone-200/60 relative" style={{ backgroundColor: creator.bannerGradient || '#ffffff', borderRadius: cardRadius }}>
+            <div className="border border-stone-200/60 relative overflow-hidden" style={{ backgroundColor: creator.bannerGradient || '#ffffff', borderRadius: cardRadius }}>
                     <div className="absolute top-3 left-3 z-30">
-                        <DiemLogo size={compact ? 16 : 18} className="text-stone-800" />
+                        <DiemLogo size={compact ? 16 : 18} className={creator.bannerDesign && creator.bannerPhotoUrl ? 'text-white' : 'text-stone-800'} />
                     </div>
                     <div className="absolute top-3 right-3 z-30">
-                        <div className="w-6 h-6 bg-stone-100 rounded-full flex items-center justify-center">
-                            <ExternalLink size={10} className="text-stone-400" />
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${creator.bannerDesign && creator.bannerPhotoUrl ? 'bg-black/30' : 'bg-stone-100'}`}>
+                            <ExternalLink size={10} className={creator.bannerDesign && creator.bannerPhotoUrl ? 'text-white' : 'text-stone-400'} />
                         </div>
                     </div>
+                    {/* Banner photo */}
+                    {creator.bannerDesign && creator.bannerPhotoUrl && (
+                        <div className={`w-full ${compact ? 'h-16' : 'h-24'} relative`}>
+                            <img src={creator.bannerPhotoUrl} alt="Banner" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/20" />
+                        </div>
+                    )}
                     {/* Avatar + bio + name */}
-                    <div className="px-3 pt-6 pb-4 flex flex-col items-center text-center gap-2">
+                    <div className={`px-3 pb-4 flex flex-col items-center text-center gap-2 ${creator.bannerDesign && creator.bannerPhotoUrl ? '-mt-7' : 'pt-6'}`}>
                     {/* Bio bubble is absolutely positioned above avatar — add top padding to make room */}
                     <div className={`relative flex flex-col items-center ${(creator.showBio ?? true) && creator.bio ? (compact ? 'mt-10' : 'mt-14') : ''}`}>
                         {/* Bio thought bubble — absolute, floats above avatar */}
@@ -226,7 +233,7 @@ const ProfilePreviewCard: React.FC<{ creator: CreatorProfile; compact?: boolean 
                             </div>
                         )}
                         {/* Avatar */}
-                        <div className={`${compact ? 'w-14 h-14' : 'w-20 h-20'} rounded-full p-0.5 border border-stone-100 shadow-sm bg-white overflow-hidden`}>
+                        <div className={`${compact ? 'w-14 h-14' : 'w-20 h-20'} rounded-full overflow-hidden bg-white ${creator.bannerDesign && creator.bannerPhotoUrl ? 'border-2 border-white shadow-lg' : 'p-0.5 border border-stone-100 shadow-sm'}`}>
                             {creator.avatarUrl
                                 ? <img src={creator.avatarUrl} className="w-full h-full rounded-full object-cover" alt="" />
                                 : <div className="w-full h-full rounded-full bg-stone-100 flex items-center justify-center"><User size={compact ? 18 : 28} className="text-stone-300" /></div>
@@ -550,6 +557,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bannerFileInputRef = useRef<HTMLInputElement>(null);
   const productFileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingProduct, setIsUploadingProduct] = useState(false);
 
@@ -1738,6 +1746,28 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
           };
           reader.readAsDataURL(file);
       }
+  };
+
+  const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const MAX_W = 1200, MAX_H = 600;
+              let { width, height } = img;
+              if (width > MAX_W) { height = height * MAX_W / width; width = MAX_W; }
+              if (height > MAX_H) { width = width * MAX_H / height; height = MAX_H; }
+              canvas.width = width; canvas.height = height;
+              canvas.getContext('2d')?.drawImage(img, 0, 0, width, height);
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+              setEditedCreator(prev => ({ ...prev, bannerPhotoUrl: dataUrl }));
+          };
+          img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
   };
 
   const handleTogglePlatform = (platformId: string) => {
@@ -5708,6 +5738,48 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             );
                                         })}
                                     </div>
+                                </div>
+
+                                {/* Banner Design */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div>
+                                            <label className="block text-sm font-medium text-stone-700">Banner Design</label>
+                                            <p className="text-[10px] text-stone-400 mt-0.5">Show a wide cover photo at the top of your profile card.</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setEditedCreator(p => ({ ...p, bannerDesign: !p.bannerDesign }))}
+                                            className={`relative w-10 h-5.5 rounded-full transition-colors flex-shrink-0 ${editedCreator.bannerDesign ? 'bg-stone-800' : 'bg-stone-200'}`}
+                                            style={{ width: 40, height: 22 }}
+                                        >
+                                            <span
+                                                className="absolute top-0.5 left-0.5 w-4.5 h-4.5 bg-white rounded-full shadow transition-transform"
+                                                style={{ width: 18, height: 18, transform: editedCreator.bannerDesign ? 'translateX(18px)' : 'translateX(0)' }}
+                                            />
+                                        </button>
+                                    </div>
+                                    {editedCreator.bannerDesign && (
+                                        <div
+                                            className="relative w-full h-32 rounded-xl overflow-hidden border-2 border-dashed border-stone-300 cursor-pointer hover:border-stone-500 transition-colors flex items-center justify-center bg-stone-50"
+                                            onClick={() => bannerFileInputRef.current?.click()}
+                                        >
+                                            {editedCreator.bannerPhotoUrl ? (
+                                                <>
+                                                    <img src={editedCreator.bannerPhotoUrl} className="absolute inset-0 w-full h-full object-cover" alt="Banner" />
+                                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                                        <span className="text-white text-xs font-semibold flex items-center gap-1.5"><Camera size={14} /> Change Photo</span>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="flex flex-col items-center gap-2 text-stone-400">
+                                                    <Camera size={20} />
+                                                    <span className="text-xs font-medium">Upload Banner Photo</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    <input type="file" ref={bannerFileInputRef} className="hidden" accept="image/*" onChange={handleBannerFileChange} />
                                 </div>
                             </>)}
 

@@ -76,6 +76,8 @@ export interface CreatorProfile {
   platforms?: (string | { id: string; url: string })[];
   rankingTitle?: string;
   bannerGradient?: string;
+  bannerPhotoUrl?: string;
+  bannerDesign?: boolean;
   diemEnabled?: boolean;
   diemButtonColor?: string;
   diemIcon?: string;

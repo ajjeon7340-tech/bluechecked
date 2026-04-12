@@ -783,21 +783,30 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
           {/* 1. MINIMAL PROFILE HEADER */}
           <div className="w-full">
-             <div className="border border-stone-200/60 relative transition-all" style={{ backgroundColor: creator.bannerGradient || '#ffffff', borderRadius: cardCornerRadiusValue }}>
+             <div className="border border-stone-200/60 relative transition-all overflow-hidden" style={{ backgroundColor: creator.bannerGradient || '#ffffff', borderRadius: cardCornerRadiusValue }}>
                 <div className="absolute top-4 left-4 z-30">
                     <div onClick={onCreateOwn} className="flex items-center cursor-pointer hover:opacity-70 transition-opacity">
-                      <DiemLogo size={20} className="text-stone-800" />
+                      <DiemLogo size={20} className={editedCreator.bannerDesign && editedCreator.bannerPhotoUrl ? 'text-white' : 'text-stone-800'} />
                     </div>
                 </div>
                 <div className="absolute top-4 right-4 z-30">
-                    <button onClick={handleShare} className="w-9 h-9 bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-700 rounded-full transition-colors flex items-center justify-center flex-shrink-0" title={t('common.share')}>
+                    <button onClick={handleShare} className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center flex-shrink-0 ${editedCreator.bannerDesign && editedCreator.bannerPhotoUrl ? 'bg-black/30 hover:bg-black/50 text-white' : 'bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-700'}`} title={t('common.share')}>
                         <Share size={16} />
                     </button>
                 </div>
-                <div className="px-4 pt-8 pb-4 sm:px-6 sm:pt-8 sm:pb-6 relative z-10">
+
+                {/* Banner photo */}
+                {editedCreator.bannerDesign && editedCreator.bannerPhotoUrl && (
+                    <div className="w-full h-36 sm:h-44 relative">
+                        <img src={editedCreator.bannerPhotoUrl} alt="Banner" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/20" />
+                    </div>
+                )}
+
+                <div className={`px-4 pb-4 sm:px-6 sm:pb-6 relative z-10 ${editedCreator.bannerDesign && editedCreator.bannerPhotoUrl ? '-mt-10' : 'pt-8 sm:pt-8'}`}>
                     <div className="flex flex-col items-center text-center gap-2">
                         {/* Avatar */}
-                        <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border border-stone-100 shadow-sm bg-white flex-shrink-0 mx-auto">
+                        <div className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-white flex-shrink-0 mx-auto ${editedCreator.bannerDesign && editedCreator.bannerPhotoUrl ? 'border-4 border-white shadow-lg' : 'border border-stone-100 shadow-sm'}`}>
                            {!imgError && (editedCreator.avatarUrl || DEFAULT_AVATAR) ? (
                                <img src={editedCreator.avatarUrl || DEFAULT_AVATAR} alt={editedCreator.displayName} className="w-full h-full rounded-full object-cover bg-stone-100" onError={() => setImgError(true)} />
                            ) : (
