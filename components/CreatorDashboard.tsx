@@ -3192,6 +3192,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 if (l.iconShape === 'square-m') return 56;
                                 if (l.iconShape === 'square-l') return 84;
                                 if (l.type === 'DIGITAL_PRODUCT') return 104;
+                                if (l.url?.match(/youtube\.com|youtu\.be/)) return 162;
                                 return 56;
                             };
                             const _getLinkW = (l: AffiliateLink) => {
@@ -3353,15 +3354,26 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             }, 0);
                             const canvasH = Math.max(maxY, linkMaxY);
 
+                            const linkMaxX = visibleBoardLinks.reduce((max, link, idx) => {
+                                const pos = getLinkPos(link, idx);
+                                const isIconMode = link.displayStyle === 'icon' || (!link.thumbnailUrl && link.type !== 'PHOTO' && link.type !== 'DIGITAL_PRODUCT' && !link.url?.match(/youtube\.com|youtu\.be/));
+                                const isThumbnailMode = !isIconMode && (link.displayStyle === 'thumbnail' || !!link.thumbnailUrl || link.type === 'DIGITAL_PRODUCT' || !!link.url?.match(/youtube\.com|youtu\.be/));
+                                const cardSize = !isIconMode ? (link.iconShape === 'square-s' ? 'S' : link.iconShape === 'square-l' ? 'L' : 'M') : 'M';
+                                const w = isIconMode ? (_getLinkSize(link) || LINK_W) : isThumbnailMode ? (cardSize === 'S' ? 120 : cardSize === 'L' ? LINK_W : 160) : (cardSize === 'S' ? 110 : cardSize === 'L' ? getWideWidth(link.title) : 140);
+                                return Math.max(max, pos.x + w);
+                            }, 0);
+                            const canvasW = Math.max(guideOffsetX + GUIDE_DESKTOP_W, linkMaxX) + BOARD_PAD;
+
                             const linkColors = ['#FFF7ED', '#F0FDF4', '#EFF6FF', '#FDF2F8', '#FFFEF0', '#F5F3FF'];
                             const linkTapes = ['rgba(240,160,80,0.45)', 'rgba(110,200,140,0.45)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)', 'rgba(200,193,185,0.55)', 'rgba(180,150,240,0.4)'];
 
                             return (
                                 <div
                                     ref={boardCanvasRef}
-                                    className="relative w-full select-none"
+                                    className="relative select-none"
                                     style={{
                                         minHeight: `${canvasH}px`,
+                                        minWidth: `${canvasW}px`,
                                         background: 'linear-gradient(135deg, #FAFAF8 0%, #F5F3EF 100%)',
                                         backgroundImage: 'radial-gradient(circle, rgba(168,162,158,0.15) 1px, transparent 1px)',
                                         backgroundSize: '24px 24px',

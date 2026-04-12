@@ -84,7 +84,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const boardInitRef    = useRef(false);
   const boardAnimating  = useRef(false);
   const boardDragRef    = useRef<{ startX: number; startY: number; camX: number; camY: number } | null>(null);
-  const boardTouchRef   = useRef<{ startX: number; startY: number; camX: number; camY: number } | null>(null);
+  const boardTouchRef   = useRef<{ startX: number; startY: number; camX: number; camY: number; pinchDist?: number; camZoom?: number } | null>(null);
   const [boardCamera, setBoardCamera]             = useState<{ x: number; y: number; zoom: number }>({ x: 0, y: 0, zoom: 1 });
   const [boardAnimReady, setBoardAnimReady]       = useState(false);
   const [boardCamTransition, setBoardCamTransition] = useState('none');
@@ -297,11 +297,28 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     const handler = (e: WheelEvent) => {
         if (boardAnimating.current) return;
         e.preventDefault();
-        setBoardCamera(prev => ({
-            ...prev,
-            x: prev.x + e.deltaX / prev.zoom,
-            y: prev.y + e.deltaY / prev.zoom,
-        }));
+        if (e.metaKey || e.altKey || e.ctrlKey) {
+            // Cmd/Alt/Ctrl + scroll → zoom centered on cursor
+            const rect = el.getBoundingClientRect();
+            const cx = e.clientX - rect.left;
+            const cy = e.clientY - rect.top;
+            const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
+            setBoardCamera(prev => {
+                const newZoom = Math.min(3, Math.max(0.2, prev.zoom * zoomDelta));
+                const W = el.clientWidth;
+                const H = el.clientHeight;
+                // World point under cursor stays fixed
+                const wx = prev.x + (cx - W / 2) / prev.zoom;
+                const wy = prev.y + (cy - H / 2) / prev.zoom;
+                return { x: wx + (W / 2 - cx) / newZoom, y: wy + (H / 2 - cy) / newZoom, zoom: newZoom };
+            });
+        } else {
+            setBoardCamera(prev => ({
+                ...prev,
+                x: prev.x + e.deltaX / prev.zoom,
+                y: prev.y + e.deltaY / prev.zoom,
+            }));
+        }
     };
     el.addEventListener('wheel', handler, { passive: false });
     return () => el.removeEventListener('wheel', handler);
@@ -890,6 +907,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       if (l.iconShape === 'square-m') return 56;
                                       if (l.iconShape === 'square-l') return 84;
                                       if (l.type === 'DIGITAL_PRODUCT') return 104;
+                                      if (l.url?.match(/youtube\.com|youtu\.be/)) return 162;
                                       return 56;
                                   };
 
@@ -1009,16 +1027,40 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                           onMouseLeave={() => { boardDragRef.current = null; setBoardIsDragging(false); }}
                                           onTouchStart={e => {
                                               if (boardAnimating.current) return;
-                                              const t = e.touches[0];
-                                              boardTouchRef.current = { startX: t.clientX, startY: t.clientY, camX: boardCamera.x, camY: boardCamera.y };
+                                              const t0 = e.touches[0];
+                                              if (e.touches.length === 2) {
+                                                  const t1 = e.touches[1];
+                                                  const dist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
+                                                  boardTouchRef.current = { startX: (t0.clientX + t1.clientX) / 2, startY: (t0.clientY + t1.clientY) / 2, camX: boardCamera.x, camY: boardCamera.y, pinchDist: dist, camZoom: boardCamera.zoom };
+                                              } else {
+                                                  boardTouchRef.current = { startX: t0.clientX, startY: t0.clientY, camX: boardCamera.x, camY: boardCamera.y };
+                                              }
                                           }}
                                           onTouchMove={e => {
                                               if (!boardTouchRef.current) return;
                                               e.preventDefault();
-                                              const t = e.touches[0];
-                                              const dx = t.clientX - boardTouchRef.current.startX;
-                                              const dy = t.clientY - boardTouchRef.current.startY;
-                                              setBoardCamera(prev => ({ ...prev, x: boardTouchRef.current!.camX - dx / prev.zoom, y: boardTouchRef.current!.camY - dy / prev.zoom }));
+                                              if (e.touches.length === 2 && boardTouchRef.current.pinchDist != null && boardTouchRef.current.camZoom != null) {
+                                                  const t0 = e.touches[0], t1 = e.touches[1];
+                                                  const dist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
+                                                  const scale = dist / boardTouchRef.current.pinchDist;
+                                                  const newZoom = Math.min(3, Math.max(0.2, boardTouchRef.current.camZoom * scale));
+                                                  const midX = (t0.clientX + t1.clientX) / 2;
+                                                  const midY = (t0.clientY + t1.clientY) / 2;
+                                                  const el = boardScrollRef.current;
+                                                  const rect = el ? el.getBoundingClientRect() : { left: 0, top: 0, width: 0, height: 0 };
+                                                  const cx = midX - rect.left;
+                                                  const cy = midY - rect.top;
+                                                  const W = rect.width, H = rect.height;
+                                                  const origZoom = boardTouchRef.current.camZoom;
+                                                  const wx = boardTouchRef.current.camX + (cx - W / 2) / origZoom;
+                                                  const wy = boardTouchRef.current.camY + (cy - H / 2) / origZoom;
+                                                  setBoardCamera({ x: wx + (W / 2 - cx) / newZoom, y: wy + (H / 2 - cy) / newZoom, zoom: newZoom });
+                                              } else {
+                                                  const t = e.touches[0];
+                                                  const dx = t.clientX - boardTouchRef.current.startX;
+                                                  const dy = t.clientY - boardTouchRef.current.startY;
+                                                  setBoardCamera(prev => ({ ...prev, x: boardTouchRef.current!.camX - dx / prev.zoom, y: boardTouchRef.current!.camY - dy / prev.zoom }));
+                                              }
                                           }}
                                           onTouchEnd={() => { boardTouchRef.current = null; }}
                                       >
