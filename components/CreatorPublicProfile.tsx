@@ -796,66 +796,14 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                 </div>
 
                 {/* Banner photo */}
-                {editedCreator.bannerDesign && editedCreator.bannerPhotoUrl && (
+                {editedCreator.bannerDesign && editedCreator.bannerPhotoUrl ? (
                     <div className="w-full h-36 sm:h-44 relative">
                         <img src={editedCreator.bannerPhotoUrl} alt="Banner" className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/20" />
                     </div>
+                ) : (
+                    <div className="w-full h-16 sm:h-20" />
                 )}
-
-                <div className={`px-4 pb-4 sm:px-6 sm:pb-6 relative z-10 ${editedCreator.bannerDesign && editedCreator.bannerPhotoUrl ? '-mt-10' : 'pt-8 sm:pt-8'}`}>
-                    <div className="flex flex-col items-center text-center gap-2">
-                        {/* Avatar */}
-                        <div className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-white flex-shrink-0 mx-auto ${editedCreator.bannerDesign && editedCreator.bannerPhotoUrl ? 'border-4 border-white shadow-lg' : 'border border-stone-100 shadow-sm'}`}>
-                           {!imgError && (editedCreator.avatarUrl || DEFAULT_AVATAR) ? (
-                               <img src={editedCreator.avatarUrl || DEFAULT_AVATAR} alt={editedCreator.displayName} className="w-full h-full rounded-full object-cover bg-stone-100" onError={() => setImgError(true)} />
-                           ) : (
-                               <div className="w-full h-full rounded-full bg-stone-100 flex items-center justify-center text-stone-300"><User size={36} /></div>
-                           )}
-                        </div>
-                        
-                        {/* Likes & Rating (Moved below avatar) */}
-                        {!isCustomizeMode && ((creator.showLikes ?? true) || (creator.showRating ?? true)) && (
-                            <div className="flex items-center justify-center gap-2 -mt-3 relative z-20">
-                                {(creator.showLikes ?? true) && (
-                                <button
-                                    onClick={handleLike}
-                                    className={`flex items-center justify-center gap-1 bg-white px-3 py-1 rounded-full border border-stone-100 text-xs font-bold shadow-sm transition-colors ${hasLiked ? 'text-pink-600 border-pink-100' : 'text-stone-500 hover:text-pink-600 hover:bg-pink-50'}`}
-                                >
-                                    <Heart size={12} className={hasLiked ? "fill-current" : ""} />
-                                    <span>{likes}</span>
-                                </button>
-                                )}
-
-                                {(creator.showRating ?? true) && (
-                                <div className="relative group/tooltip flex items-center justify-center gap-1 bg-white px-3 py-1 rounded-full border border-stone-100 text-xs font-bold text-stone-500 shadow-sm cursor-help">
-                                    <Star size={12} className="text-yellow-400 fill-yellow-400" />
-                                    <span className="text-stone-700">{creator.stats.averageRating.toFixed(1)}</span>
-                                    
-                                    {/* Response Time Tooltip */}
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[160px] bg-stone-900 text-white text-[10px] font-medium py-2 px-3 rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-all duration-200 pointer-events-none z-50 text-center shadow-xl normal-case tracking-normal whitespace-normal transform translate-y-2 group-hover/tooltip:translate-y-0">
-                                        <div className="font-bold text-emerald-400 mb-0.5 flex items-center justify-center gap-1">
-                                            <Clock size={10} /> {creator.stats.responseTimeAvg} {t('profile.response')}
-                                        </div>
-                                        <div className="text-stone-300 leading-snug">
-                                            {getResponseTimeTooltip(creator.stats.responseTimeAvg, t)}
-                                        </div>
-                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-stone-900"></div>
-                                    </div>
-                                </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Name + handle + stats */}
-                        <div className="flex-1 min-w-0 mt-1 w-full text-center">
-                            <h1 className="text-xl sm:text-2xl font-bold text-stone-900 leading-tight truncate">{creator.displayName}</h1>
-                            {creator.handle && creator.handle !== '@user' && (
-                                <p className="text-xs font-medium text-stone-400 mt-0.5">{creator.handle}</p>
-                            )}
-                        </div>
-                    </div>
-                </div>
              </div>
           </div>
 

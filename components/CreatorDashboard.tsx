@@ -208,72 +208,14 @@ const ProfilePreviewCard: React.FC<{ creator: CreatorProfile; compact?: boolean 
                         </div>
                     </div>
                     {/* Banner photo */}
-                    {creator.bannerDesign && creator.bannerPhotoUrl && (
+                    {creator.bannerDesign && creator.bannerPhotoUrl ? (
                         <div className={`w-full ${compact ? 'h-16' : 'h-24'} relative`}>
                             <img src={creator.bannerPhotoUrl} alt="Banner" className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/20" />
                         </div>
+                    ) : (
+                        <div className={`w-full ${compact ? 'h-10' : 'h-14'}`} />
                     )}
-                    {/* Avatar + bio + name */}
-                    <div className={`px-3 pb-4 flex flex-col items-center text-center gap-2 ${creator.bannerDesign && creator.bannerPhotoUrl ? '-mt-7' : 'pt-6'}`}>
-                    {/* Bio bubble is absolutely positioned above avatar — add top padding to make room */}
-                    <div className={`relative flex flex-col items-center ${(creator.showBio ?? true) && creator.bio ? (compact ? 'mt-10' : 'mt-14') : ''}`}>
-                        {/* Bio thought bubble — absolute, floats above avatar */}
-                        {(creator.showBio ?? true) && creator.bio && (
-                            <div className="absolute bottom-[80%] left-1/2 -translate-x-1/2 z-30" style={{ width: 'max-content', maxWidth: compact ? '160px' : '200px' }}>
-                                <div className="bg-white rounded-[16px] px-3 py-2 shadow-sm border border-stone-200/60">
-                                    <p className={`${compact ? 'text-[10px]' : 'text-xs'} text-stone-800 leading-snug font-medium text-center`}>
-                                        {creator.bio.length > (compact ? 60 : 100) ? creator.bio.slice(0, compact ? 60 : 100) + '…' : creator.bio}
-                                    </p>
-                                </div>
-                                <div className="relative h-3 mt-0.5">
-                                    <div className="absolute left-3 top-0 w-2 h-2 bg-white rounded-full shadow-sm border border-stone-200/60"></div>
-                                    <div className="absolute left-5 top-1.5 w-1.5 h-1.5 bg-white rounded-full shadow-sm border border-stone-200/60"></div>
-                                </div>
-                            </div>
-                        )}
-                        {/* Avatar */}
-                        <div className={`${compact ? 'w-14 h-14' : 'w-20 h-20'} rounded-full overflow-hidden bg-white ${creator.bannerDesign && creator.bannerPhotoUrl ? 'border-2 border-white shadow-lg' : 'p-0.5 border border-stone-100 shadow-sm'}`}>
-                            {creator.avatarUrl
-                                ? <img src={creator.avatarUrl} className="w-full h-full rounded-full object-cover" alt="" />
-                                : <div className="w-full h-full rounded-full bg-stone-100 flex items-center justify-center"><User size={compact ? 18 : 28} className="text-stone-300" /></div>
-                            }
-                        </div>
-                        {/* Like / rating badges — overlap bottom of avatar */}
-                        <div className="flex items-center gap-1.5 -mt-3 relative z-10">
-                            {(creator.showLikes ?? true) && (
-                                <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-full border border-stone-100 text-[10px] font-bold text-stone-500 shadow-sm">
-                                    <Heart size={10} /> <span>{creator.stats?.totalMessages || 0}</span>
-                                </div>
-                            )}
-                            {(creator.showRating ?? true) && (
-                                <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-full border border-stone-100 text-[10px] font-bold text-stone-500 shadow-sm">
-                                    <Star size={10} className="text-yellow-400 fill-yellow-400" /> <span>{(creator.stats?.averageRating || 0).toFixed(1)}</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    {/* Name + handle — shown clearly below badges */}
-                    <div className="mt-1">
-                        <p className={`${compact ? 'text-sm' : 'text-base'} font-bold text-stone-900 leading-tight`}>{creator.displayName || 'Your Name'}</p>
-                        {creator.handle && creator.handle !== '@user' && (
-                            <p className={`${compact ? 'text-[10px]' : 'text-xs'} text-stone-500 mt-0.5`}>{creator.handle}</p>
-                        )}
-                    </div>
-                    {/* Social platforms */}
-                    {platforms.length > 0 && (
-                        <div className="flex items-center justify-center gap-2 flex-wrap">
-                            {platforms.slice(0, compact ? 5 : 8).map(p => {
-                                const pid = typeof p === 'string' ? p : p.id;
-                                return (
-                                    <div key={pid} className={`${compact ? 'w-6 h-6' : 'w-7 h-7'} flex items-center justify-center rounded-full bg-stone-50 border border-stone-100`}>
-                                        {getPreviewPlatformIcon(pid)}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
             </div>
 
             {/* Post a Diem CTA */}
@@ -6433,49 +6375,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     <Button size="sm" onClick={handleAddLink} type="button" fullWidth className="mt-2">
                                          <Plus size={16} className="mr-1"/> Add {newLinkType === 'DIGITAL_PRODUCT' ? 'Product' : newLinkType === 'SUPPORT' ? 'Support Item' : 'Link'}
                                     </Button>
-                                </div>
-                            </div>
-
-                            {/* Profile Display Toggles */}
-                            <div className="border-t border-stone-100 pt-6 space-y-3">
-                            <h4 className="text-sm font-semibold text-stone-700">Profile Display</h4>
-                            <div className="flex items-center justify-between py-2">
-                                <div>
-                                    <p className="text-sm font-medium text-stone-800">Show Likes</p>
-                                    <p className="text-xs text-stone-400">Display the heart / like count on your public profile</p>
-                                </div>
-                                <button
-                                    onClick={() => setEditedCreator({ ...editedCreator, showLikes: !(editedCreator.showLikes ?? true) })}
-                                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${(editedCreator.showLikes ?? true) ? 'bg-stone-900' : 'bg-stone-200'}`}
-                                >
-                                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${(editedCreator.showLikes ?? true) ? 'translate-x-5' : 'translate-x-0'}`} />
-                                </button>
-                            </div>
-                            <div className="flex items-center justify-between py-2">
-                                <div>
-                                    <p className="text-sm font-medium text-stone-800">Show Star Rating</p>
-                                    <p className="text-xs text-stone-400">Display your average star rating on your public profile</p>
-                                </div>
-                                <button
-                                    onClick={() => setEditedCreator({ ...editedCreator, showRating: !(editedCreator.showRating ?? true) })}
-                                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${(editedCreator.showRating ?? true) ? 'bg-stone-900' : 'bg-stone-200'}`}
-                                >
-                                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${(editedCreator.showRating ?? true) ? 'translate-x-5' : 'translate-x-0'}`} />
-                                </button>
-                            </div>
-                            <div className="flex items-center justify-between py-2">
-                                <div>
-                                    <p className="text-sm font-medium text-stone-800">Show Bio</p>
-                                    <p className="text-xs text-stone-400">Display your status message / bio on your public profile</p>
-                                </div>
-                                <button
-                                    onClick={() => setEditedCreator({ ...editedCreator, showBio: !(editedCreator.showBio ?? true) })}
-                                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${(editedCreator.showBio ?? true) ? 'bg-stone-900' : 'bg-stone-200'}`}
-                                >
-                                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${(editedCreator.showBio ?? true) ? 'translate-x-5' : 'translate-x-0'}`} />
-                                </button>
-                            </div>
-                        </div>
                             </>)}
                         </div>
 
