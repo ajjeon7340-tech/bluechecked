@@ -3015,7 +3015,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     const BOARD_MAX_H = 440, CREATOR_CARD_ZONE = 300, DESKTOP_VW = 640;
                                     const sd = editedCreator.boardFocusDesktop;
                                     if (sd) {
-                                        setBoardFocusAnchor({ x: sd.x - 320, y: Math.max(0, sd.y - BOARD_MAX_H / 2) });
+                                        setBoardFocusAnchor({ x: sd.x - 320, y: Math.max(CREATOR_CARD_ZONE, sd.y - BOARD_MAX_H / 2) });
                                     } else {
                                         // No saved focus — default to horizontally centered over content
                                         const BOARD_PAD = 32, NOTE_W = 252, NOTE_GAP_X = 28, GUIDE_COLS = 3, LINK_W = 220;
@@ -3187,11 +3187,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 if (l.iconShape === 'square-xxs') return 44;
                                 const sqSize = _getLinkSize(l);
                                 if (sqSize) return sqSize;
-                                // Non-icon mode: size hint affects card height
-                                if (l.iconShape === 'square-s') return 56;
-                                if (l.iconShape === 'square-l') return 96;
+                                // Non-icon mode: S=minimal(40), M=compact(56), L=standard(84)
+                                if (l.iconShape === 'square-s') return 40;
+                                if (l.iconShape === 'square-m') return 56;
+                                if (l.iconShape === 'square-l') return 84;
                                 if (l.type === 'DIGITAL_PRODUCT') return 104;
-                                return 84;
+                                return 56;
                             };
                             const _getLinkW = (l: AffiliateLink) => {
                                 if (l.type === 'PHOTO') return (boardLinkSizes[l.id]?.w ?? l.width ?? 220);
@@ -3200,7 +3201,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const getLinkPos = (link: AffiliateLink, idx: number): {x: number, y: number} => {
                                 if (boardLinkPositions[link.id]) return boardLinkPositions[link.id];
                                 if (link.positionX !== null && link.positionX !== undefined && link.positionY !== null && link.positionY !== undefined) {
-                                    return { x: link.positionX, y: link.positionY };
+                                    return { x: link.positionX + guideOffsetX, y: link.positionY + guideOffsetY };
                                 }
                                 let y = guideOffsetY + BOARD_PAD;
                                 for (let i = 0; i < idx; i++) {
@@ -3332,7 +3333,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     const pos = boardLinkPositions[boardLinkDragging.id];
                                     if (pos) {
                                         const updatedLinks = (editedCreator.links || []).map(l =>
-                                            l.id === boardLinkDragging.id ? { ...l, positionX: pos.x, positionY: pos.y } : l
+                                            l.id === boardLinkDragging.id ? { ...l, positionX: Math.max(0, pos.x - guideOffsetX), positionY: Math.max(0, pos.y - guideOffsetY) } : l
                                         );
                                         await saveBoardLinkChange(updatedLinks);
                                     }
@@ -3418,10 +3419,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             const isThumbnailMode = effectiveStyle === 'thumbnail';
                                             const isWideMode = effectiveStyle === 'wide';
                                         const sqSize = _getLinkSize(link);
-                                        // Wide/thumb size: S=compact, M=standard, L=large
+                                        // Wide/thumb size: S=minimal, M=compact(old S), L=auto(old M)
                                         const cardSize = !isIconMode ? (link.iconShape === 'square-s' ? 'S' : link.iconShape === 'square-l' ? 'L' : 'M') : 'M';
-                                        const wideCardW = cardSize === 'S' ? 140 : cardSize === 'L' ? LINK_W : getWideWidth(link.title);
-                                        const thumbCardW = cardSize === 'S' ? 160 : LINK_W;
+                                        const wideCardW = cardSize === 'S' ? 110 : cardSize === 'L' ? getWideWidth(link.title) : 140;
+                                        const thumbCardW = cardSize === 'S' ? 120 : cardSize === 'L' ? LINK_W : 160;
                                         // Thumbnail style forces wide card regardless of iconShape
                                         let detectedPlatform: string | null = null;
                                         if (link.type === 'EXTERNAL' && link.url) {
@@ -3756,7 +3757,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     </div>
                                                 ) : (
                                                     <div
-                                                        className={`relative rounded-lg ${isThumbnailMode ? (cardSize === 'S' ? 'p-2' : 'p-3') : isIconMode ? (sqSize === 32 ? 'p-0.5 aspect-square flex items-center justify-center' : sqSize === 44 ? 'p-1 aspect-square flex items-center justify-center' : 'p-1.5 aspect-square flex items-center justify-center') : (cardSize === 'S' ? 'p-2' : 'p-3')}`}
+                                                        className={`relative rounded-lg ${isThumbnailMode ? (cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-3' : 'p-2') : isIconMode ? (sqSize === 32 ? 'p-0.5 aspect-square flex items-center justify-center' : sqSize === 44 ? 'p-1 aspect-square flex items-center justify-center' : 'p-1.5 aspect-square flex items-center justify-center') : (cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-2.5' : 'p-2')}`}
                                                         style={{
                                                             backgroundColor: link.buttonColor || linkColors[lc],
                                                             border: isDraggingLink ? '2px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.08)',
@@ -3930,10 +3931,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             );
                                                             return (
                                                                 <div className="flex items-center gap-2 h-full w-full">
-                                                                    <div className={`${cardSize === 'S' ? 'w-5 h-5' : cardSize === 'L' ? 'w-9 h-9' : 'w-7 h-7'} rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5 text-stone-600`}>
-                                                                        {link.thumbnailUrl?.startsWith('data:emoji,') ? <span className={cardSize === 'S' ? 'text-xs leading-none' : cardSize === 'L' ? 'text-xl leading-none' : 'text-base leading-none'}>{link.thumbnailUrl.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className={cardSize === 'L' ? 'scale-[1.2]' : 'scale-[0.9]'}>{getPreviewPlatformIcon(detectedPlatform)}</div> : <LinkIcon size={cardSize === 'S' ? 10 : cardSize === 'L' ? 16 : 13} />}
+                                                                    <div className={`${cardSize === 'S' ? 'w-4 h-4' : cardSize === 'L' ? 'w-7 h-7' : 'w-5 h-5'} rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5 text-stone-600`}>
+                                                                        {link.thumbnailUrl?.startsWith('data:emoji,') ? <span className={cardSize === 'S' ? 'text-[9px] leading-none' : cardSize === 'L' ? 'text-base leading-none' : 'text-xs leading-none'}>{link.thumbnailUrl.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className={cardSize === 'S' ? 'scale-[0.7]' : cardSize === 'L' ? 'scale-[0.95]' : 'scale-[0.8]'}>{getPreviewPlatformIcon(detectedPlatform)}</div> : <LinkIcon size={cardSize === 'S' ? 8 : cardSize === 'L' ? 13 : 10} />}
                                                                     </div>
-                                                                    <span className={`${cardSize === 'S' ? 'text-[10px]' : cardSize === 'L' ? 'text-sm' : 'text-xs'} font-semibold text-stone-700 truncate flex-1 text-left`}>{link.title}</span>
+                                                                    <span className={`${cardSize === 'S' ? 'text-[9px]' : cardSize === 'L' ? 'text-xs' : 'text-[10px]'} font-semibold text-stone-700 ${cardSize === 'L' ? 'overflow-hidden' : 'truncate'} flex-1 text-left`}>{link.title}</span>
                                                                 </div>
                                                             );
                                                         })()}
@@ -4084,7 +4085,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             title = hostname.charAt(0).toUpperCase() + hostname.slice(1).split('.')[0];
                                                         } catch { title = url; }
                                                     }
-                                                            await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title, url, type: 'EXTERNAL', iconShape: 'square-xxs' }]);
                                                         await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title, url, type: 'EXTERNAL', iconShape: 'square-s', displayStyle: 'icon' }]);
                                                     _closeAllBoardAdding();
                                                 }}
@@ -4518,11 +4518,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const sq = getLSz(l);
                             if (sq) return sq;
                             if (l.iconShape === 'square-xxs') return 44;
-                            if (l.iconShape === 'square-s') return 56;
-                            if (l.iconShape === 'square-l') return 96;
+                            if (l.iconShape === 'square-s') return 40;
+                            if (l.iconShape === 'square-m') return 56;
+                            if (l.iconShape === 'square-l') return 84;
                             if (l.type === 'DIGITAL_PRODUCT') return 104;
                             if (l.url?.match(/youtube\.com|youtu\.be/)) return 162;
-                            return 84;
+                            return 56;
                         };
 
                         const fposts = boardPosts.filter(p => p.isPinned);
@@ -4544,7 +4545,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const l = flinks[i];
                             const effStyle = l.displayStyle || (l.iconShape ? 'icon' : 'wide');
                             const cs = l.iconShape === 'square-s' ? 'S' : l.iconShape === 'square-l' ? 'L' : 'M';
-                            const w = effStyle === 'icon' ? (getLSz(l) || LINK_W) : effStyle === 'thumbnail' ? (cs === 'S' ? 160 : LINK_W) : (cs === 'S' ? 140 : cs === 'L' ? LINK_W : getWideWidth(l.title));
+                            const w = effStyle === 'icon' ? (getLSz(l) || LINK_W) : effStyle === 'thumbnail' ? (cs === 'S' ? 120 : cs === 'L' ? LINK_W : 160) : (cs === 'S' ? 110 : cs === 'L' ? getWideWidth(l.title) : 140);
                             return Math.max(m, p.x + w);
                         }, 640);
                         const maxLB = flinkPos.reduce((m, p, i) => Math.max(m, p.y + getLH(flinks[i])), 0);
@@ -4576,7 +4577,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const onMove = (ev: MouseEvent) => {
                                 const dx = (ev.clientX - sx) / mmScale;
                                 const dy = (ev.clientY - sy) / mmScale;
-                                setBoardFocusAnchor({ x: Math.max(-DESKTOP_VW / 2, Math.min(cW - DESKTOP_VW / 2, sax + dx)), y: Math.max(0, Math.min(tH - FOCUS_H, say + dy)) });
+                                setBoardFocusAnchor({ x: Math.max(-DESKTOP_VW / 2, Math.min(cW - DESKTOP_VW / 2, sax + dx)), y: Math.max(CREATOR_CARD_ZONE, Math.min(tH - FOCUS_H, say + dy)) });
                             };
                             const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
                             document.addEventListener('mousemove', onMove);
@@ -4616,7 +4617,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             // subtract mmGuideX to convert minimap pixel → content coord
                                             const cx = (e.clientX - r.left) / mmScale - mmGuideX;
                                             const cy = (e.clientY - r.top) / mmScale;
-                                            setBoardFocusAnchor({ x: Math.max(-DESKTOP_VW / 2, Math.min(cW - DESKTOP_VW / 2, cx - DESKTOP_VW / 2)), y: Math.max(0, Math.min(tH - FOCUS_H, cy)) });
+                                            setBoardFocusAnchor({ x: Math.max(-DESKTOP_VW / 2, Math.min(cW - DESKTOP_VW / 2, cx - DESKTOP_VW / 2)), y: Math.max(CREATOR_CARD_ZONE, Math.min(tH - FOCUS_H, cy)) });
                                         }}
                                     >
                                         {/* Creator card placeholder — centered like the actual board */}
@@ -4643,7 +4644,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             const ci = i % LC.length;
                                             const effStyle = flinks[i].displayStyle || (flinks[i].iconShape ? 'icon' : 'wide');
                                             return (
-                                                <div key={i} style={{ position: 'absolute', left: (mmGuideX + pos.x) * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: (() => { const l = flinks[i]; const cs = l.iconShape === 'square-s' ? 'S' : l.iconShape === 'square-l' ? 'L' : 'M'; return effStyle === 'icon' ? (getLSz(l) || LINK_W) : effStyle === 'thumbnail' ? (cs === 'S' ? 160 : LINK_W) : (cs === 'S' ? 140 : cs === 'L' ? LINK_W : getWideWidth(l.title)); })() * mmScale, height: getLH(flinks[i]) * mmScale, background: LC[ci], borderRadius: 2, opacity: 0.93, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                                                <div key={i} style={{ position: 'absolute', left: (mmGuideX + pos.x) * mmScale, top: (CREATOR_CARD_ZONE + pos.y) * mmScale, width: (() => { const l = flinks[i]; const cs = l.iconShape === 'square-s' ? 'S' : l.iconShape === 'square-l' ? 'L' : 'M'; return effStyle === 'icon' ? (getLSz(l) || LINK_W) : effStyle === 'thumbnail' ? (cs === 'S' ? 120 : cs === 'L' ? LINK_W : 160) : (cs === 'S' ? 110 : cs === 'L' ? getWideWidth(l.title) : 140); })() * mmScale, height: getLH(flinks[i]) * mmScale, background: LC[ci], borderRadius: 2, opacity: 0.93, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
                                                     <div style={{ position: 'absolute', top: 0, left: '20%', width: '60%', height: Math.max(2.5, 10 * mmScale), background: LT[ci], borderRadius: 1 }} />
                                                 </div>
                                             );

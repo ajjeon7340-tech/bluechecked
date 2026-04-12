@@ -885,11 +885,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       if (l.iconShape === 'square-xxs') return 44;
                                       const sqSize = _getLinkSize(l);
                                       if (sqSize) return sqSize;
-                                      // Non-icon mode: size hint affects card height
-                                      if (l.iconShape === 'square-s') return 56;
-                                      if (l.iconShape === 'square-l') return 96;
+                                      // Non-icon mode: S=minimal(40), M=compact(56), L=standard(84)
+                                      if (l.iconShape === 'square-s') return 40;
+                                      if (l.iconShape === 'square-m') return 56;
+                                      if (l.iconShape === 'square-l') return 84;
                                       if (l.type === 'DIGITAL_PRODUCT') return 104;
-                                      return 84;
+                                      return 56;
                                   };
 
                                   const getLinkPos = (link: typeof allPublicLinks[0], idx: number): {x: number, y: number} => {
@@ -960,7 +961,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       const sqSize = _getLinkSize(link);
                                       const effStyle = link.displayStyle || (link.iconShape ? 'icon' : 'wide');
                                       const cs = link.iconShape === 'square-s' ? 'S' : link.iconShape === 'square-l' ? 'L' : 'M';
-                                      const w = link.type === 'PHOTO' ? (link.width ?? 220) : (effStyle === 'icon' ? (sqSize || PROFILE_W) : effStyle === 'thumbnail' ? (cs === 'S' ? 160 : PROFILE_W) : (cs === 'S' ? 140 : cs === 'L' ? PROFILE_W : getWideWidth(link.title)));
+                                      const w = link.type === 'PHOTO' ? (link.width ?? 220) : (effStyle === 'icon' ? (sqSize || PROFILE_W) : effStyle === 'thumbnail' ? (cs === 'S' ? 120 : cs === 'L' ? PROFILE_W : 160) : (cs === 'S' ? 110 : cs === 'L' ? getWideWidth(link.title) : 140));
                                       return Math.max(max, pos.x + w);
                                   }, LINK_START_X + PROFILE_W);
                                   const maxY = pinnedPosts.reduce((max, p) => {
@@ -1034,8 +1035,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                   opacity: boardAnimReady ? 1 : 0,
                                               }}
                                           >
-                                          {/* Focus zone guidelines — positioned at saved focus anchor, always visible */}
-                                          {boardContainerW > 0 && (() => {
+                                          {/* Focus zone guidelines — only shown to creator to preview what fans see */}
+                                          {isCreatorOwner && boardContainerW > 0 && (() => {
                                               const DESKTOP_VW = 640, MOBILE_VW = 390, FOCUS_H = BOARD_MAX_H;
                                               const CREATOR_CARD_ZONE = 300;
                                               const isMob = boardContainerW < 600;
@@ -1107,10 +1108,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                       const sqSize = _getLinkSize(link);
                                                       const isExternal = link.type === 'EXTERNAL';
                                                       const Tag: React.ElementType = isExternal ? 'a' : 'button';
-                                                      // Wide/thumb size: S=compact, M=standard, L=large
+                                                      // Wide/thumb size: S=minimal, M=compact(old S), L=auto(old M)
                                                       const cardSize = !isIconMode ? (link.iconShape === 'square-s' ? 'S' : link.iconShape === 'square-l' ? 'L' : 'M') : 'M';
-                                                      const wideCardW = cardSize === 'S' ? 140 : cardSize === 'L' ? PROFILE_W : getWideWidth(link.title);
-                                                      const thumbCardW = cardSize === 'S' ? 160 : PROFILE_W;
+                                                      const wideCardW = cardSize === 'S' ? 110 : cardSize === 'L' ? getWideWidth(link.title) : 140;
+                                                      const thumbCardW = cardSize === 'S' ? 120 : cardSize === 'L' ? PROFILE_W : 160;
 
                                                       const pos = getLinkPos(link, li);
 
@@ -1158,7 +1159,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                       return (
                                                                           <button
                                                                               onClick={e => { e.stopPropagation(); handleThumbClick(); }}
-                                                                              className="w-full text-left rounded-lg overflow-hidden hover:opacity-90 transition-opacity p-3"
+                                                                              className={`w-full text-left rounded-lg overflow-hidden hover:opacity-90 transition-opacity ${cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-3' : 'p-2'}`}
                                                                               style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
                                                                           >
                                                                               <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%', backgroundColor: thumbBg }}>
@@ -1351,13 +1352,13 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                           target="_blank"
                                                                           rel="noopener noreferrer"
                                                                           onClick={e => e.stopPropagation()}
-                                                                          className={`flex items-center gap-2 rounded-lg hover:opacity-80 transition-opacity ${cardSize === 'S' ? 'p-2' : 'p-2.5'}`}
+                                                                          className={`flex items-center gap-2 rounded-lg hover:opacity-80 transition-opacity ${cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-2.5' : 'p-2'}`}
                                                                           style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}
                                                                       >
-                                                                          <div className={`${cardSize === 'S' ? 'w-5 h-5' : cardSize === 'L' ? 'w-9 h-9' : 'w-7 h-7'} rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5 text-stone-600`}>
-                                                                              {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : isEmoji ? <span className={cardSize === 'S' ? 'text-xs leading-none' : cardSize === 'L' ? 'text-xl leading-none' : 'text-base leading-none'}>{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className={cardSize === 'L' ? 'scale-[1.2]' : 'scale-[0.9]'}>{getPlatformIcon(detectedPlatform)}</div> : <ExternalLink size={cardSize === 'S' ? 10 : cardSize === 'L' ? 16 : 13} />}
+                                                                          <div className={`${cardSize === 'S' ? 'w-4 h-4' : cardSize === 'L' ? 'w-7 h-7' : 'w-5 h-5'} rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5 text-stone-600`}>
+                                                                              {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : isEmoji ? <span className={cardSize === 'S' ? 'text-[9px] leading-none' : cardSize === 'L' ? 'text-base leading-none' : 'text-xs leading-none'}>{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className={cardSize === 'S' ? 'scale-[0.7]' : cardSize === 'L' ? 'scale-[0.95]' : 'scale-[0.8]'}>{getPlatformIcon(detectedPlatform)}</div> : <ExternalLink size={cardSize === 'S' ? 8 : cardSize === 'L' ? 13 : 10} />}
                                                                           </div>
-                                                                          <span className={`${cardSize === 'S' ? 'text-[10px]' : cardSize === 'L' ? 'text-sm' : 'text-xs'} font-semibold text-stone-700 truncate flex-1`}>{link.title}</span>
+                                                                          <span className={`${cardSize === 'S' ? 'text-[9px]' : cardSize === 'L' ? 'text-xs' : 'text-[10px]'} font-semibold text-stone-700 ${cardSize === 'L' ? 'overflow-hidden' : 'truncate'} flex-1`}>{link.title}</span>
                                                                       </a>
                                                                   );
                                                               })()}
