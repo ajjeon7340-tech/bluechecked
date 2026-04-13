@@ -3395,38 +3395,37 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 }
                             };
 
-                            const handleCanvasMouseUp = async () => {
+                            const handleCanvasMouseUp = () => {
                                 pendingDragRef.current = null;
                                 pendingLinkDragRef.current = null;
                                 dashPanRef.current = null;
                                 if (boardDragging) {
                                     const rawPos = boardPositions[boardDragging.id];
+                                    const draggingId = boardDragging.id;
+                                    setBoardDragging(null);
                                     if (rawPos) {
                                         const allPositioned = filtered.map((p, idx) => ({
                                             id: p.id,
                                             pos: boardPositions[p.id] || getPos(p, idx),
                                         })).sort((a, b) => a.pos.y !== b.pos.y ? a.pos.y - b.pos.y : a.pos.x - b.pos.x);
-                                        const order = allPositioned.findIndex(item => item.id === boardDragging.id);
-                                        try {
-                                            const pX = rawPos.x - guideOffsetX;
-                                            const pY = rawPos.y - guideOffsetY;
-                                            await updateBoardPostPosition(boardDragging.id, pX, pY, order);
-                                            setBoardPosts(prev => prev.map(p => p.id === boardDragging.id ? { ...p, positionX: pX, positionY: pY, displayOrder: order } : p));
-                                        } catch {}
+                                        const order = allPositioned.findIndex(item => item.id === draggingId);
+                                        const pX = rawPos.x - guideOffsetX;
+                                        const pY = rawPos.y - guideOffsetY;
+                                        setBoardPosts(prev => prev.map(p => p.id === draggingId ? { ...p, positionX: pX, positionY: pY, displayOrder: order } : p));
+                                        updateBoardPostPosition(draggingId, pX, pY, order).catch(() => {});
                                     }
-                                    setBoardDragging(null);
                                 }
                                 if (boardLinkDragging) {
                                     const pos = boardLinkPositions[boardLinkDragging.id];
-                                    if (pos) {
-                                        const updatedLinks = (editedCreator.links || []).map(l =>
-                                            l.id === boardLinkDragging.id ? { ...l, positionX: pos.x - guideOffsetX, positionY: pos.y - guideOffsetY } : l
-                                        );
-                                        await saveBoardLinkChange(updatedLinks);
-                                    }
                                     const droppedId = boardLinkDragging.id;
                                     setLinkZOrder(prev => [...prev.filter(id => id !== droppedId), droppedId]);
                                     setBoardLinkDragging(null);
+                                    if (pos) {
+                                        const updatedLinks = (editedCreator.links || []).map(l =>
+                                            l.id === droppedId ? { ...l, positionX: pos.x - guideOffsetX, positionY: pos.y - guideOffsetY } : l
+                                        );
+                                        saveBoardLinkChange(updatedLinks).catch(() => {});
+                                    }
                                 }
                                 if (boardLinkResizing) {
                                     // Size is kept live in boardLinkSizes; Done button persists to backend.
