@@ -3721,25 +3721,27 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 onTouchCancel={cancelLongPress}
                                             >
                                                 {/* Drag grip */}
-                                                <div
-                                                    className={isIconMode && !isEditingLink ? "absolute inset-0 z-0" : "h-5 flex items-center justify-center flex-shrink-0"}
-                                                    style={{ cursor: 'grab', touchAction: 'none' }}
-                                                    onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
-                                                    onTouchStart={e => {
-                                                        e.stopPropagation();
-                                                        const touch = e.touches[0];
-                                                        setBoardLinkDragging({
-                                                            id: link.id,
-                                                            startMouseX: touch.clientX,
-                                                            startMouseY: touch.clientY,
-                                                            startNoteX: currentPos.x,
-                                                            startNoteY: currentPos.y,
-                                                        });
-                                                    }}
-                                                    title="Drag to reposition"
-                                                >
-                                                    {(!isIconMode || isEditingLink) && <div className="w-8 h-1 rounded-full bg-black/15" />}
-                                                </div>
+                                                {(!isIconMode || isEditingLink) && (
+                                                    <div
+                                                        className="h-5 flex items-center justify-center flex-shrink-0"
+                                                        style={{ cursor: 'grab', touchAction: 'none' }}
+                                                        onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
+                                                        onTouchStart={e => {
+                                                            e.stopPropagation();
+                                                            const touch = e.touches[0];
+                                                            setBoardLinkDragging({
+                                                                id: link.id,
+                                                                startMouseX: touch.clientX,
+                                                                startMouseY: touch.clientY,
+                                                                startNoteX: currentPos.x,
+                                                                startNoteY: currentPos.y,
+                                                            });
+                                                        }}
+                                                        title="Drag to reposition"
+                                                    >
+                                                        <div className="w-8 h-1 rounded-full bg-black/15" />
+                                                    </div>
+                                                )}
                                                 {isEditingLink ? (
                                                     <div className="rounded-lg p-3 shadow-lg" style={{ backgroundColor: boardLinkDraft.color || linkColors[lc], border: '2px solid rgba(0,0,0,0.15)' }}>
                                                         <input
@@ -3938,16 +3940,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         className={`relative ${isIconMode ? 'aspect-square flex items-center justify-center bg-white border border-black/5 overflow-hidden' : 'rounded-lg'} ${isThumbnailMode ? (cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-3' : 'p-2') : isIconMode ? (sqSize === 32 ? 'rounded-md' : sqSize === 44 ? 'rounded-lg' : 'rounded-xl') : (cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-2.5' : 'p-2')}`}
                                                         style={isIconMode ? {
                                                             boxShadow: isDraggingLink ? '0 16px 40px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.08)',
+                                                            cursor: isDraggingLink ? 'grabbing' : 'grab',
                                                         } : {
                                                             backgroundColor: link.buttonColor || linkColors[lc],
                                                             border: isDraggingLink ? '2px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.08)',
                                                             boxShadow: isDraggingLink ? '0 16px 40px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.07)',
                                                         }}
+                                                        onMouseDown={isIconMode && !isEditingLink ? e => handleLinkTapeMouseDown(e, link.id, currentPos) : undefined}
                                                     >
                                                         {/* Action buttons — show on hover */}
                                                         <div className="absolute top-1.5 right-1.5 hidden group-hover:flex items-center gap-1 z-10">
                                                             <button
                                                                 className="p-1 rounded-full bg-white/80 text-stone-500 hover:text-stone-800 hover:bg-white transition-all shadow-sm"
+                                                                onMouseDown={e => e.stopPropagation()}
+                                                                onTouchStart={e => e.stopPropagation()}
                                                                 onClick={e => {
                                                                     e.stopPropagation();
                                                                     setBoardLinkEditId(link.id);
@@ -3957,6 +3963,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             ><Pencil size={10} /></button>
                                                             <button
                                                                 className="p-1 rounded-full bg-white/80 text-red-400 hover:text-red-600 hover:bg-white transition-all shadow-sm"
+                                                                onMouseDown={e => e.stopPropagation()}
+                                                                onTouchStart={e => e.stopPropagation()}
                                                                 onClick={async e => {
                                                                     e.stopPropagation();
                                                                     const updatedLinks = (editedCreator.links || []).filter(l => l.id !== link.id);
