@@ -3719,7 +3719,19 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             className="w-full text-xs bg-white/70 border border-stone-200 rounded px-2 py-1 mb-2 outline-none"
                                                             placeholder="URL"
                                                             value={boardLinkDraft.url}
-                                                            onChange={e => setBoardLinkDraft(p => ({ ...p, url: e.target.value }))}
+                                                            onChange={async e => {
+                                                                const url = e.target.value;
+                                                                setBoardLinkDraft(p => ({ ...p, url }));
+                                                                if (url.match(/youtube\.com|youtu\.be/) && url.length > 15) {
+                                                                    try {
+                                                                        const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url.startsWith('http') ? url : 'https://' + url)}&format=json`);
+                                                                        if (res.ok) {
+                                                                            const data = await res.json();
+                                                                            if (data.title) setBoardLinkDraft(p => p.title === 'Youtube' || !p.title ? { ...p, title: data.title } : p);
+                                                                        }
+                                                                    } catch (e) {}
+                                                                }
+                                                            }}
                                                             onClick={e => e.stopPropagation()}
                                                         />
                                                         {/* Color swatches + palette picker */}
@@ -4245,11 +4257,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     className="w-full text-xs bg-white/70 border border-stone-200 rounded px-2 py-1.5 mb-2 outline-none focus:ring-1 focus:ring-stone-400"
                                                     placeholder="Paste URL (https://...)"
                                                     value={boardLinkDraft.url}
-                                                    onChange={e => {
+                                                    onChange={async e => {
                                                         const url = e.target.value;
                                                         setBoardLinkDraft(p => {
                                                             let autoTitle = p.title;
-                                                            if (!p.title) {
+                                                            if (!p.title || p.title === 'Youtube') {
                                                                 try {
                                                                     const hostname = new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace('www.', '');
                                                                     autoTitle = hostname.charAt(0).toUpperCase() + hostname.slice(1).split('.')[0];
@@ -4257,6 +4269,16 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             }
                                                             return { ...p, url, title: autoTitle };
                                                         });
+
+                                                        if (url.match(/youtube\.com|youtu\.be/) && url.length > 15) {
+                                                            try {
+                                                                const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url.startsWith('http') ? url : 'https://' + url)}&format=json`);
+                                                                if (res.ok) {
+                                                                    const data = await res.json();
+                                                                    if (data.title) setBoardLinkDraft(p => p.title === 'Youtube' || !p.title ? { ...p, title: data.title } : p);
+                                                                }
+                                                            } catch (e) {}
+                                                        }
                                                     }}
                                                 />
                                                 <div className="flex gap-1.5">
@@ -4298,8 +4320,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             if (e.key === 'Enter') {
                                                                 const url = boardPlatformUrlDraft.trim();
                                                                 if (url) {
+                                                                    let finalTitle = platformDef?.label || 'Platform';
+                                                                    if (boardSelectedPlatform === 'youtube' || url.match(/youtube\.com|youtu\.be/)) {
+                                                                        try {
+                                                                            const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url.startsWith('http') ? url : 'https://' + url)}&format=json`);
+                                                                            if (res.ok) {
+                                                                                const data = await res.json();
+                                                                                if (data.title) finalTitle = data.title;
+                                                                            }
+                                                                        } catch (e) {}
+                                                                    }
                                                                     _closeAllBoardAdding();
-                                                                await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-l', displayStyle: 'icon' }]);
+                                                                    await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: finalTitle, url, type: 'EXTERNAL', iconShape: 'square-l', displayStyle: 'icon' }]);
                                                                 }
                                                             }
                                                         }}
@@ -4311,8 +4343,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             onClick={async () => {
                                                                 const url = boardPlatformUrlDraft.trim();
                                                                 if (!url) return;
+                                                                let finalTitle = platformDef?.label || 'Platform';
+                                                                if (boardSelectedPlatform === 'youtube' || url.match(/youtube\.com|youtu\.be/)) {
+                                                                    try {
+                                                                        const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url.startsWith('http') ? url : 'https://' + url)}&format=json`);
+                                                                        if (res.ok) {
+                                                                            const data = await res.json();
+                                                                            if (data.title) finalTitle = data.title;
+                                                                        }
+                                                                    } catch (e) {}
+                                                                }
                                                                 _closeAllBoardAdding();
-                                                            await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-l', displayStyle: 'icon' }]);
+                                                                await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: finalTitle, url, type: 'EXTERNAL', iconShape: 'square-l', displayStyle: 'icon' }]);
                                                             }}
                                                         >Add Link</button>
                                                         <button
