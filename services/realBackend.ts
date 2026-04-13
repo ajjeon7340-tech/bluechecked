@@ -2711,8 +2711,8 @@ const mapBoardPost = (row: any): BoardPost => ({
     displayOrder: row.display_order ?? null,
     attachmentUrl: row.attachment_url ?? null,
     replyAttachmentUrl: row.reply_attachment_url ?? null,
-    noteColor: row.note_color ?? null,
-    noteSize: (row.note_size as 'S' | 'M' | 'L') ?? null,
+    noteColor: (row.note_color ?? '').split('|')[0] || null,
+    noteSize: ((row.note_color ?? '').split('|')[1] as 'S' | 'M' | 'L') || (row.note_size as 'S' | 'M' | 'L') || null,
     isPinned: row.is_pinned ?? false,
     isAddedToChat: row.is_added_to_chat ?? false,
 });
@@ -2875,9 +2875,10 @@ export const markBoardPostAsAddedToChat = async (postId: string, value: boolean)
     if (error) console.warn('[Board] markBoardPostAsAddedToChat:', error);
 };
 
-export const updateBoardNoteColor = async (postId: string, noteColor: string): Promise<void> => {
+export const updateBoardNoteColor = async (postId: string, noteColor: string, noteSize?: 'S' | 'M' | 'L' | null): Promise<void> => {
     if (!isConfigured) return;
-    const { error } = await supabase.from('board_posts').update({ note_color: noteColor }).eq('id', postId);
+    const combined = noteSize ? `${noteColor}|${noteSize}` : noteColor;
+    const { error } = await supabase.from('board_posts').update({ note_color: combined }).eq('id', postId);
     if (error) console.warn('[Board] updateBoardNoteColor:', error);
 };
 
@@ -2924,11 +2925,13 @@ export const updateBoardPostPosition = async (
     if (error) console.warn('[Board] updateBoardPostPosition:', error);
 };
 
-export const updateBoardPostSize = async (postId: string, noteSize: 'S' | 'M' | 'L'): Promise<void> => {
+export const updateBoardPostSize = async (postId: string, noteSize: 'S' | 'M' | 'L', currentColor?: string | null): Promise<void> => {
     if (!isConfigured) return;
+    const baseColor = (currentColor || '').split('|')[0];
+    const combined = baseColor ? `${baseColor}|${noteSize}` : `|${noteSize}`;
     const { error } = await supabase
         .from('board_posts')
-        .update({ note_size: noteSize })
+        .update({ note_color: combined })
         .eq('id', postId);
     if (error) console.warn('[Board] updateBoardPostSize:', error);
 };

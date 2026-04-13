@@ -3569,12 +3569,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             const panelH = link.height ?? 64;
                                             const woodStyle = link.buttonColor ?? 'light';
                                             const woodBg = woodStyle === 'dark'
-                                                ? 'linear-gradient(160deg,#7c5a38 0%,#5c3d20 40%,#6e4f2c 70%,#4a2e14 100%)'
+                                            ? 'linear-gradient(160deg,#44403c 0%,#292524 40%,#44403c 70%,#1c1917 100%)'
                                                 : woodStyle === 'warm'
-                                                ? 'linear-gradient(160deg,#d4845a 0%,#b05a30 40%,#c86c40 70%,#8c3a14 100%)'
-                                                : 'linear-gradient(160deg,#e8d5b0 0%,#c9a870 35%,#dfc090 65%,#b8885a 100%)';
-                                            const textColor = woodStyle === 'light' ? '#5c3d20' : '#f5e8d0';
-                                            const nailColor = woodStyle === 'light' ? 'rgba(92,61,32,0.35)' : 'rgba(245,232,208,0.35)';
+                                            ? 'linear-gradient(160deg,#fef3c7 0%,#fde68a 40%,#fef3c7 70%,#f59e0b 100%)'
+                                            : 'linear-gradient(160deg,#f5f5f4 0%,#e7e5e4 35%,#f5f5f4 65%,#d6d3d1 100%)';
+                                        const textColor = woodStyle === 'dark' ? '#fafaf9' : woodStyle === 'warm' ? '#78350f' : '#292524';
+                                        const nailColor = woodStyle === 'dark' ? 'rgba(250,250,249,0.2)' : woodStyle === 'warm' ? 'rgba(120,53,15,0.25)' : 'rgba(41,37,36,0.2)';
                                             return (
                                                 <div
                                                     key={link.id}
@@ -3613,7 +3613,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         </div>
                                                         {/* Label */}
                                                         <div className="absolute inset-0 flex items-center justify-center px-8">
-                                                            <span className="font-black tracking-widest uppercase text-sm leading-none select-none" style={{ color: textColor, textShadow: woodStyle === 'light' ? 'none' : '0 1px 3px rgba(0,0,0,0.4)', letterSpacing: '0.15em' }}>{link.title}</span>
+                                                        <span className="font-black tracking-widest uppercase text-sm leading-none select-none" style={{ color: textColor, textShadow: woodStyle === 'dark' ? '0 1px 3px rgba(0,0,0,0.6)' : 'none', letterSpacing: '0.15em' }}>{link.title}</span>
                                                         </div>
                                                     </div>
                                                     {/* Delete button */}
@@ -4540,9 +4540,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <p className="text-[9px] text-stone-400 font-semibold uppercase tracking-wider mb-1.5">Wood Style</p>
                                         <div className="flex gap-1.5 mb-3">
                                             {([
-                                                { id: 'light', label: 'Light', bg: 'linear-gradient(160deg,#e8d5b0,#c9a870,#dfc090,#b8885a)', border: '#c9a870' },
-                                                { id: 'dark',  label: 'Dark',  bg: 'linear-gradient(160deg,#7c5a38,#5c3d20,#6e4f2c,#4a2e14)', border: '#7c5a38' },
-                                                { id: 'warm',  label: 'Warm',  bg: 'linear-gradient(160deg,#d4845a,#b05a30,#c86c40,#8c3a14)', border: '#b05a30' },
+                                                { id: 'light', label: 'Light', bg: 'linear-gradient(160deg,#f5f5f4,#e7e5e4,#f5f5f4,#d6d3d1)', border: '#d6d3d1', color: '#292524' },
+                                                { id: 'dark',  label: 'Dark',  bg: 'linear-gradient(160deg,#44403c,#292524,#44403c,#1c1917)', border: '#292524', color: '#fafaf9' },
+                                                { id: 'warm',  label: 'Warm',  bg: 'linear-gradient(160deg,#fef3c7,#fde68a,#fef3c7,#f59e0b)', border: '#fde68a', color: '#78350f' },
                                             ] as const).map(s => (
                                                 <button
                                                     key={s.id}
@@ -4550,7 +4550,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     className="flex-1 py-1.5 rounded-lg text-[9px] font-bold transition-all"
                                                     style={{
                                                         background: s.bg,
-                                                        color: s.id === 'light' ? '#5c3d20' : '#f5e8d0',
+                                                    color: s.color,
                                                         border: boardPanelDraft.style === s.id ? `2px solid ${s.border}` : '2px solid transparent',
                                                         boxShadow: boardPanelDraft.style === s.id ? '0 0 0 2px rgba(0,0,0,0.15)' : 'none',
                                                     }}

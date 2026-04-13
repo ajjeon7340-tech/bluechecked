@@ -1136,12 +1136,12 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           const panelH = link.height ?? 64;
                                                           const woodStyle = link.buttonColor ?? 'light';
                                                           const woodBg = woodStyle === 'dark'
-                                                              ? 'linear-gradient(160deg,#7c5a38 0%,#5c3d20 40%,#6e4f2c 70%,#4a2e14 100%)'
+                                                          ? 'linear-gradient(160deg,#44403c 0%,#292524 40%,#44403c 70%,#1c1917 100%)'
                                                               : woodStyle === 'warm'
-                                                              ? 'linear-gradient(160deg,#d4845a 0%,#b05a30 40%,#c86c40 70%,#8c3a14 100%)'
-                                                              : 'linear-gradient(160deg,#e8d5b0 0%,#c9a870 35%,#dfc090 65%,#b8885a 100%)';
-                                                          const textColor = woodStyle === 'light' ? '#5c3d20' : '#f5e8d0';
-                                                          const nailColor = woodStyle === 'light' ? 'rgba(92,61,32,0.35)' : 'rgba(245,232,208,0.35)';
+                                                          ? 'linear-gradient(160deg,#fef3c7 0%,#fde68a 40%,#fef3c7 70%,#f59e0b 100%)'
+                                                          : 'linear-gradient(160deg,#f5f5f4 0%,#e7e5e4 35%,#f5f5f4 65%,#d6d3d1 100%)';
+                                                      const textColor = woodStyle === 'dark' ? '#fafaf9' : woodStyle === 'warm' ? '#78350f' : '#292524';
+                                                      const nailColor = woodStyle === 'dark' ? 'rgba(250,250,249,0.2)' : woodStyle === 'warm' ? 'rgba(120,53,15,0.25)' : 'rgba(41,37,36,0.2)';
                                                           return (
                                                               <div
                                                                   key={link.id}
@@ -1152,7 +1152,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                       <div className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full" style={{ background: nailColor, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)' }}><div className="absolute inset-[3px] rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} /></div>
                                                                       <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full" style={{ background: nailColor, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)' }}><div className="absolute inset-[3px] rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} /></div>
                                                                       <div className="absolute inset-0 flex items-center justify-center px-8">
-                                                                          <span className="font-black uppercase text-sm leading-none select-none" style={{ color: textColor, textShadow: woodStyle === 'light' ? 'none' : '0 1px 3px rgba(0,0,0,0.4)', letterSpacing: '0.15em' }}>{link.title}</span>
+                                                                      <span className="font-black uppercase text-sm leading-none select-none" style={{ color: textColor, textShadow: woodStyle === 'dark' ? '0 1px 3px rgba(0,0,0,0.6)' : 'none', letterSpacing: '0.15em' }}>{link.title}</span>
                                                                       </div>
                                                                   </div>
                                                               </div>
