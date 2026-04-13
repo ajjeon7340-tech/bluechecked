@@ -3131,7 +3131,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                             const NOTE_W = 252;
                             const NOTE_H_EST = 272;
                             const NOTE_GAP_X = 28;
-                            const getPostNoteSize = (p: BoardPost): 'S' | 'M' | 'L' => boardPostSizes[p.id] ?? p.noteSize ?? 'M';
+                            const postSizesEntry = (editedCreator.links || []).find(l => l.id === '__post_sizes__');
+                            const savedSizes: Record<string, 'S' | 'M' | 'L'> = (() => { try { return postSizesEntry?.url ? JSON.parse(postSizesEntry.url) : {}; } catch { return {}; } })();
+                            const getPostNoteSize = (p: BoardPost): 'S' | 'M' | 'L' => boardPostSizes[p.id] ?? savedSizes[p.id] ?? p.noteSize ?? 'M';
                             const getPostH = (p: BoardPost) => { const s = getPostNoteSize(p); return s === 'S' ? 110 : s === 'M' ? 190 : NOTE_H_EST; };
                             const getPostW = (p: BoardPost) => { const s = getPostNoteSize(p); return s === 'S' ? 160 : s === 'M' ? 210 : NOTE_W; };
                             const NOTE_GAP_Y = 36;
@@ -4215,7 +4217,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 onClick={async () => {
                                                                     setBoardPostSizes(prev => ({ ...prev, [post.id]: sz }));
                                                                     setBoardPosts(prev => prev.map(p => p.id === post.id ? { ...p, noteSize: sz } : p));
-                                                                    await updateBoardPostSize(post.id, sz);
+                                                                    const links = editedCreator.links || [];
+                                                                    const sizeEntry = links.find(l => l.id === '__post_sizes__');
+                                                                    const currentSizes: Record<string, 'S' | 'M' | 'L'> = (() => { try { return sizeEntry?.url ? JSON.parse(sizeEntry.url) : {}; } catch { return {}; } })();
+                                                                    const newSizes = { ...currentSizes, [post.id]: sz };
+                                                                    const updatedLinks = [
+                                                                        ...links.filter(l => l.id !== '__post_sizes__'),
+                                                                        { id: '__post_sizes__', title: '', url: JSON.stringify(newSizes), hidden: true, type: 'EXTERNAL' as const },
+                                                                    ];
+                                                                    await saveBoardLinkChange(updatedLinks);
                                                                 }}
                                                             >{sz}</button>
                                                         ))}

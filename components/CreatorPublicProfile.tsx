@@ -926,8 +926,11 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                                   const getPos = (post: BoardPost): _BP => computedPositions.get(post.id) ?? { x: BOARD_PAD, y: BOARD_PAD };
 
-                                  const getPostW = (p: BoardPost) => p.noteSize === 'S' ? 160 : p.noteSize === 'L' ? NOTE_W : 210;
-                                  const getPostH = (p: BoardPost) => p.noteSize === 'S' ? 110 : p.noteSize === 'L' ? NOTE_H_EST : 190;
+                                  const postSizesEntry = (creator.links || []).find((l: any) => l.id === '__post_sizes__');
+                                  const savedPostSizes: Record<string, 'S' | 'M' | 'L'> = (() => { try { return postSizesEntry?.url ? JSON.parse(postSizesEntry.url) : {}; } catch { return {}; } })();
+                                  const getPostNoteSize = (p: BoardPost): 'S' | 'M' | 'L' => savedPostSizes[p.id] ?? p.noteSize ?? 'M';
+                                  const getPostW = (p: BoardPost) => { const s = getPostNoteSize(p); return s === 'S' ? 160 : s === 'L' ? NOTE_W : 210; };
+                                  const getPostH = (p: BoardPost) => { const s = getPostNoteSize(p); return s === 'S' ? 110 : s === 'L' ? NOTE_H_EST : 190; };
 
                                   const linkMaxY = allPublicLinks.reduce((max, link, idx) => {
                                       const pos = getLinkPos(link, idx);
@@ -1421,7 +1424,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                   const nc = stableIdx(post.id) % noteColors.length;
                                                   const rot = rotations[stableIdx(post.id) % rotations.length];
                                                   const pos = getPos(post);
-                                                  const noteSize = post.noteSize || 'M';
+                                                  const noteSize = getPostNoteSize(post);
                                                   return (
                                                       <div
                                                           key={post.id}
