@@ -138,6 +138,43 @@ const isImage = (url: string) => {
     return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext || '');
 };
 
+const extractDomainName = (url: string) => {
+    try {
+        const hostname = new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace(/^www\./, '');
+        const name = hostname.split('.')[0];
+        if (!name) return '';
+        const capitalized = name.charAt(0).toUpperCase() + name.slice(1);
+        if (capitalized === 'Youtube') return 'YouTube';
+        if (capitalized === 'Tiktok') return 'TikTok';
+        if (capitalized === 'Github') return 'GitHub';
+        if (capitalized === 'Linkedin') return 'LinkedIn';
+        return capitalized;
+    } catch {
+        return '';
+    }
+};
+
+const fetchOembedTitle = async (url: string): Promise<string | null> => {
+    const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+    let oembedUrl = '';
+    if (url.match(/youtube\.com|youtu\.be/)) oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(fullUrl)}&format=json`;
+    else if (url.match(/tiktok\.com/)) oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(fullUrl)}`;
+    else if (url.match(/spotify\.com/)) oembedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(fullUrl)}`;
+    else if (url.match(/vimeo\.com/)) oembedUrl = `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(fullUrl)}`;
+    else if (url.match(/soundcloud\.com/)) oembedUrl = `https://soundcloud.com/oembed?format=json&url=${encodeURIComponent(fullUrl)}`;
+
+    if (oembedUrl) {
+        try {
+            const res = await fetch(oembedUrl);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.title) return data.title;
+            }
+        } catch (e) {}
+    }
+    return null;
+};
+
 const getXXSWidth = (title?: string) => Math.min(220, Math.max(110, 80 + (title?.length || 0) * 8.5));
 const getSWidth = (title?: string) => Math.min(220, Math.max(110, 80 + (title?.length || 0) * 8.5));
 // Wide-mode: base(icon 28 + gap 10 + padding 24 = 62) + per-char width (CJK chars are ~13px, spaces 4px, ASCII ~7.5px)
@@ -3718,15 +3755,26 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             value={boardLinkDraft.url}
                                                             onChange={async e => {
                                                                 const url = e.target.value;
-                                                                setBoardLinkDraft(p => ({ ...p, url }));
-                                                                if (url.match(/youtube\.com|youtu\.be/) && url.length > 15) {
-                                                                    try {
-                                                                        const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url.startsWith('http') ? url : 'https://' + url)}&format=json`);
-                                                                        if (res.ok) {
-                                                                            const data = await res.json();
-                                                                            if (data.title) setBoardLinkDraft(p => p.title === 'Youtube' || !p.title ? { ...p, title: data.title } : p);
-                                                                        }
-                                                                    } catch (e) {}
+                                                                setBoardLinkDraft(p => {
+                                                                    let autoTitle = p.title;
+                                                                    const newDomain = extractDomainName(url);
+                                                                    if (!p.title || p.title === 'Youtube' || p.title === 'Platform' || p.title === extractDomainName(p.url)) {
+                                                                        autoTitle = newDomain || '';
+                                                                    }
+                                                                    return { ...p, url, title: autoTitle };
+                                                                });
+
+                                                                if (url.length > 10) {
+                                                                    const fetchedTitle = await fetchOembedTitle(url);
+                                                                    if (fetchedTitle) {
+                                                                        setBoardLinkDraft(p => {
+                                                                            const currentDomain = extractDomainName(url);
+                                                                            if (!p.title || p.title === currentDomain || p.title === 'Platform' || p.title === 'Youtube') {
+                                                                                return { ...p, title: fetchedTitle };
+                                                                            }
+                                                                            return p;
+                                                                        });
+                                                                    }
                                                                 }
                                                             }}
                                                             onClick={e => e.stopPropagation()}
@@ -4258,23 +4306,24 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         const url = e.target.value;
                                                         setBoardLinkDraft(p => {
                                                             let autoTitle = p.title;
-                                                            if (!p.title || p.title === 'Youtube') {
-                                                                try {
-                                                                    const hostname = new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace('www.', '');
-                                                                    autoTitle = hostname.charAt(0).toUpperCase() + hostname.slice(1).split('.')[0];
-                                                                } catch {}
+                                                            const newDomain = extractDomainName(url);
+                                                            if (!p.title || p.title === 'Youtube' || p.title === 'Platform' || p.title === extractDomainName(p.url)) {
+                                                                autoTitle = newDomain || '';
                                                             }
                                                             return { ...p, url, title: autoTitle };
                                                         });
 
-                                                        if (url.match(/youtube\.com|youtu\.be/) && url.length > 15) {
-                                                            try {
-                                                                const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url.startsWith('http') ? url : 'https://' + url)}&format=json`);
-                                                                if (res.ok) {
-                                                                    const data = await res.json();
-                                                                    if (data.title) setBoardLinkDraft(p => p.title === 'Youtube' || !p.title ? { ...p, title: data.title } : p);
-                                                                }
-                                                            } catch (e) {}
+                                                        if (url.length > 10) {
+                                                            const fetchedTitle = await fetchOembedTitle(url);
+                                                            if (fetchedTitle) {
+                                                                setBoardLinkDraft(p => {
+                                                                    const currentDomain = extractDomainName(url);
+                                                                    if (!p.title || p.title === currentDomain || p.title === 'Platform' || p.title === 'Youtube') {
+                                                                        return { ...p, title: fetchedTitle };
+                                                                    }
+                                                                    return p;
+                                                                });
+                                                            }
                                                         }
                                                     }}
                                                 />
@@ -4317,16 +4366,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             if (e.key === 'Enter') {
                                                                 const url = boardPlatformUrlDraft.trim();
                                                                 if (url) {
-                                                                    let finalTitle = platformDef?.label || 'Platform';
-                                                                    if (boardSelectedPlatform === 'youtube' || url.match(/youtube\.com|youtu\.be/)) {
-                                                                        try {
-                                                                            const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url.startsWith('http') ? url : 'https://' + url)}&format=json`);
-                                                                            if (res.ok) {
-                                                                                const data = await res.json();
-                                                                                if (data.title) finalTitle = data.title;
-                                                                            }
-                                                                        } catch (e) {}
-                                                                    }
+                                                                    let finalTitle = platformDef?.label || extractDomainName(url) || 'Platform';
+                                                                    const fetchedTitle = await fetchOembedTitle(url);
+                                                                    if (fetchedTitle) finalTitle = fetchedTitle;
+
                                                                     _closeAllBoardAdding();
                                                                     await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: finalTitle, url, type: 'EXTERNAL', iconShape: 'square-l', displayStyle: 'icon' }]);
                                                                 }
@@ -4340,16 +4383,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             onClick={async () => {
                                                                 const url = boardPlatformUrlDraft.trim();
                                                                 if (!url) return;
-                                                                let finalTitle = platformDef?.label || 'Platform';
-                                                                if (boardSelectedPlatform === 'youtube' || url.match(/youtube\.com|youtu\.be/)) {
-                                                                    try {
-                                                                        const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url.startsWith('http') ? url : 'https://' + url)}&format=json`);
-                                                                        if (res.ok) {
-                                                                            const data = await res.json();
-                                                                            if (data.title) finalTitle = data.title;
-                                                                        }
-                                                                    } catch (e) {}
-                                                                }
+                                                                let finalTitle = platformDef?.label || extractDomainName(url) || 'Platform';
+                                                                const fetchedTitle = await fetchOembedTitle(url);
+                                                                if (fetchedTitle) finalTitle = fetchedTitle;
+
                                                                 _closeAllBoardAdding();
                                                                 await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: finalTitle, url, type: 'EXTERNAL', iconShape: 'square-l', displayStyle: 'icon' }]);
                                                             }}
