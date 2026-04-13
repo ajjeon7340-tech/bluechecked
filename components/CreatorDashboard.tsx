@@ -184,10 +184,7 @@ const ResponsiveName = ({ name }: { name: string }) => (
 const ProfilePreviewCard: React.FC<{ creator: CreatorProfile; compact?: boolean }> = ({ creator, compact = false }) => {
     const cornerRadius = { soft: '8px', rounded: '16px', pill: '999px' }[creator.cornerRadius || 'rounded'] || '16px';
     const cardRadius = { soft: '8px', rounded: '16px', pill: '24px' }[creator.cornerRadius || 'rounded'] || '16px';
-    const linkBg = creator.bannerGradient
-        ? { backgroundColor: creator.bannerGradient, borderColor: creator.bannerGradient === '#1c1917' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' }
-        : { backgroundColor: '#ffffff', borderColor: 'rgb(231 229 228 / 0.6)' };
-    const linkBlockStyle = { ...linkBg, borderRadius: cornerRadius };
+    const linkBlockStyle = { backgroundColor: '#ffffff', borderColor: 'rgb(231 229 228 / 0.6)', borderRadius: cornerRadius };
 
     const platforms = creator.platforms || [];
     const visibleLinks = (creator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden);
@@ -196,9 +193,9 @@ const ProfilePreviewCard: React.FC<{ creator: CreatorProfile; compact?: boolean 
     const sz = compact ? 'text-xs' : 'text-sm';
 
     return (
-        <div className="bg-[#FAF9F6] rounded-xl overflow-hidden">
+        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: creator.bannerGradient || '#FAF9F6' }}>
             {/* Main profile card */}
-            <div className="border border-stone-200/60 relative overflow-hidden" style={{ backgroundColor: creator.bannerGradient || '#ffffff', borderRadius: cardRadius }}>
+            <div className="border border-stone-200/60 relative overflow-hidden bg-white" style={{ borderRadius: cardRadius }}>
                     <div className="absolute top-3 left-3 z-30">
                         <DiemLogo size={compact ? 16 : 18} className={creator.bannerDesign && creator.bannerPhotoUrl ? 'text-white' : 'text-stone-800'} />
                     </div>
@@ -5650,10 +5647,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     </div>
                                 </div>
 
-                                {/* Card Color */}
+                                {/* Canvas Color */}
                                 <div>
-                                    <label className="block text-sm font-medium text-stone-700 mb-2">Card Color</label>
-                                    <p className="text-[10px] text-stone-400 mb-2">Choose a background color for your public profile card.</p>
+                                    <label className="block text-sm font-medium text-stone-700 mb-2">Canvas Color</label>
+                                    <p className="text-[10px] text-stone-400 mb-2">Choose a background color for your public profile page.</p>
                                     <div className="flex flex-wrap gap-2">
                                         {[
                                             { label: 'White', value: undefined, bg: '#ffffff', border: '#e7e5e4' },

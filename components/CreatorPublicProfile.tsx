@@ -724,9 +724,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
     return `${Math.floor(h / 24)}d ago`;
   };
 
-  const linkBlockStyle = creator.bannerGradient
-    ? { backgroundColor: creator.bannerGradient, borderColor: creator.bannerGradient === '#1c1917' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' }
-    : { backgroundColor: '#ffffff', borderColor: 'rgb(231 229 228 / 0.6)' };
+  const linkBlockStyle = { backgroundColor: '#ffffff', borderColor: 'rgb(231 229 228 / 0.6)' };
 
   const cornerRadiusValue = {
     'soft': '8px',
@@ -741,7 +739,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const linkBlockStyleWithRadius = { ...linkBlockStyle, borderRadius: cornerRadiusValue };
 
   return (
-    <div className={`min-h-screen ${profileFontClass} text-stone-900 pb-20 selection:bg-stone-200 selection:text-stone-900 relative bg-[#FAF9F6]`}>
+    <div className={`min-h-screen ${profileFontClass} text-stone-900 pb-20 selection:bg-stone-200 selection:text-stone-900 relative`} style={{ backgroundColor: creator.bannerGradient || '#FAF9F6' }}>
       <style>{`
           @keyframes float {
             0%, 100% { transform: translateY(0px); }
@@ -782,7 +780,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
           {/* 1. MINIMAL PROFILE HEADER */}
           <div className="w-full">
-             <div className="border border-stone-200/60 relative transition-all overflow-hidden" style={{ backgroundColor: creator.bannerGradient || '#ffffff', borderRadius: cardCornerRadiusValue }}>
+             <div className="border border-stone-200/60 relative transition-all overflow-hidden bg-white" style={{ borderRadius: cardCornerRadiusValue }}>
                 <div className="absolute top-4 left-4 z-30">
                     <div onClick={onCreateOwn} className="flex items-center cursor-pointer hover:opacity-70 transition-opacity">
                       <DiemLogo size={20} className={editedCreator.bannerDesign && editedCreator.bannerPhotoUrl ? 'text-white' : 'text-stone-800'} />
