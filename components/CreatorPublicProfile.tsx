@@ -1179,7 +1179,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                           <div
                                                               key={link.id}
                                                               className="absolute"
-                                                          style={{ left: pos.x, top: pos.y, width: isIconMode ? (sqSize || PROFILE_W) : (isThumbnailMode || isYoutube ? thumbCardW : wideCardW), zIndex: 50 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
+                                                              style={{ left: pos.x, top: pos.y, width: isIconMode ? (sqSize || PROFILE_W) : (isThumbnailMode || isYoutube ? thumbCardW : wideCardW), height: isIconMode ? (sqSize || PROFILE_W) : undefined, zIndex: 50 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
                                                               onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.zIndex = '100'; }}
                                                               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${linkRot}deg) scale(1)`; (e.currentTarget as HTMLDivElement).style.zIndex = `${50 + li}`; }}
                                                           >
@@ -1256,12 +1256,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                           if (isProduct) handleProductClick(link);
                                                                           if (isSupport) handleSupportClick(link.price);
                                                                       }}
-                                                                      className="flex items-center justify-center rounded-md overflow-hidden hover:opacity-90 transition-opacity aspect-square p-0.5 w-full h-full block"
-                                                                      style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                      className="flex items-center justify-center rounded-md overflow-hidden hover:opacity-90 transition-opacity aspect-square w-full h-full block bg-white shadow-md border border-black/5"
                                                                   >
-                                                                      <div className="w-6 h-6 rounded-md bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto">
-                                                                          {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-md" alt={link.title} /> : isEmoji ? <span className="text-xs leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className="scale-[0.75]">{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={11} className="text-violet-500" /> : isSupport ? <Heart size={11} className="text-pink-500" /> : <ExternalLink size={11} className="text-stone-500" />}
-                                                                      </div>
+                                                                      {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} /> : isEmoji ? <span className="text-xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className="scale-[0.8]">{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={14} className="text-violet-500" /> : isSupport ? <Heart size={14} className="text-pink-500" /> : <ExternalLink size={14} className="text-stone-500" />}
                                                                   </Tag>
                                                               ) : isIconMode && sqSize === 44 ? (
                                                                   /* M: small square icon */
@@ -1274,12 +1271,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                           if (isProduct) handleProductClick(link);
                                                                           if (isSupport) handleSupportClick(link.price);
                                                                       }}
-                                                                      className="flex items-center justify-center rounded-lg overflow-hidden hover:opacity-90 transition-opacity aspect-square p-1 w-full h-full block"
-                                                                      style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                      className="flex items-center justify-center rounded-lg overflow-hidden hover:opacity-90 transition-opacity aspect-square w-full h-full block bg-white shadow-md border border-black/5"
                                                                   >
-                                                                      <div className="w-7 h-7 rounded-lg bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto">
-                                                                          {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : isEmoji ? <span className="text-base leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className="scale-[0.85]">{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={14} className="text-violet-500" /> : isSupport ? <Heart size={14} className="text-pink-500" /> : <ExternalLink size={14} className="text-stone-500" />}
-                                                                      </div>
+                                                                      {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} /> : isEmoji ? <span className="text-2xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className="scale-[1]">{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={18} className="text-violet-500" /> : isSupport ? <Heart size={18} className="text-pink-500" /> : <ExternalLink size={18} className="text-stone-500" />}
                                                                   </Tag>
                                                               ) : isIconMode && sqSize === 64 ? (
                                                                   <Tag
@@ -1287,12 +1281,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                       target={isExternal ? "_blank" : undefined}
                                                                       rel={isExternal ? "noopener noreferrer" : undefined}
                                                                       onClick={e => { e.stopPropagation(); if (isProduct) handleProductClick(link); if (isSupport) handleSupportClick(link.price); }}
-                                                                      className="flex items-center justify-center rounded-lg overflow-hidden hover:opacity-90 transition-opacity aspect-square p-1.5 w-full h-full block"
-                                                                      style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                      className="flex items-center justify-center rounded-xl overflow-hidden hover:opacity-90 transition-opacity aspect-square w-full h-full block bg-white shadow-md border border-black/5"
                                                                   >
-                                                                      <div className="w-10 h-10 rounded-xl bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto">
-                                                                          {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-xl" alt={link.title} /> : isEmoji ? <span className="text-xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className="scale-[1.25]">{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={18} className="text-violet-500" /> : isSupport ? <Heart size={18} className="text-pink-500" /> : <ExternalLink size={18} className="text-stone-500" />}
-                                                                      </div>
+                                                                      {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} /> : isEmoji ? <span className="text-4xl leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className="scale-[1.5]">{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={28} className="text-violet-500" /> : isSupport ? <Heart size={28} className="text-pink-500" /> : <ExternalLink size={28} className="text-stone-500" />}
                                                                   </Tag>
                                                               ) : isProduct ? (
                                                                   <button

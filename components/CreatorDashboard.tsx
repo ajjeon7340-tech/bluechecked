@@ -3709,6 +3709,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     left: currentPos.x,
                                                     top: currentPos.y,
                                                     width: isEditingLink ? Math.max(isIconMode ? (sqSize || LINK_W) : LINK_W, 220) : (isIconMode ? (sqSize || LINK_W) : (isThumbnailMode || isYouTubeLink ? thumbCardW : wideCardW)),
+                                                    height: isIconMode && !isEditingLink ? (sqSize || LINK_W) : undefined,
                                                     transform: isDraggingLink ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
                                                     transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
                                                     zIndex: isDraggingLink ? 1000 : isEditingLink ? 500 : linkZOrder.includes(link.id) ? (100 + linkZOrder.indexOf(link.id)) : (50 + i),
@@ -3721,7 +3722,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             >
                                                 {/* Drag grip */}
                                                 <div
-                                                    className="h-5 flex items-center justify-center flex-shrink-0"
+                                                    className={isIconMode && !isEditingLink ? "absolute inset-0 z-0" : "h-5 flex items-center justify-center flex-shrink-0"}
                                                     style={{ cursor: 'grab', touchAction: 'none' }}
                                                     onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
                                                     onTouchStart={e => {
@@ -3737,7 +3738,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     }}
                                                     title="Drag to reposition"
                                                 >
-                                                    <div className="w-8 h-1 rounded-full bg-black/15" />
+                                                    {(!isIconMode || isEditingLink) && <div className="w-8 h-1 rounded-full bg-black/15" />}
                                                 </div>
                                                 {isEditingLink ? (
                                                     <div className="rounded-lg p-3 shadow-lg" style={{ backgroundColor: boardLinkDraft.color || linkColors[lc], border: '2px solid rgba(0,0,0,0.15)' }}>
@@ -3934,8 +3935,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     </div>
                                                 ) : (
                                                     <div
-                                                        className={`relative rounded-lg ${isThumbnailMode ? (cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-3' : 'p-2') : isIconMode ? (sqSize === 32 ? 'p-0.5 aspect-square flex items-center justify-center' : sqSize === 44 ? 'p-1 aspect-square flex items-center justify-center' : 'p-1.5 aspect-square flex items-center justify-center') : (cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-2.5' : 'p-2')}`}
-                                                        style={{
+                                                        className={`relative ${isIconMode ? 'aspect-square flex items-center justify-center bg-white border border-black/5 overflow-hidden' : 'rounded-lg'} ${isThumbnailMode ? (cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-3' : 'p-2') : isIconMode ? (sqSize === 32 ? 'rounded-md' : sqSize === 44 ? 'rounded-lg' : 'rounded-xl') : (cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-2.5' : 'p-2')}`}
+                                                        style={isIconMode ? {
+                                                            boxShadow: isDraggingLink ? '0 16px 40px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.08)',
+                                                        } : {
                                                             backgroundColor: link.buttonColor || linkColors[lc],
                                                             border: isDraggingLink ? '2px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.08)',
                                                             boxShadow: isDraggingLink ? '0 16px 40px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.07)',
@@ -4013,36 +4016,36 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                             </>
                                                         ) : isIconMode && sqSize === 32 ? (
                                                             /* S: tiny icon, no padding */
-                                                            <div className="w-6 h-6 rounded-md bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto">
+                                                            <div className="w-full h-full flex items-center justify-center mx-auto relative z-10 pointer-events-none">
                                                                 {detectedPlatform ? (
                                                                     <div className="scale-[0.75]">{getPreviewPlatformIcon(detectedPlatform)}</div>
                                                                 ) : link.thumbnailUrl?.startsWith('data:emoji,') ? (
-                                                                    <span className="text-xs leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span>
+                                                                    <span className="text-xl leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span>
                                                                 ) : link.thumbnailUrl ? (
-                                                                    <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-md" alt={link.title} />
-                                                                ) : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={11} className="text-violet-500" /> : link.type === 'SUPPORT' ? <Heart size={11} className="text-pink-500" /> : <LinkIcon size={11} className="text-stone-500" />}
+                                                                    <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
+                                                                ) : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={14} className="text-violet-500" /> : link.type === 'SUPPORT' ? <Heart size={14} className="text-pink-500" /> : <LinkIcon size={14} className="text-stone-500" />}
                                                             </div>
                                                         ) : isIconMode && sqSize === 44 ? (
                                                             /* M: small square icon */
-                                                            <div className="w-7 h-7 rounded-lg bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto">
+                                                            <div className="w-full h-full flex items-center justify-center mx-auto relative z-10 pointer-events-none">
                                                                 {detectedPlatform ? (
-                                                                    <div className="scale-[0.85]">{getPreviewPlatformIcon(detectedPlatform)}</div>
+                                                                    <div className="scale-[1]">{getPreviewPlatformIcon(detectedPlatform)}</div>
                                                                 ) : link.thumbnailUrl?.startsWith('data:emoji,') ? (
-                                                                    <span className="text-base leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span>
+                                                                    <span className="text-2xl leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span>
                                                                 ) : link.thumbnailUrl ? (
-                                                                    <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} />
-                                                                ) : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={14} className="text-violet-500" /> : link.type === 'SUPPORT' ? <Heart size={14} className="text-pink-500" /> : <LinkIcon size={14} className="text-stone-500" />}
+                                                                    <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
+                                                                ) : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={18} className="text-violet-500" /> : link.type === 'SUPPORT' ? <Heart size={18} className="text-pink-500" /> : <LinkIcon size={18} className="text-stone-500" />}
                                                             </div>
                                                         ) : isIconMode && sqSize === 64 ? (
                                                             /* L: medium square icon */
-                                                            <div className="w-10 h-10 rounded-xl bg-white/60 shadow-sm border border-black/5 flex items-center justify-center mx-auto">
+                                                            <div className="w-full h-full flex items-center justify-center mx-auto relative z-10 pointer-events-none">
                                                                 {detectedPlatform ? (
-                                                                    <div className="scale-[1.25]">{getPreviewPlatformIcon(detectedPlatform)}</div>
+                                                                    <div className="scale-[1.5]">{getPreviewPlatformIcon(detectedPlatform)}</div>
                                                                 ) : link.thumbnailUrl?.startsWith('data:emoji,') ? (
-                                                                    <span className="text-xl">{link.thumbnailUrl.replace('data:emoji,', '')}</span>
+                                                                    <span className="text-4xl leading-none">{link.thumbnailUrl.replace('data:emoji,', '')}</span>
                                                                 ) : link.thumbnailUrl ? (
-                                                                    <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-xl" alt={link.title} />
-                                                                ) : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={18} className="text-violet-500" /> : link.type === 'SUPPORT' ? <Heart size={18} className="text-pink-500" /> : <LinkIcon size={18} className="text-stone-500" />}
+                                                                    <img src={link.thumbnailUrl} className="w-full h-full object-cover" alt={link.title} />
+                                                                ) : link.type === 'DIGITAL_PRODUCT' ? <ShoppingBag size={28} className="text-violet-500" /> : link.type === 'SUPPORT' ? <Heart size={28} className="text-pink-500" /> : <LinkIcon size={28} className="text-stone-500" />}
                                                             </div>
                                                         ) : (() => {
                                                             // Wide format: thumbnail style when explicitly set OR auto-detected (real photo)
