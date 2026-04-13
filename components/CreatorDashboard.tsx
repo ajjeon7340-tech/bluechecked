@@ -3798,12 +3798,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                                 const updatedLinks = (editedCreator.links || []).map(l => l.id === link.id ? {
                                                                                     ...l,
                                                                                     displayStyle: val as any,
-                                                                                    ...(val === 'icon' && !l.iconShape ? { iconShape: 'square-s' } : {})
+                                                                            ...(val === 'icon' && !l.iconShape ? { iconShape: 'square-l' } : {})
                                                                                 } : l);
                                                                                 setBoardLinkDraft(p => ({
                                                                                     ...p,
                                                                                     displayStyle: val as 'icon' | 'wide' | 'thumbnail',
-                                                                                    ...(val === 'icon' && !p.iconShape ? { iconShape: 'square-s' } : {})
+                                                                            ...(val === 'icon' && !p.iconShape ? { iconShape: 'square-l' } : {})
                                                                                 }));
                                                                                 await saveBoardLinkChange(updatedLinks);
                                                                             }}
@@ -4273,7 +4273,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     title = hostname.charAt(0).toUpperCase() + hostname.slice(1).split('.')[0];
                                                                 } catch { title = url; }
                                                             }
-                                                            await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title, url, type: 'EXTERNAL', iconShape: 'square-s', displayStyle: 'icon' }]);
+                                                        await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title, url, type: 'EXTERNAL', iconShape: 'square-l', displayStyle: 'icon' }]);
                                                             _closeAllBoardAdding();
                                                         }}
                                                     >Add Link</button>
@@ -4299,7 +4299,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 const url = boardPlatformUrlDraft.trim();
                                                                 if (url) {
                                                                     _closeAllBoardAdding();
-                                                                    await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-s', displayStyle: 'icon' }]);
+                                                                await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-l', displayStyle: 'icon' }]);
                                                                 }
                                                             }
                                                         }}
@@ -4312,7 +4312,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 const url = boardPlatformUrlDraft.trim();
                                                                 if (!url) return;
                                                                 _closeAllBoardAdding();
-                                                                await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-s', displayStyle: 'icon' }]);
+                                                            await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: platformDef?.label || 'Platform', url, type: 'EXTERNAL', iconShape: 'square-l', displayStyle: 'icon' }]);
                                                             }}
                                                         >Add Link</button>
                                                         <button
@@ -4360,7 +4360,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     const url = boardLinkDraft.url.trim();
                                                     if (!title || !url) return;
                                                     await saveBoardLinkChange([...(editedCreator.links || []), {
-                                                        id: `link_${Date.now()}`, title, url, type: 'DIGITAL_PRODUCT', iconShape: 'square-s', displayStyle: 'icon',
+                                                        id: `link_${Date.now()}`, title, url, type: 'DIGITAL_PRODUCT', iconShape: 'square-l', displayStyle: 'icon',
                                                         price: boardLinkDraft.price ? parseInt(boardLinkDraft.price) : undefined,
                                                     }]);
                                                     _closeAllBoardAdding();
@@ -4398,7 +4398,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                     const title = boardLinkDraft.title.trim();
                                                     if (!title) return;
                                                     await saveBoardLinkChange([...(editedCreator.links || []), {
-                                                        id: `link_${Date.now()}`, title, url: '#', type: 'SUPPORT', iconShape: 'square-s', displayStyle: 'icon',
+                                                        id: `link_${Date.now()}`, title, url: '#', type: 'SUPPORT', iconShape: 'square-l', displayStyle: 'icon',
                                                         price: boardLinkDraft.price ? parseInt(boardLinkDraft.price) : undefined,
                                                     }]);
                                                     _closeAllBoardAdding();
