@@ -430,6 +430,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Long Press Drag State (Mobile)
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartPosRef = useRef<{x: number, y: number} | null>(null);
+  const lastDragEndTimeRef = useRef<number>(0);
 
   // Pending drag: activated only after mouse moves > threshold to avoid accidental drags during scroll
   const pendingDragRef = useRef<{ id: string; startMouseX: number; startMouseY: number; startNoteX: number; startNoteY: number } | null>(null);
@@ -3399,6 +3400,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 pendingDragRef.current = null;
                                 pendingLinkDragRef.current = null;
                                 dashPanRef.current = null;
+                                if (boardDragging || boardLinkDragging) {
+                                    lastDragEndTimeRef.current = Date.now();
+                                }
                                 if (boardDragging) {
                                     const rawPos = boardPositions[boardDragging.id];
                                     const draggingId = boardDragging.id;
@@ -4158,7 +4162,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 onMouseDown={e => e.stopPropagation()}
                                                 onMouseEnter={() => !boardDragging && setSelectedBoardId(post.id)}
                                                 onMouseLeave={() => !boardDragging && setSelectedBoardId(null)}
-                                                onClick={() => !isDragging && setBoardPopupPost(post)}
+                                                onClick={() => {
+                                                    if (isDragging || Date.now() - lastDragEndTimeRef.current < 200) return;
+                                                    setBoardPopupPost(post);
+                                                }}
                                                 onTouchStart={e => handleNoteTouchStart(e, post.id, currentPos, 'POST')}
                                                 onTouchMove={handleNoteTouchMove}
                                                 onTouchEnd={cancelLongPress}
