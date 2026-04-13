@@ -29,7 +29,7 @@ interface Props {
   onRefreshData: () => Promise<void>;
 }
 
-type DashboardView = 'OVERVIEW' | 'INBOX' | 'BOARD' | 'FINANCE' | 'ANALYTICS' | 'STATISTICS' | 'SETTINGS' | 'NOTIFICATIONS' | 'REVIEWS' | 'SUPPORT';
+type DashboardView = 'OVERVIEW' | 'INBOX' | 'BOARD' | 'FINANCE' | 'ANALYTICS' | 'STATISTICS' | 'SETTINGS' | 'NOTIFICATIONS' | 'SUPPORT';
 type InboxFilter = 'ALL' | 'PENDING' | 'REPLIED' | 'REJECTED';
 
 const SUPPORTED_PLATFORMS = [
@@ -321,7 +321,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       const path = window.location.pathname;
       if (path.startsWith('/dashboard/')) {
           const view = path.split('/')[2].toUpperCase();
-          if (['INBOX', 'BOARD', 'FINANCE', 'ANALYTICS', 'STATISTICS', 'SETTINGS', 'NOTIFICATIONS', 'REVIEWS', 'SUPPORT'].includes(view)) {
+          if (['INBOX', 'BOARD', 'FINANCE', 'ANALYTICS', 'STATISTICS', 'SETTINGS', 'NOTIFICATIONS', 'SUPPORT'].includes(view)) {
               return view as DashboardView;
           }
       }
@@ -522,10 +522,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   // Pagination State
   const [financePage, setFinancePage] = useState(1);
   const [notificationPage, setNotificationPage] = useState(1);
-  const [reviewsPage, setReviewsPage] = useState(1);
-  const [overviewReviewsPage, setOverviewReviewsPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
-  const OVERVIEW_REVIEWS_PER_PAGE = 5;
   const [chatSessionIndex, setChatSessionIndex] = useState(0);
 
   // Left Chatrooms (hidden, not deleted from DB) - stores timestamp of when left
@@ -740,7 +737,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
               setCurrentView('OVERVIEW');
           } else if (path.startsWith('/dashboard/')) {
               const view = path.split('/')[2].toUpperCase();
-              if (['INBOX', 'BOARD', 'FINANCE', 'ANALYTICS', 'STATISTICS', 'SETTINGS', 'NOTIFICATIONS', 'REVIEWS', 'SUPPORT'].includes(view)) {
+          if (['INBOX', 'BOARD', 'FINANCE', 'ANALYTICS', 'STATISTICS', 'SETTINGS', 'NOTIFICATIONS', 'SUPPORT'].includes(view)) {
                   setCurrentView(view as DashboardView);
               }
           }
@@ -1307,12 +1304,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       return Object.values(groups).sort((a, b) => new Date(b.latestMessage.createdAt).getTime() - new Date(a.latestMessage.createdAt).getTime());
   }, [incomingMessages]);
 
-  const reviews = useMemo(() => {
-      return messages
-          .filter(m => m.rating && m.rating > 0)
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [messages]);
-
   const stats = useMemo((): DashboardStats => {
     const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
     const now = Date.now();
@@ -1609,8 +1600,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
       setLastReadTime(Date.now());
       localStorage.setItem('diem_creator_last_read_time', Date.now().toString());
       setNotificationPage(1);
-    } else if (view === 'REVIEWS') {
-        setReviewsPage(1);
     }
 
     const path = view === 'OVERVIEW' ? '/dashboard' : `/dashboard/${view.toLowerCase()}`;
@@ -2072,7 +2061,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                 <SidebarItem icon={LayoutGrid} label="Board" view="BOARD" badge={boardPosts.filter(p => !p.reply).length || undefined} />
                 <SidebarItem icon={Wallet} label={t('creator.finance')} view="FINANCE" />
                 <SidebarItem icon={Bell} label={t('creator.notifications')} view="NOTIFICATIONS" badge={notifications.filter(n => n.time.getTime() > lastReadTime).length || undefined} />
-                <SidebarItem icon={Star} label={t('creator.reviews')} view="REVIEWS" />
                 <SidebarItem icon={TrendingUp} label={t('creator.analytics')} view="ANALYTICS" />
                 <SidebarItem icon={AlertCircle} label={t('creator.support')} view="SUPPORT" />
                 <SidebarItem icon={PieIcon} label={t('creator.statistics')} view="STATISTICS" />
@@ -2188,7 +2176,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                         </div>
                     </div>
                     {/* ... Charts ... */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 gap-6">
                         <div className="bg-white p-6 rounded-2xl border border-stone-200/60 shadow-sm relative overflow-hidden h-96 flex flex-col">
                             <h3 className="font-bold text-stone-900 mb-6 flex items-center justify-between flex-shrink-0">
                                 <div className="flex items-center gap-2">
@@ -2251,71 +2239,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     </div>
                                 </div>
                             )}
-                        </div>
-                         <div className="space-y-4">
-                             <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col h-96">
-                                {(() => {
-                                    const totalOverviewPages = Math.ceil(reviews.length / OVERVIEW_REVIEWS_PER_PAGE);
-                                    const displayedOverviewReviews = reviews.slice((overviewReviewsPage - 1) * OVERVIEW_REVIEWS_PER_PAGE, overviewReviewsPage * OVERVIEW_REVIEWS_PER_PAGE);
-                                    
-                                    return (
-                                        <>
-                                <div className="flex justify-between items-center mb-4 pb-2 border-b border-stone-50 flex-shrink-0">
-                                    <div className="text-stone-400 text-xs font-bold uppercase tracking-wider">{t('creator.recentReviews')}</div>
-                                    <div className="flex items-center gap-2">
-                                        {totalOverviewPages > 1 && (
-                                            <div className="flex items-center gap-0.5">
-                                                {Array.from({ length: totalOverviewPages }, (_, i) => i + 1).map(p => (
-                                                    <button
-                                                        key={p}
-                                                        onClick={() => setOverviewReviewsPage(p)}
-                                                        className={`w-5 h-5 text-[9px] font-bold rounded transition-all ${overviewReviewsPage === p ? 'bg-stone-800 text-white' : 'text-stone-400 hover:bg-stone-100'}`}
-                                                    >
-                                                        {p}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                        <button 
-                                            onClick={() => handleNavigate('REVIEWS')}
-                                            className="text-xs font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-50 px-2 py-1 rounded transition-colors"
-                                        >
-                                            {t('creator.viewAll')}
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <div className="flex-1 overflow-y-auto pr-1 space-y-4">
-                                    {displayedOverviewReviews.length === 0 ? (
-                                        <div className="text-center py-6">
-                                            <Star size={24} className="mx-auto text-stone-200 mb-2" />
-                                            <p className="text-xs text-stone-400">{t('creator.noReviewsYet')}</p>
-                                        </div>
-                                    ) : (
-                                        displayedOverviewReviews.map(review => (
-                                            <div key={review.id} className="group">
-                                                <div className="flex justify-between items-start mb-1">
-                                                    <span className="font-bold text-stone-900 text-xs">{review.senderName}</span>
-                                                    <span className="text-[10px] text-stone-400">{new Date(review.createdAt).toLocaleDateString()}</span>
-                                                </div>
-                                                <div className="flex gap-0.5 mb-2">
-                                                        {[1,2,3,4,5].map(i => (
-                                                            <Star key={i} size={10} className={`${(review.rating || 0) >= i ? "fill-yellow-400 text-yellow-400" : "text-stone-200"}`}/>
-                                                        ))}
-                                                </div>
-                                                <div className="bg-stone-50 p-2 rounded-lg">
-                                                    <p className="text-[10px] text-stone-500 line-clamp-2 italic">
-                                                        "{review.reviewContent || t('creator.noWrittenReview')}"
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                                        </>
-                                    );
-                                })()}
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -2382,7 +2305,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                      {/* CONTENT FOR STATISTICS (ACTIVITY) */}
                      {currentView === 'STATISTICS' && (
                          <>
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-in fade-in zoom-in-95 duration-300">
+                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 animate-in fade-in zoom-in-95 duration-300">
                                 <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
                                     <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                                         <div className="p-1 sm:p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Eye size={14}/></div>
@@ -2399,19 +2322,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     </div>
                                     <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
                                         {detailedStats.reduce((acc, curr) => acc + curr.likes, 0).toLocaleString()}
-                                    </div>
-                                </div>
-                                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
-                                    <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-                                        <div className="p-1 sm:p-1.5 bg-stone-100 text-stone-400 rounded-lg"><Star size={14} className="fill-current"/></div>
-                                        <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{t('creator.rating')}</span>
-                                    </div>
-                                    <div className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
-                                        {(() => {
-                                            const valid = detailedStats.filter(s => s.rating > 0);
-                                            const avg = valid.length > 0 ? valid.reduce((acc, curr) => acc + curr.rating, 0) / valid.length : 0;
-                                            return avg.toFixed(1);
-                                        })()}
                                     </div>
                                 </div>
                                 <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/60 group hover:shadow-sm transition-all">
@@ -4225,7 +4135,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                         ...links.filter(l => l.id !== '__post_sizes__'),
                                                                         { id: '__post_sizes__', title: '', url: JSON.stringify(newSizes), hidden: true, type: 'EXTERNAL' as const },
                                                                     ];
-                                                                    await saveBoardLinkChange(updatedLinks);
+                                                                    saveBoardLinkChange(updatedLinks).catch(() => {});
                                                                 }}
                                                             >{sz}</button>
                                                         ))}
@@ -5912,75 +5822,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <button onClick={() => setNotificationPage(p => Math.min(totalPages, p + 1))} disabled={notificationPage === totalPages} className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"><ChevronRight size={16} /></button>
                             </div>
                         )}
-                    </div>
-                    );
-                    })()}
-                </div>
-            )}
-
-            {/* --- VIEW: REVIEWS --- */}
-            {currentView === 'REVIEWS' && (
-                <div className="max-w-5xl mx-auto animate-in fade-in space-y-6">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-stone-500 p-2 -ml-2 flex-shrink-0"><Menu size={24} /></button>
-                            <h2 className="text-xl sm:text-2xl font-bold text-stone-900">{t('creator.reviews')}</h2>
-                        </div>
-                        <TopNav hideBurger />
-                    </div>
-                    {(() => {
-                        const totalPages = Math.ceil(reviews.length / ITEMS_PER_PAGE);
-                        const displayedReviews = reviews.slice((reviewsPage - 1) * ITEMS_PER_PAGE, reviewsPage * ITEMS_PER_PAGE);
-                        return (
-                    <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-stone-900">{t('creator.allReviews')}</h3>
-                            <span className="text-xs text-stone-500">{t('creator.reviewsCount', { count: reviews.length })}</span>
-                        </div>
-                        <div className="divide-y divide-stone-100">
-                            {displayedReviews.length === 0 ? (
-                                <div className="p-12 text-center text-stone-400 text-sm">{t('creator.noReviewsYet')}</div>
-                            ) : (
-                                displayedReviews.map(review => (
-                                    <div key={review.id} className="p-6 hover:bg-stone-50 transition-colors">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-bold text-stone-900 text-sm">{review.senderName}</span>
-                                                <div className="flex gap-0.5">
-                                                    {[1,2,3,4,5].map(i => (
-                                                        <Star key={i} size={14} className={`${(review.rating || 0) >= i ? "fill-yellow-400 text-yellow-400" : "text-stone-200"}`}/>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            <span className="text-xs text-stone-400">{new Date(review.createdAt).toLocaleDateString()}</span>
-                                        </div>
-                                        {/* @ts-ignore */}
-                                        <p className="text-sm text-stone-600 italic mb-2">"{review.reviewContent || t('creator.noWrittenReview')}"</p>
-                                        <div className="text-xs text-stone-400">
-                                            {t('creator.sessionAmount')} <span className="font-medium text-stone-600">{review.amount} {t('common.credits')}</span>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                        {/* Pagination Controls */}
-                        <div className="px-6 py-4 border-t border-stone-100 flex items-center justify-center gap-4">
-                            <button
-                                onClick={() => setReviewsPage(p => Math.max(1, p - 1))}
-                                disabled={reviewsPage === 1}
-                                className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
-                            >
-                                <ChevronLeft size={16} />
-                            </button>
-                            <span className="text-xs font-bold text-stone-600">{t('common.page', { current: reviewsPage, total: Math.max(1, totalPages) })}</span>
-                            <button
-                                onClick={() => setReviewsPage(p => Math.min(totalPages, p + 1))}
-                                disabled={reviewsPage === totalPages || totalPages <= 1}
-                                className="p-2 rounded-lg hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed text-stone-500 transition-colors"
-                            >
-                                <ChevronRight size={16} />
-                            </button>
-                        </div>
                     </div>
                     );
                     })()}

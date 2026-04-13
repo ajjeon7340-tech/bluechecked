@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { CurrentUser, Message, CreatorProfile } from '../types';
 import { Button } from './Button';
 import { DiemLogo, CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download, Smile, Verified } from './Icons';
-import { getMessages, getChatLines, invalidateChatLinesCache, invalidateMsgCache, cancelMessage, sendMessage, rateMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createCheckoutSession, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl, uploadProductFile, sendFanWelcomeMessage, getDiemCreatorId } from '../services/realBackend';
+import { getMessages, getChatLines, invalidateChatLinesCache, invalidateMsgCache, cancelMessage, sendMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createCheckoutSession, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl, uploadProductFile, sendFanWelcomeMessage, getDiemCreatorId } from '../services/realBackend';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import i18n from '../i18n/config';
 
@@ -183,13 +183,6 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   const [followUpAttachments, setFollowUpAttachments] = useState<string[]>([]);
   const [isUploadingFollowUpAttachment, setIsUploadingFollowUpAttachment] = useState(false);
   const followUpFileInputRef = useRef<HTMLInputElement>(null);
-  const [reviewText, setReviewText] = useState('');
-
-  // Rating & Appreciation
-  const [rating, setRating] = useState(0); 
-  const [hoveredStar, setHoveredStar] = useState(0); 
-  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
-  const [showRatingSuccess, setShowRatingSuccess] = useState(false);
   
   // Custom Appreciation State
   const [customAppreciationMode, setCustomAppreciationMode] = useState(false);
@@ -594,7 +587,6 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
   };
 
   // Derived state for UI logic
-  const hasRated = !!(latestMessage?.rating && latestMessage.rating > 0);
   const hasThanked = useMemo(() => {
       return latestMessage?.conversation.some(c => c.role === 'FAN' && c.content.startsWith('Fan Appreciation:'));
   }, [latestMessage]);
@@ -606,8 +598,6 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       setFollowUpText('');
       setCustomAppreciationMode(false);
       setCustomAppreciationText('');
-      setRating(0);
-      setHoveredStar(0);
       setConfirmCancelId(null);
       setShowReadBanner(false);
       // Ensure we stay in Overview when opening chat, but the 'selectedCreatorId' acts as a sub-view
@@ -687,27 +677,6 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
       } finally {
           setIsSendingFollowUp(false);
       }
-  };
-
-  const handleSubmitRating = async () => {
-      if (!latestMessage || rating === 0) return;
-      setIsSubmittingRating(true);
-      try {
-          // Optimistic update for immediate feedback
-          setMessages(prev => prev.map(m => m.id === latestMessage.id ? { ...m, rating, reviewContent: reviewText } : m));
-          
-          await rateMessage(latestMessage.id, rating, reviewText);
-          loadMessages(true); // Background refresh
-          
-          setRating(0); 
-          setHoveredStar(0);
-          setShowRatingSuccess(true);
-          setTimeout(() => setShowRatingSuccess(false), 2000);
-      } catch (e: any) { 
-          console.error(e); 
-          alert(`Failed to submit rating: ${e.message || "Please try again."}`);
-          loadMessages(true); // Revert on error
-      } finally { setIsSubmittingRating(false); }
   };
 
   const handleSendAppreciation = async (msgId: string, text: string) => {
@@ -2440,55 +2409,6 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
 
                             {latestMessage && latestMessage.status === 'REPLIED' && (
                                 <div className="p-4 bg-stone-50/50">
-                                     {/* Rating Section */}
-                                     {!hasRated && !showRatingSuccess && (
-                                         <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-sm mb-4 text-center">
-                                             <h4 className="font-bold text-stone-900 text-sm mb-2">How was the answer?</h4>
-                                             <div className="flex justify-center gap-2 mb-2">
-                                                 {[1,2,3,4,5].map(star => (
-                                                     <button
-                                                        key={star}
-                                                        onMouseEnter={() => setHoveredStar(star)}
-                                                        onMouseLeave={() => setHoveredStar(0)}
-                                                        onClick={() => setRating(star)}
-                                                        disabled={isSubmittingRating}
-                                                        className="transition-transform hover:scale-110 active:scale-95"
-                                                     >
-                                                         <Star 
-                                                            size={24} 
-                                                            className={`${(hoveredStar || rating) >= star ? 'fill-yellow-400 text-yellow-400' : 'text-stone-300'} transition-colors`}
-                                                         />
-                                                     </button>
-                                                 ))}
-                                             </div>
-                                             
-                                             {rating > 0 && (
-                                                 <div className="animate-in fade-in slide-in-from-top-2 px-4 pb-2">
-                                                     <textarea
-                                                         value={reviewText}
-                                                         onChange={(e) => setReviewText(e.target.value)}
-                                                         placeholder="Write a review (optional)..."
-                                                         className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm focus:ring-1 focus:ring-stone-400 outline-none resize-none h-20 mb-3"
-                                                     />
-                                                     <Button 
-                                                         fullWidth 
-                                                         onClick={handleSubmitRating}
-                                                         isLoading={isSubmittingRating}
-                                                         size="sm"
-                                                     >
-                                                         Submit Review
-                                                     </Button>
-                                                 </div>
-                                             )}
-                                         </div>
-                                     )}
-
-                                     {showRatingSuccess && (
-                                         <div className="bg-green-50 text-green-600 p-3 rounded-xl border border-green-100 text-center text-sm font-bold mb-4 animate-in zoom-in">
-                                             Thanks for your feedback!
-                                         </div>
-                                     )}
-
                                      {/* Follow Up / Appreciation */}
                                      {!showFollowUpInput && !customAppreciationMode ? (
                                          <div className="grid grid-cols-2 gap-3">
