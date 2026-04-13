@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CurrentUser, Message, CreatorProfile } from '../types';
 import { Button } from './Button';
-import { DiemLogo, CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, Coins, CreditCard, RefreshCw, Download, Smile, Verified } from './Icons';
+import { DiemLogo, CheckCircle2, MessageSquare, Clock, LogOut, ExternalLink, ChevronRight, User, AlertCircle, Check, Trash, Paperclip, ChevronLeft, Send, Ban, Star, DollarSign, Plus, X, Heart, Sparkles, Camera, Save, ShieldCheck, Home, Settings, Menu, Bell, Search, Wallet, TrendingUp, ShoppingBag, FileText, Image as ImageIcon, Video, Link as LinkIcon, Lock, HelpCircle, Receipt, ArrowRight, Play, Trophy, MonitorPlay, LayoutGrid, Flame, InstagramLogo, Twitter, Youtube, Twitch, Music2, TikTokLogo, XLogo, YouTubeLogo, SpotifyLogo, Coins, CreditCard, RefreshCw, Download, Smile, Verified } from './Icons';
 import { getMessages, getChatLines, invalidateChatLinesCache, invalidateMsgCache, cancelMessage, sendMessage, sendFanAppreciation, updateCurrentUser, getFeaturedCreators, addCredits, createCheckoutSession, isBackendConfigured, subscribeToMessages, getPurchasedProducts, getSecureDownloadUrl, uploadProductFile, sendFanWelcomeMessage, getDiemCreatorId } from '../services/realBackend';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import i18n from '../i18n/config';
@@ -936,7 +936,7 @@ export const FanDashboard: React.FC<Props> = ({ currentUser, onLogout, onBrowseC
           case 'instagram': return <InstagramLogo className={`${cn} ${variant === 'colored' ? 'text-pink-600' : ''} w-4 h-4`} />;
           case 'x': return <XLogo className={`${cn} ${variant === 'colored' ? 'text-black' : ''} w-3.5 h-3.5`} />;
           case 'tiktok': return <TikTokLogo className={`${cn} ${variant === 'colored' ? 'text-black' : ''} w-3.5 h-3.5`} />;
-          case 'twitch': return <Twitch size={size} className={`${cn} ${variant === 'colored' ? 'text-purple-600' : ''}`} />;
+          case 'spotify': return <SpotifyLogo className={`${cn} ${variant === 'colored' ? 'text-[#1DB954]' : ''} w-4 h-4`} />;
           case 'linkedin': return <User size={size} className={`${cn} ${variant === 'colored' ? 'text-blue-700' : ''}`} />;
           default: return <Sparkles size={size} className={cn} />;
       }

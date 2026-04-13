@@ -1058,8 +1058,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                               const isMob = boardContainerW < 600;
                                               const sv = isMob ? creator.boardFocusMobile : creator.boardFocusDesktop;
                                               // Default: center of the content
-                                              const fX = sv?.x ?? cW / 2;
-                                              const fY = sv ? Math.max(0, sv.y - CREATOR_CARD_ZONE) : cH / 2;
+                                              const fX = sv?.x ?? containerW / 2;
+                                              const fY = sv ? Math.max(0, sv.y - CREATOR_CARD_ZONE) : containerH / 2;
                                               // Anchor = top-left of the viewport frame in canvas coordinates
                                               const aX = fX - DESKTOP_VW / 2;
                                               const aY = Math.max(0, fY - FOCUS_H / 2);

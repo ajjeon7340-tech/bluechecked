@@ -39,7 +39,7 @@ const SUPPORTED_PLATFORMS = [
     { id: 'x',        label: 'X',         icon: XLogo },
     { id: 'threads',  label: 'Threads',   icon: ThreadsLogo },
     { id: 'facebook', label: 'Facebook',  icon: FacebookLogo },
-    { id: 'twitch',   label: 'Twitch',    icon: Twitch },
+    { id: 'spotify',  label: 'Spotify',   icon: SpotifyLogo },
     { id: 'discord',  label: 'Discord',   icon: DiscordLogo },
     { id: 'linkedin', label: 'LinkedIn',  icon: LinkedInLogo },
 ];
@@ -3420,9 +3420,26 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         // When modal is open use live anchor; otherwise derive from saved profile
                                         const anchor = boardFocusModeOpen ? boardFocusAnchor : (() => {
                                             const sd = editedCreator.boardFocusDesktop;
-                                            return sd
-                                                ? { x: sd.x - DESKTOP_VW / 2, y: Math.max(0, sd.y - FOCUS_H / 2) }
-                                                : { x: cW / 2 - DESKTOP_VW / 2, y: Math.max(CREATOR_CARD_ZONE_R, CREATOR_CARD_ZONE_R + cH / 2 - FOCUS_H / 2) };
+                                            if (sd) {
+                                                return { x: sd.x - DESKTOP_VW / 2, y: Math.max(0, sd.y - FOCUS_H / 2) };
+                                            }
+                                            // Compute fallback bounds for the default anchor
+                                            const BOARD_PAD = 32, NOTE_W = 252, NOTE_GAP_X = 28, GUIDE_COLS = 3, LINK_W = 220;
+                                            const LINK_AUTO_X = BOARD_PAD + GUIDE_COLS * (NOTE_W + NOTE_GAP_X) + 32;
+                                            const visLinks = (editedCreator.links || []).filter(l => l.id !== '__diem_config__' && !l.hidden);
+                                            const maxLR = visLinks.reduce((m, l) => Math.max(m, (l.positionX ?? LINK_AUTO_X) + LINK_W), DESKTOP_VW);
+                                            const cWest = Math.max(DESKTOP_VW, maxLR + 32);
+                                            const posts = boardPosts.filter(p => p.isPinned);
+                                            const maxPB = posts.reduce((m, p, idx) => {
+                                                const y = p.positionY != null ? p.positionY : BOARD_PAD + Math.floor(idx / GUIDE_COLS) * (272 + 36);
+                                                return Math.max(m, y + 272);
+                                            }, 440);
+                                            const maxLB = visLinks.reduce((m, l, idx) => {
+                                                const y = l.positionY != null ? l.positionY : BOARD_PAD + (idx * 84);
+                                                return Math.max(m, y + 84);
+                                            }, 0);
+                                            const cHest = Math.max(maxPB, maxLB) + 80;
+                                            return { x: cWest / 2 - DESKTOP_VW / 2, y: Math.max(CREATOR_CARD_ZONE_R, CREATOR_CARD_ZONE_R + cHest / 2 - FOCUS_H / 2) };
                                         })();
                                         const fLeft = guideOffsetX + anchor.x;
                                         const fTop  = guideOffsetY + (anchor.y - CREATOR_CARD_ZONE_R);
