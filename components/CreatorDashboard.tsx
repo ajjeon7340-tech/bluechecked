@@ -154,7 +154,7 @@ const extractDomainName = (url: string) => {
     }
 };
 
-const fetchOembedTitle = async (url: string): Promise<string | null> => {
+const fetchOembedData = async (url: string): Promise<{ title?: string; thumbnailUrl?: string } | null> => {
     const fullUrl = url.startsWith('http') ? url : `https://${url}`;
     let oembedUrl = '';
     if (url.match(/youtube\.com|youtu\.be/)) oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(fullUrl)}&format=json`;
@@ -168,7 +168,10 @@ const fetchOembedTitle = async (url: string): Promise<string | null> => {
             const res = await fetch(oembedUrl);
             if (res.ok) {
                 const data = await res.json();
-                if (data.title) return data.title;
+                return {
+                    title: data.title,
+                    thumbnailUrl: data.thumbnail_url || data.thumbnailUrl
+                };
             }
         } catch (e) {}
     }
@@ -3768,14 +3771,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 });
 
                                                                 if (url.length > 10) {
-                                                                    const fetchedTitle = await fetchOembedTitle(url);
-                                                                    if (fetchedTitle) {
+                                                                    const fetchedData = await fetchOembedData(url);
+                                                                    if (fetchedData) {
                                                                         setBoardLinkDraft(p => {
                                                                             const currentDomain = extractDomainName(url);
-                                                                            if (!p.title || p.title === currentDomain || p.title === 'Platform' || p.title === 'Youtube') {
-                                                                                return { ...p, title: fetchedTitle };
+                                                                            const updates: any = {};
+                                                                            if (fetchedData.title && (!p.title || p.title === currentDomain || p.title === 'Platform' || p.title === 'Youtube')) {
+                                                                                updates.title = fetchedData.title;
                                                                             }
-                                                                            return p;
+                                                                            if (fetchedData.thumbnailUrl && !p.thumbnailUrl) {
+                                                                                updates.thumbnailUrl = fetchedData.thumbnailUrl;
+                                                                            }
+                                                                            return Object.keys(updates).length > 0 ? { ...p, ...updates } : p;
                                                                         });
                                                                     }
                                                                 }
@@ -4343,14 +4350,18 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         });
 
                                                         if (url.length > 10) {
-                                                            const fetchedTitle = await fetchOembedTitle(url);
-                                                            if (fetchedTitle) {
+                                                            const fetchedData = await fetchOembedData(url);
+                                                            if (fetchedData) {
                                                                 setBoardLinkDraft(p => {
                                                                     const currentDomain = extractDomainName(url);
-                                                                    if (!p.title || p.title === currentDomain || p.title === 'Platform' || p.title === 'Youtube') {
-                                                                        return { ...p, title: fetchedTitle };
+                                                                    const updates: any = {};
+                                                                    if (fetchedData.title && (!p.title || p.title === currentDomain || p.title === 'Platform' || p.title === 'Youtube')) {
+                                                                        updates.title = fetchedData.title;
                                                                     }
-                                                                    return p;
+                                                                    if (fetchedData.thumbnailUrl && !p.thumbnailUrl) {
+                                                                        updates.thumbnailUrl = fetchedData.thumbnailUrl;
+                                                                    }
+                                                                    return Object.keys(updates).length > 0 ? { ...p, ...updates } : p;
                                                                 });
                                                             }
                                                         }
@@ -4396,11 +4407,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 const url = boardPlatformUrlDraft.trim();
                                                                 if (url) {
                                                                     let finalTitle = platformDef?.label || extractDomainName(url) || 'Platform';
-                                                                    const fetchedTitle = await fetchOembedTitle(url);
-                                                                    if (fetchedTitle) finalTitle = fetchedTitle;
+                                                                    let finalThumbnail: string | undefined = undefined;
+                                                                    const fetchedData = await fetchOembedData(url);
+                                                                    if (fetchedData) {
+                                                                        if (fetchedData.title) finalTitle = fetchedData.title;
+                                                                        if (fetchedData.thumbnailUrl) finalThumbnail = fetchedData.thumbnailUrl;
+                                                                    }
 
                                                                     _closeAllBoardAdding();
-                                                                    await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: finalTitle, url, type: 'EXTERNAL', iconShape: 'square-l', displayStyle: 'icon' }]);
+                                                                    await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: finalTitle, url, thumbnailUrl: finalThumbnail, type: 'EXTERNAL', iconShape: 'square-l', displayStyle: 'icon' }]);
                                                                 }
                                                             }
                                                         }}
@@ -4413,11 +4428,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 const url = boardPlatformUrlDraft.trim();
                                                                 if (!url) return;
                                                                 let finalTitle = platformDef?.label || extractDomainName(url) || 'Platform';
-                                                                const fetchedTitle = await fetchOembedTitle(url);
-                                                                if (fetchedTitle) finalTitle = fetchedTitle;
+                                                                let finalThumbnail: string | undefined = undefined;
+                                                                const fetchedData = await fetchOembedData(url);
+                                                                if (fetchedData) {
+                                                                    if (fetchedData.title) finalTitle = fetchedData.title;
+                                                                    if (fetchedData.thumbnailUrl) finalThumbnail = fetchedData.thumbnailUrl;
+                                                                }
 
                                                                 _closeAllBoardAdding();
-                                                                await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: finalTitle, url, type: 'EXTERNAL', iconShape: 'square-l', displayStyle: 'icon' }]);
+                                                                await saveBoardLinkChange([...(editedCreator.links || []), { id: `link_${Date.now()}`, title: finalTitle, url, thumbnailUrl: finalThumbnail, type: 'EXTERNAL', iconShape: 'square-l', displayStyle: 'icon' }]);
                                                             }}
                                                         >Add Link</button>
                                                         <button
