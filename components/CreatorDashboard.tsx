@@ -257,7 +257,7 @@ const ProfilePreviewCard: React.FC<{ creator: CreatorProfile; compact?: boolean 
                 <div className="mt-2 mx-0">
                     <div className="relative overflow-hidden rounded-2xl border border-stone-200/60 py-3 px-3"
                         style={{
-                            background: 'linear-gradient(135deg, #FAFAF9 0%, #F5F3F0 100%)',
+                            backgroundColor: 'transparent',
                             backgroundImage: 'linear-gradient(rgba(168,162,158,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(168,162,158,0.08) 1px, transparent 1px)',
                             backgroundSize: '24px 24px',
                         }}>
@@ -3411,7 +3411,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     ref={boardCanvasRef}
                                     className="absolute inset-0 select-none overflow-hidden"
                                     style={{
-                                        background: 'linear-gradient(135deg, #FAFAF8 0%, #F5F3EF 100%)',
+                                        backgroundColor: editedCreator.bannerGradient || '#FAFAF8',
                                         cursor: boardDragging || boardLinkDragging ? 'grabbing' : boardLinkResizing ? 'se-resize' : 'grab',
                                         touchAction: 'none'
                                     }}
