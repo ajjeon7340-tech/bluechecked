@@ -3940,16 +3940,34 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                         className={`relative ${isIconMode ? 'aspect-square flex items-center justify-center bg-white border border-black/5 overflow-hidden' : 'rounded-lg'} ${isThumbnailMode ? (cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-3' : 'p-2') : isIconMode ? (sqSize === 32 ? 'rounded-md' : sqSize === 44 ? 'rounded-lg' : 'rounded-xl') : (cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-2.5' : 'p-2')}`}
                                                         style={isIconMode ? {
                                                             boxShadow: isDraggingLink ? '0 16px 40px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.08)',
-                                                            cursor: isDraggingLink ? 'grabbing' : 'grab',
                                                         } : {
                                                             backgroundColor: link.buttonColor || linkColors[lc],
                                                             border: isDraggingLink ? '2px solid rgba(0,0,0,0.15)' : '1px solid rgba(0,0,0,0.08)',
                                                             boxShadow: isDraggingLink ? '0 16px 40px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.07)',
                                                         }}
-                                                        onMouseDown={isIconMode && !isEditingLink ? e => handleLinkTapeMouseDown(e, link.id, currentPos) : undefined}
                                                     >
                                                         {/* Action buttons — show on hover */}
                                                         <div className="absolute top-1.5 right-1.5 hidden group-hover:flex items-center gap-1 z-10">
+                                                            {isIconMode && !isEditingLink && (
+                                                                <div
+                                                                    className="p-1 rounded-full bg-white/80 text-stone-500 hover:text-stone-800 hover:bg-white transition-all shadow-sm cursor-grab active:cursor-grabbing"
+                                                                    onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
+                                                                    onTouchStart={e => {
+                                                                        e.stopPropagation();
+                                                                        const touch = e.touches[0];
+                                                                        setBoardLinkDragging({
+                                                                            id: link.id,
+                                                                            startMouseX: touch.clientX,
+                                                                            startMouseY: touch.clientY,
+                                                                            startNoteX: currentPos.x,
+                                                                            startNoteY: currentPos.y,
+                                                                        });
+                                                                    }}
+                                                                    title="Drag to reposition"
+                                                                >
+                                                                    <GripVertical size={10} />
+                                                                </div>
+                                                            )}
                                                             <button
                                                                 className="p-1 rounded-full bg-white/80 text-stone-500 hover:text-stone-800 hover:bg-white transition-all shadow-sm"
                                                                 onMouseDown={e => e.stopPropagation()}
