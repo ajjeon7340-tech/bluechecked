@@ -1201,7 +1201,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                           <button
                                                                               onClick={e => { e.stopPropagation(); handleThumbClick(); }}
                                                                               className={`w-full text-left rounded-lg overflow-hidden hover:opacity-90 transition-opacity ${cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-3' : 'p-2'}`}
-                                                                              style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                              style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
                                                                           >
                                                                               <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%', backgroundColor: thumbBg }}>
                                                                                   {hasThumbnail
@@ -1288,7 +1288,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                   <button
                                                                       onClick={() => handleProductClick(link)}
                                                                       className="w-full text-left rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
-                                                                      style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                  style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
                                                                   >
                                                                       <div className="flex items-center gap-2.5 p-2.5">
                                                                           <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5">
@@ -1307,7 +1307,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                   <button
                                                                       onClick={() => handleSupportClick(link.price)}
                                                                       className="w-full text-left rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
-                                                                      style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                  style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
                                                                   >
                                                                       <div className="flex items-center gap-2.5 p-2.5">
                                                                           <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5">
@@ -1369,7 +1369,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                                   if (isSupport) handleSupportClick(link.price);
                                                                               }}
                                                                               className="flex items-center gap-2.5 rounded-lg overflow-hidden hover:opacity-90 transition-opacity p-2 w-full h-full"
-                                                                              style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                              style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
                                                                           >
                                                                               <div className="w-6 h-6 rounded-md bg-white/60 shadow-sm border border-black/5 flex items-center justify-center flex-shrink-0">
                                                                                   {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-md" alt={link.title} /> : isEmoji ? <span className="text-[14px] leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className="scale-[0.9]">{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={12} className="text-violet-500" /> : isSupport ? <Heart size={12} className="text-pink-500" /> : <ExternalLink size={12} className="text-stone-500" />}
@@ -1385,7 +1385,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                           rel="noopener noreferrer"
                                                                           onClick={e => e.stopPropagation()}
                                                                           className={`flex items-center gap-2 rounded-lg hover:opacity-80 transition-opacity ${cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-2.5' : 'p-2'}`}
-                                                                          style={{ backgroundColor: noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}
+                                                                          style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}
                                                                       >
                                                                           <div className={`${cardSize === 'S' ? 'w-4 h-4' : cardSize === 'L' ? 'w-7 h-7' : 'w-5 h-5'} rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5 text-stone-600`}>
                                                                               {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : isEmoji ? <span className={cardSize === 'S' ? 'text-[9px] leading-none' : cardSize === 'L' ? 'text-base leading-none' : 'text-xs leading-none'}>{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className={cardSize === 'S' ? 'scale-[0.7]' : cardSize === 'L' ? 'scale-[0.95]' : 'scale-[0.8]'}>{getPlatformIcon(detectedPlatform)}</div> : <ExternalLink size={cardSize === 'S' ? 8 : cardSize === 'L' ? 13 : 10} />}

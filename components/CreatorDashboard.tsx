@@ -5827,6 +5827,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     </div>
                 </div>
                 </div>
+                </div>
             )}
 
             {/* --- VIEW: NOTIFICATIONS --- */}
