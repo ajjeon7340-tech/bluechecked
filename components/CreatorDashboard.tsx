@@ -426,11 +426,11 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setBoardSelectedPlatform(null);
     setBoardPlatformUrlDraft('');
     setBoardChatPickerOpen(false);
-    setBoardLinkDraft({ title: '', url: '', price: '', type: 'EXTERNAL', color: undefined });
+            setBoardLinkDraft({ title: '', url: '', price: '', type: 'EXTERNAL', color: undefined, iconShape: undefined });
     setBoardPhotoDraft({ file: null, previewUrl: null, isUploading: false });
     setMobileAddMenuOpen(false);
   };
-  const [boardLinkDraft, setBoardLinkDraft] = useState<{ title: string; url: string; price: string; type: 'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT'; color?: string; thumbnailUrl?: string; displayStyle?: 'icon' | 'thumbnail' }>({ title: '', url: '', price: '', type: 'EXTERNAL' });
+        const [boardLinkDraft, setBoardLinkDraft] = useState<{ title: string; url: string; price: string; type: 'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT'; color?: string; thumbnailUrl?: string; displayStyle?: 'icon' | 'thumbnail' | 'wide'; iconShape?: string }>({ title: '', url: '', price: '', type: 'EXTERNAL' });
   const [boardReplyDraft, setBoardReplyDraft] = useState<Record<string, string>>({});
   const [boardReplyingId, setBoardReplyingId] = useState<string | null>(null);
   const [boardReplyAttachmentFile, setBoardReplyAttachmentFile] = useState<File | null>(null);
@@ -589,10 +589,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [editingSectionTitle, setEditingSectionTitle] = useState('');
   const [newLinkSectionId, setNewLinkSectionId] = useState('');
 
-  // Settings text tab state
-  const [settingsTextTab, setSettingsTextTab] = useState<'bio' | 'instructions' | 'reply'>('bio');
-  const [settingsMainTab, setSettingsMainTab] = useState<'general' | 'style'>('general');
-
   // Onboarding tutorial (settings)
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
@@ -611,11 +607,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
   const TUTORIAL_STEPS = [
     { title: 'Profile Photo', desc: 'Add a profile photo so fans know who they\'re talking to. Tap "Upload" to choose one from your device — a clear, friendly photo works best!', tab: null, highlight: 'avatar' },
-    { title: 'Your Status Message', desc: 'This appears on your public profile — it\'s the first thing fans see when they visit your page. Make it personal!', tab: 'bio' as const, highlight: 'bio' },
-    { title: 'Request Instructions', desc: 'Shown to fans before they send you a Diem request. Guide them on what context to include so you can give the best answer.', tab: 'instructions' as const, highlight: 'instructions' },
-    { title: 'Auto-Reply Message', desc: 'Sent automatically the moment a fan pays — a warm acknowledgment while you prepare your response.', tab: 'reply' as const, highlight: 'reply' },
-    { title: 'Links & Products', desc: 'Switch to the Links tab to add links to your social profiles, website, or resources. You can also upload digital products fans can purchase directly.', tab: null, highlight: 'links' },
-    { title: 'Custom Sections', desc: 'Still in the Links tab — group your links under named sections like "My Work" or "Resources". Type a section name and hit Add to create one.', tab: null, highlight: 'sections' },
   ] as const;
 
   const handleAddSection = () => {
@@ -974,7 +965,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
         localStorage.setItem(shownKey, String(shownCount + 1));
         setTutorialIsRevisit(shownCount >= 1);
         setTutorialStep(0);
-        setSettingsTextTab('bio');
         setShowTutorial(true);
       }
     }
@@ -1007,11 +997,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     const nextStep = tutorialStep + 1;
     if (nextStep >= TUTORIAL_STEPS.length) { handleTutorialDone(); return; }
     setTutorialStep(nextStep);
-    const tab = TUTORIAL_STEPS[nextStep].tab;
-    if (tab) setSettingsTextTab(tab);
-    if (nextStep === 4 || nextStep === 5) setSettingsMainTab('links');
-    if (nextStep === 4) setTimeout(() => tutorialLinksRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
-    if (nextStep === 5) setTimeout(() => tutorialSectionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
   };
 
   const handleTutorialSkip = () => {
@@ -3821,13 +3806,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                     onClick={e => e.stopPropagation()}
                                                                 />
                                                             </label>
+                                                            {boardLinkDraft.color && (
+                                                                <button onClick={e => { e.stopPropagation(); setBoardLinkDraft(p => ({ ...p, color: undefined })); }} className="ml-2 text-[10px] text-stone-400 hover:text-red-400 underline transition-colors">Reset</button>
+                                                            )}
                                                         </div>
                                                         {/* Size Swatches */}
                                                         <div className="mb-2.5 animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
                                                             <span className="text-[10px] font-bold text-stone-400 uppercase block mb-1">Size</span>
                                                             <div className="flex gap-1">
                                                             {([['square-s', 'S'], ['square-m', 'M'], ['square-l', 'L']] as const).map(([sVal, sLabel]) => {
-                                                                const isSelected = link.iconShape === sVal || (link.iconShape === 'square' && sVal === 'square-l') || (!link.iconShape && sVal === 'square-m');
+                                                                const currentShape = boardLinkDraft.iconShape !== undefined ? boardLinkDraft.iconShape : link.iconShape;
+                                                                const isSelected = currentShape === sVal || (currentShape === 'square' && sVal === 'square-l') || (!currentShape && sVal === 'square-m');
                                                                 return (
                                                                     <button
                                                                         key={sVal}
@@ -3856,7 +3845,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                         ['wide', 'Wide', '▭'],
                                                                     ['thumbnail', 'Thumb', '▣'],
                                                                 ] as const).map(([val, label, icon]) => {
-                                                                    const isSelected = effectiveStyle === val;
+                                                                const currentStyle = boardLinkDraft.displayStyle || link.displayStyle || (link.iconShape ? 'icon' : 'wide');
+                                                                const isSelected = currentStyle === val;
                                                                     return (
                                                                         <button
                                                                             key={val}
@@ -3865,12 +3855,12 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                                 const updatedLinks = (editedCreator.links || []).map(l => l.id === link.id ? {
                                                                                     ...l,
                                                                                     displayStyle: val as any,
-                                                                            ...(val === 'icon' && !l.iconShape ? { iconShape: 'square-l' } : {})
+                                                                                ...(val === 'icon' && !l.iconShape && !boardLinkDraft.iconShape ? { iconShape: 'square-l' } : {})
                                                                                 } : l);
                                                                                 setBoardLinkDraft(p => ({
                                                                                     ...p,
                                                                                     displayStyle: val as 'icon' | 'wide' | 'thumbnail',
-                                                                            ...(val === 'icon' && !p.iconShape ? { iconShape: 'square-l' } : {})
+                                                                                ...(val === 'icon' && !p.iconShape && !link.iconShape ? { iconShape: 'square-l' } : {})
                                                                                 }));
                                                                                 await saveBoardLinkChange(updatedLinks);
                                                                             }}
@@ -3923,13 +3913,10 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                             ...l,
                                                                             title: boardLinkDraft.title || l.title,
                                                                             url: boardLinkDraft.url || l.url,
-                                                                            ...(boardLinkDraft.color ? { buttonColor: boardLinkDraft.color } : {}),
-                                                                            ...(boardLinkDraft.thumbnailUrl !== undefined ? { thumbnailUrl: boardLinkDraft.thumbnailUrl } : {}),
-                                                                            ...(boardLinkDraft.displayStyle !== undefined ? { 
-                                                                                displayStyle: boardLinkDraft.displayStyle,
-                                                                                ...(boardLinkDraft.displayStyle === 'thumbnail' ? { iconShape: undefined } : {})
-                                                                            } : {}),
-                                                                                ...(boardLinkDraft.iconShape !== undefined ? { iconShape: boardLinkDraft.iconShape } : {}),
+                                                                            buttonColor: boardLinkDraft.color,
+                                                                            thumbnailUrl: boardLinkDraft.thumbnailUrl,
+                                                                            displayStyle: boardLinkDraft.displayStyle,
+                                                                            iconShape: boardLinkDraft.iconShape,
                                                                         } : l
                                                                     );
                                                                     await saveBoardLinkChange(updatedLinks);
@@ -3982,7 +3969,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                 onClick={e => {
                                                                     e.stopPropagation();
                                                                     setBoardLinkEditId(link.id);
-                                                                    setBoardLinkDraft({ title: link.title, url: link.url, price: link.price?.toString() || '', type: (link.type as any) || 'EXTERNAL', color: link.buttonColor, thumbnailUrl: link.thumbnailUrl, displayStyle: link.displayStyle });
+                                                                    setBoardLinkDraft({ title: link.title, url: link.url, price: link.price?.toString() || '', type: (link.type as any) || 'EXTERNAL', color: link.buttonColor, thumbnailUrl: link.thumbnailUrl, displayStyle: link.displayStyle, iconShape: link.iconShape });
                                                                 }}
                                                                 title="Edit"
                                                             ><Pencil size={10} /></button>
@@ -5661,21 +5648,20 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 />
                             </div>
 
-                            {/* Main tab switcher: General | Links | Style */}
-                            <div className="flex bg-stone-100 rounded-xl p-1 gap-0.5">
-                                {([{ key: 'general', label: 'General' }, { key: 'style', label: 'Style' }] as const).map(tab => (
-                                    <button
-                                        key={tab.key}
-                                        onClick={() => setSettingsMainTab(tab.key)}
-                                        className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${settingsMainTab === tab.key ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
+                            {/* User ID (Handle) */}
+                            <div>
+                                <label className="block text-sm font-medium text-stone-700 mb-1">User ID (Handle)</label>
+                                <input 
+                                    type="text" 
+                                    value={editedCreator.handle}
+                                    onChange={e => setEditedCreator({...editedCreator, handle: e.target.value})}
+                                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none"
+                                />
+                                <p className="text-[10px] text-stone-400 mt-1">
+                                    Your public page: <span className="font-mono text-stone-600">{window.location.host}/{editedCreator.handle?.replace('@', '')}</span>
+                                </p>
                             </div>
 
-                            {/* STYLE TAB */}
-                            {settingsMainTab === 'style' && (<>
                                 {/* Profile Font Selector */}
                                 <div>
                                     <label className="block text-sm font-medium text-stone-700 mb-2">Profile Font</label>
@@ -5806,70 +5792,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     )}
                                     <input type="file" ref={bannerFileInputRef} className="hidden" accept="image/*" onChange={handleBannerFileChange} />
                                 </div>
-                            </>)}
-
-                            {/* GENERAL TAB */}
-                            {settingsMainTab === 'general' && (<>
-                            <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-1">User ID (Handle)</label>
-                                <input 
-                                    type="text" 
-                                    value={editedCreator.handle}
-                                    onChange={e => setEditedCreator({...editedCreator, handle: e.target.value})}
-                                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none"
-                                />
-                                <p className="text-[10px] text-stone-400 mt-1">
-                                    Your public page: <span className="font-mono text-stone-600">{window.location.host}/{editedCreator.handle?.replace('@', '')}</span>
-                                </p>
-                            </div>
-                            {/* Bio / Instructions / Auto-Reply tab switcher */}
-                            <div className={showTutorial && tutorialStep >= 1 && tutorialStep <= 3 ? 'relative z-[60] ring-2 ring-amber-400 ring-offset-2 rounded-xl p-1 -m-1' : ''}>
-                                <div className="flex bg-stone-100 rounded-xl p-1 mb-3 gap-0.5">
-                                    {[
-                                        { key: 'bio', label: 'Bio / About' },
-                                        { key: 'instructions', label: 'Request Instructions' },
-                                        { key: 'reply', label: 'Auto-Reply' },
-                                    ].map(tab => (
-                                        <button
-                                            key={tab.key}
-                                            onClick={() => setSettingsTextTab(tab.key as typeof settingsTextTab)}
-                                            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${settingsTextTab === tab.key ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
-                                        >
-                                            {tab.label}
-                                        </button>
-                                    ))}
-                                </div>
-                                {settingsTextTab === 'bio' && (
-                                    <textarea
-                                        value={editedCreator.bio}
-                                        onChange={e => setEditedCreator({...editedCreator, bio: e.target.value})}
-                                        className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none h-28 resize-none"
-                                        placeholder="Tell fans about yourself..."
-                                    />
-                                )}
-                                {settingsTextTab === 'instructions' && (
-                                    <>
-                                        <textarea
-                                            value={editedCreator.intakeInstructions || ''}
-                                            onChange={e => setEditedCreator({...editedCreator, intakeInstructions: e.target.value})}
-                                            className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none h-28 resize-none"
-                                            placeholder="Please be as detailed as possible so I can give you the best answer."
-                                        />
-                                        <p className="text-[10px] text-stone-400 mt-1">This is shown to fans before they send a request.</p>
-                                    </>
-                                )}
-                                {settingsTextTab === 'reply' && (
-                                    <>
-                                        <textarea
-                                            value={editedCreator.welcomeMessage || ''}
-                                            onChange={e => setEditedCreator({...editedCreator, welcomeMessage: e.target.value})}
-                                            className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-400 outline-none h-28 resize-none"
-                                            placeholder="Hi! Thanks for your message. I'll get back to you soon..."
-                                        />
-                                        <p className="text-[10px] text-stone-400 mt-1">This is sent automatically when a fan pays.</p>
-                                    </>
-                                )}
-                            </div>
                             
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -5896,8 +5818,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <option value={72}>72 Hours</option>
                                     </select>
                                 </div>
-                            </div>
-                            </>)}
 
                         </div>
 
