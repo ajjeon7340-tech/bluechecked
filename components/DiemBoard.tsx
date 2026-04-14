@@ -643,6 +643,135 @@ const ComposeModal: React.FC<{
     );
 };
 
+// ── AMA sticker — inline ask-me-anything card on the board ───────────────────
+
+const AmaSticker: React.FC<{
+    creator: CreatorProfile;
+    currentUser: CurrentUser | null;
+    onLoginRequest: () => void;
+    onSubmit: (content: string, isPrivate: boolean) => Promise<void>;
+    delay?: number;
+}> = ({ creator, currentUser, onLoginRequest, onSubmit, delay = 0 }) => {
+    const [text, setText]       = useState('');
+    const [status, setStatus]   = useState<'idle' | 'submitting' | 'sent'>('idle');
+    const [focused, setFocused] = useState(false);
+
+    const handleSubmit = async () => {
+        if (!text.trim() || status !== 'idle') return;
+        if (!currentUser) { onLoginRequest(); return; }
+        setStatus('submitting');
+        try {
+            await onSubmit(text.trim(), false);
+            setText('');
+            setStatus('sent');
+            setTimeout(() => setStatus('idle'), 2200);
+        } catch {
+            setStatus('idle');
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); }
+    };
+
+    return (
+        <div className="relative note-hover" style={{ transform: 'rotate(0.4deg)' }}>
+            <PushPin color="#be185d" delay={delay} />
+            <div
+                className="note-in note-lift mt-4 w-72 rounded-sm overflow-hidden"
+                style={{
+                    animationDelay: `${delay}ms`,
+                    boxShadow: focused
+                        ? '0 12px 36px rgba(190,24,93,0.28), 3px 6px 18px rgba(0,0,0,0.22)'
+                        : '3px 6px 18px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.1)',
+                    transition: 'box-shadow 0.2s',
+                    background: '#fefef0',
+                }}
+            >
+                {/* Gradient header strip — hot pink → purple */}
+                <div style={{
+                    background: 'linear-gradient(90deg, #f472b6 0%, #a855f7 100%)',
+                    padding: '10px 16px 8px',
+                }}>
+                    <div className="flex items-center gap-2">
+                        <span style={{ fontSize: 18, lineHeight: 1 }}>🎤</span>
+                        <span style={{ fontFamily: "'Caveat', cursive", fontSize: 19, fontWeight: 700, color: '#fff', letterSpacing: 0.2 }}>
+                            Ask me anything
+                        </span>
+                    </div>
+                    <p style={{ fontFamily: "'Kalam', cursive", fontSize: 11.5, color: 'rgba(255,255,255,0.80)', marginTop: 2 }}>
+                        to {creator.displayName}
+                    </p>
+                </div>
+
+                {/* Paper input area */}
+                <div className="px-4 pt-3 pb-4"
+                    style={{
+                        backgroundImage: 'repeating-linear-gradient(transparent 0px, transparent 23px, rgba(0,0,0,0.045) 23px, rgba(0,0,0,0.045) 24px)',
+                    }}>
+                    {status === 'sent' ? (
+                        <div className="py-4 text-center">
+                            <p style={{ fontFamily: "'Caveat', cursive", fontSize: 20, fontWeight: 700, color: '#be185d' }}>
+                                ✓ Question sent!
+                            </p>
+                            <p style={{ fontFamily: "'Kalam', cursive", fontSize: 12, color: '#78716c', marginTop: 4 }}>
+                                {creator.displayName} will reply soon
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="relative">
+                                {/* Red margin line */}
+                                <div className="absolute top-0 left-8 w-px h-full" style={{ background: 'rgba(244,114,182,0.3)' }} />
+                                <textarea
+                                    value={text}
+                                    onChange={e => setText(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    onFocus={() => setFocused(true)}
+                                    onBlur={() => setFocused(false)}
+                                    placeholder={`Your question for ${creator.displayName}…`}
+                                    maxLength={300}
+                                    rows={4}
+                                    className="w-full resize-none focus:outline-none pl-10 pr-2 py-1"
+                                    style={{
+                                        fontFamily: "'Kalam', cursive",
+                                        fontSize: 13.5,
+                                        lineHeight: '24px',
+                                        color: '#1c1917',
+                                        background: 'transparent',
+                                    }}
+                                />
+                            </div>
+                            <div className="flex items-center justify-between mt-2">
+                                <span style={{ fontFamily: "'Kalam', cursive", fontSize: 11, color: '#a8a29e' }}>
+                                    {text.length}/300
+                                </span>
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={!text.trim() || status === 'submitting'}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm active:scale-95 transition-all disabled:opacity-40"
+                                    style={{
+                                        background: 'linear-gradient(90deg, #f472b6 0%, #a855f7 100%)',
+                                        fontFamily: "'Caveat', cursive",
+                                        fontSize: 15,
+                                        fontWeight: 700,
+                                        color: '#fff',
+                                        boxShadow: '0 2px 8px rgba(168,85,247,0.35)',
+                                    }}>
+                                    {status === 'submitting'
+                                        ? <Loader2 size={13} className="animate-spin" />
+                                        : <span>📌</span>}
+                                    {status === 'submitting' ? 'Sending…' : 'Pin it'}
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // ── main ──────────────────────────────────────────────────────────────────────
 
 const NAV_H = 56;
@@ -862,6 +991,19 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                                 {creator && (
                                     <div style={{ position: 'absolute', left: canvasW / 2, top: 52, transform: 'translateX(-50%)' }}>
                                         <CreatorCard creator={creator} delay={80} />
+                                    </div>
+                                )}
+
+                                {/* AMA sticker — below creator card, right side */}
+                                {creator && !isCreator && (
+                                    <div style={{ position: 'absolute', left: canvasW / 2 + 164, top: 80, transform: 'translateX(-50%)' }}>
+                                        <AmaSticker
+                                            creator={creator}
+                                            currentUser={currentUser}
+                                            onLoginRequest={onLoginRequest}
+                                            onSubmit={handlePost}
+                                            delay={200}
+                                        />
                                     </div>
                                 )}
 
