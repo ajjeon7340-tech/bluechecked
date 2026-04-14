@@ -4930,7 +4930,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider mb-1.5">Drag the frame or click to reposition</p>
                                     <div
                                         className="relative rounded-lg overflow-hidden border border-stone-200 mb-4 cursor-crosshair"
-                                        style={{ width: MMAP_W, height: Math.max(100, tH * mmScale), background: 'linear-gradient(135deg,#FAFAF8 0%,#F5F3EF 100%)', backgroundImage: 'radial-gradient(circle,rgba(168,162,158,0.18) 1px,transparent 1px)', backgroundSize: `${Math.max(4, 24 * mmScale)}px ${Math.max(4, 24 * mmScale)}px` }}
+                                        style={{ width: MMAP_W, height: Math.max(100, tH * mmScale), backgroundColor: editedCreator.bannerGradient || '#FAFAF8', backgroundImage: 'radial-gradient(circle,rgba(168,162,158,0.18) 1px,transparent 1px)', backgroundSize: `${Math.max(4, 24 * mmScale)}px ${Math.max(4, 24 * mmScale)}px` }}
                                         onClick={e => {
                                             const r = e.currentTarget.getBoundingClientRect();
                                             // subtract mmGuideX to convert minimap pixel → content coord
@@ -5738,7 +5738,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                     <p className="text-[10px] text-stone-400 mb-2">Choose a background color for your public profile page.</p>
                                     <div className="flex flex-wrap gap-2">
                                         {[
-                                            { label: 'White', value: undefined, bg: '#ffffff', border: '#e7e5e4' },
+                                            { label: 'Default', value: undefined, bg: '#faf9f6', border: '#e7e5e4' },
+                                            { label: 'White', value: '#ffffff', bg: '#ffffff', border: '#e7e5e4' },
                                             { label: 'Stone', value: '#f5f4f2', bg: '#f5f4f2', border: '#d6d3d1' },
                                             { label: 'Slate', value: '#f1f5f9', bg: '#f1f5f9', border: '#cbd5e1' },
                                             { label: 'Rose', value: '#fff1f2', bg: '#fff1f2', border: '#fecdd3' },
