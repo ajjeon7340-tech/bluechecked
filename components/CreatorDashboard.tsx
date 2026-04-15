@@ -407,14 +407,17 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
   const [boardAddingProduct, setBoardAddingProduct] = useState(false);
   const [boardAddingSupport, setBoardAddingSupport] = useState(false);
   const [boardAddingPhoto, setBoardAddingPhoto] = useState(false);
-  const [boardAddingPanel, setBoardAddingPanel] = useState(false);
-  const [boardPanelDraft, setBoardPanelDraft] = useState({ label: '', style: 'light' as 'light' | 'dark' | 'warm' });
-  const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null>(null);
+const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null>(null);
   const [boardPlatformUrlDraft, setBoardPlatformUrlDraft] = useState('');
   const [boardPhotoDraft, setBoardPhotoDraft] = useState<{ file: File | null; previewUrl: string | null; isUploading: boolean }>({ file: null, previewUrl: null, isUploading: false });
   const [boardLinkSizes, setBoardLinkSizes] = useState<Record<string, { w: number; h: number }>>({});
   const [boardLinkResizing, setBoardLinkResizing] = useState<{ id: string; startMouseX: number; startMouseY: number; startW: number; startH: number; flipX?: boolean } | null>(null);
   const [boardPhotoEditId, setBoardPhotoEditId] = useState<string | null>(null);
+  const [boardAddingGroup, setBoardAddingGroup] = useState(false);
+  const [boardGroupDraft, setBoardGroupDraft] = useState({ title: '' });
+  const [boardGroupEditId, setBoardGroupEditId] = useState<string | null>(null);
+  const [boardGroupAddingPhotoId, setBoardGroupAddingPhotoId] = useState<string | null>(null);
+  const [boardGroupPhotoDraft, setBoardGroupPhotoDraft] = useState<{ file: File | null; previewUrl: string | null; isUploading: boolean }>({ file: null, previewUrl: null, isUploading: false });
   const [mobileAddMenuOpen, setMobileAddMenuOpen] = useState(false);
 
   const _closeAllBoardAdding = () => {
@@ -422,12 +425,15 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
     setBoardAddingProduct(false);
     setBoardAddingSupport(false);
     setBoardAddingPhoto(false);
-    setBoardAddingPanel(false);
     setBoardSelectedPlatform(null);
     setBoardPlatformUrlDraft('');
     setBoardChatPickerOpen(false);
             setBoardLinkDraft({ title: '', url: '', price: '', type: 'EXTERNAL', color: undefined, iconShape: undefined });
     setBoardPhotoDraft({ file: null, previewUrl: null, isUploading: false });
+    setBoardAddingGroup(false);
+    setBoardGroupDraft({ title: '' });
+    setBoardGroupAddingPhotoId(null);
+    setBoardGroupPhotoDraft({ file: null, previewUrl: null, isUploading: false });
     setMobileAddMenuOpen(false);
   };
         const [boardLinkDraft, setBoardLinkDraft] = useState<{ title: string; url: string; price: string; type: 'EXTERNAL' | 'DIGITAL_PRODUCT' | 'SUPPORT'; color?: string; thumbnailUrl?: string; displayStyle?: 'icon' | 'thumbnail' | 'wide'; iconShape?: string }>({ title: '', url: '', price: '', type: 'EXTERNAL' });
@@ -3180,7 +3186,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 return null;
                             };
                             const _getLinkH = (l: AffiliateLink) => {
-                                if (l.type === 'PANEL') return (l.height ?? 64);
+                                if (l.type === 'GROUP') return 46 + 8 + (boardLinkSizes[l.id]?.h ?? l.height ?? 200);
                                 if (l.type === 'PHOTO') return (boardLinkSizes[l.id]?.h ?? l.height ?? 160);
                                 if (l.iconShape === 'square-xxs') return 44;
                                 const sqSize = _getLinkSize(l);
@@ -3194,7 +3200,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 return 56;
                             };
                             const _getLinkW = (l: AffiliateLink) => {
-                                if (l.type === 'PANEL') return (l.width ?? 200);
+                                if (l.type === 'GROUP') return (boardLinkSizes[l.id]?.w ?? l.width ?? 300);
                                 if (l.type === 'PHOTO') return (boardLinkSizes[l.id]?.w ?? l.width ?? 220);
                                 return null;
                             };
@@ -3379,6 +3385,9 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
 
                             const linkMaxX = visibleBoardLinks.reduce((max, link, idx) => {
                                 const pos = getLinkPos(link, idx);
+                                if (link.type === 'GROUP' || link.type === 'PHOTO') {
+                                    return Math.max(max, pos.x + (_getLinkW(link) ?? LINK_W));
+                                }
                                 const isIconMode = link.displayStyle === 'icon' || (!link.thumbnailUrl && link.type !== 'PHOTO' && link.type !== 'DIGITAL_PRODUCT' && !link.url?.match(/youtube\.com|youtu\.be/));
                                 const isThumbnailMode = !isIconMode && (link.displayStyle === 'thumbnail' || !!link.thumbnailUrl || link.type === 'DIGITAL_PRODUCT' || !!link.url?.match(/youtube\.com|youtu\.be/));
                                 const cardSize = !isIconMode ? (link.iconShape === 'square-s' ? 'S' : link.iconShape === 'square-l' ? 'L' : 'M') : 'M';
@@ -3518,68 +3527,6 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                             } catch {}
                                             return null;
                                         })();
-                                        // ── Panel (wooden section label) ──
-                                        if (link.type === 'PANEL') {
-                                            const panelW = link.width ?? 200;
-                                            const panelH = link.height ?? 64;
-                                            const woodStyle = link.buttonColor ?? 'light';
-                                            const woodBg = woodStyle === 'dark'
-                                            ? 'linear-gradient(160deg,#44403c 0%,#292524 40%,#44403c 70%,#1c1917 100%)'
-                                                : woodStyle === 'warm'
-                                            ? 'linear-gradient(160deg,#fef3c7 0%,#fde68a 40%,#fef3c7 70%,#f59e0b 100%)'
-                                            : 'linear-gradient(160deg,#f5f5f4 0%,#e7e5e4 35%,#f5f5f4 65%,#d6d3d1 100%)';
-                                        const textColor = woodStyle === 'dark' ? '#fafaf9' : woodStyle === 'warm' ? '#78350f' : '#292524';
-                                        const nailColor = woodStyle === 'dark' ? 'rgba(250,250,249,0.2)' : woodStyle === 'warm' ? 'rgba(120,53,15,0.25)' : 'rgba(41,37,36,0.2)';
-                                            return (
-                                                <div
-                                                    key={link.id}
-                                                    className="absolute group"
-                                                    style={{
-                                                        left: currentPos.x,
-                                                        top: currentPos.y,
-                                                        width: panelW,
-                                                        height: panelH,
-                                                        zIndex: 50 + i,
-                                                        transform: isDraggingLink ? 'rotate(0deg) scale(1.04)' : `rotate(${rot}deg)`,
-                                                        transition: isDraggingLink ? 'none' : 'transform 0.2s ease',
-                                                    }}
-                                                    onTouchStart={e => handleNoteTouchStart(e, link.id, currentPos, 'LINK')}
-                                                    onTouchMove={handleNoteTouchMove}
-                                                >
-                                                    {/* Drag handle — full panel surface */}
-                                                    <div
-                                                        className="absolute inset-0 rounded-lg overflow-hidden"
-                                                        style={{
-                                                            background: woodBg,
-                                                            backgroundImage: 'repeating-linear-gradient(88deg, transparent, transparent 5px, rgba(0,0,0,0.04) 5px, rgba(0,0,0,0.04) 6px), repeating-linear-gradient(92deg, transparent, transparent 8px, rgba(255,255,255,0.06) 8px, rgba(255,255,255,0.06) 9px)',
-                                                            boxShadow: '0 3px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)',
-                                                            cursor: isDraggingLink ? 'grabbing' : 'grab',
-                                                            touchAction: 'none',
-                                                        }}
-                                                        onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
-                                                    >
-                                                        {/* Left nail */}
-                                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full" style={{ background: nailColor, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)' }}>
-                                                            <div className="absolute inset-[3px] rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} />
-                                                        </div>
-                                                        {/* Right nail */}
-                                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full" style={{ background: nailColor, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)' }}>
-                                                            <div className="absolute inset-[3px] rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} />
-                                                        </div>
-                                                        {/* Label */}
-                                                        <div className="absolute inset-0 flex items-center justify-center px-8">
-                                                        <span className="font-black tracking-widest uppercase text-sm leading-none select-none" style={{ color: textColor, textShadow: woodStyle === 'dark' ? '0 1px 3px rgba(0,0,0,0.6)' : 'none', letterSpacing: '0.15em' }}>{link.title}</span>
-                                                        </div>
-                                                    </div>
-                                                    {/* Delete button */}
-                                                    <button
-                                                        className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-stone-700 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10"
-                                                        onClick={e => { e.stopPropagation(); saveBoardLinkChange((editedCreator.links || []).filter(l => l.id !== link.id)); }}
-                                                    ><Trash2 size={10} /></button>
-                                                </div>
-                                            );
-                                        }
-
                                         // ── Photo (plain image, free resize via edit mode) ──
                                         if (link.type === 'PHOTO') {
                                             const phW = boardLinkSizes[link.id]?.w ?? link.width ?? 220;
@@ -3688,6 +3635,138 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                 </div>
                                             );
                                         }
+
+                                                        // ── Group (photo gallery zone) ──
+                                                        if (link.type === 'GROUP') {
+                                                            const gw = boardLinkSizes[link.id]?.w ?? link.width ?? 300;
+                                                            const zoneH = boardLinkSizes[link.id]?.h ?? link.height ?? 200;
+                                                            const isResizingGroup = boardLinkResizing?.id === link.id;
+                                                            const isEditingGroup = boardGroupEditId === link.id;
+                                                            const photos = link.groupPhotos ?? [];
+                                                            const bgCol = link.buttonColor || linkColors[lc];
+                                                            const linkTapesD = ['rgba(240,160,80,0.45)', 'rgba(110,200,140,0.45)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)', 'rgba(200,193,185,0.55)', 'rgba(180,150,240,0.4)'];
+                                                            const tapeColor = linkTapesD[lc % linkTapesD.length];
+                                                            const titleW = getWideWidth(link.title);
+                                                            const tapePx = Math.round(titleW * 0.38);
+                                                            return (
+                                                                <div
+                                                                    key={link.id}
+                                                                    className="absolute group/grouplink"
+                                                                    style={{
+                                                                        left: currentPos.x,
+                                                                        top: currentPos.y,
+                                                                        width: gw,
+                                                                        zIndex: isDraggingLink ? 1000 : isResizingGroup ? 900 : isEditingGroup ? 800 : (50 + i),
+                                                                        transform: isDraggingLink ? 'rotate(0deg) scale(1.02)' : `rotate(${rot}deg)`,
+                                                                        transition: isDraggingLink || isResizingGroup ? 'none' : 'transform 0.2s ease',
+                                                                    }}
+                                                                    onTouchStart={e => handleNoteTouchStart(e, link.id, currentPos, 'LINK')}
+                                                                    onTouchMove={handleNoteTouchMove}
+                                                                >
+                                                                    {/* Wide title sticker — drag handle */}
+                                                                    <div
+                                                                        className="flex flex-col"
+                                                                        style={{ width: titleW, cursor: isDraggingLink ? 'grabbing' : 'grab', touchAction: 'none' }}
+                                                                        onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
+                                                                    >
+                                                                        <div className="mx-auto rounded-b-sm" style={{ height: 14, width: tapePx, background: tapeColor }} />
+                                                                        <div className="rounded-lg" style={{ backgroundColor: bgCol, border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: '5px 10px' }}>
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(0,0,0,0.07)' }}>
+                                                                                    <span style={{ fontSize: 9, lineHeight: 1 }}>🖼</span>
+                                                                                </div>
+                                                                                <span style={{ fontFamily: "'Caveat', cursive", fontSize: 13, fontWeight: 700, color: '#292524', whiteSpace: 'nowrap', letterSpacing: '0.04em' }}>{link.title}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div style={{ height: 8 }} />
+                                                                    {/* Gallery zone */}
+                                                                    <div
+                                                                        style={{
+                                                                            width: gw, height: zoneH, borderRadius: 12, position: 'relative',
+                                                                            background: isEditingGroup ? 'rgba(238,242,255,0.95)' : 'rgba(250,246,242,0.9)',
+                                                                            border: isEditingGroup ? '1.5px solid #6366f1' : '1.5px solid rgba(0,0,0,0.08)',
+                                                                            boxShadow: isEditingGroup ? '0 0 0 2px rgba(99,102,241,0.2), 0 2px 10px rgba(0,0,0,0.06)' : '0 2px 10px rgba(0,0,0,0.06)',
+                                                                            overflow: isEditingGroup ? 'visible' : 'hidden',
+                                                                            padding: 8, display: 'flex', flexWrap: 'wrap', gap: 6, alignContent: 'flex-start',
+                                                                        }}
+                                                                    >
+                                                                        {photos.map((photo: { id: string; url: string }) => (
+                                                                            <div key={photo.id} className="relative group/photo" style={{ width: 72, height: 72, borderRadius: 8, overflow: 'hidden', flexShrink: 0, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+                                                                                <img src={photo.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                                                {isEditingGroup && (
+                                                                                    <button
+                                                                                        className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/photo:opacity-100 transition-opacity"
+                                                                                        onClick={e => {
+                                                                                            e.stopPropagation();
+                                                                                            const updated = (editedCreator.links || []).map(l =>
+                                                                                                l.id === link.id ? { ...l, groupPhotos: (l.groupPhotos || []).filter((p: { id: string }) => p.id !== photo.id) } : l
+                                                                                            );
+                                                                                            saveBoardLinkChange(updated);
+                                                                                        }}
+                                                                                    ><X size={8} /></button>
+                                                                                )}
+                                                                            </div>
+                                                                        ))}
+                                                                        {isEditingGroup && (
+                                                                            <button
+                                                                                className="w-16 h-16 rounded-lg border-2 border-dashed border-indigo-300 bg-indigo-50 hover:bg-indigo-100 flex items-center justify-center flex-shrink-0 transition-colors"
+                                                                                onClick={e => { e.stopPropagation(); setBoardGroupAddingPhotoId(link.id); }}
+                                                                            >
+                                                                                <Plus size={18} className="text-indigo-400" />
+                                                                            </button>
+                                                                        )}
+                                                                        {isEditingGroup && (
+                                                                            <div
+                                                                                className="absolute -bottom-2 -right-2 w-5 h-5 rounded-full bg-indigo-500 border-2 border-white cursor-se-resize z-20 flex items-center justify-center shadow"
+                                                                                style={{ touchAction: 'none' }}
+                                                                                onMouseDown={e => {
+                                                                                    e.preventDefault(); e.stopPropagation();
+                                                                                    setBoardLinkResizing({ id: link.id, startMouseX: e.clientX, startMouseY: e.clientY, startW: gw, startH: zoneH });
+                                                                                }}
+                                                                            >
+                                                                                <svg width="8" height="8" viewBox="0 0 8 8" fill="white"><path d="M2 8 L8 2 M5 8 L8 5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                    {/* Hover toolbar */}
+                                                                    <div className="absolute -top-7 right-0 hidden group-hover/grouplink:flex items-center gap-1 z-10">
+                                                                        {isEditingGroup ? (
+                                                                            <button
+                                                                                className="px-2 py-0.5 text-[10px] font-bold rounded bg-indigo-500 text-white hover:bg-indigo-600 shadow"
+                                                                                onClick={async e => {
+                                                                                    e.stopPropagation();
+                                                                                    setBoardGroupEditId(null);
+                                                                                    const sz = boardLinkSizes[link.id];
+                                                                                    if (sz) {
+                                                                                        const updatedLinks = (editedCreator.links || []).map(l =>
+                                                                                            l.id === link.id ? { ...l, width: sz.w, height: sz.h } : l
+                                                                                        );
+                                                                                        await saveBoardLinkChange(updatedLinks);
+                                                                                    }
+                                                                                }}
+                                                                            >Done</button>
+                                                                        ) : (
+                                                                            <>
+                                                                                <button
+                                                                                    className="p-1 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all shadow-sm"
+                                                                                    title="Edit group"
+                                                                                    onClick={e => { e.stopPropagation(); setBoardGroupEditId(link.id); }}
+                                                                                ><Pencil size={10} /></button>
+                                                                                <button
+                                                                                    className="p-1 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all shadow-sm"
+                                                                                    onClick={async e => {
+                                                                                        e.stopPropagation();
+                                                                                        await saveBoardLinkChange((editedCreator.links || []).filter(l => l.id !== link.id));
+                                                                                    }}
+                                                                                    title="Delete"
+                                                                                ><Trash2 size={10} /></button>
+                                                                            </>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        }
 
                                         return (
                                             <div
@@ -4269,7 +4348,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                     </div>
 
                     {(() => {
-                        const isAddingSticker = boardAddingLink || boardAddingProduct || boardAddingSupport || boardAddingPhoto || boardAddingPanel;
+                        const isAddingSticker = boardAddingLink || boardAddingProduct || boardAddingSupport || boardAddingPhoto || boardAddingGroup || !!boardGroupAddingPhotoId;
                         return (
                     <div className="sticky bottom-0 z-20 pb-4 pt-2 pointer-events-none">
                         <div className="pointer-events-auto flex items-end justify-center gap-3 flex-wrap px-4" style={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.12))' }}>
@@ -4581,60 +4660,97 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 </div>
                             )}
 
-                            {/* ── 🪵 Panel ── */}
-                            {boardAddingPanel && (
+                            {/* ── 🗂 Group ── */}
+                            {boardAddingGroup && (
                                 <div className="flex flex-col" style={{ width: 240 }}>
-                                    <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#FDF8F0', border: '2px solid rgba(161,110,60,0.3)' }}>
-                                        <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-2">🪵 Section Panel</p>
+                                    <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#EEF2FF', border: '2px solid rgba(99,102,241,0.25)' }}>
+                                        <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider mb-2">🗂 Photo Group</p>
                                         <input
-                                            className="w-full text-sm font-bold bg-white/70 border border-amber-200 rounded px-2 py-1.5 mb-2 outline-none focus:ring-1 focus:ring-amber-400"
-                                            placeholder="e.g. FASHION, OUTFITS, Q&A…"
-                                            value={boardPanelDraft.label}
+                                            className="w-full text-sm font-bold bg-white/70 border border-indigo-200 rounded px-2 py-1.5 mb-3 outline-none focus:ring-1 focus:ring-indigo-400"
+                                            placeholder="Group name (e.g. Behind the Scenes)"
+                                            value={boardGroupDraft.title}
                                             autoFocus
-                                            onChange={e => setBoardPanelDraft(p => ({ ...p, label: e.target.value }))}
+                                            onChange={e => setBoardGroupDraft(p => ({ ...p, title: e.target.value }))}
                                         />
-                                        <p className="text-[9px] text-stone-400 font-semibold uppercase tracking-wider mb-1.5">Wood Style</p>
-                                        <div className="flex gap-1.5 mb-3">
-                                            {([
-                                                { id: 'light', label: 'Light', bg: 'linear-gradient(160deg,#f5f5f4,#e7e5e4,#f5f5f4,#d6d3d1)', border: '#d6d3d1', color: '#292524' },
-                                                { id: 'dark',  label: 'Dark',  bg: 'linear-gradient(160deg,#44403c,#292524,#44403c,#1c1917)', border: '#292524', color: '#fafaf9' },
-                                                { id: 'warm',  label: 'Warm',  bg: 'linear-gradient(160deg,#fef3c7,#fde68a,#fef3c7,#f59e0b)', border: '#fde68a', color: '#78350f' },
-                                            ] as const).map(s => (
-                                                <button
-                                                    key={s.id}
-                                                    onClick={() => setBoardPanelDraft(p => ({ ...p, style: s.id }))}
-                                                    className="flex-1 py-1.5 rounded-lg text-[9px] font-bold transition-all"
-                                                    style={{
-                                                        background: s.bg,
-                                                    color: s.color,
-                                                        border: boardPanelDraft.style === s.id ? `2px solid ${s.border}` : '2px solid transparent',
-                                                        boxShadow: boardPanelDraft.style === s.id ? '0 0 0 2px rgba(0,0,0,0.15)' : 'none',
-                                                    }}
-                                                >{s.label}</button>
-                                            ))}
-                                        </div>
                                         <div className="flex gap-1.5">
                                             <button
-                                                className="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-amber-700 text-white hover:bg-amber-800 transition-colors disabled:opacity-40"
-                                                disabled={!boardPanelDraft.label.trim()}
+                                                className="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 transition-colors disabled:opacity-40"
+                                                disabled={!boardGroupDraft.title.trim()}
                                                 onClick={async () => {
-                                                    const label = boardPanelDraft.label.trim();
-                                                    if (!label) return;
-                                                    const newPanel: AffiliateLink = {
-                                                        id: `panel_${Date.now()}`,
-                                                        title: label,
-                                                        url: '',
-                                                        type: 'PANEL',
-                                                        buttonColor: boardPanelDraft.style,
-                                                        width: Math.max(160, Math.min(360, label.length * 18 + 80)),
-                                                        height: 64,
+                                                    const title = boardGroupDraft.title.trim();
+                                                    if (!title) return;
+                                                    const newGroup: AffiliateLink = {
+                                                        id: `group_${Date.now()}`,
+                                                        title,
+                                                        url: '#',
+                                                        type: 'GROUP',
+                                                        width: 300,
+                                                        height: 200,
+                                                        groupPhotos: [],
                                                     };
-                                                    await saveBoardLinkChange([...(editedCreator.links || []), newPanel]);
-                                                    setBoardPanelDraft({ label: '', style: 'light' });
+                                                    await saveBoardLinkChange([...(editedCreator.links || []), newGroup]);
                                                     _closeAllBoardAdding();
                                                 }}
-                                            >Add Panel</button>
-                                            <button className="flex-1 py-1.5 text-[10px] font-bold rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-50 transition-colors" onClick={_closeAllBoardAdding}>Cancel</button>
+                                            >Create Group</button>
+                                            <button className="flex-1 py-1.5 text-[10px] font-bold rounded-lg border border-indigo-200 text-indigo-500 hover:bg-indigo-50 transition-colors" onClick={_closeAllBoardAdding}>Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ── Add photo to group picker ── */}
+                            {boardGroupAddingPhotoId && (
+                                <div className="flex flex-col" style={{ width: 240 }}>
+                                    <div className="rounded-xl p-3 shadow-lg" style={{ backgroundColor: '#EEF2FF', border: '2px solid rgba(99,102,241,0.3)' }}>
+                                        <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider mb-2">➕ Add Photo to Group</p>
+                                        {boardGroupPhotoDraft.previewUrl ? (
+                                            <div className="relative rounded-md overflow-hidden mb-2 bg-stone-100" style={{ height: 100 }}>
+                                                <img src={boardGroupPhotoDraft.previewUrl} className="absolute inset-0 w-full h-full object-cover" alt="preview" />
+                                                <button
+                                                    className="absolute top-1 right-1 p-0.5 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+                                                    onClick={() => setBoardGroupPhotoDraft(p => ({ ...p, file: null, previewUrl: null }))}
+                                                ><X size={10} /></button>
+                                            </div>
+                                        ) : (
+                                            <label className="block w-full rounded-md border-2 border-dashed border-indigo-300 bg-indigo-50 hover:bg-indigo-100 transition-colors cursor-pointer mb-2" style={{ height: 70 }}>
+                                                <div className="h-full flex flex-col items-center justify-center gap-1">
+                                                    <span className="text-lg">🖼</span>
+                                                    <span className="text-[10px] text-indigo-600 font-semibold">Click to choose photo</span>
+                                                </div>
+                                                <input type="file" accept="image/*" className="hidden" onChange={e => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+                                                    const reader = new FileReader();
+                                                    reader.onload = ev => setBoardGroupPhotoDraft(p => ({ ...p, file, previewUrl: ev.target?.result as string }));
+                                                    reader.readAsDataURL(file);
+                                                }} />
+                                            </label>
+                                        )}
+                                        <div className="flex gap-1.5">
+                                            <button
+                                                className="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 transition-colors disabled:opacity-40"
+                                                disabled={!boardGroupPhotoDraft.file || boardGroupPhotoDraft.isUploading}
+                                                onClick={async () => {
+                                                    if (!boardGroupPhotoDraft.file || !boardGroupAddingPhotoId) return;
+                                                    setBoardGroupPhotoDraft(p => ({ ...p, isUploading: true }));
+                                                    try {
+                                                        const url = await uploadPremiumContent(boardGroupPhotoDraft.file!, creator.id);
+                                                        const newPhoto = { id: `gp_${Date.now()}`, url };
+                                                        const updatedLinks = (editedCreator.links || []).map(l =>
+                                                            l.id === boardGroupAddingPhotoId ? { ...l, groupPhotos: [...(l.groupPhotos || []), newPhoto] } : l
+                                                        );
+                                                        await saveBoardLinkChange(updatedLinks);
+                                                        setBoardGroupAddingPhotoId(null);
+                                                        setBoardGroupPhotoDraft({ file: null, previewUrl: null, isUploading: false });
+                                                    } catch {
+                                                        setBoardGroupPhotoDraft(p => ({ ...p, isUploading: false }));
+                                                    }
+                                                }}
+                                            >{boardGroupPhotoDraft.isUploading ? 'Uploading…' : 'Add Photo'}</button>
+                                            <button
+                                                className="flex-1 py-1.5 text-[10px] font-bold rounded-lg border border-indigo-200 text-indigo-500 hover:bg-indigo-50 transition-colors"
+                                                onClick={() => { setBoardGroupAddingPhotoId(null); setBoardGroupPhotoDraft({ file: null, previewUrl: null, isUploading: false }); }}
+                                            >Cancel</button>
                                         </div>
                                     </div>
                                 </div>
@@ -4657,8 +4773,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                 <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingPhoto(true); }}>
                                     🖼 Photo
                                 </button>
-                                <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-amber-500 hover:text-amber-700 hover:bg-amber-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingPanel(true); }}>
-                                    🪵 Panel
+                                <button className="rounded-xl py-2.5 px-3 border-2 border-dashed border-stone-300 text-stone-500 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50/60 transition-all flex items-center justify-center gap-1.5 text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardAddingGroup(true); }}>
+                                    🗂 Group
                                 </button>
                                 <button className={`rounded-xl py-2.5 px-4 border-2 border-dashed text-xs font-semibold transition-all flex items-center justify-center gap-2 ${boardChatPickerOpen ? 'border-blue-400 text-blue-700 bg-blue-50' : 'border-stone-300 text-stone-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/60'}`} style={{ backgroundColor: boardChatPickerOpen ? undefined : 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }} onClick={() => { _closeAllBoardAdding(); setBoardChatPickerOpen(p => !p); }}>
                                     <MessageSquare size={13} /> From Chat
@@ -4684,8 +4800,8 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                         <button className="flex items-center gap-3 text-sm font-semibold text-emerald-600 py-2.5 px-3 hover:bg-emerald-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardAddingPhoto(true); }}>
                                             <span className="text-lg leading-none">🖼</span> Photo
                                         </button>
-                                        <button className="flex items-center gap-3 text-sm font-semibold text-amber-700 py-2.5 px-3 hover:bg-amber-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardAddingPanel(true); }}>
-                                            <span className="text-lg leading-none">🪵</span> Panel
+                                        <button className="flex items-center gap-3 text-sm font-semibold text-indigo-600 py-2.5 px-3 hover:bg-indigo-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardAddingGroup(true); }}>
+                                            <span className="text-lg leading-none">🗂</span> Group
                                         </button>
                                         <button className="flex items-center gap-3 text-sm font-semibold text-emerald-600 py-2.5 px-3 hover:bg-emerald-100 rounded-xl transition-colors" onClick={() => { _closeAllBoardAdding(); setBoardChatPickerOpen(true); }}>
                                             <span className="text-lg leading-none">💬</span> From Chat

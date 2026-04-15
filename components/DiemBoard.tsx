@@ -250,7 +250,7 @@ const pubDetectPlatform = (url: string): string | null => {
     } catch { return null; }
 };
 
-// ── text-driven width (mirrors CreatorDashboard) ─────────────────────────────
+// ── text-driven width for wide-style links ────────────────────────────────────
 
 const getWideWidth = (title?: string): number => {
     if (!title) return 120;
@@ -261,7 +261,8 @@ const getWideWidth = (title?: string): number => {
         else if (ch === ' ') { charW += 5; }
         else { charW += 7.5; }
     }
-    return Math.min(240, Math.max(100, Math.ceil(56 + charW)));
+    // No upper cap — let wide links expand freely with text
+    return Math.max(100, Math.ceil(62 + charW));
 };
 
 // ── link sticker (matches creator board style) ────────────────────────────────
@@ -287,7 +288,8 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
     const isThumbnailStyle = link.displayStyle === 'thumbnail' || (!link.displayStyle && hasRealPhoto && !sqSize);
     // Thumbnail mode forces wide card regardless of iconShape
     const isThumbnailMode = isThumbnailStyle && !(ytId && link.displayStyle !== 'icon');
-    const width = isThumbnailMode ? LINK_W : (sqSize || LINK_W);
+    const wideW = getWideWidth(link.title);
+    const width = isThumbnailMode ? LINK_W : (sqSize || wideW);
     const tapeW = isThumbnailMode ? 'w-12' : sqSize === 220 ? 'w-12' : sqSize === 160 ? 'w-10' : sqSize === 64 ? 'w-5' : sqSize ? 'w-8' : 'w-12';
     const bgColor = link.buttonColor || linkColors[lc];
 
@@ -295,40 +297,41 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
         if (link.url && link.url !== '#') window.open(link.url.startsWith('http') ? link.url : `https://${link.url}`, '_blank');
     };
 
-    // ── PANEL → featured link wide-S (width grows with text) ──────────────────
-    if (link.type === 'PANEL') {
-        const panelW = getWideWidth(link.title);
-        const tapeColor = linkTapes[lc];
+    // ── GROUP (photo gallery zone) ────────────────────────────────────────────
+    if (link.type === 'GROUP') {
+        const gw = link.width ?? 300;
+        const zoneH = link.height ?? 200;
+        const photos: { id: string; url: string }[] = link.groupPhotos ?? [];
         const bgCol = link.buttonColor || linkColors[lc];
-        // Tiny tape width proportional to card width
-        const tapePx = Math.round(panelW * 0.38);
+        const tapeColor = linkTapes[lc];
+        const titleW = getWideWidth(link.title);
+        const tapePx = Math.round(titleW * 0.38);
         return (
-            <div className="flex flex-col hover:scale-[1.03] transition-transform" style={{ width: panelW }}>
-                {/* Tape */}
-                <div className="mx-auto rounded-b-sm flex-shrink-0" style={{ height: 14, width: tapePx, background: tapeColor }} />
-                {/* Label card */}
-                <div
-                    className="rounded-lg"
-                    style={{
-                        backgroundColor: bgCol,
-                        border: '1px solid rgba(0,0,0,0.08)',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-                        padding: '5px 10px',
-                    }}
-                >
-                    <div className="flex items-center gap-1.5 w-full">
-                        {/* Small icon box */}
-                        <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0"
-                            style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(0,0,0,0.07)' }}>
-                            {link.thumbnailUrl?.startsWith('data:emoji,')
-                                ? <span style={{ fontSize: 9, lineHeight: 1 }}>{link.thumbnailUrl.replace('data:emoji,', '')}</span>
-                                : <LinkIcon size={8} className="text-stone-500" />}
+            <div style={{ width: gw }}>
+                {/* Wide title sticker */}
+                <div className="flex flex-col" style={{ width: titleW }}>
+                    <div className="mx-auto rounded-b-sm flex-shrink-0" style={{ height: 14, width: tapePx, background: tapeColor }} />
+                    <div className="rounded-lg" style={{ backgroundColor: bgCol, border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: '5px 10px' }}>
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(0,0,0,0.07)' }}>
+                                <span style={{ fontSize: 9, lineHeight: 1 }}>🖼</span>
+                            </div>
+                            <span style={{ fontFamily: "'Caveat', cursive", fontSize: 13, fontWeight: 700, color: '#292524', whiteSpace: 'nowrap', letterSpacing: '0.04em' }}>{link.title}</span>
                         </div>
-                        {/* Title — no truncate so width can expand to fit */}
-                        <span style={{ fontFamily: "'Caveat', cursive", fontSize: 13, fontWeight: 700, color: '#292524', whiteSpace: 'nowrap', letterSpacing: '0.04em' }}>
-                            {link.title}
-                        </span>
                     </div>
+                </div>
+                <div style={{ height: 8 }} />
+                {/* Gallery zone */}
+                <div style={{ width: gw, height: zoneH, borderRadius: 12, background: 'rgba(250,246,242,0.9)', border: '1.5px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', overflow: 'hidden', padding: 8, display: 'flex', flexWrap: 'wrap', gap: 6, alignContent: 'flex-start' }}>
+                    {photos.length === 0 ? (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <span style={{ fontFamily: "'Kalam', cursive", fontSize: 12, color: '#a8a29e' }}>No photos yet</span>
+                        </div>
+                    ) : photos.map(photo => (
+                        <div key={photo.id} style={{ width: 72, height: 72, borderRadius: 8, overflow: 'hidden', flexShrink: 0, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+                            <img src={photo.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                    ))}
                 </div>
             </div>
         );
@@ -429,7 +432,7 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
                                 : detectedPlatform ? pubPlatformIcon(detectedPlatform)
                                 : <LinkIcon size={13} />}
                         </div>
-                        <span className="text-xs font-semibold text-stone-700 truncate flex-1 text-left">{link.title}</span>
+                        <span className="text-xs font-semibold text-stone-700 text-left" style={{ whiteSpace: 'nowrap' }}>{link.title}</span>
                         <ExternalLink size={9} className="text-stone-300 flex-shrink-0" />
                     </div>
                 )}
@@ -978,7 +981,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
     const LINK_AUTO_X       = BOARD_PAD + GUIDE_COLS * (NOTE_W + NOTE_GAP_X) + 20;
 
     const getLinkSize = (l: any): number | null => {
-        if (l.type === 'PANEL') return getWideWidth(l.title);  // text-driven width
+        if (l.type === 'GROUP') return l.width ?? 300;
         if (l.iconShape === 'square-l') return 220;
         if (l.iconShape === 'square-m') return 160;
         if (l.iconShape === 'square-s' || l.iconShape === 'square') return 110;
@@ -986,9 +989,9 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
         return null;
     };
     const getLinkH = (l: any): number => {
+        if (l.type === 'GROUP') return 46 + 8 + (l.height ?? 200);
         const sq = getLinkSize(l);
         if (sq) return sq;
-        if (l.type === 'PANEL') return 46;  // compact wide-S height: tape(14) + card(32)
         if (l.type === 'DIGITAL_PRODUCT') return 104;
         if (l.url && pubGetYtId(l.url)) return 162;
         return 84;

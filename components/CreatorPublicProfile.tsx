@@ -856,7 +856,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       return null;
                                   };
                                   const _getLinkH = (l: typeof allPublicLinks[0]) => {
-                                      if (l.type === 'PANEL') return l.height ?? 64;
+                                      if (l.type === 'GROUP') return 46 + 8 + (l.height ?? 200);
                                       if (l.type === 'PHOTO') return l.height ?? 160;
                                       if (l.iconShape === 'square-xxs') return 44;
                                       const sqSize = _getLinkSize(l);
@@ -944,7 +944,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                       const sqSize = _getLinkSize(link);
                                       const effStyle = link.displayStyle || (link.iconShape ? 'icon' : 'wide');
                                       const cs = link.iconShape === 'square-s' ? 'S' : link.iconShape === 'square-l' ? 'L' : 'M';
-                                      const w = link.type === 'PANEL' ? (link.width ?? 200) : link.type === 'PHOTO' ? (link.width ?? 220) : (effStyle === 'icon' ? (sqSize || PROFILE_W) : effStyle === 'thumbnail' ? (cs === 'S' ? 120 : cs === 'L' ? PROFILE_W : 160) : (cs === 'S' ? 110 : cs === 'L' ? getWideWidth(link.title) : 140));
+                                      const w = link.type === 'GROUP' ? (link.width ?? 300) : link.type === 'PHOTO' ? (link.width ?? 220) : (effStyle === 'icon' ? (sqSize || PROFILE_W) : effStyle === 'thumbnail' ? (cs === 'S' ? 120 : cs === 'L' ? PROFILE_W : 160) : (cs === 'S' ? 110 : cs === 'L' ? getWideWidth(link.title) : 140));
                                       return Math.max(max, pos.x + w);
                                   }, LINK_START_X + PROFILE_W);
                                   const maxY = pinnedPosts.reduce((max, p) => {
@@ -1136,30 +1136,44 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                                                       const linkRot = rotations[(stableIdx(link.id) + li) % rotations.length];
 
-                                                      // ── Panel (wooden section label) ──
-                                                      if (link.type === 'PANEL') {
-                                                          const panelW = link.width ?? 200;
-                                                          const panelH = link.height ?? 64;
-                                                          const woodStyle = link.buttonColor ?? 'light';
-                                                          const woodBg = woodStyle === 'dark'
-                                                          ? 'linear-gradient(160deg,#44403c 0%,#292524 40%,#44403c 70%,#1c1917 100%)'
-                                                              : woodStyle === 'warm'
-                                                          ? 'linear-gradient(160deg,#fef3c7 0%,#fde68a 40%,#fef3c7 70%,#f59e0b 100%)'
-                                                          : 'linear-gradient(160deg,#f5f5f4 0%,#e7e5e4 35%,#f5f5f4 65%,#d6d3d1 100%)';
-                                                      const textColor = woodStyle === 'dark' ? '#fafaf9' : woodStyle === 'warm' ? '#78350f' : '#292524';
-                                                      const nailColor = woodStyle === 'dark' ? 'rgba(250,250,249,0.2)' : woodStyle === 'warm' ? 'rgba(120,53,15,0.25)' : 'rgba(41,37,36,0.2)';
+                                                      // ── Group (photo gallery zone) ──
+                                                      if (link.type === 'GROUP') {
+                                                          const gw = link.width ?? 300;
+                                                          const zoneH = link.height ?? 200;
+                                                          const photos: { id: string; url: string }[] = link.groupPhotos ?? [];
+                                                          const linkColors = ['#FFF7ED', '#F0FDF4', '#EFF6FF', '#FDF2F8', '#FFFEF0', '#F5F3FF'];
+                                                          const linkTapesP = ['rgba(240,160,80,0.45)', 'rgba(110,200,140,0.45)', 'rgba(110,170,240,0.4)', 'rgba(240,140,180,0.4)', 'rgba(200,193,185,0.55)', 'rgba(180,150,240,0.4)'];
+                                                          const lc = li % linkColors.length;
+                                                          const bgCol = link.buttonColor || linkColors[lc];
+                                                          const tapeColor = linkTapesP[lc];
+                                                          const titleW = getWideWidth(link.title);
+                                                          const tapePx = Math.round(titleW * 0.38);
                                                           return (
-                                                              <div
-                                                                  key={link.id}
-                                                                  className="absolute"
-                                                                  style={{ left: pos.x, top: pos.y, width: panelW, height: panelH, zIndex: 40 + li, transform: `rotate(${linkRot}deg)`, transition: 'transform 0.2s ease' }}
-                                                              >
-                                                                  <div className="w-full h-full rounded-lg overflow-hidden relative" style={{ background: woodBg, backgroundImage: 'repeating-linear-gradient(88deg, transparent, transparent 5px, rgba(0,0,0,0.04) 5px, rgba(0,0,0,0.04) 6px), repeating-linear-gradient(92deg, transparent, transparent 8px, rgba(255,255,255,0.06) 8px, rgba(255,255,255,0.06) 9px)', boxShadow: '0 3px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)' }}>
-                                                                      <div className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full" style={{ background: nailColor, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)' }}><div className="absolute inset-[3px] rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} /></div>
-                                                                      <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full" style={{ background: nailColor, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)' }}><div className="absolute inset-[3px] rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} /></div>
-                                                                      <div className="absolute inset-0 flex items-center justify-center px-8">
-                                                                      <span className="font-black uppercase text-sm leading-none select-none" style={{ color: textColor, textShadow: woodStyle === 'dark' ? '0 1px 3px rgba(0,0,0,0.6)' : 'none', letterSpacing: '0.15em' }}>{link.title}</span>
+                                                              <div key={link.id} className="absolute" style={{ left: pos.x, top: pos.y, width: gw, zIndex: 10 + li }}>
+                                                                  {/* Wide title sticker */}
+                                                                  <div className="flex flex-col" style={{ width: titleW }}>
+                                                                      <div className="mx-auto rounded-b-sm" style={{ height: 14, width: tapePx, background: tapeColor }} />
+                                                                      <div className="rounded-lg" style={{ backgroundColor: bgCol, border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: '5px 10px' }}>
+                                                                          <div className="flex items-center gap-1.5">
+                                                                              <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(0,0,0,0.07)' }}>
+                                                                                  <span style={{ fontSize: 9, lineHeight: 1 }}>🖼</span>
+                                                                              </div>
+                                                                              <span style={{ fontFamily: "'Caveat', cursive", fontSize: 13, fontWeight: 700, color: '#292524', whiteSpace: 'nowrap', letterSpacing: '0.04em' }}>{link.title}</span>
+                                                                          </div>
                                                                       </div>
+                                                                  </div>
+                                                                  <div style={{ height: 8 }} />
+                                                                  {/* Gallery zone */}
+                                                                  <div style={{ width: gw, height: zoneH, borderRadius: 12, background: 'rgba(250,246,242,0.9)', border: '1.5px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', overflow: 'hidden', padding: 8, display: 'flex', flexWrap: 'wrap', gap: 6, alignContent: 'flex-start' }}>
+                                                                      {photos.length === 0 ? (
+                                                                          <div className="w-full h-full flex items-center justify-center">
+                                                                              <span style={{ fontFamily: "'Kalam', cursive", fontSize: 12, color: '#a8a29e' }}>No photos yet</span>
+                                                                          </div>
+                                                                      ) : photos.map(photo => (
+                                                                          <div key={photo.id} style={{ width: 72, height: 72, borderRadius: 8, overflow: 'hidden', flexShrink: 0, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+                                                                              <img src={photo.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                                          </div>
+                                                                      ))}
                                                                   </div>
                                                               </div>
                                                           );
