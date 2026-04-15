@@ -90,55 +90,70 @@ const PushPin: React.FC<{ color: string; delay?: number }> = ({ color, delay = 0
 
 // ── creator "about" card ──────────────────────────────────────────────────────
 
-const CreatorCard: React.FC<{ creator: CreatorProfile; delay: number }> = ({ creator, delay }) => (
-    <div className="relative note-hover" style={{ transform: 'rotate(-0.8deg)' }}>
-        <PushPin color="#dc2626" delay={delay} />
-        <div
-            className="note-in note-lift mt-4 w-72 rounded-sm overflow-hidden"
-            style={{
-                animationDelay: `${delay}ms`,
-                background: '#fefef0',
-                boxShadow: '3px 6px 18px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.1)',
-                backgroundImage: 'repeating-linear-gradient(transparent 0px, transparent 27px, rgba(0,0,0,0.045) 27px, rgba(0,0,0,0.045) 28px)',
-            }}
-        >
-            {/* Tape strip across top */}
-            <div className="h-5 w-24 mx-auto -mt-2 mb-1 rounded-sm opacity-60"
-                style={{ background: 'rgba(253,230,138,0.8)', boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }} />
+const CreatorCard: React.FC<{ creator: CreatorProfile; delay: number; isMobile?: boolean }> = ({ creator, delay, isMobile = false }) => {
+    const cardW      = isMobile ? 288  : 380;
+    const avatarSz   = isMobile ? 64   : 96;
+    const nameSz     = isMobile ? 22   : 30;
+    const handleSz   = isMobile ? 11   : 13;
+    const bioSz      = isMobile ? 13.5 : 15.5;
+    const statsSz    = isMobile ? 11   : 13;
+    const padX       = isMobile ? 20   : 26;
+    const padB       = isMobile ? 20   : 26;
+    const tapW       = isMobile ? 96   : 128;
+    const lineH      = isMobile ? 27   : 31;
 
-            <div className="px-5 pb-5">
-                <div className="flex items-center gap-3 mb-3">
-                    {creator.avatarUrl ? (
-                        <img src={creator.avatarUrl}
-                            className="w-16 h-16 rounded-full object-cover flex-shrink-0"
-                            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.2), 0 0 0 3px #fff, 0 0 0 5px rgba(0,0,0,0.1)' }} />
-                    ) : (
-                        <div className="w-16 h-16 rounded-full bg-stone-200 flex-shrink-0"
-                            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.2), 0 0 0 3px #fff, 0 0 0 5px rgba(0,0,0,0.1)' }} />
-                    )}
-                    <div>
-                        <h2 style={{ fontFamily: "'Caveat', cursive", fontSize: 22, fontWeight: 700, color: '#1c1917', lineHeight: 1.2 }}>
-                            {creator.displayName}
-                        </h2>
-                        {creator.handle && creator.handle !== '@user' && (
-                            <p className="text-xs text-stone-400 mt-0.5">{creator.handle}</p>
+    return (
+        <div className="relative note-hover" style={{ transform: 'rotate(-0.8deg)' }}>
+            <PushPin color="#dc2626" delay={delay} />
+            <div
+                className="note-in note-lift mt-4 rounded-sm overflow-hidden"
+                style={{
+                    width: cardW,
+                    animationDelay: `${delay}ms`,
+                    background: '#fefef0',
+                    boxShadow: '3px 6px 18px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.1)',
+                    backgroundImage: `repeating-linear-gradient(transparent 0px, transparent ${lineH - 1}px, rgba(0,0,0,0.045) ${lineH - 1}px, rgba(0,0,0,0.045) ${lineH}px)`,
+                }}
+            >
+                {/* Tape strip across top */}
+                <div className="-mt-2 mb-1 mx-auto rounded-sm opacity-60"
+                    style={{ height: 20, width: tapW, background: 'rgba(253,230,138,0.8)', boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }} />
+
+                <div style={{ padding: `0 ${padX}px ${padB}px` }}>
+                    <div className="flex items-center gap-4 mb-3">
+                        {creator.avatarUrl ? (
+                            <img src={creator.avatarUrl}
+                                className="rounded-full object-cover flex-shrink-0"
+                                style={{ width: avatarSz, height: avatarSz, boxShadow: '0 2px 8px rgba(0,0,0,0.2), 0 0 0 3px #fff, 0 0 0 5px rgba(0,0,0,0.1)' }} />
+                        ) : (
+                            <div className="rounded-full bg-stone-200 flex-shrink-0"
+                                style={{ width: avatarSz, height: avatarSz, boxShadow: '0 2px 8px rgba(0,0,0,0.2), 0 0 0 3px #fff, 0 0 0 5px rgba(0,0,0,0.1)' }} />
                         )}
+                        <div>
+                            <h2 style={{ fontFamily: "'Caveat', cursive", fontSize: nameSz, fontWeight: 700, color: '#1c1917', lineHeight: 1.2 }}>
+                                {creator.displayName}
+                            </h2>
+                            {creator.handle && creator.handle !== '@user' && (
+                                <p style={{ fontSize: handleSz }} className="text-stone-400 mt-0.5">{creator.handle}</p>
+                            )}
+                        </div>
                     </div>
-                </div>
-                {creator.bio && (
-                    <p style={{ fontFamily: "'Kalam', cursive", fontSize: 13.5, color: '#44403c', lineHeight: 1.7 }}
-                        className="line-clamp-4">
-                        {creator.bio}
-                    </p>
-                )}
-                <div className="mt-4 flex gap-5 text-xs text-stone-400 border-t border-stone-200/80 pt-3">
-                    <span>{creator.stats?.replyRate || '—'} reply rate</span>
-                    <span>{creator.stats?.responseTimeAvg || '—'} avg reply</span>
+                    {creator.bio && (
+                        <p style={{ fontFamily: "'Kalam', cursive", fontSize: bioSz, color: '#44403c', lineHeight: 1.75 }}
+                            className={isMobile ? 'line-clamp-4' : 'line-clamp-6'}>
+                            {creator.bio}
+                        </p>
+                    )}
+                    <div className="mt-4 flex gap-5 border-t border-stone-200/80 pt-3"
+                        style={{ fontSize: statsSz, color: '#a8a29e' }}>
+                        <span>{creator.stats?.replyRate || '—'} reply rate</span>
+                        <span>{creator.stats?.responseTimeAvg || '—'} avg reply</span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 // ── platform helpers (mirrors CreatorDashboard) ───────────────────────────────
 
@@ -320,12 +335,23 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
 
 const PaperNote: React.FC<{
     post: BoardPost; idx: number; isOwn: boolean; isCreator: boolean;
-    delay: number; onClick: () => void;
-}> = ({ post, idx, isOwn, isCreator, delay, onClick }) => {
-    const isPending    = !post.reply;
-    const canSee       = !isPending || isOwn || isCreator;
-    const rot          = noteRot(post.id, idx);
-    const pc           = getPinColor(post.id, idx);
+    delay: number; onClick: () => void; isMobile?: boolean;
+}> = ({ post, idx, isOwn, isCreator, delay, onClick, isMobile = false }) => {
+    const isPending = !post.reply;
+    const canSee    = !isPending || isOwn || isCreator;
+    const rot       = noteRot(post.id, idx);
+    const pc        = getPinColor(post.id, idx);
+
+    const authorSz  = isMobile ? 13   : 15;
+    const contentSz = isMobile ? 13.5 : 15;
+    const footerSz  = isMobile ? 10   : 11.5;
+    const lineH     = isMobile ? 23   : 26;
+    const pleft     = isMobile ? 48   : 52;
+    const pright    = isMobile ? 16   : 20;
+    const pt        = isMobile ? 12   : 16;
+    const pb        = isMobile ? 16   : 20;
+    const avatarSz  = isMobile ? 20   : 24;
+    const foldSz    = isMobile ? 24   : 28;
 
     return (
         <div
@@ -339,27 +365,29 @@ const PaperNote: React.FC<{
                 style={{
                     animationDelay: `${delay}ms`,
                     background: '#fefef0',
-                    backgroundImage: 'repeating-linear-gradient(transparent 0px, transparent 23px, rgba(0,0,0,0.04) 23px, rgba(0,0,0,0.04) 24px)',
+                    backgroundImage: `repeating-linear-gradient(transparent 0px, transparent ${lineH - 1}px, rgba(0,0,0,0.04) ${lineH - 1}px, rgba(0,0,0,0.04) ${lineH}px)`,
                     boxShadow: '2px 5px 14px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.08)',
                     opacity: isPending && !canSee ? 0.82 : 1,
                 }}
             >
                 {/* Red left margin line — like real lined paper */}
-                <div className="absolute top-0 left-9 w-px h-full bg-red-200/60" />
+                <div className="absolute top-0 w-px h-full bg-red-200/60" style={{ left: isMobile ? 36 : 40 }} />
 
-                <div className="pl-12 pr-4 pt-3 pb-4">
+                <div style={{ paddingLeft: pleft, paddingRight: pright, paddingTop: pt, paddingBottom: pb }}>
                     {/* Author line */}
                     <div className="flex items-center gap-1.5 mb-2.5">
                         {post.fanAvatarUrl ? (
-                            <img src={post.fanAvatarUrl} className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
+                            <img src={post.fanAvatarUrl} className="rounded-full object-cover flex-shrink-0"
+                                style={{ width: avatarSz, height: avatarSz }} />
                         ) : (
-                            <div className="w-5 h-5 rounded-full bg-stone-300 flex-shrink-0" />
+                            <div className="rounded-full bg-stone-300 flex-shrink-0"
+                                style={{ width: avatarSz, height: avatarSz }} />
                         )}
-                        <span style={{ fontFamily: "'Caveat', cursive", fontSize: 13, fontWeight: 600, color: '#57534e' }}
+                        <span style={{ fontFamily: "'Caveat', cursive", fontSize: authorSz, fontWeight: 600, color: '#57534e' }}
                             className="truncate flex-1">
                             {post.fanName}
                         </span>
-                        {post.isPrivate && <Lock size={9} className="text-stone-400 flex-shrink-0" />}
+                        {post.isPrivate && <Lock size={isMobile ? 9 : 11} className="text-stone-400 flex-shrink-0" />}
                     </div>
 
                     {/* Message content */}
@@ -367,7 +395,7 @@ const PaperNote: React.FC<{
                         <p
                             style={{
                                 fontFamily: "'Kalam', cursive",
-                                fontSize: 13.5,
+                                fontSize: contentSz,
                                 color: '#1c1917',
                                 lineHeight: 1.65,
                                 filter: !canSee ? 'blur(5px) sepia(0.2)' : 'none',
@@ -381,16 +409,16 @@ const PaperNote: React.FC<{
 
                         {!canSee && (
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
-                                {/* Wax-seal look */}
-                                <div className="w-10 h-10 rounded-full flex items-center justify-center"
+                                <div className="rounded-full flex items-center justify-center"
                                     style={{
+                                        width: isMobile ? 40 : 48, height: isMobile ? 40 : 48,
                                         background: 'radial-gradient(circle at 38% 32%, rgba(255,255,255,0.4) 0%, rgba(180,60,60,0.85) 100%)',
                                         boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
                                     }}>
-                                    <Lock size={13} color="rgba(255,255,255,0.9)" />
+                                    <Lock size={isMobile ? 13 : 16} color="rgba(255,255,255,0.9)" />
                                 </div>
-                                <span className="text-[9px] text-stone-400 font-medium tracking-wider uppercase"
-                                    style={{ background: 'rgba(254,254,240,0.85)', padding: '2px 6px', borderRadius: 3 }}>
+                                <span style={{ fontSize: isMobile ? 9 : 10, background: 'rgba(254,254,240,0.85)', padding: '2px 6px', borderRadius: 3 }}
+                                    className="text-stone-400 font-medium tracking-wider uppercase">
                                     awaiting reply
                                 </span>
                             </div>
@@ -398,21 +426,22 @@ const PaperNote: React.FC<{
                     </div>
 
                     {/* Footer */}
-                    <div className="mt-3 flex items-center justify-between border-t border-stone-200/60 pt-2">
-                        <span className="text-[10px] text-stone-400">{timeAgo(post.createdAt)}</span>
+                    <div className="mt-3 flex items-center justify-between border-t border-stone-200/60 pt-2"
+                        style={{ fontSize: footerSz }}>
+                        <span className="text-stone-400">{timeAgo(post.createdAt)}</span>
                         {post.reply ? (
-                            <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-0.5">
-                                <CheckCircle size={9} /> replied
+                            <span className="text-emerald-600 font-semibold flex items-center gap-0.5">
+                                <CheckCircle size={isMobile ? 9 : 11} /> replied
                             </span>
                         ) : (
-                            <span className="text-[10px] text-amber-500 font-medium">pending</span>
+                            <span className="text-amber-500 font-medium">pending</span>
                         )}
                     </div>
                 </div>
 
                 {/* Bottom-right fold corner */}
-                <div className="absolute bottom-0 right-0 w-6 h-6"
-                    style={{ background: 'linear-gradient(225deg, rgba(0,0,0,0.10) 45%, transparent 45%)' }} />
+                <div className="absolute bottom-0 right-0"
+                    style={{ width: foldSz, height: foldSz, background: 'linear-gradient(225deg, rgba(0,0,0,0.10) 45%, transparent 45%)' }} />
             </div>
         </div>
     );
@@ -799,7 +828,6 @@ const AmaSticker: React.FC<{
 // ── main ──────────────────────────────────────────────────────────────────────
 
 const NAV_H = 56;
-const CREATOR_CARD_ZONE = 300; // vertical space for the creator card at top of canvas
 
 export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginRequest, onBack }) => {
     const [posts, setPosts]           = useState<BoardPost[]>([]);
@@ -829,17 +857,18 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
 
     useEffect(() => { loadPosts(); }, [loadPosts]);
 
-    // ── layout constants (must match CreatorDashboard exactly) ──
-    const NOTE_W      = 252;
-    const NOTE_H_EST  = 272;
-    const NOTE_GAP_X  = 28;
-    const NOTE_GAP_Y  = 36;
-    const BOARD_PAD   = 32;
-    // Wider canvas on desktop to accommodate the larger AMA sticker
-    const GUIDE_W     = isMobile ? 640 : 800;
-    const GUIDE_COLS  = 2;
-    const LINK_W      = 220;
-    const LINK_AUTO_X = BOARD_PAD + GUIDE_COLS * (NOTE_W + NOTE_GAP_X) + 20;
+    // ── layout constants — scale up on desktop ──
+    const CREATOR_CARD_ZONE = isMobile ? 300  : 400;
+    const NOTE_W            = isMobile ? 252  : 310;
+    const NOTE_H_EST        = isMobile ? 272  : 340;
+    const NOTE_GAP_X        = isMobile ? 28   : 44;
+    const NOTE_GAP_Y        = isMobile ? 36   : 52;
+    const BOARD_PAD         = isMobile ? 32   : 44;
+    // Wider canvas on desktop to accommodate larger cards and AMA sticker
+    const GUIDE_W           = isMobile ? 640  : 860;
+    const GUIDE_COLS        = 2;
+    const LINK_W            = 220;
+    const LINK_AUTO_X       = BOARD_PAD + GUIDE_COLS * (NOTE_W + NOTE_GAP_X) + 20;
 
     const getLinkSize = (l: any): number | null => {
         if (l.iconShape === 'square-l') return 220;
@@ -1022,7 +1051,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                                 {/* Creator card — top-center of canvas */}
                                 {creator && (
                                     <div style={{ position: 'absolute', left: canvasW / 2, top: 52, transform: 'translateX(-50%)' }}>
-                                        <CreatorCard creator={creator} delay={80} />
+                                        <CreatorCard creator={creator} delay={80} isMobile={isMobile} />
                                     </div>
                                 )}
 
@@ -1083,6 +1112,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                                                 isOwn={currentUser?.id === post.fanId} isCreator={isCreator}
                                                 delay={200 + i * 55}
                                                 onClick={() => handleNoteClick(post)}
+                                                isMobile={isMobile}
                                             />
                                         </div>
                                     );
