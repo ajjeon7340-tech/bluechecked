@@ -91,16 +91,24 @@ const PushPin: React.FC<{ color: string; delay?: number }> = ({ color, delay = 0
 // ── creator "about" card ──────────────────────────────────────────────────────
 
 const CreatorCard: React.FC<{ creator: CreatorProfile; delay: number; isMobile?: boolean }> = ({ creator, delay, isMobile = false }) => {
-    const cardW      = isMobile ? 288  : 380;
-    const avatarSz   = isMobile ? 64   : 96;
-    const nameSz     = isMobile ? 22   : 30;
-    const handleSz   = isMobile ? 11   : 13;
-    const bioSz      = isMobile ? 13.5 : 15.5;
-    const statsSz    = isMobile ? 11   : 13;
-    const padX       = isMobile ? 20   : 26;
-    const padB       = isMobile ? 20   : 26;
-    const tapW       = isMobile ? 96   : 128;
-    const lineH      = isMobile ? 27   : 31;
+    const cardW      = isMobile ? 288  : 460;
+    const avatarSz   = isMobile ? 64   : 120;
+    const nameSz     = isMobile ? 22   : 34;
+    const handleSz   = isMobile ? 11   : 14;
+    const bioSz      = isMobile ? 13.5 : 16;
+    const statsSz    = isMobile ? 11   : 13.5;
+    const padX       = isMobile ? 20   : 30;
+    const padB       = isMobile ? 20   : 30;
+    const tapW       = isMobile ? 96   : 160;
+    const lineH      = isMobile ? 27   : 32;
+
+    // Platforms: normalise to id strings
+    const platformIds: string[] = (creator.platforms || []).map(p =>
+        typeof p === 'string' ? p : p.id
+    ).filter(Boolean).slice(0, isMobile ? 4 : 6);
+
+    // Tags
+    const tags = (creator.tags || []).slice(0, isMobile ? 3 : 6);
 
     return (
         <div className="relative note-hover" style={{ transform: 'rotate(-0.8deg)' }}>
@@ -111,43 +119,89 @@ const CreatorCard: React.FC<{ creator: CreatorProfile; delay: number; isMobile?:
                     width: cardW,
                     animationDelay: `${delay}ms`,
                     background: '#fefef0',
-                    boxShadow: '3px 6px 18px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.1)',
-                    backgroundImage: `repeating-linear-gradient(transparent 0px, transparent ${lineH - 1}px, rgba(0,0,0,0.045) ${lineH - 1}px, rgba(0,0,0,0.045) ${lineH}px)`,
+                    boxShadow: '3px 6px 22px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.1)',
+                    backgroundImage: `repeating-linear-gradient(transparent 0px, transparent ${lineH - 1}px, rgba(0,0,0,0.04) ${lineH - 1}px, rgba(0,0,0,0.04) ${lineH}px)`,
                 }}
             >
                 {/* Tape strip across top */}
-                <div className="-mt-2 mb-1 mx-auto rounded-sm opacity-60"
-                    style={{ height: 20, width: tapW, background: 'rgba(253,230,138,0.8)', boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }} />
+                <div className="-mt-2 mb-2 mx-auto rounded-sm opacity-60"
+                    style={{ height: 22, width: tapW, background: 'rgba(253,230,138,0.8)', boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }} />
 
                 <div style={{ padding: `0 ${padX}px ${padB}px` }}>
-                    <div className="flex items-center gap-4 mb-3">
+                    {/* Avatar + name row */}
+                    <div className="flex items-center gap-4 mb-4">
                         {creator.avatarUrl ? (
                             <img src={creator.avatarUrl}
                                 className="rounded-full object-cover flex-shrink-0"
-                                style={{ width: avatarSz, height: avatarSz, boxShadow: '0 2px 8px rgba(0,0,0,0.2), 0 0 0 3px #fff, 0 0 0 5px rgba(0,0,0,0.1)' }} />
+                                style={{ width: avatarSz, height: avatarSz, boxShadow: '0 3px 10px rgba(0,0,0,0.22), 0 0 0 3px #fff, 0 0 0 6px rgba(0,0,0,0.1)' }} />
                         ) : (
                             <div className="rounded-full bg-stone-200 flex-shrink-0"
-                                style={{ width: avatarSz, height: avatarSz, boxShadow: '0 2px 8px rgba(0,0,0,0.2), 0 0 0 3px #fff, 0 0 0 5px rgba(0,0,0,0.1)' }} />
+                                style={{ width: avatarSz, height: avatarSz, boxShadow: '0 3px 10px rgba(0,0,0,0.22), 0 0 0 3px #fff, 0 0 0 6px rgba(0,0,0,0.1)' }} />
                         )}
-                        <div>
+                        <div className="flex-1 min-w-0">
                             <h2 style={{ fontFamily: "'Caveat', cursive", fontSize: nameSz, fontWeight: 700, color: '#1c1917', lineHeight: 1.2 }}>
                                 {creator.displayName}
                             </h2>
                             {creator.handle && creator.handle !== '@user' && (
-                                <p style={{ fontSize: handleSz }} className="text-stone-400 mt-0.5">{creator.handle}</p>
+                                <p style={{ fontSize: handleSz }} className="text-stone-400 mt-1">{creator.handle}</p>
+                            )}
+                            {/* Platform pills — desktop only */}
+                            {!isMobile && platformIds.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                    {platformIds.map(pid => (
+                                        <span key={pid}
+                                            className="capitalize"
+                                            style={{
+                                                fontFamily: "'Kalam', cursive",
+                                                fontSize: 11,
+                                                background: 'rgba(0,0,0,0.07)',
+                                                color: '#57534e',
+                                                padding: '2px 8px',
+                                                borderRadius: 999,
+                                            }}>
+                                            {pid}
+                                        </span>
+                                    ))}
+                                </div>
                             )}
                         </div>
                     </div>
+
+                    {/* Bio — full text on desktop */}
                     {creator.bio && (
-                        <p style={{ fontFamily: "'Kalam', cursive", fontSize: bioSz, color: '#44403c', lineHeight: 1.75 }}
-                            className={isMobile ? 'line-clamp-4' : 'line-clamp-6'}>
+                        <p style={{ fontFamily: "'Kalam', cursive", fontSize: bioSz, color: '#44403c', lineHeight: 1.8 }}
+                            className={isMobile ? 'line-clamp-4' : undefined}>
                             {creator.bio}
                         </p>
                     )}
-                    <div className="mt-4 flex gap-5 border-t border-stone-200/80 pt-3"
-                        style={{ fontSize: statsSz, color: '#a8a29e' }}>
+
+                    {/* Tags — desktop only */}
+                    {!isMobile && tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-3">
+                            {tags.map(tag => (
+                                <span key={tag} style={{
+                                    fontFamily: "'Kalam', cursive",
+                                    fontSize: 12,
+                                    background: 'rgba(253,230,138,0.55)',
+                                    color: '#78350f',
+                                    padding: '3px 10px',
+                                    borderRadius: 999,
+                                    border: '1px solid rgba(253,230,138,0.8)',
+                                }}>
+                                    # {tag}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Stats */}
+                    <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-stone-200/80 pt-3"
+                        style={{ fontSize: statsSz, color: '#a8a29e', marginTop: isMobile ? 16 : 20 }}>
                         <span>{creator.stats?.replyRate || '—'} reply rate</span>
                         <span>{creator.stats?.responseTimeAvg || '—'} avg reply</span>
+                        {!isMobile && creator.showLikes && creator.likesCount > 0 && (
+                            <span>♥ {creator.likesCount.toLocaleString()}</span>
+                        )}
                     </div>
                 </div>
             </div>
@@ -342,16 +396,16 @@ const PaperNote: React.FC<{
     const rot       = noteRot(post.id, idx);
     const pc        = getPinColor(post.id, idx);
 
-    const authorSz  = isMobile ? 13   : 15;
-    const contentSz = isMobile ? 13.5 : 15;
-    const footerSz  = isMobile ? 10   : 11.5;
-    const lineH     = isMobile ? 23   : 26;
-    const pleft     = isMobile ? 48   : 52;
-    const pright    = isMobile ? 16   : 20;
-    const pt        = isMobile ? 12   : 16;
-    const pb        = isMobile ? 16   : 20;
-    const avatarSz  = isMobile ? 20   : 24;
-    const foldSz    = isMobile ? 24   : 28;
+    const authorSz  = isMobile ? 13   : 16;
+    const contentSz = isMobile ? 13.5 : 16;
+    const footerSz  = isMobile ? 10   : 12.5;
+    const lineH     = isMobile ? 23   : 28;
+    const pleft     = isMobile ? 48   : 56;
+    const pright    = isMobile ? 16   : 24;
+    const pt        = isMobile ? 12   : 20;
+    const pb        = isMobile ? 16   : 24;
+    const avatarSz  = isMobile ? 20   : 28;
+    const foldSz    = isMobile ? 24   : 32;
 
     return (
         <div
@@ -402,7 +456,7 @@ const PaperNote: React.FC<{
                                 userSelect: !canSee ? 'none' : 'auto',
                                 WebkitFilter: !canSee ? 'blur(5px) sepia(0.2)' : 'none',
                             }}
-                            className="line-clamp-5"
+                            className={isMobile ? 'line-clamp-5' : 'line-clamp-[9]'}
                         >
                             {canSee ? post.content : 'This message is waiting for a response from the creator and will appear here once replied to...'}
                         </p>
@@ -858,14 +912,14 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
     useEffect(() => { loadPosts(); }, [loadPosts]);
 
     // ── layout constants — scale up on desktop ──
-    const CREATOR_CARD_ZONE = isMobile ? 300  : 400;
-    const NOTE_W            = isMobile ? 252  : 310;
-    const NOTE_H_EST        = isMobile ? 272  : 340;
-    const NOTE_GAP_X        = isMobile ? 28   : 44;
-    const NOTE_GAP_Y        = isMobile ? 36   : 52;
-    const BOARD_PAD         = isMobile ? 32   : 44;
+    const CREATOR_CARD_ZONE = isMobile ? 300  : 560;
+    const NOTE_W            = isMobile ? 252  : 360;
+    const NOTE_H_EST        = isMobile ? 272  : 440;
+    const NOTE_GAP_X        = isMobile ? 28   : 52;
+    const NOTE_GAP_Y        = isMobile ? 36   : 68;
+    const BOARD_PAD         = isMobile ? 32   : 52;
     // Wider canvas on desktop to accommodate larger cards and AMA sticker
-    const GUIDE_W           = isMobile ? 640  : 860;
+    const GUIDE_W           = isMobile ? 640  : 960;
     const GUIDE_COLS        = 2;
     const LINK_W            = 220;
     const LINK_AUTO_X       = BOARD_PAD + GUIDE_COLS * (NOTE_W + NOTE_GAP_X) + 20;
@@ -902,10 +956,12 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
         return pos;
     });
 
-    const maxPostBottom = postPositions.reduce((m, p) => Math.max(m, p.y + NOTE_H_EST), 440);
+    const minPostArea   = isMobile ? 440 : 700;
+    const canvasBottom  = isMobile ? 100 : 160;
+    const maxPostBottom = postPositions.reduce((m, p) => Math.max(m, p.y + NOTE_H_EST), minPostArea);
     const maxLinkRight  = linkPositions.reduce((m, p, i) => Math.max(m, p.x + (getLinkSize(visibleLinks[i]) || LINK_W)), GUIDE_W);
     const maxLinkBottom = linkPositions.reduce((m, p, i) => Math.max(m, p.y + getLinkH(visibleLinks[i])), 0);
-    const canvasH = Math.max(maxPostBottom, maxLinkBottom) + 80;
+    const canvasH = Math.max(maxPostBottom, maxLinkBottom) + canvasBottom;
     const canvasW = Math.max(GUIDE_W, maxLinkRight + 32);
     const totalH  = CREATOR_CARD_ZONE + canvasH;
 
