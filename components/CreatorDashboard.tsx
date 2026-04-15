@@ -3766,6 +3766,7 @@ export const CreatorDashboard: React.FC<Props> = ({ creator, currentUser, onLogo
                                                                             }
                                                                             if (fetchedData.thumbnailUrl && !p.thumbnailUrl) {
                                                                                 updates.thumbnailUrl = fetchedData.thumbnailUrl;
+                                                                                updates.displayStyle = 'thumbnail';
                                                                             }
                                                                             return Object.keys(updates).length > 0 ? { ...p, ...updates } : p;
                                                                         });
