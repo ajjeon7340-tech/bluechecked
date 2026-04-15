@@ -651,7 +651,8 @@ const AmaSticker: React.FC<{
     onLoginRequest: () => void;
     onSubmit: (content: string, isPrivate: boolean) => Promise<void>;
     delay?: number;
-}> = ({ creator, currentUser, onLoginRequest, onSubmit, delay = 0 }) => {
+    isMobile?: boolean;
+}> = ({ creator, currentUser, onLoginRequest, onSubmit, delay = 0, isMobile = false }) => {
     const [text, setText]       = useState('');
     const [status, setStatus]   = useState<'idle' | 'submitting' | 'sent'>('idle');
     const [focused, setFocused] = useState(false);
@@ -674,12 +675,33 @@ const AmaSticker: React.FC<{
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); }
     };
 
+    // Scale up all dimensions for desktop
+    const cardW        = isMobile ? 288  : 380;
+    const headerPad    = isMobile ? '10px 16px 8px'  : '14px 22px 12px';
+    const emojiSize    = isMobile ? 18   : 24;
+    const titleSize    = isMobile ? 19   : 26;
+    const subtitleSize = isMobile ? 11.5 : 13.5;
+    const bodyPx       = isMobile ? 16   : 22;
+    const bodyPt       = isMobile ? 12   : 16;
+    const bodyPb       = isMobile ? 16   : 20;
+    const lineH        = isMobile ? 23   : 27;
+    const inputFont    = isMobile ? 13.5 : 16;
+    const inputLineH   = isMobile ? '24px' : '28px';
+    const inputRows    = isMobile ? 4    : 6;
+    const charFont     = isMobile ? 11   : 12.5;
+    const btnFontSize  = isMobile ? 15   : 18;
+    const btnPx        = isMobile ? 12   : 18;
+    const btnPy        = isMobile ? 6    : 9;
+    const sentTitleSz  = isMobile ? 20   : 26;
+    const sentSubSz    = isMobile ? 12   : 14;
+
     return (
         <div className="relative note-hover" style={{ transform: 'rotate(0.4deg)' }}>
             <PushPin color="#be185d" delay={delay} />
             <div
-                className="note-in note-lift mt-4 w-72 rounded-sm overflow-hidden"
+                className="note-in note-lift mt-4 rounded-sm overflow-hidden"
                 style={{
+                    width: cardW,
                     animationDelay: `${delay}ms`,
                     boxShadow: focused
                         ? '0 12px 36px rgba(190,24,93,0.28), 3px 6px 18px rgba(0,0,0,0.22)'
@@ -691,38 +713,38 @@ const AmaSticker: React.FC<{
                 {/* Gradient header strip — hot pink → purple */}
                 <div style={{
                     background: 'linear-gradient(90deg, #f472b6 0%, #a855f7 100%)',
-                    padding: '10px 16px 8px',
+                    padding: headerPad,
                 }}>
                     <div className="flex items-center gap-2">
-                        <span style={{ fontSize: 18, lineHeight: 1 }}>🎤</span>
-                        <span style={{ fontFamily: "'Caveat', cursive", fontSize: 19, fontWeight: 700, color: '#fff', letterSpacing: 0.2 }}>
+                        <span style={{ fontSize: emojiSize, lineHeight: 1 }}>🎤</span>
+                        <span style={{ fontFamily: "'Caveat', cursive", fontSize: titleSize, fontWeight: 700, color: '#fff', letterSpacing: 0.2 }}>
                             Ask me anything
                         </span>
                     </div>
-                    <p style={{ fontFamily: "'Kalam', cursive", fontSize: 11.5, color: 'rgba(255,255,255,0.80)', marginTop: 2 }}>
+                    <p style={{ fontFamily: "'Kalam', cursive", fontSize: subtitleSize, color: 'rgba(255,255,255,0.80)', marginTop: 2 }}>
                         to {creator.displayName}
                     </p>
                 </div>
 
                 {/* Paper input area */}
-                <div className="px-4 pt-3 pb-4"
-                    style={{
-                        backgroundImage: 'repeating-linear-gradient(transparent 0px, transparent 23px, rgba(0,0,0,0.045) 23px, rgba(0,0,0,0.045) 24px)',
-                    }}>
+                <div style={{
+                    padding: `${bodyPt}px ${bodyPx}px ${bodyPb}px`,
+                    backgroundImage: `repeating-linear-gradient(transparent 0px, transparent ${lineH - 1}px, rgba(0,0,0,0.045) ${lineH - 1}px, rgba(0,0,0,0.045) ${lineH}px)`,
+                }}>
                     {status === 'sent' ? (
-                        <div className="py-4 text-center">
-                            <p style={{ fontFamily: "'Caveat', cursive", fontSize: 20, fontWeight: 700, color: '#be185d' }}>
+                        <div style={{ paddingTop: 12, paddingBottom: 12, textAlign: 'center' }}>
+                            <p style={{ fontFamily: "'Caveat', cursive", fontSize: sentTitleSz, fontWeight: 700, color: '#be185d' }}>
                                 ✓ Question sent!
                             </p>
-                            <p style={{ fontFamily: "'Kalam', cursive", fontSize: 12, color: '#78716c', marginTop: 4 }}>
+                            <p style={{ fontFamily: "'Kalam', cursive", fontSize: sentSubSz, color: '#78716c', marginTop: 4 }}>
                                 {creator.displayName} will reply soon
                             </p>
                         </div>
                     ) : (
                         <>
                             <div className="relative">
-                                {/* Red margin line */}
-                                <div className="absolute top-0 left-8 w-px h-full" style={{ background: 'rgba(244,114,182,0.3)' }} />
+                                {/* Pink margin line */}
+                                <div className="absolute top-0 h-full w-px" style={{ left: 32, background: 'rgba(244,114,182,0.3)' }} />
                                 <textarea
                                     value={text}
                                     onChange={e => setText(e.target.value)}
@@ -731,35 +753,37 @@ const AmaSticker: React.FC<{
                                     onBlur={() => setFocused(false)}
                                     placeholder={`Your question for ${creator.displayName}…`}
                                     maxLength={300}
-                                    rows={4}
-                                    className="w-full resize-none focus:outline-none pl-10 pr-2 py-1"
+                                    rows={inputRows}
+                                    className="w-full resize-none focus:outline-none pr-2 py-1"
                                     style={{
+                                        paddingLeft: 40,
                                         fontFamily: "'Kalam', cursive",
-                                        fontSize: 13.5,
-                                        lineHeight: '24px',
+                                        fontSize: inputFont,
+                                        lineHeight: inputLineH,
                                         color: '#1c1917',
                                         background: 'transparent',
                                     }}
                                 />
                             </div>
-                            <div className="flex items-center justify-between mt-2">
-                                <span style={{ fontFamily: "'Kalam', cursive", fontSize: 11, color: '#a8a29e' }}>
+                            <div className="flex items-center justify-between" style={{ marginTop: 8 }}>
+                                <span style={{ fontFamily: "'Kalam', cursive", fontSize: charFont, color: '#a8a29e' }}>
                                     {text.length}/300
                                 </span>
                                 <button
                                     onClick={handleSubmit}
                                     disabled={!text.trim() || status === 'submitting'}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm active:scale-95 transition-all disabled:opacity-40"
+                                    className="flex items-center gap-1.5 rounded-sm active:scale-95 transition-all disabled:opacity-40"
                                     style={{
+                                        padding: `${btnPy}px ${btnPx}px`,
                                         background: 'linear-gradient(90deg, #f472b6 0%, #a855f7 100%)',
                                         fontFamily: "'Caveat', cursive",
-                                        fontSize: 15,
+                                        fontSize: btnFontSize,
                                         fontWeight: 700,
                                         color: '#fff',
                                         boxShadow: '0 2px 8px rgba(168,85,247,0.35)',
                                     }}>
                                     {status === 'submitting'
-                                        ? <Loader2 size={13} className="animate-spin" />
+                                        ? <Loader2 size={isMobile ? 13 : 15} className="animate-spin" />
                                         : <span>📌</span>}
                                     {status === 'submitting' ? 'Sending…' : 'Pin it'}
                                 </button>
@@ -787,6 +811,13 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
     const [camTransition, setCamTransition] = useState('none');
     const initRef   = useRef(false);
     const isCreator = !!(currentUser && creator && currentUser.id === creator.id);
+    const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
+
+    useEffect(() => {
+        const onResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
 
     const loadPosts = useCallback(async () => {
         if (!creator) return;
@@ -804,7 +835,8 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
     const NOTE_GAP_X  = 28;
     const NOTE_GAP_Y  = 36;
     const BOARD_PAD   = 32;
-    const GUIDE_W     = 640;
+    // Wider canvas on desktop to accommodate the larger AMA sticker
+    const GUIDE_W     = isMobile ? 640 : 800;
     const GUIDE_COLS  = 2;
     const LINK_W      = 220;
     const LINK_AUTO_X = BOARD_PAD + GUIDE_COLS * (NOTE_W + NOTE_GAP_X) + 20;
@@ -1003,6 +1035,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                                             onLoginRequest={onLoginRequest}
                                             onSubmit={handlePost}
                                             delay={200}
+                                            isMobile={isMobile}
                                         />
                                     </div>
                                 )}
