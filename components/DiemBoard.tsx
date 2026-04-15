@@ -250,6 +250,20 @@ const pubDetectPlatform = (url: string): string | null => {
     } catch { return null; }
 };
 
+// ── text-driven width (mirrors CreatorDashboard) ─────────────────────────────
+
+const getWideWidth = (title?: string): number => {
+    if (!title) return 120;
+    let charW = 0;
+    for (const ch of title) {
+        const code = ch.codePointAt(0) || 0;
+        if (code >= 0x1100) { charW += 13; }  // Korean / CJK wide chars
+        else if (ch === ' ') { charW += 5; }
+        else { charW += 7.5; }
+    }
+    return Math.min(240, Math.max(100, Math.ceil(56 + charW)));
+};
+
 // ── link sticker (matches creator board style) ────────────────────────────────
 
 const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
@@ -280,6 +294,45 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
     const handleClick = () => {
         if (link.url && link.url !== '#') window.open(link.url.startsWith('http') ? link.url : `https://${link.url}`, '_blank');
     };
+
+    // ── PANEL → featured link wide-S (width grows with text) ──────────────────
+    if (link.type === 'PANEL') {
+        const panelW = getWideWidth(link.title);
+        const tapeColor = linkTapes[lc];
+        const bgCol = link.buttonColor || linkColors[lc];
+        // Tiny tape width proportional to card width
+        const tapePx = Math.round(panelW * 0.38);
+        return (
+            <div className="flex flex-col hover:scale-[1.03] transition-transform" style={{ width: panelW }}>
+                {/* Tape */}
+                <div className="mx-auto rounded-b-sm flex-shrink-0" style={{ height: 14, width: tapePx, background: tapeColor }} />
+                {/* Label card */}
+                <div
+                    className="rounded-lg"
+                    style={{
+                        backgroundColor: bgCol,
+                        border: '1px solid rgba(0,0,0,0.08)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                        padding: '5px 10px',
+                    }}
+                >
+                    <div className="flex items-center gap-1.5 w-full">
+                        {/* Small icon box */}
+                        <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0"
+                            style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(0,0,0,0.07)' }}>
+                            {link.thumbnailUrl?.startsWith('data:emoji,')
+                                ? <span style={{ fontSize: 9, lineHeight: 1 }}>{link.thumbnailUrl.replace('data:emoji,', '')}</span>
+                                : <LinkIcon size={8} className="text-stone-500" />}
+                        </div>
+                        {/* Title — no truncate so width can expand to fit */}
+                        <span style={{ fontFamily: "'Caveat', cursive", fontSize: 13, fontWeight: 700, color: '#292524', whiteSpace: 'nowrap', letterSpacing: '0.04em' }}>
+                            {link.title}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div
@@ -925,6 +978,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
     const LINK_AUTO_X       = BOARD_PAD + GUIDE_COLS * (NOTE_W + NOTE_GAP_X) + 20;
 
     const getLinkSize = (l: any): number | null => {
+        if (l.type === 'PANEL') return getWideWidth(l.title);  // text-driven width
         if (l.iconShape === 'square-l') return 220;
         if (l.iconShape === 'square-m') return 160;
         if (l.iconShape === 'square-s' || l.iconShape === 'square') return 110;
@@ -934,6 +988,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
     const getLinkH = (l: any): number => {
         const sq = getLinkSize(l);
         if (sq) return sq;
+        if (l.type === 'PANEL') return 46;  // compact wide-S height: tape(14) + card(32)
         if (l.type === 'DIGITAL_PRODUCT') return 104;
         if (l.url && pubGetYtId(l.url)) return 162;
         return 84;

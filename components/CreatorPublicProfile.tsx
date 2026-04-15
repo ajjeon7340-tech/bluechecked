@@ -77,8 +77,14 @@ export const CreatorPublicProfile: React.FC<Props> = ({
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const boardScrollRef = useRef<HTMLDivElement>(null);
   const [boardContainerW, setBoardContainerW] = useState(0);
-  // Fixed board visible height — mirrors the height set on the board container
-  const BOARD_MAX_H = 440;
+  // Dynamic board height — fills the remaining viewport below the profile header
+  const computeBoardH = () => Math.min(960, Math.max(520, Math.round(window.innerHeight * 0.74)));
+  const [BOARD_MAX_H, setBoardMaxH] = useState(computeBoardH);
+  useEffect(() => {
+      const onResize = () => setBoardMaxH(computeBoardH());
+      window.addEventListener('resize', onResize);
+      return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   // Board camera animation + pan state
   const boardInitRef    = useRef(false);
