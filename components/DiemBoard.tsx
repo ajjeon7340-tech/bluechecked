@@ -91,16 +91,16 @@ const PushPin: React.FC<{ color: string; delay?: number }> = ({ color, delay = 0
 // ── creator "about" card ──────────────────────────────────────────────────────
 
 const CreatorCard: React.FC<{ creator: CreatorProfile; delay: number; isMobile?: boolean }> = ({ creator, delay, isMobile = false }) => {
-    const cardW      = isMobile ? 288  : 460;
-    const avatarSz   = isMobile ? 64   : 120;
-    const nameSz     = isMobile ? 22   : 34;
-    const handleSz   = isMobile ? 11   : 14;
-    const bioSz      = isMobile ? 13.5 : 16;
-    const statsSz    = isMobile ? 11   : 13.5;
-    const padX       = isMobile ? 20   : 30;
-    const padB       = isMobile ? 20   : 30;
-    const tapW       = isMobile ? 96   : 160;
-    const lineH      = isMobile ? 27   : 32;
+    const cardW      = isMobile ? 300  : 460;
+    const avatarSz   = isMobile ? 80   : 120;
+    const nameSz     = isMobile ? 26   : 34;
+    const handleSz   = isMobile ? 12   : 14;
+    const bioSz      = isMobile ? 14.5 : 16;
+    const statsSz    = isMobile ? 12   : 13.5;
+    const padX       = isMobile ? 22   : 30;
+    const padB       = isMobile ? 22   : 30;
+    const tapW       = isMobile ? 112  : 160;
+    const lineH      = isMobile ? 29   : 32;
 
     // Platforms: normalise to id strings
     const platformIds: string[] = (creator.platforms || []).map(p =>
@@ -396,16 +396,16 @@ const PaperNote: React.FC<{
     const rot       = noteRot(post.id, idx);
     const pc        = getPinColor(post.id, idx);
 
-    const authorSz  = isMobile ? 13   : 16;
-    const contentSz = isMobile ? 13.5 : 16;
-    const footerSz  = isMobile ? 10   : 12.5;
-    const lineH     = isMobile ? 23   : 28;
-    const pleft     = isMobile ? 48   : 56;
-    const pright    = isMobile ? 16   : 24;
-    const pt        = isMobile ? 12   : 20;
-    const pb        = isMobile ? 16   : 24;
-    const avatarSz  = isMobile ? 20   : 28;
-    const foldSz    = isMobile ? 24   : 32;
+    const authorSz  = isMobile ? 14   : 16;
+    const contentSz = isMobile ? 14   : 16;
+    const footerSz  = isMobile ? 11   : 12.5;
+    const lineH     = isMobile ? 25   : 28;
+    const pleft     = isMobile ? 50   : 56;
+    const pright    = isMobile ? 18   : 24;
+    const pt        = isMobile ? 16   : 20;
+    const pb        = isMobile ? 20   : 24;
+    const avatarSz  = isMobile ? 22   : 28;
+    const foldSz    = isMobile ? 26   : 32;
 
     return (
         <div
@@ -456,7 +456,7 @@ const PaperNote: React.FC<{
                                 userSelect: !canSee ? 'none' : 'auto',
                                 WebkitFilter: !canSee ? 'blur(5px) sepia(0.2)' : 'none',
                             }}
-                            className={isMobile ? 'line-clamp-5' : 'line-clamp-[9]'}
+                            className={isMobile ? 'line-clamp-[8]' : 'line-clamp-[11]'}
                         >
                             {canSee ? post.content : 'This message is waiting for a response from the creator and will appear here once replied to...'}
                         </p>
@@ -912,12 +912,12 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
     useEffect(() => { loadPosts(); }, [loadPosts]);
 
     // ── layout constants — scale up on desktop ──
-    const CREATOR_CARD_ZONE = isMobile ? 300  : 560;
+    const CREATOR_CARD_ZONE = isMobile ? 460  : 640;
     const NOTE_W            = isMobile ? 252  : 360;
-    const NOTE_H_EST        = isMobile ? 272  : 440;
+    const NOTE_H_EST        = isMobile ? 360  : 480;
     const NOTE_GAP_X        = isMobile ? 28   : 52;
-    const NOTE_GAP_Y        = isMobile ? 36   : 68;
-    const BOARD_PAD         = isMobile ? 32   : 52;
+    const NOTE_GAP_Y        = isMobile ? 52   : 80;
+    const BOARD_PAD         = isMobile ? 40   : 60;
     // Wider canvas on desktop to accommodate larger cards and AMA sticker
     const GUIDE_W           = isMobile ? 640  : 960;
     const GUIDE_COLS        = 2;
@@ -956,8 +956,8 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
         return pos;
     });
 
-    const minPostArea   = isMobile ? 440 : 700;
-    const canvasBottom  = isMobile ? 100 : 160;
+    const minPostArea   = isMobile ? 700 : 900;
+    const canvasBottom  = isMobile ? 160 : 220;
     const maxPostBottom = postPositions.reduce((m, p) => Math.max(m, p.y + NOTE_H_EST), minPostArea);
     const maxLinkRight  = linkPositions.reduce((m, p, i) => Math.max(m, p.x + (getLinkSize(visibleLinks[i]) || LINK_W)), GUIDE_W);
     const maxLinkBottom = linkPositions.reduce((m, p, i) => Math.max(m, p.y + getLinkH(visibleLinks[i])), 0);
