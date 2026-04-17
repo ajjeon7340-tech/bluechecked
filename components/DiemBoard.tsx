@@ -58,12 +58,31 @@ const BOARD_STYLES = `
     from { opacity: 0; }
     to   { opacity: 1; }
   }
+  @keyframes grainShift {
+    0%   { transform: translate(0,   0);   }
+    20%  { transform: translate(-3%, -4%); }
+    40%  { transform: translate( 4%,  2%); }
+    60%  { transform: translate(-2%,  5%); }
+    80%  { transform: translate( 3%, -2%); }
+    100% { transform: translate(0,   0);   }
+  }
   .note-in   { animation: noteIn  0.45s cubic-bezier(0.34,1.56,0.64,1) both; }
   .pin-drop  { animation: pinDrop 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
   .board-in  { animation: boardFadeIn 0.6s ease both; }
-  .note-hover:hover { filter: drop-shadow(0 8px 18px rgba(0,0,0,0.28)); }
-  .note-hover:hover .note-lift { transform: translateY(-5px) !important; }
-  .note-lift { transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+  .note-hover:hover .note-lift { transform: translateY(-6px) rotate(-0.5deg) !important; }
+  .note-lift { transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1); }
+  .grain-overlay {
+    position: absolute; inset: 0; pointer-events: none; z-index: 100; overflow: hidden;
+  }
+  .grain-overlay::after {
+    content: '';
+    position: absolute;
+    inset: -50%;
+    width: 200%; height: 200%;
+    opacity: 0.038;
+    animation: grainShift 0.55s steps(1) infinite;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
 `;
 
 // ── 3-D pushpin ───────────────────────────────────────────────────────────────
@@ -119,7 +138,7 @@ const CreatorCard: React.FC<{ creator: CreatorProfile; delay: number; isMobile?:
                     width: cardW,
                     animationDelay: `${delay}ms`,
                     background: '#fefef0',
-                    boxShadow: '3px 6px 22px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.1)',
+                    boxShadow: '7px 7px 0px rgba(0,0,0,0.18), 1px 1px 0px rgba(0,0,0,0.08)',
                     backgroundImage: `repeating-linear-gradient(transparent 0px, transparent ${lineH - 1}px, rgba(0,0,0,0.04) ${lineH - 1}px, rgba(0,0,0,0.04) ${lineH}px)`,
                 }}
             >
@@ -322,7 +341,7 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
                 {/* Wide title sticker */}
                 <div className="flex flex-col" style={{ width: titleW }}>
                     <div className="mx-auto rounded-b-sm flex-shrink-0" style={{ height: 14, width: tapePx, background: tapeColor }} />
-                    <div className="rounded-lg" style={{ backgroundColor: bgCol, border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: '5px 10px' }}>
+                    <div className="rounded-lg" style={{ backgroundColor: bgCol, border: '1px solid rgba(0,0,0,0.10)', boxShadow: '4px 4px 0px rgba(0,0,0,0.16)', padding: '5px 10px' }}>
                         <div className="flex items-center gap-1.5">
                             <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(0,0,0,0.07)' }}>
                                 <span style={{ fontSize: 9, lineHeight: 1 }}>🖼</span>
@@ -361,8 +380,8 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
                 className={`rounded-lg shadow-md ${isThumbnailMode ? 'p-3' : 'p-3'}`}
                 style={{
                     backgroundColor: bgColor,
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                    border: '1px solid rgba(0,0,0,0.10)',
+                    boxShadow: '4px 4px 0px rgba(0,0,0,0.16)',
                 }}
             >
                 {ytId && link.displayStyle !== 'icon' ? (
@@ -487,7 +506,7 @@ const PaperNote: React.FC<{
                     animationDelay: `${delay}ms`,
                     background: '#fefef0',
                     backgroundImage: `repeating-linear-gradient(transparent 0px, transparent ${lineH - 1}px, rgba(0,0,0,0.04) ${lineH - 1}px, rgba(0,0,0,0.04) ${lineH}px)`,
-                    boxShadow: '2px 5px 14px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.08)',
+                    boxShadow: '6px 6px 0px rgba(0,0,0,0.20), 1px 1px 0px rgba(0,0,0,0.08)',
                     opacity: isPending && !canSee ? 0.82 : 1,
                 }}
             >
@@ -579,8 +598,8 @@ const ThreadModal: React.FC<{ post: BoardPost; creator: CreatorProfile; onClose:
                 className="w-full max-w-md overflow-hidden rounded-sm board-in"
                 style={{
                     background: '#fefef0',
-                    boxShadow: '0 24px 60px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.15)',
-                    border: '1px solid rgba(0,0,0,0.06)',
+                    boxShadow: '10px 10px 0px rgba(0,0,0,0.28), 2px 2px 0px rgba(0,0,0,0.12)',
+                    border: '1px solid rgba(0,0,0,0.10)',
                 }}
                 onClick={e => e.stopPropagation()}>
 
@@ -694,7 +713,7 @@ const ComposeModal: React.FC<{
                 style={{
                     background: bg,
                     backgroundImage: `linear-gradient(to bottom, ${strip} 9%, ${bg} 9%)`,
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.15)',
+                    boxShadow: '10px 10px 0px rgba(0,0,0,0.28), 2px 2px 0px rgba(0,0,0,0.12)',
                     transition: 'background 0.25s, background-image 0.25s',
                 }}
                 onClick={e => e.stopPropagation()}>
@@ -779,7 +798,7 @@ const ComposeModal: React.FC<{
                                 fontSize: 16,
                                 fontWeight: 700,
                                 color: text,
-                                boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
+                                boxShadow: '3px 3px 0px rgba(0,0,0,0.18)',
                             }}>
                             {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <span>📌</span>}
                             {isSubmitting ? 'Posting…' : 'Post'}
@@ -852,8 +871,8 @@ const AmaSticker: React.FC<{
                     width: cardW,
                     animationDelay: `${delay}ms`,
                     boxShadow: focused
-                        ? '0 12px 36px rgba(190,24,93,0.28), 3px 6px 18px rgba(0,0,0,0.22)'
-                        : '3px 6px 18px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.1)',
+                        ? '8px 8px 0px rgba(190,24,93,0.30), 2px 2px 0px rgba(0,0,0,0.12)'
+                        : '6px 6px 0px rgba(0,0,0,0.20), 1px 1px 0px rgba(0,0,0,0.08)',
                     transition: 'box-shadow 0.2s',
                     background: '#fefef0',
                 }}
@@ -928,7 +947,7 @@ const AmaSticker: React.FC<{
                                         fontSize: btnFontSize,
                                         fontWeight: 700,
                                         color: '#fff',
-                                        boxShadow: '0 2px 8px rgba(168,85,247,0.35)',
+                                        boxShadow: '3px 3px 0px rgba(0,0,0,0.20)',
                                     }}>
                                     {status === 'submitting'
                                         ? <Loader2 size={isMobile ? 13 : 15} className="animate-spin" />
@@ -1118,6 +1137,9 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                         boxShadow: 'inset 0 0 50px rgba(0,0,0,0.25), inset 4px 4px 12px rgba(0,0,0,0.15)',
                     }}
                 >
+                    {/* ── Film grain overlay ── */}
+                    <div className="grain-overlay" />
+
                     {/* ── Nav bar (stays on top) ── */}
                     <div
                         className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-5"
@@ -1213,7 +1235,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                                                     animationDelay: '400ms',
                                                     background: '#fefef0',
                                                     backgroundImage: 'repeating-linear-gradient(transparent 0px, transparent 23px, rgba(0,0,0,0.04) 23px, rgba(0,0,0,0.04) 24px)',
-                                                    boxShadow: '2px 5px 14px rgba(0,0,0,0.18)',
+                                                    boxShadow: '6px 6px 0px rgba(0,0,0,0.20)',
                                                 }}>
                                                 <p style={{ fontFamily: "'Kalam', cursive", fontSize: 14, color: '#57534e', lineHeight: 1.7 }}>
                                                     No posts yet. Be the first to pin a Diem on the board!
