@@ -3670,9 +3670,13 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                                                         zIndex: isDraggingLink ? 1000 : isResizingGroup ? 900 : isEditingGroup ? 800 : 2,
                                                                         transform: isDraggingLink ? 'rotate(0deg) scale(1.02)' : `rotate(${rot}deg)`,
                                                                         transition: isDraggingLink || isResizingGroup ? 'none' : 'transform 0.2s ease',
+                                                                        cursor: isEditingGroup ? 'default' : isDraggingLink ? 'grabbing' : 'grab',
                                                                     }}
+                                                                    onMouseDown={e => { if (!isEditingGroup) handleLinkTapeMouseDown(e, link.id, currentPos); }}
                                                                     onTouchStart={e => handleNoteTouchStart(e, link.id, currentPos, 'LINK')}
                                                                     onTouchMove={handleNoteTouchMove}
+                                                                    onTouchEnd={cancelLongPress}
+                                                                    onTouchCancel={cancelLongPress}
                                                                 >
                                                                     {/* Title sticker row: tape + label + action buttons */}
                                                                     <div className="flex flex-col" style={{ width: titleW }}>
@@ -3682,7 +3686,6 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                                                             <div
                                                                                 className="flex items-center gap-1.5 flex-1 min-w-0"
                                                                                 style={{ cursor: isDraggingLink ? 'grabbing' : 'grab', touchAction: 'none' }}
-                                                                                onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
                                                                             >
                                                                                 <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(0,0,0,0.07)' }}>
                                                                                     <span style={{ fontSize: 9, lineHeight: 1 }}>🖼</span>

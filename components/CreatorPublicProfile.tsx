@@ -814,7 +814,16 @@ export const CreatorPublicProfile: React.FC<Props> = ({
           {!isCustomizeMode && creator.diemEnabled !== false && (
               <div ref={tutorialDiemBtnRef} className={`w-full${showTutorial && tutorialStep === 1 ? ' ring-2 ring-amber-400 ring-offset-2 rounded-2xl' : ''}`}>
                   <div
-                      className="relative overflow-hidden rounded-2xl border border-stone-200/60"
+                      className="relative overflow-hidden rounded-2xl"
+                      style={{
+                          padding: '12px',
+                          backgroundImage: `
+                              repeating-linear-gradient(92deg, transparent 0px, transparent 3px, rgba(0,0,0,0.025) 3px, rgba(0,0,0,0.025) 4px),
+                              repeating-linear-gradient(2deg,  transparent 0px, transparent 8px, rgba(255,255,255,0.015) 8px, rgba(255,255,255,0.015) 9px),
+                              linear-gradient(160deg, #9a7050 0%, #6b4a2a 30%, #7a5535 60%, #5a3820 100%)
+                          `,
+                          boxShadow: 'inset 0 0 60px rgba(0,0,0,0.5)',
+                      }}
                   >
                       {/* Always-on board */}
                       <div>
@@ -967,6 +976,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
 
                                   return (
                                       <>
+                                      <style>{`@keyframes pubGrainShift{0%{transform:translate(0,0)}20%{transform:translate(-3%,-4%)}40%{transform:translate(4%,2%)}60%{transform:translate(-2%,5%)}80%{transform:translate(3%,-2%)}100%{transform:translate(0,0)}}`}</style>
                                       <div
                                           ref={el => {
                                               (boardScrollRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
@@ -976,8 +986,20 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                   ro.observe(el);
                                               }
                                           }}
-                                          className="overflow-hidden select-none relative"
-                                          style={{ height: `${BOARD_MAX_H}px`, cursor: boardIsDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+                                          className="overflow-hidden select-none relative rounded-sm"
+                                          style={{
+                                              height: `${BOARD_MAX_H}px`,
+                                              cursor: boardIsDragging ? 'grabbing' : 'grab',
+                                              touchAction: 'none',
+                                              backgroundColor: '#c9a76b',
+                                              backgroundImage: `
+                                                  radial-gradient(ellipse at 10% 10%, rgba(220,180,95,0.55) 0%, transparent 45%),
+                                                  radial-gradient(ellipse at 90% 90%, rgba(155,105,35,0.40) 0%, transparent 45%),
+                                                  radial-gradient(ellipse at 50% 50%, rgba(200,155,70,0.20) 0%, transparent 65%),
+                                                  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Ccircle cx='1.5' cy='1.5' r='0.8' fill='rgba(90,50,0,0.07)'/%3E%3Ccircle cx='4.5' cy='4.5' r='0.7' fill='rgba(255,200,80,0.06)'/%3E%3Ccircle cx='1' cy='4.5' r='0.5' fill='rgba(80,40,0,0.05)'/%3E%3Ccircle cx='4.5' cy='1.5' r='0.6' fill='rgba(200,150,50,0.06)'/%3E%3C/svg%3E")
+                                              `,
+                                              boxShadow: 'inset 0 0 50px rgba(0,0,0,0.25), inset 4px 4px 12px rgba(0,0,0,0.15)',
+                                          }}
                                           onMouseDown={e => {
                                               if (boardAnimating.current) return;
                                               setBoardIsDragging(true);
@@ -1044,16 +1066,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                   opacity: boardAnimReady ? 1 : 0,
                                               }}
                                           >
-                                              {/* Infinite Grid Background inside transformed container */}
-                                              <div
-                                                  className="absolute pointer-events-none"
-                                                  style={{
-                                                      left: -50000, top: -50000, width: 100000, height: 100000,
-                                                      backgroundImage: 'linear-gradient(rgba(168,162,158,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(168,162,158,0.07) 1px, transparent 1px)',
-                                                      backgroundSize: '32px 32px',
-                                                      backgroundPosition: 'center center'
-                                                  }}
-                                              />
                                           {/* Focus zone guidelines — only shown to creator to preview what fans see */}
                                           {isCreatorOwner && boardContainerW > 0 && (() => {
                                               const DESKTOP_VW = 640, MOBILE_VW = 390, FOCUS_H = BOARD_MAX_H;
@@ -1153,7 +1165,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                   {/* Wide title sticker */}
                                                                   <div className="flex flex-col" style={{ width: titleW }}>
                                                                       <div className="mx-auto rounded-b-sm" style={{ height: 14, width: tapePx, background: tapeColor }} />
-                                                                      <div className="rounded-lg" style={{ backgroundColor: bgCol, border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: '5px 10px' }}>
+                                                                      <div className="rounded-lg" style={{ backgroundColor: bgCol, border: '1px solid rgba(0,0,0,0.10)', boxShadow: '4px 4px 0px rgba(0,0,0,0.16)', padding: '5px 10px' }}>
                                                                           <div className="flex items-center gap-1.5">
                                                                               <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(0,0,0,0.07)' }}>
                                                                                   <span style={{ fontSize: 9, lineHeight: 1 }}>🖼</span>
@@ -1164,7 +1176,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                   </div>
                                                                   <div style={{ height: 8 }} />
                                                                   {/* Gallery zone */}
-                                                                  <div style={{ width: gw, height: zoneH, borderRadius: 12, background: 'rgba(250,246,242,0.9)', border: '1.5px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', overflow: 'hidden', padding: 8, display: 'flex', flexWrap: 'wrap', gap: 6, alignContent: 'flex-start' }}>
+                                                                  <div style={{ width: gw, height: zoneH, borderRadius: 12, background: 'rgba(250,246,242,0.9)', border: '1.5px solid rgba(0,0,0,0.08)', boxShadow: '4px 4px 0px rgba(0,0,0,0.14)', overflow: 'hidden', padding: 8, display: 'flex', flexWrap: 'wrap', gap: 6, alignContent: 'flex-start' }}>
                                                                       {photos.length === 0 ? (
                                                                           <div className="w-full h-full flex items-center justify-center">
                                                                               <span style={{ fontFamily: "'Kalam', cursive", fontSize: 12, color: '#a8a29e' }}>No photos yet</span>
@@ -1221,7 +1233,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                           <button
                                                                               onClick={e => { e.stopPropagation(); handleThumbClick(); }}
                                                                               className={`w-full text-left rounded-lg overflow-hidden hover:opacity-90 transition-opacity ${cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-3' : 'p-2'}`}
-                                                                              style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                              style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.10)', boxShadow: '4px 4px 0px rgba(0,0,0,0.16)' }}
                                                                           >
                                                                               <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%', backgroundColor: thumbBg }}>
                                                                                   {hasThumbnail
@@ -1247,7 +1259,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                       rel="noopener noreferrer"
                                                                       onClick={e => e.stopPropagation()}
                                                                       className="block rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
-                                                                      style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                      style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.10)', boxShadow: '4px 4px 0px rgba(0,0,0,0.16)' }}
                                                                   >
                                                                       <div className="p-2.5">
                                                                           <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%' }}>
@@ -1308,7 +1320,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                   <button
                                                                       onClick={() => handleProductClick(link)}
                                                                       className="w-full text-left rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
-                                                                  style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                  style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.10)', boxShadow: '4px 4px 0px rgba(0,0,0,0.16)' }}
                                                                   >
                                                                       <div className="flex items-center gap-2.5 p-2.5">
                                                                           <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5">
@@ -1327,7 +1339,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                   <button
                                                                       onClick={() => handleSupportClick(link.price)}
                                                                       className="w-full text-left rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
-                                                                  style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                  style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.10)', boxShadow: '4px 4px 0px rgba(0,0,0,0.16)' }}
                                                                   >
                                                                       <div className="flex items-center gap-2.5 p-2.5">
                                                                           <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5">
@@ -1349,7 +1361,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                               rel="noopener noreferrer"
                                                                               onClick={e => e.stopPropagation()}
                                                                               className="block rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
-                                                                              style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                              style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.10)', boxShadow: '4px 4px 0px rgba(0,0,0,0.16)' }}
                                                                           >
                                                                               <div className="p-2.5">
                                                                                   {/* Thumbnail */}
@@ -1389,7 +1401,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                                   if (isSupport) handleSupportClick(link.price);
                                                                               }}
                                                                               className="flex items-center gap-2.5 rounded-lg overflow-hidden hover:opacity-90 transition-opacity p-2 w-full h-full"
-                                                                              style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}
+                                                                              style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.10)', boxShadow: '4px 4px 0px rgba(0,0,0,0.16)' }}
                                                                           >
                                                                               <div className="w-6 h-6 rounded-md bg-white/60 shadow-sm border border-black/5 flex items-center justify-center flex-shrink-0">
                                                                                   {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-md" alt={link.title} /> : isEmoji ? <span className="text-[14px] leading-none">{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className="scale-[0.9]">{getPlatformIcon(detectedPlatform)}</div> : isProduct ? <ShoppingBag size={12} className="text-violet-500" /> : isSupport ? <Heart size={12} className="text-pink-500" /> : <ExternalLink size={12} className="text-stone-500" />}
@@ -1405,7 +1417,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                           rel="noopener noreferrer"
                                                                           onClick={e => e.stopPropagation()}
                                                                           className={`flex items-center gap-2 rounded-lg hover:opacity-80 transition-opacity ${cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-2.5' : 'p-2'}`}
-                                                                          style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}
+                                                                          style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.08)', boxShadow: '3px 3px 0px rgba(0,0,0,0.14)' }}
                                                                       >
                                                                           <div className={`${cardSize === 'S' ? 'w-4 h-4' : cardSize === 'L' ? 'w-7 h-7' : 'w-5 h-5'} rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60 border border-black/5 text-stone-600`}>
                                                                               {hasThumbnail ? <img src={link.thumbnailUrl} className="w-full h-full object-cover rounded-lg" alt={link.title} /> : isEmoji ? <span className={cardSize === 'S' ? 'text-[9px] leading-none' : cardSize === 'L' ? 'text-base leading-none' : 'text-xs leading-none'}>{link.thumbnailUrl!.replace('data:emoji,', '')}</span> : detectedPlatform ? <div className={cardSize === 'S' ? 'scale-[0.7]' : cardSize === 'L' ? 'scale-[0.95]' : 'scale-[0.8]'}>{getPlatformIcon(detectedPlatform)}</div> : <ExternalLink size={cardSize === 'S' ? 8 : cardSize === 'L' ? 13 : 10} />}
@@ -1450,8 +1462,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                   backgroundColor: post.noteColor ?? noteColors[nc],
                                                                   backgroundImage: 'repeating-linear-gradient(to bottom, transparent, transparent 23px, rgba(0,0,0,0.04) 23px, rgba(0,0,0,0.04) 24px)',
                                                                   backgroundPositionY: '36px',
-                                                                  border: '1px solid rgba(0,0,0,0.08)',
-                                                                  boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                                                                  border: '1px solid rgba(0,0,0,0.10)',
+                                                                  boxShadow: '5px 5px 0px rgba(0,0,0,0.18)',
                                                               }}
                                                           >
                                                               {/* Avatar + Name */}
@@ -1474,6 +1486,10 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                   );
                                               })}
 
+                                          </div>
+                                          {/* Film grain overlay — fixed in viewport, not scaled with canvas */}
+                                          <div className="pub-grain-overlay" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 50, overflow: 'hidden' }}>
+                                              <div style={{ position: 'absolute', inset: '-50%', width: '200%', height: '200%', opacity: 0.038, backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E\")", animation: 'pubGrainShift 0.55s steps(1) infinite' }} />
                                           </div>
                                       </div>
                                       {/* Floating Post Diem Button (Board Feature) */}
@@ -1510,8 +1526,8 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                   backgroundColor: noteColors[nc],
                                                   backgroundImage: 'repeating-linear-gradient(to bottom, transparent, transparent 27px, rgba(0,0,0,0.05) 27px, rgba(0,0,0,0.05) 28px)',
                                                   backgroundPositionY: '48px',
-                                                  border: '1px solid rgba(0,0,0,0.08)',
-                                                  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                                                  border: '1px solid rgba(0,0,0,0.10)',
+                                                  boxShadow: '8px 8px 0px rgba(0,0,0,0.22)',
                                               }}
                                           >
                                                   {/* Back button + label */}
