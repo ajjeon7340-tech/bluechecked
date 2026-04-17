@@ -5386,7 +5386,6 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                 const noteColors = ['#FFFEF0', '#F0FDF4', '#FFF7ED', '#F5F3FF', '#EFF6FF', '#FDF2F8'];
                 const rotations = [-1.8, 0.9, -0.7, 1.4, -1.1, 0.6];
                 const stableIdx = (id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xFFFFFF; return Math.abs(h); };
-                const isReplying = inboxPost ? boardReplyingId === inboxPost.id : false;
                 return (
                 <div className="h-full flex flex-col bg-[#FAF9F6] animate-in fade-in">
                     {/* Header */}
@@ -5549,135 +5548,172 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
 
                                         {/* Thread content */}
                                         <div className="flex-1 overflow-y-auto px-5 py-5">
-                                        <div className="max-w-2xl mx-auto space-y-1">
+                                        <div className="max-w-2xl mx-auto">
                                             {/* Fan message */}
-                                            <div className="flex relative z-10">
-                                                <div className="flex flex-col items-center mr-3 relative flex-shrink-0">
-                                                    {post.reply && <div className="absolute left-[17px] top-11 -bottom-1 w-0.5 bg-stone-200" />}
-                                                    <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-800 flex items-center justify-center flex-shrink-0">
-                                                        {post.fanAvatarUrl
-                                                            ? <img src={post.fanAvatarUrl} className="w-full h-full object-cover" alt={post.fanName} />
-                                                            : <div className="w-full h-full bg-stone-200 flex items-center justify-center"><User size={16} className="text-stone-500" /></div>}
-                                                    </div>
-                                                </div>
-                                                <div className="flex-1 min-w-0 pb-4">
-                                                    <div className="flex items-center gap-2 mb-2 ml-1 flex-wrap">
-                                                        <span className="font-semibold text-sm text-stone-900">{post.fanName}</span>
-                                                        <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
-                                                            <User size={9} className="fill-current" />
-                                                            <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
-                                                        </div>
-                                                        <span className="text-xs font-medium text-stone-400">• {new Date(post.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
-                                                    </div>
-                                                    <div className="bg-white p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
-                                                        <p className="text-sm text-stone-700 leading-relaxed">{post.content}</p>
-                                                        {post.attachmentUrl && (
-                                                            /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(post.attachmentUrl)
-                                                                ? <img src={post.attachmentUrl} className="mt-2 w-full max-h-48 object-cover rounded-xl" alt="attachment" />
-                                                                : <a href={post.attachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 text-xs text-stone-500 hover:text-stone-800 font-medium transition-colors"><Paperclip size={12} /> {post.attachmentUrl.split('/').pop()}</a>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Creator reply thread */}
-                                            {parsePostReplies(post.reply).map((msg, ri) => (
-                                                <div key={ri} className="flex mt-1 relative z-10">
-                                                    <div className="flex flex-col items-center mr-3 flex-shrink-0">
-                                                        <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-200 flex items-center justify-center">
-                                                            {creator.avatarUrl
-                                                                ? <img src={creator.avatarUrl} className="w-full h-full object-cover" alt={creator.displayName} />
+                                            {(() => {
+                                                const replies = parsePostReplies(post.reply);
+                                                return (
+                                                <>
+                                                <div className="flex relative z-10">
+                                                    <div className="flex flex-col items-center mr-3 flex-shrink-0" style={{ width: 36 }}>
+                                                        <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-800 flex items-center justify-center flex-shrink-0">
+                                                            {post.fanAvatarUrl
+                                                                ? <img src={post.fanAvatarUrl} className="w-full h-full object-cover" alt={post.fanName} />
                                                                 : <div className="w-full h-full bg-stone-200 flex items-center justify-center"><User size={16} className="text-stone-500" /></div>}
                                                         </div>
+                                                        {/* line down — always, since compose is always open */}
+                                                        <div className="flex-1 w-0.5 bg-stone-200 mt-1" style={{ minHeight: 16 }} />
                                                     </div>
-                                                    <div className="flex-1 min-w-0">
+                                                    <div className="flex-1 min-w-0 pb-4">
                                                         <div className="flex items-center gap-2 mb-2 ml-1 flex-wrap">
-                                                            <span className="font-semibold text-sm text-stone-900">{creator.displayName}</span>
+                                                            <span className="font-semibold text-sm text-stone-900">{post.fanName}</span>
                                                             <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
-                                                                <CheckCircle2 size={10} className="text-blue-500" />
-                                                                <span className="text-[9px] font-semibold uppercase tracking-wide">Creator</span>
+                                                                <User size={9} className="fill-current" />
+                                                                <span className="text-[9px] font-semibold uppercase tracking-wide">Fan</span>
                                                             </div>
-                                                            {msg.at && <span className="text-xs font-medium text-stone-400">• {new Date(msg.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>}
+                                                            <span className="text-xs font-medium text-stone-400">• {new Date(post.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
                                                         </div>
                                                         <div className="bg-white p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
-                                                            <p className="text-sm text-stone-700 leading-relaxed">{msg.content}</p>
-                                                            {msg.attachmentUrl && (
-                                                                /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(msg.attachmentUrl)
-                                                                    ? <img src={msg.attachmentUrl} className="mt-2 w-full max-h-48 object-cover rounded-xl" alt="attachment" />
-                                                                    : <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 text-xs text-stone-500 hover:text-stone-800 font-medium transition-colors"><Paperclip size={12} /> {msg.attachmentUrl.split('/').pop()}</a>
+                                                            <p className="text-sm text-stone-700 leading-relaxed">{post.content}</p>
+                                                            {post.attachmentUrl && (
+                                                                /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(post.attachmentUrl)
+                                                                    ? <img src={post.attachmentUrl} className="mt-2 w-full max-h-48 object-cover rounded-xl" alt="attachment" />
+                                                                    : <a href={post.attachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 text-xs text-stone-500 hover:text-stone-800 font-medium transition-colors"><Paperclip size={12} /> {post.attachmentUrl.split('/').pop()}</a>
                                                             )}
                                                         </div>
                                                     </div>
                                                 </div>
-                                            ))}
-                                            {/* Add to Chat — shown after thread */}
-                                            {parsePostReplies(post.reply).length > 0 && (
-                                                <div className="mt-2 ml-12">
-                                                    {post.isPrivate ? (
-                                                        <span className="inline-flex items-center gap-1 text-[10px] text-stone-400 font-medium"><Lock size={9} /> Private — cannot be added to board</span>
-                                                    ) : post.isAddedToChat ? (
-                                                        <span className="inline-flex items-center gap-2 text-[10px] font-medium">
-                                                            <span className="text-emerald-600 flex items-center gap-1">
-                                                                <MessageSquare size={9} />
-                                                                {post.isPinned ? 'Pinned to Community Board' : 'In From Chat — ready to pin'}
-                                                            </span>
-                                                            <button
-                                                                onClick={async () => {
-                                                                    try {
-                                                                        await markBoardPostAsAddedToChat(post.id, false);
-                                                                        if (post.isPinned) await pinBoardPost(post.id, false);
-                                                                        setBoardPosts(prev => prev.map(p => p.id === post.id ? { ...p, isAddedToChat: false, isPinned: false } : p));
-                                                                    } catch {}
-                                                                }}
-                                                                className="text-stone-400 hover:text-red-400 transition-colors underline"
-                                                            >Remove</button>
-                                                        </span>
-                                                    ) : (
-                                                        <button
-                                                            onClick={async () => {
-                                                                try {
-                                                                    await markBoardPostAsAddedToChat(post.id, true);
-                                                                    setBoardPosts(prev => prev.map(p => p.id === post.id ? { ...p, isAddedToChat: true } : p));
-                                                                } catch {}
-                                                            }}
-                                                            className="inline-flex items-center gap-1 text-[10px] font-semibold text-stone-500 hover:text-stone-800 bg-stone-100 hover:bg-stone-200 px-2 py-1 rounded-full transition-colors"
-                                                        >
-                                                            <MessageSquare size={9} /> Add to Chat
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            )}
-                                            {/* Compose area */}
-                                            {isReplying ? (
-                                                <div className="flex mt-4 relative z-10">
-                                                    <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-200 flex items-center justify-center flex-shrink-0 mr-3">
-                                                        {creator.avatarUrl
-                                                            ? <img src={creator.avatarUrl} className="w-full h-full object-cover" alt="" />
-                                                            : <User size={16} className="text-stone-500" />}
+
+                                                {/* Creator reply thread */}
+                                                {replies.map((msg, ri) => {
+                                                    const isLastReply = ri === replies.length - 1;
+                                                    return (
+                                                        <div key={ri} className="flex relative z-10">
+                                                            <div className="flex flex-col items-center mr-3 flex-shrink-0" style={{ width: 36 }}>
+                                                                {/* connector in from above */}
+                                                                <div className="w-0.5 bg-stone-200" style={{ height: 10 }} />
+                                                                <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-200 flex items-center justify-center flex-shrink-0">
+                                                                    {creator.avatarUrl
+                                                                        ? <img src={creator.avatarUrl} className="w-full h-full object-cover" alt={creator.displayName} />
+                                                                        : <div className="w-full h-full bg-stone-200 flex items-center justify-center"><User size={16} className="text-stone-500" /></div>}
+                                                                </div>
+                                                                {/* line down to next reply or compose */}
+                                                                <div className="flex-1 w-0.5 bg-stone-200 mt-1" style={{ minHeight: 16 }} />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0 pb-4 pt-2.5">
+                                                                <div className="flex items-center gap-2 mb-2 ml-1 flex-wrap">
+                                                                    <span className="font-semibold text-sm text-stone-900">{creator.displayName}</span>
+                                                                    <div className="flex items-center gap-1 bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                                                                        <CheckCircle2 size={10} className="text-blue-500" />
+                                                                        <span className="text-[9px] font-semibold uppercase tracking-wide">Creator</span>
+                                                                    </div>
+                                                                    {msg.at && <span className="text-xs font-medium text-stone-400">• {new Date(msg.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>}
+                                                                    {/* Add to Chat — inline on last reply */}
+                                                                    {isLastReply && (
+                                                                        <span className="ml-auto">
+                                                                            {post.isPrivate ? (
+                                                                                <span className="inline-flex items-center gap-1 text-[10px] text-stone-300 font-medium"><Lock size={9} /> Private</span>
+                                                                            ) : post.isAddedToChat ? (
+                                                                                <span className="inline-flex items-center gap-2 text-[10px] font-medium">
+                                                                                    <span className="text-emerald-600 flex items-center gap-1"><MessageSquare size={9} /> {post.isPinned ? 'Pinned' : 'Added'}</span>
+                                                                                    <button onClick={async () => { try { await markBoardPostAsAddedToChat(post.id, false); if (post.isPinned) await pinBoardPost(post.id, false); setBoardPosts(prev => prev.map(p => p.id === post.id ? { ...p, isAddedToChat: false, isPinned: false } : p)); } catch {} }} className="text-stone-400 hover:text-red-400 transition-colors underline">Remove</button>
+                                                                                </span>
+                                                                            ) : (
+                                                                                <button onClick={async () => { try { await markBoardPostAsAddedToChat(post.id, true); setBoardPosts(prev => prev.map(p => p.id === post.id ? { ...p, isAddedToChat: true } : p)); } catch {} }} className="inline-flex items-center gap-1 text-[10px] font-semibold text-stone-500 hover:text-stone-800 bg-stone-100 hover:bg-stone-200 px-2 py-1 rounded-full transition-colors">
+                                                                                    <MessageSquare size={9} /> Add to Chat
+                                                                                </button>
+                                                                            )}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="bg-white p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
+                                                                    <p className="text-sm text-stone-700 leading-relaxed">{msg.content}</p>
+                                                                    {msg.attachmentUrl && (
+                                                                        /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(msg.attachmentUrl)
+                                                                            ? <img src={msg.attachmentUrl} className="mt-2 w-full max-h-48 object-cover rounded-xl" alt="attachment" />
+                                                                            : <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 text-xs text-stone-500 hover:text-stone-800 font-medium transition-colors"><Paperclip size={12} /> {msg.attachmentUrl.split('/').pop()}</a>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+
+                                                {/* Compose — always visible, no toggle button */}
+                                                <div className="flex relative z-10">
+                                                    <div className="flex flex-col items-center mr-3 flex-shrink-0" style={{ width: 36 }}>
+                                                        {/* connector in from above */}
+                                                        <div className="w-0.5 bg-stone-200" style={{ height: 10 }} />
+                                                        <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-200 flex items-center justify-center flex-shrink-0">
+                                                            {creator.avatarUrl
+                                                                ? <img src={creator.avatarUrl} className="w-full h-full object-cover" alt="" />
+                                                                : <User size={16} className="text-stone-500" />}
+                                                        </div>
                                                     </div>
-                                                    <div className="flex-1 min-w-0">
+                                                    <div className="flex-1 min-w-0 pt-2.5 pb-6">
                                                         <textarea
-                                                            autoFocus
                                                             className="w-full text-sm bg-white border border-stone-200 rounded-2xl rounded-tl-lg p-3 outline-none resize-none focus:ring-1 focus:ring-stone-400 placeholder-stone-300"
                                                             placeholder="Write your reply…"
                                                             rows={3}
                                                             value={boardReplyDraft[post.id] || ''}
                                                             onChange={e => setBoardReplyDraft(prev => ({ ...prev, [post.id]: e.target.value }))}
                                                         />
+                                                        {/* Attachment picker */}
+                                                        <input
+                                                            ref={boardReplyAttachmentInputRef}
+                                                            type="file"
+                                                            accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+                                                            className="hidden"
+                                                            onChange={e => {
+                                                                const file = e.target.files?.[0] ?? null;
+                                                                setBoardReplyAttachmentFile(file);
+                                                                if (file && file.type.startsWith('image/')) {
+                                                                    const reader = new FileReader();
+                                                                    reader.onload = ev => setBoardReplyAttachmentPreview(ev.target?.result as string);
+                                                                    reader.readAsDataURL(file);
+                                                                } else {
+                                                                    setBoardReplyAttachmentPreview(null);
+                                                                }
+                                                                e.target.value = '';
+                                                            }}
+                                                        />
+                                                        {boardReplyAttachmentFile ? (
+                                                            <div className="flex items-center gap-2 bg-stone-100 rounded-xl px-3 py-2 mt-2">
+                                                                {boardReplyAttachmentPreview
+                                                                    ? <img src={boardReplyAttachmentPreview} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" alt="preview" />
+                                                                    : <div className="w-10 h-10 rounded-lg bg-stone-200 flex items-center justify-center flex-shrink-0"><Paperclip size={16} className="text-stone-500" /></div>}
+                                                                <span className="text-xs text-stone-600 font-medium truncate flex-1">{boardReplyAttachmentFile.name}</span>
+                                                                <button onClick={() => { setBoardReplyAttachmentFile(null); setBoardReplyAttachmentPreview(null); }} className="p-1 rounded-full hover:bg-stone-200 transition-colors text-stone-400"><X size={12} /></button>
+                                                            </div>
+                                                        ) : (
+                                                            <button onClick={() => boardReplyAttachmentInputRef.current?.click()} className="mt-2 flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-600 font-medium transition-colors px-1">
+                                                                <Paperclip size={13} /> Add attachment
+                                                            </button>
+                                                        )}
                                                         <div className="flex gap-2 mt-2">
-                                                            <button onClick={() => setBoardReplyingId(null)} className="flex-1 py-2 text-xs font-semibold rounded-xl border border-stone-200 text-stone-500 hover:bg-stone-100 transition-colors">Finish</button>
+                                                            <button
+                                                                onClick={() => setInboxSelectedPostId(null)}
+                                                                className="flex-1 py-2 text-xs font-semibold rounded-xl border border-stone-200 text-stone-500 hover:bg-stone-100 transition-colors"
+                                                            >Finish</button>
                                                             <button
                                                                 onClick={async () => {
                                                                     const draft = boardReplyDraft[post.id]?.trim();
                                                                     if (!draft) return;
                                                                     try {
+                                                                        let attachUrl: string | null = null;
+                                                                        if (boardReplyAttachmentFile && currentUser) {
+                                                                            attachUrl = await uploadBoardAttachment(boardReplyAttachmentFile, currentUser.id);
+                                                                        }
                                                                         const existing = parsePostReplies(post.reply);
-                                                                        const newMsg = { content: draft, at: new Date().toISOString(), attachmentUrl: null };
+                                                                        const newMsg = { content: draft, at: new Date().toISOString(), attachmentUrl: attachUrl };
                                                                         const jsonStr = JSON.stringify([...existing, newMsg]);
                                                                         await replyToBoardPost(post.id, jsonStr, null);
                                                                         const updated = { ...post, reply: jsonStr, replyAt: newMsg.at };
                                                                         setBoardPosts(prev => prev.map(p => p.id === post.id ? updated : p));
+                                                                        setInboxSelectedPostId(updated.id);
                                                                         setBoardReplyDraft(prev => { const n = { ...prev }; delete n[post.id]; return n; });
+                                                                        setBoardReplyAttachmentFile(null);
+                                                                        setBoardReplyAttachmentPreview(null);
                                                                     } catch {}
                                                                 }}
                                                                 className="flex-1 py-2 text-xs font-semibold rounded-xl bg-stone-900 text-white hover:bg-stone-700 transition-colors"
@@ -5685,16 +5721,9 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                                         </div>
                                                     </div>
                                                 </div>
-                                            ) : (
-                                                <div className="mt-4">
-                                                    <button
-                                                        onClick={() => setBoardReplyingId(post.id)}
-                                                        className="w-full py-2.5 text-sm font-semibold rounded-xl bg-stone-900 text-white hover:bg-stone-700 transition-colors flex items-center justify-center gap-2"
-                                                    >
-                                                        <MessageSquare size={14} /> {parsePostReplies(post.reply).length > 0 ? 'Continue answering' : 'Answer this question'}
-                                                    </button>
-                                                </div>
-                                            )}
+                                                </>
+                                                );
+                                            })()}
                                         </div>
                                         </div>
                                     </div>
