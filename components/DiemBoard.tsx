@@ -321,7 +321,7 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
     const wideW = getWideWidth(link.title);
     const width = isThumbnailMode ? LINK_W : (sqSize || wideW);
     const tapeW = isThumbnailMode ? 'w-12' : sqSize === 220 ? 'w-12' : sqSize === 160 ? 'w-10' : sqSize === 64 ? 'w-5' : sqSize ? 'w-8' : 'w-12';
-    const bgColor = link.buttonColor || linkColors[lc];
+    const bgColor = link.buttonColor || '#FEFEFE';
 
     const handleClick = () => {
         if (link.url && link.url !== '#') window.open(link.url.startsWith('http') ? link.url : `https://${link.url}`, '_blank');
@@ -1116,25 +1116,25 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                 style={{
                     padding: '14px',
                     backgroundImage: `
-                        repeating-linear-gradient(92deg, transparent 0px, transparent 3px, rgba(0,0,0,0.025) 3px, rgba(0,0,0,0.025) 4px),
+                        repeating-linear-gradient(92deg, transparent 0px, transparent 3px, rgba(0,0,0,0.018) 3px, rgba(0,0,0,0.018) 4px),
                         repeating-linear-gradient(2deg,  transparent 0px, transparent 8px, rgba(255,255,255,0.015) 8px, rgba(255,255,255,0.015) 9px),
-                        linear-gradient(160deg, #9a7050 0%, #6b4a2a 30%, #7a5535 60%, #5a3820 100%)
+                        linear-gradient(160deg, #C8B89A 0%, #A89070 30%, #B8A078 60%, #988060 100%)
                     `,
-                    boxShadow: 'inset 0 0 60px rgba(0,0,0,0.5)',
+                    boxShadow: 'inset 0 0 60px rgba(0,0,0,0.3)',
                 }}
             >
                 {/* Cork surface */}
                 <div
                     className="relative h-full rounded-sm overflow-hidden"
                     style={{
-                        backgroundColor: '#c9a76b',
+                        backgroundColor: '#EAE3D9',
                         backgroundImage: `
-                            radial-gradient(ellipse at 10% 10%, rgba(220,180,95,0.55) 0%, transparent 45%),
-                            radial-gradient(ellipse at 90% 90%, rgba(155,105,35,0.40) 0%, transparent 45%),
-                            radial-gradient(ellipse at 50% 50%, rgba(200,155,70,0.20) 0%, transparent 65%),
-                            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Ccircle cx='1.5' cy='1.5' r='0.8' fill='rgba(90,50,0,0.07)'/%3E%3Ccircle cx='4.5' cy='4.5' r='0.7' fill='rgba(255,200,80,0.06)'/%3E%3Ccircle cx='1' cy='4.5' r='0.5' fill='rgba(80,40,0,0.05)'/%3E%3Ccircle cx='4.5' cy='1.5' r='0.6' fill='rgba(200,150,50,0.06)'/%3E%3C/svg%3E")
+                            radial-gradient(ellipse at 10% 10%, rgba(255,245,225,0.60) 0%, transparent 45%),
+                            radial-gradient(ellipse at 90% 90%, rgba(200,180,150,0.35) 0%, transparent 45%),
+                            radial-gradient(ellipse at 50% 50%, rgba(230,215,190,0.25) 0%, transparent 65%),
+                            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Ccircle cx='1.5' cy='1.5' r='0.8' fill='rgba(120,90,50,0.05)'/%3E%3Ccircle cx='4.5' cy='4.5' r='0.7' fill='rgba(180,150,100,0.04)'/%3E%3Ccircle cx='1' cy='4.5' r='0.5' fill='rgba(100,70,30,0.04)'/%3E%3Ccircle cx='4.5' cy='1.5' r='0.6' fill='rgba(210,185,145,0.05)'/%3E%3C/svg%3E")
                         `,
-                        boxShadow: 'inset 0 0 50px rgba(0,0,0,0.25), inset 4px 4px 12px rgba(0,0,0,0.15)',
+                        boxShadow: 'inset 0 0 50px rgba(0,0,0,0.12), inset 4px 4px 12px rgba(0,0,0,0.08)',
                     }}
                 >
                     {/* ── Film grain overlay ── */}
@@ -1145,7 +1145,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                         className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-5"
                         style={{
                             height: NAV_H,
-                            background: 'rgba(90,56,32,0.78)',
+                            background: 'rgba(130,105,75,0.82)',
                             backdropFilter: 'blur(10px)',
                             WebkitBackdropFilter: 'blur(10px)',
                             borderBottom: '1px solid rgba(255,255,255,0.07)',
