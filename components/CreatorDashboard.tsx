@@ -3661,71 +3661,106 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                                             return (
                                                                 <div
                                                                     key={link.id}
-                                                                    className="absolute group/grouplink"
+                                                                    className="absolute"
                                                                     style={{
                                                                         left: currentPos.x,
                                                                         top: currentPos.y,
                                                                         width: gw,
-                                                                        zIndex: isDraggingLink ? 1000 : isResizingGroup ? 900 : isEditingGroup ? 800 : (50 + i),
+                                                                        // Sits behind all other stickers by default; raised only when actively editing
+                                                                        zIndex: isDraggingLink ? 1000 : isResizingGroup ? 900 : isEditingGroup ? 800 : 2,
                                                                         transform: isDraggingLink ? 'rotate(0deg) scale(1.02)' : `rotate(${rot}deg)`,
                                                                         transition: isDraggingLink || isResizingGroup ? 'none' : 'transform 0.2s ease',
                                                                     }}
                                                                     onTouchStart={e => handleNoteTouchStart(e, link.id, currentPos, 'LINK')}
                                                                     onTouchMove={handleNoteTouchMove}
                                                                 >
-                                                                    {/* Wide title sticker — drag handle */}
-                                                                    <div
-                                                                        className="flex flex-col"
-                                                                        style={{ width: titleW, cursor: isDraggingLink ? 'grabbing' : 'grab', touchAction: 'none' }}
-                                                                        onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
-                                                                    >
+                                                                    {/* Title sticker row: tape + label + action buttons */}
+                                                                    <div className="flex flex-col" style={{ width: titleW }}>
                                                                         <div className="mx-auto rounded-b-sm" style={{ height: 14, width: tapePx, background: tapeColor }} />
-                                                                        <div className="rounded-lg" style={{ backgroundColor: bgCol, border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: '5px 10px' }}>
-                                                                            <div className="flex items-center gap-1.5">
+                                                                        <div className="rounded-lg flex items-center gap-1.5" style={{ backgroundColor: bgCol, border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: '5px 10px' }}>
+                                                                            {/* Drag handle (label area) */}
+                                                                            <div
+                                                                                className="flex items-center gap-1.5 flex-1 min-w-0"
+                                                                                style={{ cursor: isDraggingLink ? 'grabbing' : 'grab', touchAction: 'none' }}
+                                                                                onMouseDown={e => handleLinkTapeMouseDown(e, link.id, currentPos)}
+                                                                            >
                                                                                 <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(0,0,0,0.07)' }}>
                                                                                     <span style={{ fontSize: 9, lineHeight: 1 }}>🖼</span>
                                                                                 </div>
                                                                                 <span style={{ fontFamily: "'Caveat', cursive", fontSize: 13, fontWeight: 700, color: '#292524', whiteSpace: 'nowrap', letterSpacing: '0.04em' }}>{link.title}</span>
                                                                             </div>
+                                                                            {/* Action buttons — always inside the label card */}
+                                                                            <div className="flex items-center gap-0.5 flex-shrink-0 ml-1">
+                                                                                {isEditingGroup ? (
+                                                                                    <button
+                                                                                        className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-indigo-500 text-white hover:bg-indigo-600"
+                                                                                        onClick={async e => {
+                                                                                            e.stopPropagation();
+                                                                                            setBoardGroupEditId(null);
+                                                                                            const sz = boardLinkSizes[link.id];
+                                                                                            if (sz) {
+                                                                                                await saveBoardLinkChange((editedCreator.links || []).map(l =>
+                                                                                                    l.id === link.id ? { ...l, width: sz.w, height: sz.h } : l
+                                                                                                ));
+                                                                                            }
+                                                                                        }}
+                                                                                    >Done</button>
+                                                                                ) : (
+                                                                                    <>
+                                                                                        <button
+                                                                                            className="w-5 h-5 rounded flex items-center justify-center bg-black/15 hover:bg-black/30 transition-colors"
+                                                                                            title="Edit group"
+                                                                                            onClick={e => { e.stopPropagation(); setBoardGroupEditId(link.id); }}
+                                                                                        ><Pencil size={9} className="text-stone-700" /></button>
+                                                                                        <button
+                                                                                            className="w-5 h-5 rounded flex items-center justify-center bg-black/15 hover:bg-red-400/70 transition-colors"
+                                                                                            title="Delete group"
+                                                                                            onClick={async e => {
+                                                                                                e.stopPropagation();
+                                                                                                await saveBoardLinkChange((editedCreator.links || []).filter(l => l.id !== link.id));
+                                                                                            }}
+                                                                                        ><Trash2 size={9} className="text-stone-700" /></button>
+                                                                                    </>
+                                                                                )}
+                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                     <div style={{ height: 8 }} />
-                                                                    {/* Gallery zone */}
-                                                                    <div
-                                                                        style={{
-                                                                            width: gw, height: zoneH, borderRadius: 12, position: 'relative',
+                                                                    {/* Gallery zone — outer wrapper allows overflow for resize handle; inner clips photos */}
+                                                                    <div style={{ width: gw, height: zoneH, position: 'relative' }}>
+                                                                        {/* Photo grid (clips to zone) */}
+                                                                        <div style={{
+                                                                            position: 'absolute', inset: 0, borderRadius: 12,
                                                                             background: isEditingGroup ? 'rgba(238,242,255,0.95)' : 'rgba(250,246,242,0.9)',
                                                                             border: isEditingGroup ? '1.5px solid #6366f1' : '1.5px solid rgba(0,0,0,0.08)',
                                                                             boxShadow: isEditingGroup ? '0 0 0 2px rgba(99,102,241,0.2), 0 2px 10px rgba(0,0,0,0.06)' : '0 2px 10px rgba(0,0,0,0.06)',
-                                                                            overflow: isEditingGroup ? 'visible' : 'hidden',
+                                                                            overflow: 'hidden',
                                                                             padding: 8, display: 'flex', flexWrap: 'wrap', gap: 6, alignContent: 'flex-start',
-                                                                        }}
-                                                                    >
-                                                                        {photos.map((photo: { id: string; url: string }) => (
-                                                                            <div key={photo.id} className="relative group/photo" style={{ width: 72, height: 72, borderRadius: 8, overflow: 'hidden', flexShrink: 0, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
-                                                                                <img src={photo.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                                                {isEditingGroup && (
-                                                                                    <button
-                                                                                        className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/photo:opacity-100 transition-opacity"
-                                                                                        onClick={e => {
-                                                                                            e.stopPropagation();
-                                                                                            const updated = (editedCreator.links || []).map(l =>
-                                                                                                l.id === link.id ? { ...l, groupPhotos: (l.groupPhotos || []).filter((p: { id: string }) => p.id !== photo.id) } : l
-                                                                                            );
-                                                                                            saveBoardLinkChange(updated);
-                                                                                        }}
-                                                                                    ><X size={8} /></button>
-                                                                                )}
-                                                                            </div>
-                                                                        ))}
-                                                                        {isEditingGroup && (
-                                                                            <button
-                                                                                className="w-16 h-16 rounded-lg border-2 border-dashed border-indigo-300 bg-indigo-50 hover:bg-indigo-100 flex items-center justify-center flex-shrink-0 transition-colors"
-                                                                                onClick={e => { e.stopPropagation(); setBoardGroupAddingPhotoId(link.id); }}
-                                                                            >
-                                                                                <Plus size={18} className="text-indigo-400" />
-                                                                            </button>
-                                                                        )}
+                                                                        }}>
+                                                                            {photos.map((photo: { id: string; url: string }) => (
+                                                                                <div key={photo.id} className="relative group/photo" style={{ width: 72, height: 72, borderRadius: 8, overflow: 'hidden', flexShrink: 0, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+                                                                                    <img src={photo.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                                                    {isEditingGroup && (
+                                                                                        <button
+                                                                                            className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/photo:opacity-100 transition-opacity"
+                                                                                            onClick={e => {
+                                                                                                e.stopPropagation();
+                                                                                                saveBoardLinkChange((editedCreator.links || []).map(l =>
+                                                                                                    l.id === link.id ? { ...l, groupPhotos: (l.groupPhotos || []).filter((p: { id: string }) => p.id !== photo.id) } : l
+                                                                                                ));
+                                                                                            }}
+                                                                                        ><X size={8} /></button>
+                                                                                    )}
+                                                                                </div>
+                                                                            ))}
+                                                                            {isEditingGroup && (
+                                                                                <button
+                                                                                    className="w-16 h-16 rounded-lg border-2 border-dashed border-indigo-300 bg-indigo-50 hover:bg-indigo-100 flex items-center justify-center flex-shrink-0 transition-colors"
+                                                                                    onClick={e => { e.stopPropagation(); setBoardGroupAddingPhotoId(link.id); }}
+                                                                                ><Plus size={18} className="text-indigo-400" /></button>
+                                                                            )}
+                                                                        </div>
+                                                                        {/* Resize handle — outside the clipping div */}
                                                                         {isEditingGroup && (
                                                                             <div
                                                                                 className="absolute -bottom-2 -right-2 w-5 h-5 rounded-full bg-indigo-500 border-2 border-white cursor-se-resize z-20 flex items-center justify-center shadow"
@@ -3737,41 +3772,6 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                                                             >
                                                                                 <svg width="8" height="8" viewBox="0 0 8 8" fill="white"><path d="M2 8 L8 2 M5 8 L8 5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
                                                                             </div>
-                                                                        )}
-                                                                    </div>
-                                                                    {/* Hover toolbar */}
-                                                                    <div className="absolute -top-7 right-0 hidden group-hover/grouplink:flex items-center gap-1 z-10">
-                                                                        {isEditingGroup ? (
-                                                                            <button
-                                                                                className="px-2 py-0.5 text-[10px] font-bold rounded bg-indigo-500 text-white hover:bg-indigo-600 shadow"
-                                                                                onClick={async e => {
-                                                                                    e.stopPropagation();
-                                                                                    setBoardGroupEditId(null);
-                                                                                    const sz = boardLinkSizes[link.id];
-                                                                                    if (sz) {
-                                                                                        const updatedLinks = (editedCreator.links || []).map(l =>
-                                                                                            l.id === link.id ? { ...l, width: sz.w, height: sz.h } : l
-                                                                                        );
-                                                                                        await saveBoardLinkChange(updatedLinks);
-                                                                                    }
-                                                                                }}
-                                                                            >Done</button>
-                                                                        ) : (
-                                                                            <>
-                                                                                <button
-                                                                                    className="p-1 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all shadow-sm"
-                                                                                    title="Edit group"
-                                                                                    onClick={e => { e.stopPropagation(); setBoardGroupEditId(link.id); }}
-                                                                                ><Pencil size={10} /></button>
-                                                                                <button
-                                                                                    className="p-1 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all shadow-sm"
-                                                                                    onClick={async e => {
-                                                                                        e.stopPropagation();
-                                                                                        await saveBoardLinkChange((editedCreator.links || []).filter(l => l.id !== link.id));
-                                                                                    }}
-                                                                                    title="Delete"
-                                                                                ><Trash2 size={10} /></button>
-                                                                            </>
                                                                         )}
                                                                     </div>
                                                                 </div>
