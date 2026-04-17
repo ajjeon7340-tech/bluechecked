@@ -1114,13 +1114,13 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
             <div
                 className="fixed inset-0"
                 style={{
-                    padding: '14px',
+                    padding: '22px',
+                    backgroundColor: '#EDE5D8',
                     backgroundImage: `
-                        repeating-linear-gradient(92deg, transparent 0px, transparent 3px, rgba(0,0,0,0.018) 3px, rgba(0,0,0,0.018) 4px),
-                        repeating-linear-gradient(2deg,  transparent 0px, transparent 8px, rgba(255,255,255,0.015) 8px, rgba(255,255,255,0.015) 9px),
-                        linear-gradient(160deg, #C8B89A 0%, #A89070 30%, #B8A078 60%, #988060 100%)
+                        repeating-linear-gradient(92deg, transparent 0px, transparent 4px, rgba(0,0,0,0.012) 4px, rgba(0,0,0,0.012) 5px),
+                        repeating-linear-gradient(2deg,  transparent 0px, transparent 10px, rgba(0,0,0,0.006) 10px, rgba(0,0,0,0.006) 11px)
                     `,
-                    boxShadow: 'inset 0 0 60px rgba(0,0,0,0.3)',
+                    boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)',
                 }}
             >
                 {/* Cork surface */}
@@ -1134,7 +1134,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                             radial-gradient(ellipse at 50% 50%, rgba(230,215,190,0.25) 0%, transparent 65%),
                             url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Ccircle cx='1.5' cy='1.5' r='0.8' fill='rgba(120,90,50,0.05)'/%3E%3Ccircle cx='4.5' cy='4.5' r='0.7' fill='rgba(180,150,100,0.04)'/%3E%3Ccircle cx='1' cy='4.5' r='0.5' fill='rgba(100,70,30,0.04)'/%3E%3Ccircle cx='4.5' cy='1.5' r='0.6' fill='rgba(210,185,145,0.05)'/%3E%3C/svg%3E")
                         `,
-                        boxShadow: 'inset 0 0 50px rgba(0,0,0,0.12), inset 4px 4px 12px rgba(0,0,0,0.08)',
+                        boxShadow: 'inset 0 6px 20px rgba(0,0,0,0.08), inset 4px 0 14px rgba(0,0,0,0.05), inset -4px 0 14px rgba(0,0,0,0.05), inset 0 -4px 14px rgba(0,0,0,0.04), inset 0 0 0 1px rgba(0,0,0,0.07)',
                     }}
                 >
                     {/* ── Film grain overlay ── */}
@@ -1145,7 +1145,7 @@ export const DiemBoard: React.FC<Props> = ({ creator, currentUser, onLoginReques
                         className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-5"
                         style={{
                             height: NAV_H,
-                            background: 'rgba(130,105,75,0.82)',
+                            background: 'rgba(160,140,115,0.88)',
                             backdropFilter: 'blur(10px)',
                             WebkitBackdropFilter: 'blur(10px)',
                             borderBottom: '1px solid rgba(255,255,255,0.07)',
