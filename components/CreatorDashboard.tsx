@@ -180,6 +180,16 @@ const fetchOembedData = async (url: string): Promise<{ title?: string; thumbnail
 
 const getXXSWidth = (title?: string) => Math.min(220, Math.max(110, 80 + (title?.length || 0) * 8.5));
 const getSWidth = (title?: string) => Math.min(220, Math.max(110, 80 + (title?.length || 0) * 8.5));
+
+// Parse board post reply field — supports legacy plain string and new JSON thread array
+const parsePostReplies = (reply: string | null): { content: string; at: string; attachmentUrl?: string | null }[] => {
+    if (!reply) return [];
+    try {
+        const parsed = JSON.parse(reply);
+        if (Array.isArray(parsed)) return parsed;
+    } catch {}
+    return [{ content: reply, at: '' }];
+};
 // Wide-mode: base(icon 28 + gap 10 + padding 24 = 62) + per-char width (CJK chars are ~13px, spaces 4px, ASCII ~7.5px)
 const getWideWidth = (title?: string) => {
     if (!title) return 160;
@@ -4866,7 +4876,7 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                                 <p className="text-[10px] text-stone-600 line-clamp-2 mb-1.5 leading-relaxed">{post.content}</p>
                                                 <div className="pt-1.5 border-t border-black/5">
                                                     <p className="text-[9px] text-stone-400 font-semibold uppercase tracking-wide mb-0.5">Reply</p>
-                                                    <p className="text-[10px] text-stone-500 line-clamp-2 leading-relaxed">{post.reply}</p>
+                                                    <p className="text-[10px] text-stone-500 line-clamp-2 leading-relaxed">{(() => { const r = parsePostReplies(post.reply); return r[r.length - 1]?.content ?? post.reply; })()}</p>
                                                 </div>
                                             </div>
                                         ))}
@@ -5206,7 +5216,7 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                 {/* Fan message */}
                                 <div className="flex relative z-10">
                                     <div className="flex flex-col items-center mr-3 relative flex-shrink-0">
-                                        {(livePost.reply || isReplying) && <div className="absolute left-[17px] top-11 -bottom-1 w-0.5 bg-stone-200" />}
+                                        {(!!livePost.reply || isReplying) && <div className="absolute left-[17px] top-11 -bottom-1 w-0.5 bg-stone-200" />}
                                         <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-800 flex items-center justify-center flex-shrink-0">
                                             {livePost.fanAvatarUrl
                                                 ? <img src={livePost.fanAvatarUrl} className="w-full h-full object-cover" alt={livePost.fanName} />
@@ -5233,9 +5243,9 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                     </div>
                                 </div>
 
-                                {/* Creator reply */}
-                                {livePost.reply ? (
-                                    <div className="flex mt-1 relative z-10">
+                                {/* Creator reply thread */}
+                                {parsePostReplies(livePost.reply).map((msg, ri) => (
+                                    <div key={ri} className="flex mt-1 relative z-10">
                                         <div className="flex flex-col items-center mr-3 flex-shrink-0">
                                             <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-200 flex items-center justify-center">
                                                 {creator.avatarUrl
@@ -5250,19 +5260,20 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                                     <CheckCircle2 size={10} className="text-blue-500" />
                                                     <span className="text-[9px] font-semibold uppercase tracking-wide">Creator</span>
                                                 </div>
-                                                {livePost.replyAt && <span className="text-xs font-medium text-stone-400">• {new Date(livePost.replyAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>}
+                                                {msg.at && <span className="text-xs font-medium text-stone-400">• {new Date(msg.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>}
                                             </div>
                                             <div className="bg-white p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
-                                                <p className="text-sm text-stone-700 leading-relaxed">{livePost.reply}</p>
-                                                {livePost.replyAttachmentUrl && (
-                                                    /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(livePost.replyAttachmentUrl)
-                                                        ? <img src={livePost.replyAttachmentUrl} className="mt-2 w-full max-h-48 object-cover rounded-xl" alt="attachment" />
-                                                        : <a href={livePost.replyAttachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 text-xs text-stone-500 hover:text-stone-800 font-medium transition-colors"><Paperclip size={12} /> {livePost.replyAttachmentUrl.split('/').pop()}</a>
+                                                <p className="text-sm text-stone-700 leading-relaxed">{msg.content}</p>
+                                                {msg.attachmentUrl && (
+                                                    /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(msg.attachmentUrl)
+                                                        ? <img src={msg.attachmentUrl} className="mt-2 w-full max-h-48 object-cover rounded-xl" alt="attachment" />
+                                                        : <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 text-xs text-stone-500 hover:text-stone-800 font-medium transition-colors"><Paperclip size={12} /> {msg.attachmentUrl.split('/').pop()}</a>
                                                 )}
                                             </div>
                                         </div>
                                     </div>
-                                ) : isReplying ? (
+                                ))}
+                                {isReplying ? (
                                     <div className="flex mt-4 relative z-10">
                                         <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-200 flex items-center justify-center flex-shrink-0 mr-3">
                                             {creator.avatarUrl
@@ -5317,28 +5328,30 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                                 </button>
                                             )}
                                             <div className="flex gap-2 mt-2">
-                                                <button onClick={() => { setBoardReplyingId(null); setBoardReplyAttachmentFile(null); setBoardReplyAttachmentPreview(null); }} className="flex-1 py-2 text-xs font-semibold rounded-xl border border-stone-200 text-stone-500 hover:bg-stone-100 transition-colors">Cancel</button>
+                                                <button onClick={() => { setBoardReplyingId(null); setBoardReplyAttachmentFile(null); setBoardReplyAttachmentPreview(null); }} className="flex-1 py-2 text-xs font-semibold rounded-xl border border-stone-200 text-stone-500 hover:bg-stone-100 transition-colors">Finish</button>
                                                 <button
                                                     onClick={async () => {
-                                                        const reply = boardReplyDraft[livePost.id]?.trim();
-                                                        if (!reply) return;
+                                                        const draft = boardReplyDraft[livePost.id]?.trim();
+                                                        if (!draft) return;
                                                         try {
-                                                            let replyAttachmentUrl: string | null = null;
+                                                            let attachUrl: string | null = null;
                                                             if (boardReplyAttachmentFile && currentUser) {
-                                                                replyAttachmentUrl = await uploadBoardAttachment(boardReplyAttachmentFile, currentUser.id);
+                                                                attachUrl = await uploadBoardAttachment(boardReplyAttachmentFile, currentUser.id);
                                                             }
-                                                            await replyToBoardPost(livePost.id, reply, replyAttachmentUrl);
-                                                            const updated = { ...livePost, reply, replyAt: new Date().toISOString(), replyAttachmentUrl };
+                                                            const existing = parsePostReplies(livePost.reply);
+                                                            const newMsg = { content: draft, at: new Date().toISOString(), attachmentUrl: attachUrl };
+                                                            const jsonStr = JSON.stringify([...existing, newMsg]);
+                                                            await replyToBoardPost(livePost.id, jsonStr, null);
+                                                            const updated = { ...livePost, reply: jsonStr, replyAt: newMsg.at };
                                                             setBoardPosts(prev => prev.map(p => p.id === livePost.id ? updated : p));
                                                             setBoardPopupPost(updated);
-                                                            setBoardReplyingId(null);
                                                             setBoardReplyDraft(prev => { const n = { ...prev }; delete n[livePost.id]; return n; });
                                                             setBoardReplyAttachmentFile(null);
                                                             setBoardReplyAttachmentPreview(null);
                                                         } catch {}
                                                     }}
                                                     className="flex-1 py-2 text-xs font-semibold rounded-xl bg-stone-900 text-white hover:bg-stone-700 transition-colors"
-                                                >Post Reply</button>
+                                                >Send</button>
                                             </div>
                                         </div>
                                     </div>
@@ -5348,7 +5361,7 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                             onClick={() => setBoardReplyingId(livePost.id)}
                                             className="w-full py-2.5 text-sm font-semibold rounded-xl bg-stone-900 text-white hover:bg-stone-700 transition-colors flex items-center justify-center gap-2"
                                         >
-                                            <MessageSquare size={14} /> Answer this question
+                                            <MessageSquare size={14} /> {parsePostReplies(livePost.reply).length > 0 ? 'Continue answering' : 'Answer this question'}
                                         </button>
                                     </div>
                                 )}
@@ -5465,7 +5478,7 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                                     {post.reply && (
                                                         <div className="flex items-start gap-1.5 bg-black/5 rounded-lg px-2 py-1.5">
                                                             <CheckCircle2 size={9} className="text-blue-500 mt-0.5 flex-shrink-0" />
-                                                            <p className="text-[10px] text-stone-500 line-clamp-2 leading-relaxed">{post.reply}</p>
+                                                            <p className="text-[10px] text-stone-500 line-clamp-2 leading-relaxed">{(() => { const r = parsePostReplies(post.reply); return r[r.length - 1]?.content ?? post.reply; })()}</p>
                                                         </div>
                                                     )}
                                                     <p className="text-[9px] text-stone-400 mt-1.5">{getRelativeTime(post.replyAt ?? post.createdAt)}</p>
@@ -5567,9 +5580,9 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                                 </div>
                                             </div>
 
-                                            {/* Creator reply */}
-                                            {post.reply ? (
-                                                <div className="flex mt-1 relative z-10">
+                                            {/* Creator reply thread */}
+                                            {parsePostReplies(post.reply).map((msg, ri) => (
+                                                <div key={ri} className="flex mt-1 relative z-10">
                                                     <div className="flex flex-col items-center mr-3 flex-shrink-0">
                                                         <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-200 flex items-center justify-center">
                                                             {creator.avatarUrl
@@ -5584,54 +5597,58 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                                                 <CheckCircle2 size={10} className="text-blue-500" />
                                                                 <span className="text-[9px] font-semibold uppercase tracking-wide">Creator</span>
                                                             </div>
-                                                            {post.replyAt && <span className="text-xs font-medium text-stone-400">• {new Date(post.replyAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>}
+                                                            {msg.at && <span className="text-xs font-medium text-stone-400">• {new Date(msg.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>}
                                                         </div>
                                                         <div className="bg-white p-3 sm:p-4 rounded-2xl rounded-tl-lg border border-stone-200/60">
-                                                            <p className="text-sm text-stone-700 leading-relaxed">{post.reply}</p>
-                                                            {post.replyAttachmentUrl && (
-                                                                /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(post.replyAttachmentUrl)
-                                                                    ? <img src={post.replyAttachmentUrl} className="mt-2 w-full max-h-48 object-cover rounded-xl" alt="attachment" />
-                                                                    : <a href={post.replyAttachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 text-xs text-stone-500 hover:text-stone-800 font-medium transition-colors"><Paperclip size={12} /> {post.replyAttachmentUrl.split('/').pop()}</a>
-                                                            )}
-                                                        </div>
-                                                        {/* Add to Chat callout */}
-                                                        <div className="mt-2 ml-1">
-                                                            {post.isPrivate ? (
-                                                                <span className="inline-flex items-center gap-1 text-[10px] text-stone-400 font-medium"><Lock size={9} /> Private — cannot be added to board</span>
-                                                            ) : post.isAddedToChat ? (
-                                                                <span className="inline-flex items-center gap-2 text-[10px] font-medium">
-                                                                    <span className="text-emerald-600 flex items-center gap-1">
-                                                                        <MessageSquare size={9} />
-                                                                        {post.isPinned ? 'Pinned to Community Board' : 'In From Chat — ready to pin'}
-                                                                    </span>
-                                                                    <button
-                                                                        onClick={async () => {
-                                                                            try {
-                                                                                await markBoardPostAsAddedToChat(post.id, false);
-                                                                                if (post.isPinned) await pinBoardPost(post.id, false);
-                                                                                setBoardPosts(prev => prev.map(p => p.id === post.id ? { ...p, isAddedToChat: false, isPinned: false } : p));
-                                                                            } catch {}
-                                                                        }}
-                                                                        className="text-stone-400 hover:text-red-400 transition-colors underline"
-                                                                    >Remove</button>
-                                                                </span>
-                                                            ) : (
-                                                                <button
-                                                                    onClick={async () => {
-                                                                        try {
-                                                                            await markBoardPostAsAddedToChat(post.id, true);
-                                                                            setBoardPosts(prev => prev.map(p => p.id === post.id ? { ...p, isAddedToChat: true } : p));
-                                                                        } catch {}
-                                                                    }}
-                                                                    className="inline-flex items-center gap-1 text-[10px] font-semibold text-stone-500 hover:text-stone-800 bg-stone-100 hover:bg-stone-200 px-2 py-1 rounded-full transition-colors"
-                                                                >
-                                                                    <MessageSquare size={9} /> Add to Chat
-                                                                </button>
+                                                            <p className="text-sm text-stone-700 leading-relaxed">{msg.content}</p>
+                                                            {msg.attachmentUrl && (
+                                                                /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(msg.attachmentUrl)
+                                                                    ? <img src={msg.attachmentUrl} className="mt-2 w-full max-h-48 object-cover rounded-xl" alt="attachment" />
+                                                                    : <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-2 text-xs text-stone-500 hover:text-stone-800 font-medium transition-colors"><Paperclip size={12} /> {msg.attachmentUrl.split('/').pop()}</a>
                                                             )}
                                                         </div>
                                                     </div>
                                                 </div>
-                                            ) : isReplying ? (
+                                            ))}
+                                            {/* Add to Chat — shown after thread */}
+                                            {parsePostReplies(post.reply).length > 0 && (
+                                                <div className="mt-2 ml-12">
+                                                    {post.isPrivate ? (
+                                                        <span className="inline-flex items-center gap-1 text-[10px] text-stone-400 font-medium"><Lock size={9} /> Private — cannot be added to board</span>
+                                                    ) : post.isAddedToChat ? (
+                                                        <span className="inline-flex items-center gap-2 text-[10px] font-medium">
+                                                            <span className="text-emerald-600 flex items-center gap-1">
+                                                                <MessageSquare size={9} />
+                                                                {post.isPinned ? 'Pinned to Community Board' : 'In From Chat — ready to pin'}
+                                                            </span>
+                                                            <button
+                                                                onClick={async () => {
+                                                                    try {
+                                                                        await markBoardPostAsAddedToChat(post.id, false);
+                                                                        if (post.isPinned) await pinBoardPost(post.id, false);
+                                                                        setBoardPosts(prev => prev.map(p => p.id === post.id ? { ...p, isAddedToChat: false, isPinned: false } : p));
+                                                                    } catch {}
+                                                                }}
+                                                                className="text-stone-400 hover:text-red-400 transition-colors underline"
+                                                            >Remove</button>
+                                                        </span>
+                                                    ) : (
+                                                        <button
+                                                            onClick={async () => {
+                                                                try {
+                                                                    await markBoardPostAsAddedToChat(post.id, true);
+                                                                    setBoardPosts(prev => prev.map(p => p.id === post.id ? { ...p, isAddedToChat: true } : p));
+                                                                } catch {}
+                                                            }}
+                                                            className="inline-flex items-center gap-1 text-[10px] font-semibold text-stone-500 hover:text-stone-800 bg-stone-100 hover:bg-stone-200 px-2 py-1 rounded-full transition-colors"
+                                                        >
+                                                            <MessageSquare size={9} /> Add to Chat
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+                                            {/* Compose area */}
+                                            {isReplying ? (
                                                 <div className="flex mt-4 relative z-10">
                                                     <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-200 flex items-center justify-center flex-shrink-0 mr-3">
                                                         {creator.avatarUrl
@@ -5648,21 +5665,23 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                                             onChange={e => setBoardReplyDraft(prev => ({ ...prev, [post.id]: e.target.value }))}
                                                         />
                                                         <div className="flex gap-2 mt-2">
-                                                            <button onClick={() => setBoardReplyingId(null)} className="flex-1 py-2 text-xs font-semibold rounded-xl border border-stone-200 text-stone-500 hover:bg-stone-100 transition-colors">Cancel</button>
+                                                            <button onClick={() => setBoardReplyingId(null)} className="flex-1 py-2 text-xs font-semibold rounded-xl border border-stone-200 text-stone-500 hover:bg-stone-100 transition-colors">Finish</button>
                                                             <button
                                                                 onClick={async () => {
-                                                                    const reply = boardReplyDraft[post.id]?.trim();
-                                                                    if (!reply) return;
+                                                                    const draft = boardReplyDraft[post.id]?.trim();
+                                                                    if (!draft) return;
                                                                     try {
-                                                                        await replyToBoardPost(post.id, reply, null);
-                                                                        const updated = { ...post, reply, replyAt: new Date().toISOString(), replyAttachmentUrl: null };
+                                                                        const existing = parsePostReplies(post.reply);
+                                                                        const newMsg = { content: draft, at: new Date().toISOString(), attachmentUrl: null };
+                                                                        const jsonStr = JSON.stringify([...existing, newMsg]);
+                                                                        await replyToBoardPost(post.id, jsonStr, null);
+                                                                        const updated = { ...post, reply: jsonStr, replyAt: newMsg.at };
                                                                         setBoardPosts(prev => prev.map(p => p.id === post.id ? updated : p));
-                                                                        setBoardReplyingId(null);
                                                                         setBoardReplyDraft(prev => { const n = { ...prev }; delete n[post.id]; return n; });
                                                                     } catch {}
                                                                 }}
                                                                 className="flex-1 py-2 text-xs font-semibold rounded-xl bg-stone-900 text-white hover:bg-stone-700 transition-colors"
-                                                            >Post Reply</button>
+                                                            >Send</button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -5672,7 +5691,7 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                                         onClick={() => setBoardReplyingId(post.id)}
                                                         className="w-full py-2.5 text-sm font-semibold rounded-xl bg-stone-900 text-white hover:bg-stone-700 transition-colors flex items-center justify-center gap-2"
                                                     >
-                                                        <MessageSquare size={14} /> Answer this question
+                                                        <MessageSquare size={14} /> {parsePostReplies(post.reply).length > 0 ? 'Continue answering' : 'Answer this question'}
                                                     </button>
                                                 </div>
                                             )}

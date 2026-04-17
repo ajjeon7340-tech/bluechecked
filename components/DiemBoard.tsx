@@ -250,6 +250,17 @@ const pubDetectPlatform = (url: string): string | null => {
     } catch { return null; }
 };
 
+// ── board post reply thread parser ───────────────────────────────────────────
+
+const parsePostReplies = (reply: string | null): { content: string; at: string; attachmentUrl?: string | null }[] => {
+    if (!reply) return [];
+    try {
+        const parsed = JSON.parse(reply);
+        if (Array.isArray(parsed)) return parsed;
+    } catch {}
+    return [{ content: reply, at: '' }];
+};
+
 // ── text-driven width for wide-style links ────────────────────────────────────
 
 const getWideWidth = (title?: string): number => {
@@ -610,12 +621,12 @@ const ThreadModal: React.FC<{ post: BoardPost; creator: CreatorProfile; onClose:
                     </div>
                 </div>
 
-                {/* Creator reply */}
-                {post.reply && (
-                    <div style={{
+                {/* Creator reply thread */}
+                {parsePostReplies(post.reply).map((msg, ri) => (
+                    <div key={ri} style={{
                         background: '#f0fdf4',
                         backgroundImage: 'repeating-linear-gradient(transparent 0px, transparent 27px, rgba(0,0,0,0.035) 27px, rgba(0,0,0,0.035) 28px)',
-                        borderTop: '1px solid rgba(0,0,0,0.06)',
+                        borderTop: ri === 0 ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(16,185,129,0.12)',
                         borderLeft: '4px solid rgba(16,185,129,0.5)',
                     }} className="p-5">
                         <div className="flex items-start gap-3">
@@ -632,17 +643,15 @@ const ThreadModal: React.FC<{ post: BoardPost; creator: CreatorProfile; onClose:
                                     <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-0.5">
                                         <CheckCircle size={9} /> CREATOR
                                     </span>
-                                    <span className="text-[10px] text-stone-400 ml-auto">
-                                        · {post.replyAt ? timeAgo(post.replyAt) : ''}
-                                    </span>
+                                    {msg.at && <span className="text-[10px] text-stone-400 ml-auto">· {timeAgo(msg.at)}</span>}
                                 </div>
                                 <p style={{ fontFamily: "'Kalam', cursive", fontSize: 14.5, color: '#292524', lineHeight: 1.7 }}>
-                                    {post.reply}
+                                    {msg.content}
                                 </p>
                             </div>
                         </div>
                     </div>
-                )}
+                ))}
 
                 <div className="px-5 py-3 flex justify-end" style={{ background: '#faf9f0', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
                     <button onClick={onClose}
