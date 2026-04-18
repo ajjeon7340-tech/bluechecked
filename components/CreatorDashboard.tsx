@@ -3441,7 +3441,6 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                             transformOrigin: '0 0',
                                             transform: `translate(${bTx}px, ${bTy}px) scale(${dashCamera.zoom})`,
                                             transition: dashCamTransition,
-                                            pointerEvents: 'none',
                                         }}
                                     >
                                                 {/* Infinite Grid Background inside transformed container */}
@@ -3870,7 +3869,7 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                                         />
                                                         {/* Color swatches + palette picker */}
                                                         <div className="flex items-center gap-1 mb-2.5" onClick={e => e.stopPropagation()}>
-                                                            {['#FFFEF0','#F0FDF4','#FFF7ED'].map(c => (
+                                                            {['#FFF7ED','#F0FDF4','#EFF6FF','#FDF2F8','#FFFEF0','#F5F3FF'].map(c => (
                                                                 <button
                                                                     key={c}
                                                                     onClick={e => { e.stopPropagation(); setBoardLinkDraft(p => ({ ...p, color: c })); }}
