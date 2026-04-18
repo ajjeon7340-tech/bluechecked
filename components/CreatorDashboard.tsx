@@ -4025,7 +4025,7 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                                                     </div>
                                                 ) : (
                                                     <div
-                                                        className={`relative ${isIconMode ? 'aspect-square flex items-center justify-center bg-white border border-black/5 overflow-hidden' : 'rounded-lg'} ${isThumbnailMode ? (cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-3' : 'p-2') : isIconMode ? (sqSize === 32 ? 'rounded-md' : sqSize === 44 ? 'rounded-lg' : 'rounded-xl') : (cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-2.5' : 'p-2')}`}
+                                                        className={`relative ${isIconMode ? 'aspect-square flex items-center justify-center bg-white border border-black/5 overflow-hidden' : 'rounded-lg'} ${isThumbnailMode ? (cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-2' : 'p-1.5') : isIconMode ? (sqSize === 32 ? 'rounded-md' : sqSize === 44 ? 'rounded-lg' : 'rounded-xl') : (cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-2.5' : 'p-2')}`}
                                                         style={isIconMode ? {
                                                             boxShadow: isDraggingLink ? '0 16px 40px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.08)',
                                                         } : {

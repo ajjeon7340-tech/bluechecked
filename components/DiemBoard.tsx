@@ -377,7 +377,7 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
             <div className={`h-4 mx-auto rounded-b-sm flex-shrink-0 ${tapeW}`} style={{ background: linkTapes[lc] }} />
             {/* Card body */}
             <div
-                className={`rounded-lg shadow-md ${isThumbnailMode ? 'p-3' : 'p-3'}`}
+                className={`rounded-lg shadow-md ${isThumbnailMode ? 'p-1.5' : 'p-2.5'}`}
                 style={{
                     backgroundColor: bgColor,
                     border: '1px solid rgba(0,0,0,0.10)',

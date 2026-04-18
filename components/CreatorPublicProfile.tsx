@@ -1232,7 +1232,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                       return (
                                                                           <button
                                                                               onClick={e => { e.stopPropagation(); handleThumbClick(); }}
-                                                                              className={`w-full text-left rounded-lg overflow-hidden hover:opacity-90 transition-opacity ${cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-3' : 'p-2'}`}
+                                                                              className={`w-full text-left rounded-lg overflow-hidden hover:opacity-90 transition-opacity ${cardSize === 'S' ? 'p-1' : cardSize === 'L' ? 'p-2' : 'p-1.5'}`}
                                                                               style={{ backgroundColor: link.buttonColor || noteColors[nc], border: '1px solid rgba(0,0,0,0.10)', boxShadow: '4px 4px 0px rgba(0,0,0,0.16)' }}
                                                                           >
                                                                               <div className="relative w-full rounded-md overflow-hidden mb-2" style={{ paddingBottom: '56.25%', backgroundColor: thumbBg }}>
