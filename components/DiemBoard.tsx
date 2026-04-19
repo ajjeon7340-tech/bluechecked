@@ -353,11 +353,7 @@ const LinkSticker: React.FC<{ link: any; idx: number }> = ({ link, idx }) => {
                 <div style={{ height: 8 }} />
                 {/* Gallery zone */}
                 <div style={{ width: gw, height: zoneH, borderRadius: 12, background: 'rgba(250,246,242,0.9)', border: '1.5px solid rgba(0,0,0,0.08)', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', overflow: 'hidden', padding: 8, display: 'flex', flexWrap: 'wrap', gap: 6, alignContent: 'flex-start' }}>
-                    {photos.length === 0 ? (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <span style={{ fontFamily: "'Kalam', cursive", fontSize: 12, color: '#a8a29e' }}>No photos yet</span>
-                        </div>
-                    ) : photos.map(photo => (
+                    {photos.map(photo => (
                         <div key={photo.id} style={{ width: 72, height: 72, borderRadius: 8, overflow: 'hidden', flexShrink: 0, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
                             <img src={photo.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>

@@ -817,12 +817,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                       className="relative overflow-hidden rounded-2xl"
                       style={{
                           padding: '20px',
-                          backgroundColor: '#EDE5D8',
-                          backgroundImage: `
-                              repeating-linear-gradient(92deg, transparent 0px, transparent 4px, rgba(0,0,0,0.012) 4px, rgba(0,0,0,0.012) 5px),
-                              repeating-linear-gradient(2deg,  transparent 0px, transparent 10px, rgba(0,0,0,0.006) 10px, rgba(0,0,0,0.006) 11px)
-                          `,
-                          boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)',
+                          backgroundColor: '#F6F5F3',
+                          backgroundImage: 'radial-gradient(circle, rgba(168,162,158,0.18) 1px, transparent 1px)',
+                          backgroundSize: '20px 20px',
                       }}
                   >
                       {/* Always-on board */}
@@ -991,14 +988,9 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                               height: `${BOARD_MAX_H}px`,
                                               cursor: boardIsDragging ? 'grabbing' : 'grab',
                                               touchAction: 'none',
-                                              backgroundColor: '#EAE3D9',
-                                              backgroundImage: `
-                                                  radial-gradient(ellipse at 10% 10%, rgba(255,245,225,0.60) 0%, transparent 45%),
-                                                  radial-gradient(ellipse at 90% 90%, rgba(200,180,150,0.35) 0%, transparent 45%),
-                                                  radial-gradient(ellipse at 50% 50%, rgba(230,215,190,0.25) 0%, transparent 65%),
-                                                  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Ccircle cx='1.5' cy='1.5' r='0.8' fill='rgba(120,90,50,0.05)'/%3E%3Ccircle cx='4.5' cy='4.5' r='0.7' fill='rgba(180,150,100,0.04)'/%3E%3Ccircle cx='1' cy='4.5' r='0.5' fill='rgba(100,70,30,0.04)'/%3E%3Ccircle cx='4.5' cy='1.5' r='0.6' fill='rgba(210,185,145,0.05)'/%3E%3C/svg%3E")
-                                              `,
-                                              boxShadow: 'inset 0 6px 20px rgba(0,0,0,0.08), inset 4px 0 14px rgba(0,0,0,0.05), inset -4px 0 14px rgba(0,0,0,0.05), inset 0 -4px 14px rgba(0,0,0,0.04), inset 0 0 0 1px rgba(0,0,0,0.07)',
+                                              backgroundColor: '#FAFAF8',
+                                              backgroundImage: 'radial-gradient(circle, rgba(168,162,158,0.15) 1px, transparent 1px)',
+                                              backgroundSize: '24px 24px',
                                           }}
                                           onMouseDown={e => {
                                               if (boardAnimating.current) return;
@@ -1177,11 +1169,7 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                                   <div style={{ height: 8 }} />
                                                                   {/* Gallery zone */}
                                                                   <div style={{ width: gw, height: zoneH, borderRadius: 12, background: 'rgba(250,246,242,0.9)', border: '1.5px solid rgba(0,0,0,0.08)', boxShadow: '4px 4px 0px rgba(0,0,0,0.14)', overflow: 'hidden', padding: 8, display: 'flex', flexWrap: 'wrap', gap: 6, alignContent: 'flex-start' }}>
-                                                                      {photos.length === 0 ? (
-                                                                          <div className="w-full h-full flex items-center justify-center">
-                                                                              <span style={{ fontFamily: "'Kalam', cursive", fontSize: 12, color: '#a8a29e' }}>No photos yet</span>
-                                                                          </div>
-                                                                      ) : photos.map(photo => (
+                                                                      {photos.map(photo => (
                                                                           <div key={photo.id} style={{ width: 72, height: 72, borderRadius: 8, overflow: 'hidden', flexShrink: 0, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
                                                                               <img src={photo.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                                           </div>
@@ -1486,10 +1474,6 @@ export const CreatorPublicProfile: React.FC<Props> = ({
                                                   );
                                               })}
 
-                                          </div>
-                                          {/* Film grain overlay — fixed in viewport, not scaled with canvas */}
-                                          <div className="pub-grain-overlay" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 50, overflow: 'hidden' }}>
-                                              <div style={{ position: 'absolute', inset: '-50%', width: '200%', height: '200%', opacity: 0.038, backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E\")", animation: 'pubGrainShift 0.55s steps(1) infinite' }} />
                                           </div>
                                       </div>
                                       {/* Floating Post Diem Button (Board Feature) */}
