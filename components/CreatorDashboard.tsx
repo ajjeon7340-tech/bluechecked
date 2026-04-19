@@ -4358,6 +4358,21 @@ const [boardSelectedPlatform, setBoardSelectedPlatform] = useState<string | null
                             </div>
                             );
                         })()}
+                        {/* Floating Add Link button */}
+                        <button
+                            className="absolute bottom-5 right-5 z-30 flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg transition-all hover:scale-105 active:scale-95"
+                            style={{ background: '#1c1917', color: '#fef9c3', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}
+                            onClick={() => {
+                                const newId = `link_${Date.now()}`;
+                                const newLink = { id: newId, title: '', url: '', type: 'EXTERNAL' as const };
+                                const updatedLinks = [...(editedCreator.links || []), newLink];
+                                setEditedCreator(prev => ({ ...prev, links: updatedLinks }));
+                                setBoardLinkDraft({ title: '', url: '', price: '', type: 'EXTERNAL', color: undefined, iconShape: undefined });
+                                setBoardLinkEditId(newId);
+                            }}
+                        >
+                            <Plus size={15} /> Add Link
+                        </button>
                     </div>
                 </div>
             )}
