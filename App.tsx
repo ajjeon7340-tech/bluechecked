@@ -6,13 +6,14 @@ import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { FanDashboard } from './components/FanDashboard';
 import { TermsOfService } from './components/TermsOfService';
+import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { BoardDashboard } from './components/BoardDashboard';
 import { getCreatorProfile, getCreatorProfileByHandle, checkAndSyncSession, completeOAuthSignup, signOut, subscribeToAuthChanges, getDiemPublicProfileId } from './services/realBackend';
 import { CreatorProfile, CurrentUser, UserRole } from './types';
 import { DiemLogo } from './components/Icons';
 import { useTranslation } from 'react-i18next';
 
-type PageState = 'LANDING' | 'LOGIN' | 'DASHBOARD' | 'PROFILE' | 'FAN_DASHBOARD' | 'SETUP_PROFILE' | 'TERMS' | 'BOARD_DASHBOARD';
+type PageState = 'LANDING' | 'LOGIN' | 'DASHBOARD' | 'PROFILE' | 'FAN_DASHBOARD' | 'SETUP_PROFILE' | 'TERMS' | 'PRIVACY' | 'BOARD_DASHBOARD';
 
 function App() {
   const { t } = useTranslation();
@@ -151,7 +152,7 @@ function App() {
             // 1. Check URL for Creator Handle (e.g. diem.ee/alexcode)
             const path = window.location.pathname;
             const potentialHandle = path.substring(1); // remove leading /
-            const isSystemRoute = ['login', 'dashboard', 'setup', 'reset-password', 'terms', 'dashboard-test'].some(route =>
+            const isSystemRoute = ['login', 'dashboard', 'setup', 'reset-password', 'terms', 'privacy', 'dashboard-test'].some(route =>
                 potentialHandle.toLowerCase() === route || potentialHandle.toLowerCase().startsWith(route + '/')
             );
 
@@ -170,6 +171,12 @@ function App() {
 
             if (path === '/terms') {
                 setCurrentPage('TERMS');
+                setIsLoading(false);
+                return;
+            }
+
+            if (path === '/privacy') {
+                setCurrentPage('PRIVACY');
                 setIsLoading(false);
                 return;
             }
@@ -448,6 +455,15 @@ function App() {
       
       {currentPage === 'TERMS' && (
         <TermsOfService
+          onBack={() => {
+            window.history.pushState({ page: 'LANDING' }, '', '/');
+            setCurrentPage('LANDING');
+          }}
+        />
+      )}
+
+      {currentPage === 'PRIVACY' && (
+        <PrivacyPolicy
           onBack={() => {
             window.history.pushState({ page: 'LANDING' }, '', '/');
             setCurrentPage('LANDING');
